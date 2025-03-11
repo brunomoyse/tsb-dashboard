@@ -20,5 +20,10 @@
   "name": "Name",
   "description": "Description",
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "nav": {
+    "products": "Products",
+    "orders": "Orders",
+    "booking": "Booking"
+  }
 }
