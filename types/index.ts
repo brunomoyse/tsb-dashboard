@@ -2,7 +2,7 @@
 export interface Translation {
     locale: string;
     name: string;
-    description: string;
+    description: string | null;
 }
 
 export interface Product {
@@ -10,7 +10,7 @@ export interface Product {
     price: number;
     code: string;
     //slug: string;
-    pieceCount: number;
+    pieceCount: number | null;
     isHalal: boolean;
     isVegan: boolean;
     isActive: boolean;

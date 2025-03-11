@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="dialog" max-width="800px">
+    <v-dialog v-model="dialog" max-width="800px" persistent>
         <v-card>
             <v-card-title>{{ t('editProduct') }}</v-card-title>
             <v-card-text>
@@ -133,7 +133,7 @@ const createProductCopy = (product: Product): ExtendedProduct => {
         id: product.id,
         price: product.price,
         code: product.code,
-        pieceCount: product.pieceCount ?? 0,
+        pieceCount: product.pieceCount != null ? product.pieceCount : null,
         isHalal: product.isHalal ?? false,
         isVegan: product.isVegan ?? false,
         isActive: product.isActive,

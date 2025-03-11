@@ -11,12 +11,11 @@
             :headers="headers"
             :items="products"
             fixed-header
-            items-per-page="15"
+            items-per-page="8"
             :search="searchQuery"
         >
             <template v-slot:item.price="{ value }">
-                <!-- Format price to x,xx coma separated -->
-                {{ value?.toFixed(2).replace('.', ',') }}
+                {{ belPriceFormat.format(value) }}
             </template>
             <template v-slot:item.isAvailable="{ value }">
                 <v-chip
@@ -79,6 +78,11 @@ const headers = computed(() => [
     { title: t('availability'), align: 'end', key: 'isAvailable' },
     { title: t('actions'), align: 'end', key: 'actions' }
 ])
+
+const belPriceFormat = new Intl.NumberFormat('fr-BE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+});
 
 const searchQuery = ref('')
 

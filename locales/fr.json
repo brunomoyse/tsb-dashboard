@@ -20,5 +20,10 @@
   "name": "Nom",
   "description": "Description",
   "cancel": "Annuler",
-  "save": "Enregistrer"
+  "save": "Enregistrer",
+  "nav": {
+    "products": "Produits",
+    "orders": "Commandes",
+    "booking": "Réservations"
+  }
 }
