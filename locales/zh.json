@@ -1,3 +1,24 @@
 {
-
+  "searchProducts": "搜索产品",
+  "visibility": "可见性",
+  "availability": "可用性",
+  "visible": "可见",
+  "invisible": "不可见",
+  "available": "可用",
+  "unavailable": "不可用",
+  "code": "代码",
+  "priceEuro": "价格（€）",
+  "actions": "操作",
+  "editProduct": "编辑产品",
+  "category": "类别",
+  "productCode": "产品代码",
+  "price": "价格",
+  "pieceCount": "件数",
+  "halal": "清真",
+  "vegan": "纯素",
+  "discountable": "可打折",
+  "name": "名称",
+  "description": "描述",
+  "cancel": "取消",
+  "save": "保存"
 }

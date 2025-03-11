@@ -5,7 +5,7 @@
             v-model="searchQuery"
             class="mb-4"
             clearable
-            label="Search Products"
+            :label="t('searchProducts')"
         ></v-text-field>
         <v-data-table
             :headers="headers"
@@ -16,20 +16,27 @@
         >
             <template v-slot:item.price="{ value }">
                 <!-- Format price to x,xx coma separated -->
-                {{ value.toFixed(2).replace('.', ',') }}
+                {{ value?.toFixed(2).replace('.', ',') }}
+            </template>
+            <template v-slot:item.isAvailable="{ value }">
+                <v-chip
+                    :border="`${value ? 'success' : 'error'} thin opacity-25`"
+                    :color="value ? 'success' : 'error'"
+                    :text="value ? t('available') : t('unavailable')"
+                    size="x-small"
+                ></v-chip>
             </template>
             <template v-slot:item.isActive="{ value }">
                 <v-chip
                     :border="`${value ? 'success' : 'error'} thin opacity-25`"
                     :color="value ? 'success' : 'error'"
-                    :text="value ? 'ACTIVE' : 'INACTIVE'"
+                    :text="value ? t('visible') : t('invisible')"
                     size="x-small"
                 ></v-chip>
             </template>
             <template v-slot:item.actions="{ item }">
                 <div class="d-flex ga-2 justify-end">
                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small" @click="openEditDialog(item)"></v-icon>
-
                     <v-icon color="medium-emphasis" icon="mdi-delete" size="small" @click="remove(item.id)"></v-icon>
                 </div>
             </template>
@@ -45,34 +52,75 @@
 </template>
 
 <script lang="ts" setup>
-import {useAsyncData, useNuxtApp} from "#imports";
-import type {Product} from "~/types";
+import { ref, computed } from 'vue'
+import { useAsyncData, useCategoriesStore, useNuxtApp } from '#imports'
+import { useI18n } from 'vue-i18n'
+import type { Product, ProductCategory } from '~/types'
 import EditProductDialog from '~/components/EditProductDialog.vue'
 
+const { t, locale } = useI18n()
 
-const {$api} = useNuxtApp()
+// Use a store for categories
+const categoryStore = useCategoriesStore()
+const { $api } = useNuxtApp()
 
-const headers = [
-    {title: 'Code', align: 'start', key: 'code'},
-    {title: 'Category', align: 'end', key: 'category_id', value: (item: Product) => getCategory(item.category_id)},
-    {title: 'Name', align: 'end', key: 'name'},
-    {title: 'Price(€)', align: 'end', key: 'price'},
-    {title: 'Available', align: 'end', key: 'isActive'},
-    {title: 'Actions', align: 'end', key: 'actions'},
-]
+// Headers as a computed property to use translations
+const headers = computed(() => [
+    { title: t('code'), align: 'start', key: 'code' },
+    {
+        title: t('category'),
+        align: 'end',
+        key: 'category_id',
+        value: (item: Product) => getCategory(item.categoryId)
+    },
+    { title: t('name'), align: 'end', key: 'name' },
+    { title: t('priceEuro'), align: 'end', key: 'price' },
+    { title: t('visibility'), align: 'end', key: 'isActive' },
+    { title: t('availability'), align: 'end', key: 'isAvailable' },
+    { title: t('actions'), align: 'end', key: 'actions' }
+])
 
 const searchQuery = ref('')
 
-const {data: products} = await useAsyncData<Product[]>('products', () =>
-    $api('/products')
+// Fetch products
+const { data: products } = await useAsyncData<Product[]>('products', () =>
+        $api('/admin/products'),
+    {
+        transform: (data: Product[]) => {
+            return data.map(product => {
+                const translation = product.translations.find(t => t.locale === locale.value)
+                return {
+                    ...product,
+                    name: translation ? translation.name : product.name
+                }
+            })
+        }
+    }
 )
 
-const categories = ref([])
+// Fetch categories
+const { data: categoriesData } = await useAsyncData<ProductCategory[]>('categories', () =>
+    $api('/categories', {
+        headers: {
+            'Accept-Language': locale.value
+        }
+    })
+)
 
-const getCategory = (categoryId: string) => {
-    const category = categories.value?.find((cat) => cat.id === categoryId)
-    return category ? category.name : ''
+// Save categories in store if available
+if (categoriesData.value) {
+    categoryStore.setCategories(categoriesData.value)
 }
+
+// Local copy of categories (reactive)
+const categories = computed(() => categoryStore.getCategories())
+
+// Helper to get category name by id
+const getCategory = (categoryId: string) => {
+    const cat = categories.value?.find((c) => c.id === categoryId)
+    return cat ? cat.name : ''
+}
+
 // Track the selected product for editing
 const selectedProduct = ref<Product | null>(null)
 
@@ -82,8 +130,7 @@ const openEditDialog = (product: Product) => {
 
 // Handle the update from the dialog
 const updateProduct = (updatedProduct: Product) => {
-    // You could call an API endpoint to save changes here
-    // For now, we'll just update the local products array
+    if (!products.value) return
     const index = products.value.findIndex(p => p.id === updatedProduct.id)
     if (index !== -1) {
         products.value[index] = updatedProduct
@@ -95,5 +142,4 @@ const remove = (id: number) => {
     // Implement deletion logic here
     console.log('Remove product with id:', id)
 }
-
 </script>

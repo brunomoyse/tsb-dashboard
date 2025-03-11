@@ -1,3 +1,24 @@
 {
-
+  "searchProducts": "Rechercher des produits",
+  "visibility": "Visibilité",
+  "availability": "Disponibilité",
+  "visible": "Visible",
+  "invisible": "Invisible",
+  "available": "Disponible",
+  "unavailable": "Indisponible",
+  "code": "Code",
+  "priceEuro": "Prix (€)",
+  "actions": "Actions",
+  "editProduct": "Modifier le produit",
+  "category": "Catégorie",
+  "productCode": "Code",
+  "price": "Prix",
+  "pieceCount": "Nombre de pièces",
+  "halal": "Halal",
+  "vegan": "Végan",
+  "discountable": "Remisable",
+  "name": "Nom",
+  "description": "Description",
+  "cancel": "Annuler",
+  "save": "Enregistrer"
 }

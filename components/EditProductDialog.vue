@@ -1,79 +1,89 @@
 <template>
-    <v-dialog v-model="dialog" max-width="600px">
+    <v-dialog v-model="dialog" max-width="800px">
         <v-card>
-            <v-card-title>Edit Product</v-card-title>
+            <v-card-title>{{ t('editProduct') }}</v-card-title>
             <v-card-text>
-                <!-- Product Fields -->
-                <v-text-field
-                    v-model="editedProduct.code"
-                    label="Product Code"
-                ></v-text-field>
-                <v-text-field
-                    v-model="editedProduct.slug"
-                    label="Slug"
-                ></v-text-field>
-                <v-text-field
-                    v-model="editedProduct.price"
-                    label="Price"
-                    type="number"
-                ></v-text-field>
-                <v-text-field
-                    v-model="editedProduct.pieceCount"
-                    label="Piece Count"
-                    type="number"
-                ></v-text-field>
-                <!-- v-select for Category -->
-                <v-select
-                    v-model="editedProduct.categoryId"
-                    :items="categories"
-                    item-text="name"
-                    item-value="id"
-                    label="Category"
-                ></v-select>
-                <v-checkbox
-                    v-model="editedProduct.isHalal"
-                    label="Halal"
-                ></v-checkbox>
-                <v-checkbox
-                    v-model="editedProduct.isVegan"
-                    label="Vegan"
-                ></v-checkbox>
-                <v-checkbox
-                    v-model="editedProduct.isAvailable"
-                    label="Available"
-                ></v-checkbox>
-                <v-checkbox
-                    v-model="editedProduct.discountable"
-                    label="Discountable"
-                ></v-checkbox>
-
-                <!-- Translations -->
-                <div
-                    v-for="(translation, index) in editedProduct.translations"
-                    :key="translation.lang"
-                >
-                    <v-text-field
-                        v-model="translation.name"
-                        :label="`Translation ${translation.lang.toUpperCase()} Name`"
-                    ></v-text-field>
-                    <v-text-field
-                        v-model="translation.description"
-                        :label="`Translation ${translation.lang.toUpperCase()} Description`"
-                    ></v-text-field>
-                </div>
+                <v-container>
+                    <!-- Row 1: Two Columns -->
+                    <v-row>
+                        <!-- Left Column: Category, Code, Price, Piece Count -->
+                        <v-col cols="12" md="6">
+                            <v-select
+                                v-model="editedProduct.categoryId"
+                                :items="categories"
+                                :item-title="item => item.name"
+                                item-value="id"
+                                :label="t('category')"
+                            ></v-select>
+                            <v-text-field
+                                v-model="editedProduct.code"
+                                :label="t('productCode')"
+                            ></v-text-field>
+                            <v-text-field
+                                v-model="editedProduct.price"
+                                :label="t('price')"
+                                type="number"
+                            ></v-text-field>
+                            <v-text-field
+                                v-model="editedProduct.pieceCount"
+                                :label="t('pieceCount')"
+                                type="number"
+                            ></v-text-field>
+                        </v-col>
+                        <!-- Right Column: Options -->
+                        <v-col cols="12" md="6">
+                            <v-checkbox
+                                v-model="editedProduct.isHalal"
+                                :label="t('halal')"
+                            ></v-checkbox>
+                            <v-checkbox
+                                v-model="editedProduct.isVegan"
+                                :label="t('vegan')"
+                            ></v-checkbox>
+                            <v-checkbox
+                                v-model="editedProduct.discountable"
+                                :label="t('discountable')"
+                            ></v-checkbox>
+                            <v-checkbox
+                                v-model="editedProduct.isAvailable"
+                                :label="t('available')"
+                            ></v-checkbox>
+                        </v-col>
+                    </v-row>
+                    <!-- Row 2: Translations (3 columns) -->
+                    <v-row>
+                        <v-col
+                            cols="12"
+                            md="4"
+                            v-for="translation in editedProduct.translations"
+                            :key="translation.lang"
+                        >
+                            <v-text-field
+                                v-model="translation.name"
+                                :label="translation.lang.toUpperCase() + ' ' + t('name')"
+                            ></v-text-field>
+                            <v-textarea
+                                v-model="translation.description"
+                                :label="translation.lang.toUpperCase() + ' ' + t('description')"
+                            ></v-textarea>
+                        </v-col>
+                    </v-row>
+                </v-container>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn text @click="closeDialog">Cancel</v-btn>
-                <v-btn color="primary" text @click="saveChanges">Save</v-btn>
+                <v-btn @click="closeDialog">{{ t('cancel') }}</v-btn>
+                <v-btn color="primary" @click="saveChanges">{{ t('save') }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineProps, defineEmits } from 'vue'
+import { ref, watch, defineEmits, computed } from 'vue'
 import type { Product } from '~/types'
+import { useCategoriesStore } from '~/stores/categories'
+const { t } = useI18n()
 
 // Extend translation with a language code for local editing
 interface ExtendedTranslation {
@@ -82,28 +92,24 @@ interface ExtendedTranslation {
     description: string
 }
 
+// Extend product with our custom fields (image removed)
 interface ExtendedProduct extends Product {
     translations: ExtendedTranslation[]
 }
 
-const props = defineProps<{ product: Product | null }>()
+const props = defineProps<{ product: Product }>()
 const emit = defineEmits<{
     (e: 'update', updatedProduct: Product): void
     (e: 'close'): void
 }>()
 
+const categoryStore = useCategoriesStore()
 const dialog = ref(true)
 
-// Define categories constant (replace with your own categories as needed)
-const categories = ref([
-    { id: 'cat1', name: 'Category 1' },
-    { id: 'cat2', name: 'Category 2' },
-    { id: 'cat3', name: 'Category 3' },
-])
+const categories = computed(() => categoryStore.getCategories())
 
 // Create a product copy that always includes 3 translations for fr, en, and zh.
-const createProductCopy = (product: any): ExtendedProduct | null => {
-    if (!product) return null
+const createProductCopy = (product: Product): ExtendedProduct => {
     const languages = ['fr', 'en', 'zh']
     let translations: ExtendedTranslation[] = []
 
@@ -127,12 +133,11 @@ const createProductCopy = (product: any): ExtendedProduct | null => {
         id: product.id,
         price: product.price,
         code: product.code,
-        slug: product.slug,
         pieceCount: product.pieceCount ?? 0,
         isHalal: product.isHalal ?? false,
         isVegan: product.isVegan ?? false,
-        // Use product.isAvailable if provided; otherwise, fall back to product.isActive
-        isAvailable: product.isAvailable !== undefined ? product.isAvailable : product.isActive,
+        isActive: product.isActive,
+        isAvailable: true,
         categoryId: product.categoryId,
         discountable: product.discountable ?? false,
         translations: translations,
