@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineEmits, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Product } from '~/types'
 import { useCategoriesStore } from '~/stores/categories'
 const { t } = useI18n()

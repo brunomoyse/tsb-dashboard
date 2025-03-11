@@ -68,11 +68,11 @@ const headers = computed(() => [
     { title: t('code'), align: 'start', key: 'code' },
     {
         title: t('category'),
-        align: 'end',
+        align: 'start',
         key: 'category_id',
         value: (item: Product) => getCategory(item.categoryId)
     },
-    { title: t('name'), align: 'end', key: 'name' },
+    { title: t('name'), align: 'start', key: 'name' },
     { title: t('priceEuro'), align: 'end', key: 'price' },
     { title: t('visibility'), align: 'end', key: 'isActive' },
     { title: t('availability'), align: 'end', key: 'isAvailable' },
