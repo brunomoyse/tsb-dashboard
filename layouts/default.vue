@@ -1,21 +1,35 @@
 <template>
     <v-app>
         <v-app-bar app>
-            <v-btn @click="goToProducts">{{ t('nav.products') }}</v-btn>
-            <v-btn disabled>{{ t('nav.orders') }}</v-btn>
-            <v-btn disabled>{{ t('nav.booking') }}</v-btn>
+            <!-- Fixed Language Switcher -->
+            <v-menu offset-y>
+                <template v-slot:activator="{ props }">
+                    <v-btn icon v-bind="props">
+                        <v-avatar size="32">
+                            <span class="text-h5">{{ currentLocaleIcon }}</span>
+                        </v-avatar>
+                    </v-btn>
+                </template>
+                <v-list>
+                    <v-list-item
+                        v-for="lang in languages"
+                        :key="lang.value"
+                        @click="onLanguageChange(lang.value)"
+                    >
+                        <v-list-item-title>{{ lang.label }}</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
+
             <v-spacer></v-spacer>
-            <v-select
-                v-model="locale"
-                :items="languages"
-                item-title="label"
-                item-value="value"
-                hide-details
-                dense
-                solo
-                flat
-                style="max-width: 150px;"
-            ></v-select>
+
+            <!-- Navigation Buttons -->
+            <NuxtLinkLocale to="products">
+                <v-btn color="black">{{ t('nav.products') }}</v-btn>
+            </NuxtLinkLocale>
+
+            <v-btn color="black" disabled>{{ t('nav.orders') }}</v-btn>
+            <v-btn color="black" disabled>{{ t('nav.booking') }}</v-btn>
         </v-app-bar>
         <v-main>
             <nuxt-page />
@@ -24,20 +38,25 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-
-const router = useRouter()
 const { locale, t } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
 
-// Define the available languages for the switcher.
 const languages = [
-    { label: 'Français', value: 'fr' },
-    { label: 'English', value: 'en' },
-    { label: '中文', value: 'zh' }
+    { value: 'fr', label: '🇫🇷 Français' },
+    { value: 'en', label: '🇬🇧 English' },
+    { value: 'zh', label: '🇨🇳 中文' }
 ]
 
-const goToProducts = () => {
-    router.push('/products')
+const currentLocaleIcon = computed(() =>
+    languages.find(l => l.value === locale.value)?.label.split(' ')[0] || '🌐'
+)
+
+const onLanguageChange = (newLocale: string) => {
+    const newPath = switchLocalePath(newLocale)
+    if (newPath) {
+        navigateTo(newPath)
+    }
 }
+
+const goToProducts = () => navigateTo('/products')
 </script>

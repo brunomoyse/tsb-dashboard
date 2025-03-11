@@ -1,11 +1,15 @@
-import { defineNuxtRouteMiddleware, navigateTo, useCookie, useRuntimeConfig } from '#imports'
+import { defineNuxtRouteMiddleware, navigateTo, useCookie, useRuntimeConfig, useLocalePath } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
     // Exclude the login page from authentication check to avoid infinite redirection
-    if (to.path === '/login') return
+    const localePath = useLocalePath()
+
+    if (to.path === localePath('login')) return
 
     const token = getAccessToken()
-    if (!token) return navigateTo('/login')
+    if (!token) {
+        return navigateTo(localePath('login'))
+    }
 
     if (import.meta.server) {
         // Dynamically import jsonwebtoken only on the server side
@@ -16,8 +20,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         try {
             jwt.verify(token, jwtSecret)
         } catch (error) {
-            return navigateTo('/login')
-        }
+            return navigateTo(localePath('login'))        }
     }
 })
 

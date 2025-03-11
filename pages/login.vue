@@ -42,6 +42,10 @@ interface LoginResponse {
     accessToken: string
 }
 
+definePageMeta({
+    layout: false
+})
+
 const { $api } = useNuxtApp()
 
 const email = ref('')
