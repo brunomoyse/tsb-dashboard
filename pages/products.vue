@@ -25,7 +25,7 @@
                     size="x-small"
                 ></v-chip>
             </template>
-            <template v-slot:item.isActive="{ value }">
+            <template v-slot:item.isVisible="{ value }">
                 <v-chip
                     :border="`${value ? 'success' : 'error'} thin opacity-25`"
                     :color="value ? 'success' : 'error'"
@@ -74,7 +74,7 @@ const headers = computed(() => [
     },
     { title: t('name'), align: 'start', key: 'name' },
     { title: t('priceEuro'), align: 'end', key: 'price' },
-    { title: t('visibility'), align: 'end', key: 'isActive' },
+    { title: t('visibility'), align: 'end', key: 'isVisible' },
     { title: t('availability'), align: 'end', key: 'isAvailable' },
     { title: t('actions'), align: 'end', key: 'actions' }
 ])
