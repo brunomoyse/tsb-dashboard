@@ -54,7 +54,7 @@ export default defineNuxtConfig({
       cookieKey: 'i18n_redirected',
       redirectOn: 'root' // recommended for SEO
     },
-    baseUrl: process.env.BASE_URL,
+    baseUrl: process.env.DASHBOARD_BASE_URL,
     vueI18n: "../i18n.config.ts",
   },
 
