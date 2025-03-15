@@ -8,12 +8,16 @@
             :label="t('searchProducts')"
         ></v-text-field>
         <v-data-table
+            v-if="products"
             :headers="headers"
             :items="products"
             fixed-header
             items-per-page="8"
             :search="searchQuery"
         >
+            <template v-slot:item.categoryId="{ value }">
+                {{ getCategoryName(value) }}
+            </template>
             <template v-slot:item.price="{ value }">
                 {{ belPriceFormat.format(value) }}
             </template>
@@ -64,20 +68,15 @@ const categoryStore = useCategoriesStore()
 const { $api } = useNuxtApp()
 
 // Headers as a computed property to use translations
-const headers = computed(() => [
+const headers = [
     { title: t('code'), align: 'start', key: 'code' },
-    {
-        title: t('category'),
-        align: 'start',
-        key: 'category_id',
-        value: (item: Product) => getCategory(item.categoryId)
-    },
+    { title: t('category'), align: 'start', key: 'categoryId' },
     { title: t('name'), align: 'start', key: 'name' },
     { title: t('priceEuro'), align: 'end', key: 'price' },
     { title: t('visibility'), align: 'end', key: 'isVisible' },
     { title: t('availability'), align: 'end', key: 'isAvailable' },
     { title: t('actions'), align: 'end', key: 'actions' }
-])
+];
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     minimumFractionDigits: 2,
@@ -120,7 +119,8 @@ if (categoriesData.value) {
 const categories = computed(() => categoryStore.getCategories())
 
 // Helper to get category name by id
-const getCategory = (categoryId: string) => {
+const getCategoryName = (categoryId: string) => {
+    console.log(categoryId)
     const cat = categories.value?.find((c) => c.id === categoryId)
     return cat ? cat.name : ''
 }
