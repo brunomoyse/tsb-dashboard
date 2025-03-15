@@ -1,22 +1,21 @@
 // types/index.ts
 export interface Translation {
     locale: string;
-    name: string;
+    name: string | null;
     description: string | null;
 }
 
 export interface Product {
     id: string;
     price: number;
-    code: string;
-    //slug: string;
+    code: string | null;
     pieceCount: number | null;
     isHalal: boolean;
     isVegan: boolean;
     isVisible: boolean;
     isAvailable: boolean;
     categoryId: string;
-    discountable: boolean;
+    isDiscountable: boolean;
     translations: Translation[];
     // Generated on fetch
     name?: string;
@@ -29,29 +28,12 @@ export interface ProductCategory {
     translations: Translation[];
 }
 
-export interface CartItem {
-    product: Product;
-    quantity: number;
-}
-
 export interface User {
     id: string;
     email: string;
     name: string;
     address: string;
     phoneNumber: string;
-}
-
-export interface Order {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    userId: string;
-    paymentMethod: string;
-    molliePaymentId: string;
-    molliePaymentUrl: string;
-    status: string;
-    products: CartItem[];
 }
 
 export interface RefreshTokenResponse {

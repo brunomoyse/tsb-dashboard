@@ -10,6 +10,8 @@
   "priceEuro": "Prix (€)",
   "translations": "Traductions",
   "actions": "Actions",
+  "itemsPerPage": "Par page",
+  "addProduct": "Ajouter un produit",
   "editProduct": "Modifier le produit",
   "category": "Catégorie",
   "productCode": "Code",
@@ -21,10 +23,15 @@
   "name": "Nom",
   "description": "Description",
   "cancel": "Annuler",
+  "create": "Créer",
   "save": "Enregistrer",
   "nav": {
     "products": "Produits",
     "orders": "Commandes",
     "booking": "Réservations"
+  },
+  "form": {
+    "categoryRequired": "La catégorie est requise",
+    "frenchNameRequired": "Le nom en français est requis"
   }
 }
