@@ -1,9 +1,18 @@
-// types.d.ts or similar file
+// types/types.d.ts
+import type { $Fetch } from 'ofetch'
 
 declare module '#app' {
-    interface NuxtApp {
-        $apiBaseUrl: () => string;
-        $api: ReturnType<typeof $fetch.create>
-        $refreshToken: () => Promise<RefreshTokenResponse | null>;
-    }
+  interface NuxtApp {
+    $apiBaseUrl: () => string
+    $api: $Fetch
+    $refreshToken: () => Promise<RefreshTokenResponse | null>
+  }
+}
+
+// If using Nitro auto-imports
+declare module 'nitropack' {
+  interface NitroApp {
+    $apiBaseUrl?: () => string
+    $api?: $Fetch
+  }
 }

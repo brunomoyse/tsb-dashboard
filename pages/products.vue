@@ -1,19 +1,39 @@
 <template>
     <v-container>
-        <!-- Search input -->
-        <v-text-field
-            v-model="searchQuery"
-            class="mb-4"
-            clearable
-            :label="t('searchProducts')"
-        ></v-text-field>
+        <!-- Toolbar header for Products -->
+        <v-card class="mb-4" flat>
+            <v-toolbar flat>
+                <v-text-field
+                    v-model="searchQuery"
+                    prepend-inner-icon="mdi-magnify"
+                    clearable
+                    dense
+                    hide-details
+                    :placeholder="t('searchProducts')"
+                ></v-text-field>
+
+                <v-spacer></v-spacer>
+
+                <v-btn color="primary" class="ml-4" @click="openCreateDialog">
+                    <v-icon left>mdi-plus</v-icon>
+                    {{ t('addProduct') }}
+                </v-btn>
+            </v-toolbar>
+        </v-card>
+
         <v-data-table
             v-if="products"
             :headers="headers"
             :items="products"
             fixed-header
-            items-per-page="8"
+            items-per-page="10"
             :search="searchQuery"
+            :items-per-page-text="t('itemsPerPage')"
+            :items-per-page-options="[
+              {value: 5, title: '5'},
+              {value: 10, title: '10'},
+              {value: -1, title: '$vuetify.dataFooter.itemsPerPageAll'}
+            ]"
         >
             <template v-slot:item.categoryId="{ value }">
                 {{ getCategoryName(value) }}
@@ -42,7 +62,7 @@
                     <v-chip
                         v-for="lang in availableLocales"
                         :key="lang"
-                        :color="hasTranslation(item, lang) ? 'green' : 'red'"
+                        :color="hasTranslation(item, lang) ? 'green darken-2' : 'red darken-2'"
                         class="ma-1"
                         small
                         text-color="white"
@@ -54,17 +74,30 @@
             </template>
             <template v-slot:item.actions="{ item }">
                 <div class="d-flex ga-2 justify-end">
-                    <v-icon color="medium-emphasis" icon="mdi-pencil" size="small" @click="openEditDialog(item)"></v-icon>
-                    <!--
-                    <v-icon color="medium-emphasis" icon="mdi-delete" size="small" @click="remove(item.id)"></v-icon>
-                    -->
+                    <v-icon
+                        color="medium-emphasis"
+                        icon="mdi-pencil"
+                        size="small"
+                        @click="openEditDialog(item)"
+                    ></v-icon>
+                    <!-- Optionally add a delete icon here -->
                 </div>
             </template>
         </v-data-table>
+
+        <!-- Create Product Dialog -->
+        <ProductDialog
+            v-if="createDialog"
+            mode="create"
+            @create="handleCreate"
+            @close="createDialog = false"
+        />
+
         <!-- Edit Product Dialog -->
-        <EditProductDialog
+        <ProductDialog
             v-if="selectedProduct"
             :product="selectedProduct"
+            mode="edit"
             @update="updateProduct"
             @close="selectedProduct = null"
         />
@@ -76,27 +109,27 @@ import { ref, computed } from 'vue'
 import { useAsyncData, useCategoriesStore, useNuxtApp } from '#imports'
 import { useI18n } from 'vue-i18n'
 import type { Product, ProductCategory } from '~/types'
-import EditProductDialog from '~/components/EditProductDialog.vue'
+import ProductDialog from '~/components/ProductDialog.vue'
 
 const { t, locale, availableLocales } = useI18n()
 
-// Use a store for categories
+// Categories store and API instance.
 const categoryStore = useCategoriesStore()
 const { $api } = useNuxtApp()
 
-// Headers as a computed property to use translations
+// Define table headers.
 const headers = [
-    { title: t('code'), align: 'start', key: 'code' },
-    { title: t('category'), align: 'start', key: 'categoryId' },
-    { title: t('name'), align: 'start', key: 'name' },
-    { title: t('priceEuro'), align: 'end', key: 'price' },
-    { title: t('visibility'), align: 'start', key: 'isVisible', width: '100px' },
-    { title: t('availability'), align: 'start', key: 'isAvailable', width: '100px' },
-    { title: t('translations'), align: 'start', key: 'translationsStatus', width: '160px', sortable: false  },
-    { title: t('actions'), align: 'end', key: 'actions', sortable: false },
-];
+    { title: t('code'), align: 'start', key: 'code', value: 'code' },
+    { title: t('category'), align: 'start', key: 'categoryId', value: 'categoryId' },
+    { title: t('name'), align: 'start', key: 'name', value: 'name' },
+    { title: t('priceEuro'), align: 'end', key: 'price', value: 'price' },
+    { title: t('visibility'), align: 'start', key: 'isVisible', value: 'isVisible', width: '100px' },
+    { title: t('availability'), align: 'start', key: 'isAvailable', value: 'isAvailable', width: '100px' },
+    { title: t('translations'), align: 'start', key: 'translationsStatus', value: 'translationsStatus', width: '160px', sortable: false },
+    { title: t('actions'), align: 'end', key: 'actions', value: 'actions', sortable: false }
+] as const
 
-// Helper: Check if translation exists and has a filled name.
+// Helper: Check if a translation is complete.
 const hasTranslation = (product: Product, lang: string) => {
     const translation = product.translations.find(t => t.locale === lang)
     return translation && translation.name && translation.name.trim() !== ''
@@ -115,13 +148,14 @@ const getFlagEmoji = (lang: string) => {
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-});
+})
 
 const searchQuery = ref('')
 
-// Fetch products
-const { data: products } = await useAsyncData<Product[]>('products', () =>
-        $api('/admin/products'),
+// Fetch products.
+const { data: products } = await useAsyncData<Product[], Product[]>(
+    'products',
+    () => $api<Product[]>('/admin/products'),
     {
         transform: (data: Product[]) => {
             return data.map(product => {
@@ -130,64 +164,79 @@ const { data: products } = await useAsyncData<Product[]>('products', () =>
                     ...product,
                     name: translation ? translation.name : product.name
                 }
-            })
+            }) as Product[]
         }
     }
 )
 
-// Fetch categories
+// Fetch categories.
 const { data: categoriesData } = await useAsyncData<ProductCategory[]>('categories', () =>
-    $api('/categories', {
-        headers: {
-            'Accept-Language': locale.value
-        }
-    })
+    $api('/categories', { headers: { 'Accept-Language': locale.value } })
 )
 
-// Save categories in store if available
+// Save categories in the store.
 if (categoriesData.value) {
     categoryStore.setCategories(categoriesData.value)
 }
-
-// Local copy of categories (reactive)
 const categories = computed(() => categoryStore.getCategories())
 
-// Helper to get category name by id
+// Helper: Get category name by ID.
 const getCategoryName = (categoryId: string) => {
-    const cat = categories.value?.find((c) => c.id === categoryId)
+    const cat = categories.value?.find(c => c.id === categoryId)
     return cat ? cat.name : ''
 }
 
-// Track the selected product for editing
+// State for dialogs.
 const selectedProduct = ref<Product | null>(null)
+const createDialog = ref(false)
 
+// Open the edit dialog.
 const openEditDialog = (product: Product) => {
     selectedProduct.value = product
 }
 
-// Handle the update from the dialog
+// Open the create dialog.
+const openCreateDialog = () => {
+    createDialog.value = true
+}
+
+// Handle product updates (edit mode).
 const updateProduct = async (updatedProduct: Product) => {
     try {
         const res = await $api(`/admin/products/${updatedProduct.id}`, {
             method: 'PUT',
-            body: JSON.stringify(updatedProduct),
-        });
+            body: JSON.stringify(updatedProduct)
+        })
         if (!res?.id || !products.value) {
-            console.error('Failed to update product:', updatedProduct);
-            return;
+            console.error('Failed to update product:', updatedProduct)
+            return
         }
-        // Replace the product in the local array.
         products.value = products.value.map(p =>
             p.id === updatedProduct.id ? res : p
-        );
-        selectedProduct.value = null;
+        )
+        selectedProduct.value = null
     } catch (error) {
-        console.error('Failed to update product:', error);
+        console.error('Failed to update product:', error)
     }
-};
-
-const remove = (id: string) => {
-    // Implement deletion logic here
-    console.log('Remove product with id:', id)
 }
+
+// Handle new product creation.
+const handleCreate = async (newProduct: Product) => {
+    try {
+        const res = await $api('/admin/products', {
+            method: 'POST',
+            body: JSON.stringify(newProduct)
+        })
+        if (!res?.id || !products.value) {
+            console.error('Failed to create product:', newProduct)
+            return
+        }
+        // Prepend the new product to the list.
+        products.value = [res, ...products.value]
+        createDialog.value = false
+    } catch (error) {
+        console.error('Failed to create product:', error)
+    }
+}
+
 </script>

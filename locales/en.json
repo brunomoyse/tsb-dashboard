@@ -10,6 +10,8 @@
   "priceEuro": "Price (€)",
   "translations": "Translations",
   "actions": "Actions",
+  "itemsPerPage": "Items per page",
+  "addProduct": "Add Product",
   "editProduct": "Edit Product",
   "category": "Category",
   "productCode": "Product Code",
@@ -21,10 +23,15 @@
   "name": "Name",
   "description": "Description",
   "cancel": "Cancel",
+  "create": "Create",
   "save": "Save",
   "nav": {
     "products": "Products",
     "orders": "Orders",
     "booking": "Booking"
+  },
+  "form": {
+    "categoryRequired": "Category is required",
+    "frenchNameRequired": "French name is required"
   }
 }

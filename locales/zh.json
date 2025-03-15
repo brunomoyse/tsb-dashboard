@@ -10,6 +10,8 @@
   "priceEuro": "价格（€）",
   "translations": "翻译",
   "actions": "操作",
+  "itemsPerPage": "每页项目数",
+  "addProduct": "添加产品",
   "editProduct": "编辑产品",
   "category": "类别",
   "productCode": "产品代码",
@@ -21,10 +23,15 @@
   "name": "名称",
   "description": "描述",
   "cancel": "取消",
+  "create": "创建",
   "save": "保存",
   "nav": {
     "products": "产品",
     "orders": "订单",
     "booking": "预订"
+  },
+  "form": {
+    "categoryRequired": "类别是必需的",
+    "frenchNameRequired": "法文名称是必需的"
   }
 }
