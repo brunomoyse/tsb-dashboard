@@ -56,15 +56,15 @@
                             cols="12"
                             md="4"
                             v-for="translation in editedProduct.translations"
-                            :key="translation.lang"
+                            :key="translation.locale"
                         >
                             <v-text-field
                                 v-model="translation.name"
-                                :label="translation.lang.toUpperCase() + ' ' + t('name')"
+                                :label="translation.locale.toUpperCase() + ' ' + t('name')"
                             ></v-text-field>
                             <v-textarea
                                 v-model="translation.description"
-                                :label="translation.lang.toUpperCase() + ' ' + t('description')"
+                                :label="translation.locale.toUpperCase() + ' ' + t('description')"
                             ></v-textarea>
                         </v-col>
                     </v-row>
@@ -81,21 +81,9 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Product } from '~/types'
+import type { Product, Translation } from '~/types'
 import { useCategoriesStore } from '~/stores/categories'
 const { t } = useI18n()
-
-// Extend translation with a language code for local editing
-interface ExtendedTranslation {
-    lang: string
-    name: string
-    description: string
-}
-
-// Extend product with our custom fields (image removed)
-interface ExtendedProduct extends Product {
-    translations: ExtendedTranslation[]
-}
 
 const props = defineProps<{ product: Product }>()
 const emit = defineEmits<{
@@ -109,24 +97,24 @@ const dialog = ref(true)
 const categories = computed(() => categoryStore.getCategories())
 
 // Create a product copy that always includes 3 translations for fr, en, and zh.
-const createProductCopy = (product: Product): ExtendedProduct => {
+const createProductCopy = (product: Product): Product => {
     const languages = ['fr', 'en', 'zh']
-    let translations: ExtendedTranslation[] = []
+    let translations: Translation[] = []
 
     if (product.translations && Array.isArray(product.translations) && product.translations.length) {
         for (let i = 0; i < languages.length; i++) {
             if (product.translations[i]) {
                 translations.push({
-                    lang: languages[i],
+                    locale: languages[i],
                     name: product.translations[i].name,
                     description: product.translations[i].description,
                 })
             } else {
-                translations.push({ lang: languages[i], name: '', description: '' })
+                translations.push({ locale: languages[i], name: '', description: '' })
             }
         }
     } else {
-        translations = languages.map(lang => ({ lang, name: '', description: '' }))
+        translations = languages.map(locale => ({ locale, name: '', description: '' }))
     }
 
     return {
