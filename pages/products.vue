@@ -37,10 +37,27 @@
                     size="x-small"
                 ></v-chip>
             </template>
+            <template v-slot:item.translationsStatus="{ item }">
+                <div class="d-flex">
+                    <v-chip
+                        v-for="lang in availableLocales"
+                        :key="lang"
+                        :color="hasTranslation(item, lang) ? 'green' : 'red'"
+                        class="ma-1"
+                        small
+                        text-color="white"
+                        style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
+                    >
+                        {{ getFlagEmoji(lang) }}
+                    </v-chip>
+                </div>
+            </template>
             <template v-slot:item.actions="{ item }">
                 <div class="d-flex ga-2 justify-end">
                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small" @click="openEditDialog(item)"></v-icon>
+                    <!--
                     <v-icon color="medium-emphasis" icon="mdi-delete" size="small" @click="remove(item.id)"></v-icon>
+                    -->
                 </div>
             </template>
         </v-data-table>
@@ -61,7 +78,7 @@ import { useI18n } from 'vue-i18n'
 import type { Product, ProductCategory } from '~/types'
 import EditProductDialog from '~/components/EditProductDialog.vue'
 
-const { t, locale } = useI18n()
+const { t, locale, availableLocales } = useI18n()
 
 // Use a store for categories
 const categoryStore = useCategoriesStore()
@@ -73,10 +90,27 @@ const headers = [
     { title: t('category'), align: 'start', key: 'categoryId' },
     { title: t('name'), align: 'start', key: 'name' },
     { title: t('priceEuro'), align: 'end', key: 'price' },
-    { title: t('visibility'), align: 'end', key: 'isVisible' },
-    { title: t('availability'), align: 'end', key: 'isAvailable' },
-    { title: t('actions'), align: 'end', key: 'actions' }
+    { title: t('visibility'), align: 'start', key: 'isVisible', width: '100px' },
+    { title: t('availability'), align: 'start', key: 'isAvailable', width: '100px' },
+    { title: t('translations'), align: 'start', key: 'translationsStatus', width: '160px', sortable: false  },
+    { title: t('actions'), align: 'end', key: 'actions', sortable: false },
 ];
+
+// Helper: Check if translation exists and has a filled name.
+const hasTranslation = (product: Product, lang: string) => {
+    const translation = product.translations.find(t => t.locale === lang)
+    return translation && translation.name && translation.name.trim() !== ''
+}
+
+// Helper: Return the flag emoji for each language.
+const getFlagEmoji = (lang: string) => {
+    switch(lang) {
+        case 'fr': return '🇫🇷'
+        case 'en': return '🇬🇧'
+        case 'zh': return '🇨🇳'
+        default: return ''
+    }
+}
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     minimumFractionDigits: 2,
@@ -120,7 +154,6 @@ const categories = computed(() => categoryStore.getCategories())
 
 // Helper to get category name by id
 const getCategoryName = (categoryId: string) => {
-    console.log(categoryId)
     const cat = categories.value?.find((c) => c.id === categoryId)
     return cat ? cat.name : ''
 }
@@ -133,16 +166,27 @@ const openEditDialog = (product: Product) => {
 }
 
 // Handle the update from the dialog
-const updateProduct = (updatedProduct: Product) => {
-    if (!products.value) return
-    const index = products.value.findIndex(p => p.id === updatedProduct.id)
-    if (index !== -1) {
-        products.value[index] = updatedProduct
+const updateProduct = async (updatedProduct: Product) => {
+    try {
+        const res = await $api(`/admin/products/${updatedProduct.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updatedProduct),
+        });
+        if (!res?.id || !products.value) {
+            console.error('Failed to update product:', updatedProduct);
+            return;
+        }
+        // Replace the product in the local array.
+        products.value = products.value.map(p =>
+            p.id === updatedProduct.id ? res : p
+        );
+        selectedProduct.value = null;
+    } catch (error) {
+        console.error('Failed to update product:', error);
     }
-    selectedProduct.value = null
-}
+};
 
-const remove = (id: number) => {
+const remove = (id: string) => {
     // Implement deletion logic here
     console.log('Remove product with id:', id)
 }
