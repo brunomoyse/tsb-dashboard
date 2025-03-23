@@ -17,6 +17,7 @@ export interface Product {
     categoryId: string;
     isDiscountable: boolean;
     translations: Translation[];
+    slug: string | null;
     // Generated on fetch
     name?: string;
 }
