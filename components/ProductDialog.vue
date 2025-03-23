@@ -32,36 +32,35 @@
                                     type="number"
                                 ></v-text-field>
                             </v-col>
-                            <!-- Right Column: Checkboxes in Two Columns -->
-                            <v-col cols="12" md="6">
-                                <v-row>
-                                    <!-- First Column: Visible, Available, Discountable -->
-                                    <v-col cols="12" md="6">
-                                        <v-checkbox
-                                            v-model="editedProduct.isVisible"
-                                            :label="t('visible')"
-                                        ></v-checkbox>
-                                        <v-checkbox
-                                            v-model="editedProduct.isAvailable"
-                                            :label="t('available')"
-                                        ></v-checkbox>
-                                        <v-checkbox
-                                            v-model="editedProduct.isDiscountable"
-                                            :label="t('discountable')"
-                                        ></v-checkbox>
-                                    </v-col>
-                                    <!-- Second Column: Halal, Vegan -->
-                                    <v-col cols="12" md="6">
-                                        <v-checkbox
-                                            v-model="editedProduct.isHalal"
-                                            :label="t('halal')"
-                                        ></v-checkbox>
-                                        <v-checkbox
-                                            v-model="editedProduct.isVegan"
-                                            :label="t('vegan')"
-                                        ></v-checkbox>
-                                    </v-col>
-                                </v-row>
+                            <!-- Right Column: Image Preview / Upload -->
+                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
+                                <div v-if="hasImage" class="d-flex flex-column align-center justify-center">
+                                    <v-img
+                                        :src="imageUrl"
+                                        class="mb-4"
+                                        width="150"
+                                    ></v-img>
+                                    <v-btn text @click="removeImage">{{ t('changeImage') }}</v-btn>
+                                </div>
+                                <div v-else class="d-flex flex-column align-center justify-center">
+                                    <!-- Image preview -->
+                                    <v-img
+                                        v-if="imagePreview"
+                                        :src="imagePreview"
+                                        width="150"
+                                        height="150"
+                                        class="mb-4"
+                                        cover
+                                    ></v-img>
+
+                                    <!-- File input -->
+                                    <v-file-input
+                                        v-model="selectedImage"
+                                        label="Upload Image"
+                                        accept="image/*"
+                                        style="width: 300px;"
+                                    ></v-file-input>
+                                </div>
                             </v-col>
                         </v-row>
                         <!-- Row 2: Translations (3 columns) -->
@@ -83,6 +82,24 @@
                                 ></v-textarea>
                             </v-col>
                         </v-row>
+                        <!-- Row 3: Checkboxes -->
+                        <v-row dense class="pa-0 ma-0">
+                            <v-col cols="12" md="4" class="pa-1">
+                                <v-checkbox dense v-model="editedProduct.isVisible" :label="t('visible')"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="4" class="pa-1">
+                                <v-checkbox dense v-model="editedProduct.isAvailable" :label="t('available')"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="4" class="pa-1">
+                                <v-checkbox dense v-model="editedProduct.isDiscountable" :label="t('discountable')"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="4" class="pa-1">
+                                <v-checkbox dense v-model="editedProduct.isHalal" :label="t('halal')"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="4" class="pa-1">
+                                <v-checkbox dense v-model="editedProduct.isVegan" :label="t('vegan')"></v-checkbox>
+                            </v-col>
+                        </v-row>
                     </v-container>
                 </v-form>
             </v-card-text>
@@ -96,15 +113,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import type { Product, Translation } from '~/types'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
 import type { VForm } from 'vuetify/components'
 
-// Define props and emits.
-// - In edit mode, a product is provided.
-// - In create mode, product prop may be omitted.
+// Props and emits definition.
 const props = defineProps<{
     product?: Product
     mode?: 'create' | 'edit'
@@ -144,6 +159,7 @@ const createDefaultProduct = (): Product => ({
     isAvailable: false,
     categoryId: '',
     isDiscountable: true,
+    slug: null,
     translations: languages.map(locale => ({ locale, name: null, description: null }))
 })
 
@@ -165,7 +181,6 @@ if (props.mode !== 'create') {
 
 const dialog = ref(true)
 
-// Use categories store.
 const categoryStore = useCategoriesStore()
 const categories = computed(() => categoryStore.getCategories())
 
@@ -189,13 +204,72 @@ const saveChanges = async () => {
     closeDialog()
 }
 
-// Dynamic dialog title and save button label.
 const dialogTitle = computed(() =>
     props.mode === 'create' ? t('addProduct') : t('editProduct')
 )
 const saveLabel = computed(() =>
     props.mode === 'create' ? t('create') : t('save')
 )
+
+// ----- Image Preview / Upload Section -----
+const config = useRuntimeConfig()
+// Compute the image URL based on the product slug.
+const imageUrl = computed(() =>
+    props.product?.slug
+        ? `${config.public.s3bucketUrl}/images/thumbnails/${props.product.slug}.png`
+        : ''
+)
+
+// Flag indicating if the image exists.
+const hasImage = ref(false)
+// Reactive property to hold the file if the user uploads one.
+const selectedImage = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
+
+watch(selectedImage, (file) => {
+    if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            imagePreview.value = e.target?.result as string
+        }
+        reader.readAsDataURL(file as File)
+    } else {
+        imagePreview.value = null
+    }
+})
+
+// Helper function to check if an image exists at a given URL.
+const checkImageExists = (url: string) => {
+    const img = new Image()
+    img.src = url
+    img.onload = () => {
+        hasImage.value = true
+    }
+    img.onerror = () => {
+        hasImage.value = false
+    }
+}
+
+onMounted(() => {
+    if (imageUrl.value) {
+        checkImageExists(imageUrl.value)
+    }
+})
+
+// Re-check the image whenever the URL changes.
+watch(imageUrl, (newUrl) => {
+    if (newUrl) {
+        checkImageExists(newUrl)
+    } else {
+        hasImage.value = false
+    }
+})
+
+// Remove the current image preview so that the file input appears.
+const removeImage = () => {
+    hasImage.value = false
+    selectedImage.value = null
+}
 </script>
 
 <style scoped>

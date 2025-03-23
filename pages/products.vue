@@ -74,13 +74,13 @@
             </template>
             <template v-slot:item.actions="{ item }">
                 <div class="d-flex ga-2 justify-end">
+                    <!-- Edit product -->
                     <v-icon
                         color="medium-emphasis"
                         icon="mdi-pencil"
                         size="small"
                         @click="openEditDialog(item)"
                     ></v-icon>
-                    <!-- Optionally add a delete icon here -->
                 </div>
             </template>
         </v-data-table>
