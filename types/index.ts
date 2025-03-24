@@ -20,6 +20,8 @@ export interface Product {
     slug: string | null;
     // Generated on fetch
     name?: string;
+    // Temporary file upload
+    image?: File;
 }
 
 export interface ProductCategory {
