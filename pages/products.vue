@@ -223,20 +223,36 @@ const updateProduct = async (updatedProduct: Product) => {
 // Handle new product creation.
 const handleCreate = async (newProduct: Product) => {
     try {
+        // Create a FormData object.
+        const formData = new FormData();
+
+        // Destructure to separate the image file from the rest of the product data.
+        const { image, ...productData } = newProduct;
+
+        // Append the product data as a JSON string to a field called "data".
+        formData.append("data", JSON.stringify(productData));
+
+        // Append the image file if it exists.
+        if (image) {
+            formData.append("image", image);
+        }
+
+        // Send the POST request with the FormData as body.
         const res = await $api('/admin/products', {
             method: 'POST',
-            body: JSON.stringify(newProduct)
-        })
+            body: formData
+        });
+
         if (!res?.id || !products.value) {
-            console.error('Failed to create product:', newProduct)
-            return
+            console.error('Failed to create product:', newProduct);
+            return;
         }
         // Prepend the new product to the list.
-        products.value = [res, ...products.value]
-        createDialog.value = false
+        products.value = [res, ...products.value];
+        createDialog.value = false;
     } catch (error) {
-        console.error('Failed to create product:', error)
+        console.error('Failed to create product:', error);
     }
-}
+};
 
 </script>

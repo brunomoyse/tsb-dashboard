@@ -196,6 +196,11 @@ const saveChanges = async () => {
         const valid = await form.value.validate()
         if (!valid) return
     }
+
+    if (selectedImage.value) {
+        editedProduct.value.image = selectedImage.value
+    }
+
     if (props.mode === 'create') {
         emit('create', editedProduct.value)
     } else {
