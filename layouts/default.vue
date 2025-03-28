@@ -25,11 +25,12 @@
 
             <!-- Navigation Buttons -->
             <NuxtLinkLocale to="products">
-                <v-btn color="black">{{ t('nav.products') }}</v-btn>
+                <v-btn color="black">{{ t('navigation.products') }}</v-btn>
             </NuxtLinkLocale>
 
-            <v-btn color="black" disabled>{{ t('nav.orders') }}</v-btn>
-            <v-btn color="black" disabled>{{ t('nav.booking') }}</v-btn>
+            <NuxtLinkLocale to="orders">
+                <v-btn color="black">{{ t('navigation.orders') }}</v-btn>
+            </NuxtLinkLocale>
         </v-app-bar>
         <v-main>
             <nuxt-page />

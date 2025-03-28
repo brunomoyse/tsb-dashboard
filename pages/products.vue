@@ -9,14 +9,14 @@
                     clearable
                     dense
                     hide-details
-                    :placeholder="t('searchProducts')"
+                    :placeholder="t('products.search')"
                 ></v-text-field>
 
                 <v-spacer></v-spacer>
 
                 <v-btn color="primary" class="ml-4" @click="openCreateDialog">
                     <v-icon left>mdi-plus</v-icon>
-                    {{ t('addProduct') }}
+                    {{ t('products.add') }}
                 </v-btn>
             </v-toolbar>
         </v-card>
@@ -28,7 +28,7 @@
             fixed-header
             items-per-page="10"
             :search="searchQuery"
-            :items-per-page-text="t('itemsPerPage')"
+            :items-per-page-text="t('common.itemsPerPage')"
             :items-per-page-options="[
               {value: 5, title: '5'},
               {value: 10, title: '10'},
@@ -45,7 +45,7 @@
                 <v-chip
                     :border="`${value ? 'success' : 'error'} thin opacity-25`"
                     :color="value ? 'success' : 'error'"
-                    :text="value ? t('available') : t('unavailable')"
+                    :text="value ? t('common.available') : t('common.unavailable')"
                     size="x-small"
                 ></v-chip>
             </template>
@@ -53,7 +53,7 @@
                 <v-chip
                     :border="`${value ? 'success' : 'error'} thin opacity-25`"
                     :color="value ? 'success' : 'error'"
-                    :text="value ? t('visible') : t('invisible')"
+                    :text="value ? t('common.visible') : t('common.invisible')"
                     size="x-small"
                 ></v-chip>
             </template>
@@ -119,14 +119,14 @@ const { $api } = useNuxtApp()
 
 // Define table headers.
 const headers = [
-    { title: t('code'), align: 'start', key: 'code', value: 'code' },
-    { title: t('category'), align: 'start', key: 'categoryId', value: 'categoryId' },
-    { title: t('name'), align: 'start', key: 'name', value: 'name' },
-    { title: t('priceEuro'), align: 'end', key: 'price', value: 'price' },
-    { title: t('visibility'), align: 'start', key: 'isVisible', value: 'isVisible', width: '100px' },
-    { title: t('availability'), align: 'start', key: 'isAvailable', value: 'isAvailable', width: '100px' },
-    { title: t('translations'), align: 'start', key: 'translationsStatus', value: 'translationsStatus', width: '160px', sortable: false },
-    { title: t('actions'), align: 'end', key: 'actions', value: 'actions', sortable: false }
+    { title: t('common.code'), align: 'start', key: 'code', value: 'code' },
+    { title: t('products.category'), align: 'start', key: 'categoryId', value: 'categoryId' },
+    { title: t('common.name'), align: 'start', key: 'name', value: 'name' },
+    { title: t('common.price'), align: 'end', key: 'price', value: 'price' },
+    { title: t('common.visibility'), align: 'start', key: 'isVisible', value: 'isVisible', width: '100px' },
+    { title: t('common.availability'), align: 'start', key: 'isAvailable', value: 'isAvailable', width: '100px' },
+    { title: t('products.translations'), align: 'start', key: 'translationsStatus', value: 'translationsStatus', width: '160px', sortable: false },
+    { title: t('common.actions'), align: 'end', key: 'actions', value: 'actions', sortable: false }
 ] as const
 
 // Helper: Check if a translation is complete.
@@ -147,7 +147,9 @@ const getFlagEmoji = (lang: string) => {
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
+    style: "currency",
+    currency: "EUR",
 })
 
 const searchQuery = ref('')

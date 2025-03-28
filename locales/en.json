@@ -1,38 +1,84 @@
 {
-  "searchProducts": "Search Products",
-  "visibility": "Visibility",
-  "availability": "Availability",
-  "visible": "Visible",
-  "invisible": "Invisible",
-  "available": "Available",
-  "unavailable": "Unavailable",
-  "code": "Code",
-  "priceEuro": "Price (€)",
-  "translations": "Translations",
-  "actions": "Actions",
-  "itemsPerPage": "Items per page",
-  "addProduct": "Add Product",
-  "editProduct": "Edit Product",
-  "category": "Category",
-  "productCode": "Product Code",
-  "price": "Price",
-  "pieceCount": "Piece Count",
-  "halal": "Halal",
-  "vegan": "Vegan",
-  "discountable": "Discountable",
-  "name": "Name",
-  "description": "Description",
-  "cancel": "Cancel",
-  "create": "Create",
-  "save": "Save",
-  "changeImage": "Change Image",
-  "nav": {
+  "common": {
+    "actions": "Actions",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "itemsPerPage": "Items per page",
+    "name": "Name",
+    "description": "Description",
+    "code": "Code",
+    "price": "Price",
+    "visibility": "Visibility",
+    "available": "Available",
+    "unavailable": "Unavailable"
+  },
+
+  "products": {
+    "search": "Search Products",
+    "add": "Add Product",
+    "edit": "Edit Product",
+    "visibility": {
+      "visible": "Visible",
+      "invisible": "Invisible"
+    },
+    "category": "Category",
+    "code": "Product Code",
+    "priceEuro": "Price (€)",
+    "pieceCount": "Piece Count",
+    "halal": "Halal",
+    "vegan": "Vegan",
+    "discountable": "Discountable",
+    "translations": "Translations",
+    "image": "Change Image"
+  },
+
+  "orders": {
+    "pickup": "Pick up",
+    "search": "Search orders...",
+    "noOrders": "No orders found",
+    "updateStatus": "Update Order Status",
+    "waitMessage": "Please wait {seconds} seconds before confirming cancellation.",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "preparing": "Preparing",
+      "awaiting_pick_up": "Awaiting Pickup",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "deliveryOption": {
+        "pickup": "Pick up",
+        "delivery": "Delivery"
+    },
+    "paymentStatus": {
+      "pending": "Payment Pending",
+      "confirmed": "Payment Confirmed",
+      "cancelled": "Payment Cancelled"
+    },
+    "paymentMethod": {
+      "online": "Online Payment",
+      "cash": "Cash"
+    }
+  },
+
+  "navigation": {
     "products": "Products",
     "orders": "Orders",
     "booking": "Booking"
   },
-  "form": {
+
+  "validation": {
     "categoryRequired": "Category is required",
-    "frenchNameRequired": "French name is required"
+    "frenchNameRequired": "French name is required",
+    "priceRequired": "Price is required",
+    "invalidPrice": "Invalid price format"
+  },
+
+  "notifications": {
+    "productCreated": "Product created successfully",
+    "productUpdated": "Product updated successfully",
+    "orderUpdated": "Order status updated"
   }
 }

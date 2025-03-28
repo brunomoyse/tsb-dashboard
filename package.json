@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@awesome-cordova-library/vibration": "^1.0.2",
     "@mdi/font": "^7.4.47",
     "@pinia/nuxt": "^0.10.1",
     "jsonwebtoken": "^9.0.2",
