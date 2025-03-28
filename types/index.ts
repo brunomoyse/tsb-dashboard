@@ -24,6 +24,36 @@ export interface Product {
     image?: File;
 }
 
+export interface Order {
+    id: string;
+    createdAt: string;
+    userId: string;
+    status: string;
+    paymentStatus: OrderStatus;
+    paymentMode: 'ONLINE' | 'CASH';
+    deliveryOption: string;
+    molliePaymentId: string;
+    molliePaymentUrl: string;
+    products: OrderProductLine[];
+    address: string;
+}
+
+export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
+
+export type OrderDeliveryStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED'
+export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'PICKED_UP' | 'CANCELLED' | 'FAILED'
+
+
+export interface OrderProductLine {
+    product: {
+        id: string;
+        name: string;
+    };
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+}
+
 export interface ProductCategory {
     id: string;
     name: string;

@@ -1,38 +1,84 @@
 {
-  "searchProducts": "搜索产品",
-  "visibility": "可见性",
-  "availability": "可用性",
-  "visible": "可见",
-  "invisible": "不可见",
-  "available": "可用",
-  "unavailable": "不可用",
-  "code": "代码",
-  "priceEuro": "价格（€）",
-  "translations": "翻译",
-  "actions": "操作",
-  "itemsPerPage": "每页项目数",
-  "addProduct": "添加产品",
-  "editProduct": "编辑产品",
-  "category": "类别",
-  "productCode": "产品代码",
-  "price": "价格",
-  "pieceCount": "件数",
-  "halal": "清真",
-  "vegan": "纯素",
-  "discountable": "可打折",
-  "name": "名称",
-  "description": "描述",
-  "cancel": "取消",
-  "create": "创建",
-  "save": "保存",
-  "changeImage": "更改图像",
-  "nav": {
+  "common": {
+    "actions": "操作",
+    "cancel": "取消",
+    "save": "保存",
+    "create": "创建",
+    "itemsPerPage": "每页项目数",
+    "name": "名称",
+    "description": "描述",
+    "code": "代码",
+    "price": "价格",
+    "visibility": "可见性",
+    "available": "可用",
+    "unavailable": "不可用"
+  },
+
+  "products": {
+    "search": "搜索产品",
+    "add": "添加产品",
+    "edit": "编辑产品",
+    "visibility": {
+      "visible": "可见",
+      "invisible": "不可见"
+    },
+    "category": "类别",
+    "code": "产品代码",
+    "priceEuro": "价格（欧元）",
+    "pieceCount": "件数",
+    "halal": "清真",
+    "vegan": "纯素",
+    "discountable": "可折扣",
+    "translations": "翻译",
+    "image": "更改图片"
+  },
+
+  "orders": {
+    "pickup": "自取",
+    "search": "搜索订单...",
+    "noOrders": "未找到订单",
+    "updateStatus": "更新订单状态",
+    "waitMessage": "请等待 {seconds} 秒后再确认取消。",
+    "status": {
+      "pending": "待处理",
+      "confirmed": "已确认",
+      "preparing": "准备中",
+      "awaiting_pick_up": "等待自取",
+      "out_for_delivery": "配送中",
+      "delivered": "已送达",
+      "cancelled": "已取消"
+    },
+    "deliveryOption": {
+      "pickup": "自取",
+      "delivery": "配送"
+    },
+    "paymentStatus": {
+      "pending": "待支付",
+      "confirmed": "支付确认",
+      "cancelled": "支付取消"
+    },
+    "paymentMethod": {
+      "online": "在线支付",
+      "cash": "现金"
+    }
+  },
+
+  "navigation": {
     "products": "产品",
     "orders": "订单",
     "booking": "预订"
   },
-  "form": {
-    "categoryRequired": "类别是必需的",
-    "frenchNameRequired": "法文名称是必需的"
+
+  "validation": {
+    "categoryRequired": "必须填写类别",
+    "frenchNameRequired": "必须填写法语名称",
+    "priceRequired": "必须填写价格",
+    "invalidPrice": "价格格式无效"
+  },
+
+  "notifications": {
+    "productCreated": "产品创建成功",
+    "productUpdated": "产品更新成功",
+    "orderUpdated": "订单状态已更新"
   }
 }
