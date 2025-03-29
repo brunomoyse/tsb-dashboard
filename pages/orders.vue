@@ -366,10 +366,29 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
         orders.value = orders.value.map(order =>
             order.id === selectedOrder.value?.id ? { ...order, status: newStatus } : order
         )
+        printReceipt()
         vibrate()
         showBottomSheet.value = false
     } catch (error) {
         console.error('Status update failed:', error)
+    }
+}
+
+const printReceipt = () => {
+    if (typeof window !== 'undefined' && 'PrintHandler' in window) {
+        // PrintHandler is injected from Android (Sunmi V2s)
+        // Send the full ticket text to print
+        (window as any).PrintHandler.print(
+        `Tokyo Sushi Bar
+        --------------------------
+        Order #A-102
+        2x California Roll - €10.00
+        1x Miso Soup       - €3.50
+
+        Total:             €13.50
+        Thank you!`)
+    } else {
+        console.error('🖨️ PrintHandler not available (are you in the WebView on Sunmi V2s?)')
     }
 }
 
