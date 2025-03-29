@@ -9,12 +9,14 @@
                     <v-card-text>
                         <v-form ref="form" v-model="valid" @submit.prevent="onSubmit">
                             <v-text-field
+                                name="email"
                                 label="Email"
                                 v-model="email"
                                 :rules="[rules.required]"
                                 required
                             ></v-text-field>
                             <v-text-field
+                                name="password"
                                 label="Password"
                                 type="password"
                                 v-model="password"
@@ -36,7 +38,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useNuxtApp, useCookie, navigateTo } from '#imports'
+import { useNuxtApp, useCookie, useLocalePath, navigateTo } from '#imports'
+const localePath = useLocalePath()
 
 interface LoginResponse {
     accessToken: string
@@ -77,8 +80,8 @@ const onSubmit = async () => {
         const accessTokenCookie = useCookie('access_token')
         accessTokenCookie.value = response.accessToken
 
-        // Optionally, navigate to a protected page (e.g., home)
-        navigateTo('/products')
+        // navigateTo(localePath('orders'))
+        navigateTo(localePath('orders', 'zh'))
     } catch (error) {
         console.error('Error during login', error)
     }
