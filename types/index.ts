@@ -47,6 +47,8 @@ export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITIN
 export interface OrderProductLine {
     product: {
         id: string;
+        categoryName: string;
+        code: string;
         name: string;
     };
     quantity: number;
