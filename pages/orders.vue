@@ -184,7 +184,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Order, OrderProductLine, OrderStatus } from '~/types'
+import type {Order, OrderProductLine, OrderStatus, Product} from '~/types'
 
 const { t, locale } = useI18n()
 const { $api } = useNuxtApp()
@@ -366,7 +366,7 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
         orders.value = orders.value.map(order =>
             order.id === selectedOrder.value?.id ? { ...order, status: newStatus } : order
         )
-        printReceipt()
+        printReceipt(selectedOrder.value.products)
         vibrate()
         showBottomSheet.value = false
     } catch (error) {
@@ -374,21 +374,13 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
     }
 }
 
-const printReceipt = () => {
+const printReceipt = (productLines: OrderProductLine[]) => {
+    const encodedProducts: string = JSON.stringify(productLines);
     if (typeof window !== 'undefined' && 'PrintHandler' in window) {
         // PrintHandler is injected from Android (Sunmi V2s)
-        // Send the full ticket text to print
-        (window as any).PrintHandler.print(
-        `Tokyo Sushi Bar
-        --------------------------
-        Order #A-102
-        2x California Roll - €10.00
-        1x Miso Soup       - €3.50
-
-        Total:             €13.50
-        Thank you!`)
+        (window as any).PrintHandler.print(encodedProducts);
     } else {
-        console.error('🖨️ PrintHandler not available (are you in the WebView on Sunmi V2s?)')
+        console.error('🖨️ PrintHandler not available (are you in the WebView on Sunmi V2s?)');
     }
 }
 
