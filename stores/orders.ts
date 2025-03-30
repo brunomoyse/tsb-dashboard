@@ -25,10 +25,10 @@ export const useOrdersStore = defineStore('orders', {
                 } else {
                     this.orders.push(order)
                 }
-                // Re-sort orders by updatedAt descending after the update.
-                //this.orders.sort(
-                //    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-                //)
+                // Re-sort orders by createdAt descending after the update.
+                this.orders.sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                )
             } catch (error) {
                 console.error(`Failed to fetch order ${orderId}:`, error)
             }
