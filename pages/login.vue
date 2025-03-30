@@ -9,6 +9,7 @@
                     <v-card-text>
                         <v-form ref="form" v-model="valid" @submit.prevent="onSubmit">
                             <v-text-field
+                                autocomplete="email"
                                 name="email"
                                 label="Email"
                                 v-model="email"
@@ -16,6 +17,7 @@
                                 required
                             ></v-text-field>
                             <v-text-field
+                                autocomplete="current-password"
                                 name="password"
                                 label="Password"
                                 type="password"

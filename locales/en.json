@@ -9,9 +9,12 @@
     "description": "Description",
     "code": "Code",
     "price": "Price",
+    "visible": "Visible",
+    "invisible": "Invisible",
     "visibility": "Visibility",
     "available": "Available",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "availability": "Availability"
   },
 
   "products": {

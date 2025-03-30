@@ -9,9 +9,12 @@
     "description": "Description",
     "code": "Code",
     "price": "Prix",
+    "visible": "Visible",
+    "invisible": "Invisible",
     "visibility": "Visibilité",
     "available": "Disponible",
-    "unavailable": "Indisponible"
+    "unavailable": "Indisponible",
+    "availability": "Disponibilité"
   },
 
   "products": {
@@ -34,7 +37,7 @@
   },
 
   "orders": {
-    "pickup": "À récupérer",
+    "pickup": "À emporter",
     "search": "Rechercher des commandes...",
     "noOrders": "Aucune commande trouvée",
     "updateStatus": "Mettre à jour le statut",
@@ -49,7 +52,7 @@
       "cancelled": "Annulé"
     },
     "deliveryOption": {
-      "pickup": "À récupérer",
+      "pickup": "À emporter",
       "delivery": "Livraison"
     },
     "paymentStatus": {

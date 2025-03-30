@@ -14,21 +14,21 @@
                                     :items="categories"
                                     :item-title="item => item.name"
                                     item-value="id"
-                                    :label="t('category')"
-                                    :rules="[v => (!!v && v.trim().length > 0) || t('form.categoryRequired')]"
+                                    :label="t('products.category')"
+                                    :rules="[v => (!!v && v.trim().length > 0) || t('validation.categoryRequired')]"
                                 ></v-select>
                                 <v-text-field
                                     v-model="editedProduct.code"
-                                    :label="t('productCode')"
+                                    :label="t('products.code')"
                                 ></v-text-field>
                                 <v-text-field
                                     v-model.number="editedProduct.price"
-                                    :label="t('price')"
+                                    :label="t('products.priceEuro')"
                                     type="number"
                                 ></v-text-field>
                                 <v-text-field
                                     v-model.number="editedProduct.pieceCount"
-                                    :label="t('pieceCount')"
+                                    :label="t('products.pieceCount')"
                                     type="number"
                                 ></v-text-field>
                             </v-col>
@@ -40,7 +40,7 @@
                                         class="mb-4"
                                         width="150"
                                     ></v-img>
-                                    <v-btn text @click="removeImage">{{ t('changeImage') }}</v-btn>
+                                    <v-btn text @click="removeImage">{{ t('products.image') }}</v-btn>
                                 </div>
                                 <div v-else class="d-flex flex-column align-center justify-center">
                                     <!-- Image preview -->
@@ -73,31 +73,31 @@
                             >
                                 <v-text-field
                                     v-model="translation.name"
-                                    :label="translation.locale.toUpperCase() + ' ' + t('name')"
-                                    :rules="translation.locale === 'fr' ? [v => (!!v && v.trim().length > 0) || t('form.frenchNameRequired')] : []"
+                                    :label="translation.locale.toUpperCase() + ' ' + t('common.name')"
+                                    :rules="translation.locale === 'fr' ? [v => (!!v && v.trim().length > 0) || t('validation.frenchNameRequired')] : []"
                                 ></v-text-field>
                                 <v-textarea
                                     v-model="translation.description"
-                                    :label="translation.locale.toUpperCase() + ' ' + t('description')"
+                                    :label="translation.locale.toUpperCase() + ' ' + t('common.description')"
                                 ></v-textarea>
                             </v-col>
                         </v-row>
                         <!-- Row 3: Checkboxes -->
                         <v-row dense class="pa-0 ma-0">
                             <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isVisible" :label="t('visible')"></v-checkbox>
+                                <v-checkbox dense v-model="editedProduct.isVisible" :label="t('common.visible')"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isAvailable" :label="t('available')"></v-checkbox>
+                                <v-checkbox dense v-model="editedProduct.isAvailable" :label="t('common.available')"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isDiscountable" :label="t('discountable')"></v-checkbox>
+                                <v-checkbox dense v-model="editedProduct.isDiscountable" :label="t('products.discountable')"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isHalal" :label="t('halal')"></v-checkbox>
+                                <v-checkbox dense v-model="editedProduct.isHalal" :label="t('products.halal')"></v-checkbox>
                             </v-col>
                             <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isVegan" :label="t('vegan')"></v-checkbox>
+                                <v-checkbox dense v-model="editedProduct.isVegan" :label="t('products.vegan')"></v-checkbox>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -105,7 +105,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn @click="closeDialog">{{ t('cancel') }}</v-btn>
+                <v-btn @click="closeDialog">{{ t('common.cancel') }}</v-btn>
                 <v-btn color="primary" @click="saveChanges">{{ saveLabel }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -131,7 +131,7 @@ const emit = defineEmits<{
     (e: 'close'): void
 }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Languages used for translations.
 const languages = ['fr', 'en', 'zh']
@@ -182,7 +182,7 @@ if (props.mode !== 'create') {
 const dialog = ref(true)
 
 const categoryStore = useCategoriesStore()
-const categories = computed(() => categoryStore.getCategories())
+const categories = computed(() => categoryStore.getCategories(locale.value))
 
 const closeDialog = () => {
     dialog.value = false
@@ -210,10 +210,10 @@ const saveChanges = async () => {
 }
 
 const dialogTitle = computed(() =>
-    props.mode === 'create' ? t('addProduct') : t('editProduct')
+    props.mode === 'create' ? t('products.add') : t('products.edit')
 )
 const saveLabel = computed(() =>
-    props.mode === 'create' ? t('create') : t('save')
+    props.mode === 'create' ? t('common.create') : t('common.save')
 )
 
 // ----- Image Preview / Upload Section -----

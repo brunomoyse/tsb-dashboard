@@ -9,9 +9,12 @@
     "description": "描述",
     "code": "代码",
     "price": "价格",
+    "visible": "可见",
+    "invisible": "不可见",
     "visibility": "可见性",
     "available": "可用",
-    "unavailable": "不可用"
+    "unavailable": "不可用",
+    "availability": "可用性"
   },
 
   "products": {

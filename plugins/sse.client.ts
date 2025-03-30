@@ -17,7 +17,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     let eventSource: EventSource | null = null
 
     nuxtApp.hook('app:mounted', () => {
-        console.log('SSE: App mounted, connecting to', sseUrl)
         eventSource = new EventSource(sseUrl, { withCredentials: true })
         eventSource.onmessage = (ev) => {
             try {
