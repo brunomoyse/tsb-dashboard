@@ -189,9 +189,13 @@ import type {Order, OrderProductLine, OrderStatus, Product} from '~/types'
 const { t, locale } = useI18n()
 const { $api } = useNuxtApp()
 
+const ordersStore = useOrdersStore()
+onMounted(() => {
+    ordersStore.initSseListener()
+})
+
 // State
 const searchQuery = ref('')
-const orders = ref<Order[]>([])
 const selectedOrder = ref<Order | null>(null)
 const showBottomSheet = ref(false)
 const touchStartX = ref(0)
@@ -282,16 +286,17 @@ const getPaymentStatusColor = (status: string) => {
 }
 
 // Data Fetching
-const { data } = await useAsyncData<Order[]>('orders', () =>
+const { data: ordersData } = await useAsyncData<Order[]>('orders', () =>
     $api('/admin/orders', { headers: { 'Accept-Language': locale.value } })
 )
-watch(data, (newData) => {
-    if (newData) orders.value = newData
-}, { immediate: true })
+// Populate the Pinia store with orders fetched from the server
+if (ordersData.value) {
+    ordersStore.setOrders(ordersData.value)
+}
 
 // Computed orders with total price
 const ordersWithTotal = computed(() =>
-    orders.value.map(order => ({
+    ordersStore.orders.map(order => ({
         ...order,
         total: order.products.reduce((sum: number, pl: OrderProductLine) => sum + pl.totalPrice, 0)
     }))
@@ -363,7 +368,8 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
             body: { status: newStatus, orderID: selectedOrder.value.id },
             headers: { 'Content-Type': 'application/json' }
         })
-        orders.value = orders.value.map(order =>
+        // @TODO: Update in store instead
+        ordersStore.orders = ordersStore.orders.map(order =>
             order.id === selectedOrder.value?.id ? { ...order, status: newStatus } : order
         )
         printReceipt(selectedOrder.value.products)
@@ -442,25 +448,6 @@ const cardStyle = (order: Order) => {
     }
 }
 
-// On SSR, process.client is false so we can provide a fallback.
-const { $sse } = useNuxtApp()
-const sseEvents = $sse ? $sse.events : ref([])
-
-watch(
-    () => sseEvents.value,
-    (events) => {
-        events.forEach((ev) => {
-            if (ev.event === 'orderCreated') {
-                console.log('Order created event:', ev.orderID)
-                // Refresh orders or append new order data.
-            } else if (ev.event === 'orderStatusUpdated') {
-                console.log('Order updated: ', ev.orderID)
-                // Update specific order status in your state.
-            }
-        })
-    },
-    { deep: true }
-)
 
 </script>
 

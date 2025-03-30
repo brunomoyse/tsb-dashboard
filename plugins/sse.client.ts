@@ -11,7 +11,7 @@ interface EventData {
 
 export default defineNuxtPlugin((nuxtApp) => {
     const config = useRuntimeConfig()
-    const sseUrl = (config.public.sseUrl as string) || 'http://localhost:8080/sse'
+    const sseUrl = (config.public.sseUrl as string) || 'http://localhost:8080/api/v1/sse'
     const events = ref<EventData[]>([]) // This reactive ref will hold an array of events.
 
     let eventSource: EventSource | null = null
