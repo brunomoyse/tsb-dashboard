@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     public: {
       s3bucketUrl: process.env.S3_BUCKET_URL,
       api: process.env.API_BASE_URL,
+      sseUrl: process.env.SSE_URL,
     },
     jwtSecret: process.env.JWT_SECRET,
   },
@@ -33,6 +34,9 @@ export default defineNuxtConfig({
   ],
 
   i18n: {
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
     defaultLocale: 'fr',
     strategy: 'prefix',
     locales: [
