@@ -27,6 +27,7 @@ export interface Product {
 export interface Order {
     id: string;
     createdAt: string;
+    updatedAt: string;
     userId: string;
     status: string;
     paymentStatus: OrderStatus;
