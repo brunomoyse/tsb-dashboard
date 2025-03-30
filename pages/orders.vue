@@ -441,6 +441,27 @@ const cardStyle = (order: Order) => {
         }
     }
 }
+
+// On SSR, process.client is false so we can provide a fallback.
+const { $sse } = useNuxtApp()
+const sseEvents = $sse ? $sse.events : ref([])
+
+watch(
+    () => sseEvents.value,
+    (events) => {
+        events.forEach((ev) => {
+            if (ev.event === 'orderCreated') {
+                console.log('Order created event:', ev.orderID)
+                // Refresh orders or append new order data.
+            } else if (ev.event === 'orderStatusUpdated') {
+                console.log('Order updated: ', ev.orderID)
+                // Update specific order status in your state.
+            }
+        })
+    },
+    { deep: true }
+)
+
 </script>
 
 <style scoped>
