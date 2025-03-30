@@ -21,9 +21,19 @@ export const useOrdersStore = defineStore('orders', {
                 })
                 const idx = this.orders.findIndex(o => o.id === orderId)
                 if (idx !== -1) {
+                    // Update existing order
                     this.orders[idx] = order
                 } else {
+                    // New order
                     this.orders.push(order)
+
+                    // Make sound notification on device.
+                    if (typeof window !== 'undefined' && 'SoundHandler' in window) {
+                        // SoundHandler is injected from Android (Sunmi V2s)
+                        (window as any).SoundHandler.playNotificationSound();
+                    } else {
+                        console.error('🔊 SoundHandler not available (are you in the WebView on Sunmi V2s?)');
+                    }
                 }
                 // Re-sort orders by createdAt descending after the update.
                 this.orders.sort(
