@@ -16,7 +16,7 @@
         </v-toolbar>
 
         <!-- Order List with Transition Group -->
-        <transition-group name="order" tag="div" v-if="ordersWithTotal.length">
+        <transition-group v-if="ordersWithTotal.length" name="order" tag="div">
             <div
                 v-for="order in filteredOrders"
                 :key="order.id"
@@ -26,6 +26,7 @@
             >
                 <v-card
                     class="ma-2 rounded-lg"
+                    :class="{ heartbeat: order.status === 'PENDING' }"
                     elevation="2"
                     :style="cardStyle(order)"
                     @click="openBottomSheet(order)"
@@ -476,5 +477,20 @@ const cardStyle = (order: Order) => {
 .order-enter-to {
     opacity: 1;
     transform: translateY(0);
+}
+
+@keyframes heartbeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.015);
+    }
+}
+
+.heartbeat {
+    transform: scale(1);
+    animation: heartbeat 3s ease-in-out 3;
+    animation-fill-mode: forwards;
 }
 </style>

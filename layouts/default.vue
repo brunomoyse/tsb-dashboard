@@ -52,7 +52,7 @@ const currentLocaleIcon = computed(() =>
     languages.find(l => l.value === locale.value)?.label.split(' ')[0] || '🌐'
 )
 
-const onLanguageChange = (newLocale: string) => {
+const onLanguageChange = (newLocale: "fr" | "en" | "zh") => {
     const newPath = switchLocalePath(newLocale)
     if (newPath) {
         navigateTo(newPath)

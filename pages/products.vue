@@ -180,7 +180,7 @@ const { data: categoriesData } = await useAsyncData<ProductCategory[]>('categori
 if (categoriesData.value) {
     categoryStore.setCategories(categoriesData.value)
 }
-const categories = computed(() => categoryStore.getCategories())
+const categories = computed(() => categoryStore.getCategories(locale.value))
 
 // Helper: Get category name by ID.
 const getCategoryName = (categoryId: string) => {
