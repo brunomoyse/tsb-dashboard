@@ -15,8 +15,8 @@
             </v-btn>
         </v-toolbar>
 
-        <!-- Order List -->
-        <div v-if="ordersWithTotal.length">
+        <!-- Order List with Transition Group -->
+        <transition-group name="order" tag="div" v-if="ordersWithTotal.length">
             <div
                 v-for="order in filteredOrders"
                 :key="order.id"
@@ -55,7 +55,7 @@
                                     :color="getPaymentStatusColor(order.paymentStatus)"
                                     size="small"
                                 >
-                                    {{ belPriceFormat.format((order.total)) }}
+                                    {{ belPriceFormat.format(order.total) }}
                                 </v-chip>
                             </div>
 
@@ -83,7 +83,7 @@
                     </v-card-text>
                 </v-card>
             </div>
-        </div>
+        </transition-group>
 
         <!-- Empty State -->
         <v-card v-else class="ma-4 text-center pa-6">
@@ -191,7 +191,7 @@ const { $api } = useNuxtApp()
 
 const ordersStore = useOrdersStore()
 onMounted(() => {
-    ordersStore.initSseListener()
+    ordersStore.initSseListener(locale.value)
 })
 
 // State
@@ -464,5 +464,17 @@ const cardStyle = (order: Order) => {
 
 .v-btn {
     text-transform: none;
+}
+
+.order-enter-active, .order-leave-active {
+    transition: all 0.5s ease;
+}
+.order-enter-from {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+.order-enter-to {
+    opacity: 1;
+    transform: translateY(0);
 }
 </style>
