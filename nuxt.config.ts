@@ -30,7 +30,7 @@ export default defineNuxtConfig({
   },
 
   plugins: [
-    '~/plugins/fetchAuth',
+    '~/plugins/api',
   ],
 
   i18n: {
