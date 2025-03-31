@@ -1,5 +1,9 @@
 <template>
     <v-container class="pa-4" fluid>
+        <v-alert type="error" v-if="errorMessage" class="mb-4" @click="errorMessage = ''">
+            {{ errorMessage }}
+        </v-alert>
+
         <v-row align="center" justify="center">
             <v-col cols="12" sm="8" md="4">
                 <v-card>
@@ -35,23 +39,24 @@
                 </v-card>
             </v-col>
         </v-row>
+
     </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useNuxtApp, useCookie, useLocalePath, navigateTo } from '#imports'
-const localePath = useLocalePath()
-
-interface LoginResponse {
-    accessToken: string
-}
+import type {LoginResponse, User} from "~/types";
+import {useAuthStore} from '@/stores/auth'
 
 definePageMeta({
+    public: true,
     layout: false
 })
 
 const { $api } = useNuxtApp()
+const localePath = useLocalePath()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -61,31 +66,37 @@ const rules = {
     required: (value: unknown) => !!value || 'This field is required.'
 }
 
+// Regular email/password login
+const errorMessage = ref('')
+
+const login = async (): Promise<boolean> => {
+    errorMessage.value = ''
+    try {
+        await $api<LoginResponse>('/login', {
+            method: 'POST',
+            body: { email: email.value, password: password.value },
+        });
+        return true
+    } catch (error: any) {
+        errorMessage.value = 'Invalid email or password'
+        return false
+    }
+}
+
+const loginSuccess = async () => {
+    if (import.meta.client) {
+        const user = await $api<User>('/my-profile')
+        if (user) authStore.setUser(user)
+    }
+}
+
 const onSubmit = async () => {
     if (!valid.value) return
 
-    try {
-        const response = await $api<LoginResponse>('/login', {
-            method: 'POST',
-            body: {
-                email: email.value,
-                password: password.value
-            }
-        })
+    const success = await login();
+    if (!success) return // don't redirect if login failed
 
-        if (!response.accessToken) {
-            console.error('Login failed')
-            return
-        }
-
-        // Store the token in a cookie named "access_token"
-        const accessTokenCookie = useCookie('access_token')
-        accessTokenCookie.value = response.accessToken
-
-        // navigateTo(localePath('orders'))
-        navigateTo(localePath('orders', 'zh'))
-    } catch (error) {
-        console.error('Error during login', error)
-    }
+    await loginSuccess()
+    navigateTo(localePath('orders'));
 }
 </script>

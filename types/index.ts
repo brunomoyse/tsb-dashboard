@@ -72,7 +72,7 @@ export interface User {
     phoneNumber: string;
 }
 
-export interface RefreshTokenResponse {
-    accessToken: string,
-    user: User,
+export interface LoginResponse {
+    user: User;
 }
+
