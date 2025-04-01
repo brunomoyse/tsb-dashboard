@@ -14,7 +14,7 @@
     "@mdi/font": "^7.4.47",
     "@pinia/nuxt": "^0.10.1",
     "jsonwebtoken": "^9.0.2",
-    "nuxt": "^3.16.1",
+    "nuxt": "^3.16.2",
     "pinia-plugin-persistedstate": "^4.2.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
@@ -23,6 +23,6 @@
     "@nuxtjs/i18n": "^9.4.0",
     "@types/jsonwebtoken": "^9.0.9",
     "vite-plugin-vuetify": "^2.1.0",
-    "vuetify": "^3.7.19"
+    "vuetify": "^3.8.0"
   }
 }
