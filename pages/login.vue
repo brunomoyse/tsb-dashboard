@@ -85,7 +85,7 @@ const login = async (): Promise<boolean> => {
 
 const loginSuccess = async () => {
     if (import.meta.client) {
-        const user = await $api<User>('/my-profile')
+        const user = await $api<User>('/me')
         if (user) authStore.setUser(user)
     }
 }
