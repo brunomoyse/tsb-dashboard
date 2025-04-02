@@ -1,25 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { useNuxtApp } from '#imports'
-import type { Order } from '@/types'
+import type {Order, OrderResponse} from '@/types'
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
-        orders: [] as Order[],
+        orders: [] as OrderResponse[],
     }),
     actions: {
-        setOrders(orders: Order[]) {
+        setOrders(orders: OrderResponse[]) {
             // Sort orders by updatedAt descending
-            this.orders = orders.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+            this.orders = orders.sort((a, b) => new Date(b.order.updatedAt).getTime() - new Date(a.order.updatedAt).getTime())
         },
         async fetchOrderById(orderId: string, currentLocale: string) {
             const { $api } = useNuxtApp()
             try {
                 // Adjust the endpoint as needed.
-                const order: Order = await $api(`/admin/orders/${orderId}`, {
+                const order: OrderResponse = await $api(`/admin/orders/${orderId}`, {
                     headers: { 'Accept-Language': currentLocale }
                 })
-                const idx = this.orders.findIndex(o => o.id === orderId)
+                const idx = this.orders.findIndex(o => o.order.id === orderId)
                 if (idx !== -1) {
                     // Update existing order
                     this.orders[idx] = order
@@ -37,7 +37,7 @@ export const useOrdersStore = defineStore('orders', {
                 }
                 // Re-sort orders by createdAt descending after the update.
                 this.orders.sort(
-                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    (a, b) => new Date(b.order.createdAt).getTime() - new Date(a.order.createdAt).getTime()
                 )
             } catch (error) {
                 console.error(`Failed to fetch order ${orderId}:`, error)

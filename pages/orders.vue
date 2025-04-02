@@ -16,29 +16,29 @@
         </v-toolbar>
 
         <!-- Order List with Transition Group -->
-        <transition-group v-if="ordersWithTotal.length" name="order" tag="div">
+        <transition-group v-if="ordersStore.orders.length" name="order" tag="div">
             <div
-                v-for="order in filteredOrders"
-                :key="order.id"
+                v-for="orderObject in ordersStore.orders"
+                :key="orderObject.order.id"
                 class="order-item"
-                @touchstart="touchStart($event, order)"
-                @touchend="touchEnd($event, order)"
+                @touchstart="touchStart($event, orderObject.order)"
+                @touchend="touchEnd($event, orderObject.order)"
             >
                 <v-card
                     class="ma-2 rounded-lg"
-                    :class="{ heartbeat: order.status === 'PENDING' }"
+                    :class="{ heartbeat: orderObject.order.orderStatus === 'PENDING' }"
                     elevation="2"
-                    :style="cardStyle(order)"
-                    @click="openBottomSheet(order)"
+                    :style="cardStyle(orderObject)"
+                    @click="openBottomSheet(orderObject)"
                 >
                     <v-card-text class="d-flex align-center">
                         <!-- Status Indicator -->
                         <v-icon
                             large
-                            :color="getStatusColor(order.status as OrderStatus)"
+                            :color="getStatusColor(orderObject.order.orderStatus)"
                             class="mr-3"
                         >
-                            {{ getStatusIcon(order.status as OrderStatus) }}
+                            {{ getStatusIcon(orderObject.order.orderStatus) }}
                         </v-icon>
 
                         <!-- Order Info -->
@@ -46,17 +46,17 @@
                             <div class="d-flex justify-space-between">
                                 <div>
                                     <div class="text-body-1 font-weight-bold">
-                                        {{ order.deliveryOption === 'delivery' ? order.address : t('orders.pickup') }}
+                                        {{ orderObject.order.orderType === 'DELIVERY' ? orderObject.order.addressId : t('orders.pickup') }}
                                     </div>
                                     <div class="text-caption text-medium-emphasis">
-                                        {{ formatDate(order.createdAt) }}
+                                        {{ formatDate(orderObject.order.createdAt) }}
                                     </div>
                                 </div>
                                 <v-chip
-                                    :color="getPaymentStatusColor(order.paymentStatus)"
+                                    :color="getPaymentStatusColor(orderObject.payment?.status)"
                                     size="small"
                                 >
-                                    {{ belPriceFormat.format(order.total) }}
+                                    {{ belPriceFormat.format(parseFloat(orderObject.order.totalPrice)) }}
                                 </v-chip>
                             </div>
 
@@ -66,18 +66,18 @@
                                 <div>
                                     <div class="d-flex align-center gap-2">
                                         <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
-                                        {{ t(`orders.paymentMethod.${order.paymentMode.toLowerCase()}`) }}
+                                        {{ orderObject.order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
                                     </div>
                                     <div class="d-flex align-center gap-2 mt-1">
                                         <v-icon small class="mr-1">mdi-truck-delivery-outline</v-icon>
-                                        {{ t(`orders.deliveryOption.${order.deliveryOption?.toLowerCase()}`) }}
+                                        {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
                                     </div>
                                 </div>
                                 <v-chip
-                                    :color="getStatusColor(order.status as OrderStatus)"
+                                    :color="getStatusColor(orderObject.order.orderStatus)"
                                     size="small"
                                 >
-                                    {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
+                                    {{ t(`orders.status.${orderObject.order.orderStatus?.toLowerCase()}`) }}
                                 </v-chip>
                             </div>
                         </div>
@@ -101,10 +101,10 @@
                         <div class="text-caption">
                             {{
                                 selectedOrder
-                                    ? formatDate(selectedOrder.createdAt) +
+                                    ? formatDate(selectedOrder.order.createdAt) +
                                     ' - ' +
-                                    (selectedOrder.deliveryOption === 'delivery'
-                                        ? selectedOrder.address
+                                    (selectedOrder.order.orderType === 'DELIVERY'
+                                        ? selectedOrder.order.addressId
                                         : t('orders.pickup'))
                                     : ''
                             }}
@@ -158,10 +158,10 @@
                     </div>
                     <!-- Display current order info -->
                     <div v-if="selectedOrder" class="mt-2 grey--text text-caption">
-                        {{ formatDate(selectedOrder.createdAt) }} -
-                        {{ selectedOrder.deliveryOption === 'delivery' ? selectedOrder.address : t('orders.pickup') }}
+                        {{ formatDate(selectedOrder.order.createdAt) }} -
+                        {{ selectedOrder.order.orderType === 'DELIVERY' ? selectedOrder.order.addressId : t('orders.pickup') }}
                     </div>
-                    <div v-if="selectedOrder && selectedOrder.paymentMode === 'ONLINE'" class="mt-2 red--text">
+                    <div v-if="selectedOrder && selectedOrder.order.isOnlinePayment" class="mt-2 red--text">
                         {{ t('orders.refundNotice', 'A refund will be processed for online payments.') }}
                     </div>
                     <div class="mt-2" v-if="confirmDisabled">
@@ -185,7 +185,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type {Order, OrderProductLine, OrderStatus, Product} from '~/types'
+import type {Order, OrderResponse, OrderStatus, OrderType} from '~/types'
 
 const { t, locale } = useI18n()
 const { $api } = useNuxtApp()
@@ -197,7 +197,7 @@ onMounted(() => {
 
 // State
 const searchQuery = ref('')
-const selectedOrder = ref<Order | null>(null)
+const selectedOrder = ref<OrderResponse | null>(null)
 const showBottomSheet = ref(false)
 const touchStartX = ref(0)
 
@@ -208,7 +208,7 @@ const confirmDisabled = computed(() => cancelDelay.value > 0)
 let cancelTimer: number | undefined = undefined
 
 // Define allowed transitions based on current status and delivery option
-const getAllowedStatuses = (current: OrderStatus, deliveryOption: string): OrderStatus[] => {
+const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): OrderStatus[] => {
     let allowed: OrderStatus[] = []
     switch (current) {
         case 'PENDING':
@@ -221,9 +221,9 @@ const getAllowedStatuses = (current: OrderStatus, deliveryOption: string): Order
             allowed = ['AWAITING_PICK_UP']
             break
         case 'AWAITING_PICK_UP':
-            if (deliveryOption === 'delivery') {
+            if (deliveryOption === 'DELIVERY') {
                 allowed = ['OUT_FOR_DELIVERY']
-            } else if (deliveryOption === 'pickup') {
+            } else if (deliveryOption === 'PICKUP') {
                 allowed = ['PICKED_UP', 'FAILED']
             }
             break
@@ -243,7 +243,7 @@ const getAllowedStatuses = (current: OrderStatus, deliveryOption: string): Order
 
 const availableStatuses = computed(() => {
     if (!selectedOrder.value) return []
-    return getAllowedStatuses(selectedOrder.value.status as OrderStatus, selectedOrder.value.deliveryOption)
+    return getAllowedStatuses(selectedOrder.value.order.orderStatus, selectedOrder.value.order.orderType)
 })
 
 // Status icon mapping
@@ -277,40 +277,25 @@ const getStatusColor = (status: OrderStatus): string => {
     return colors[status] || 'primary'
 }
 
-const getPaymentStatusColor = (status: string) => {
+const getPaymentStatusColor = (status: string | undefined) => {
+    if (!status) return 'grey'
     const colors: Record<string, string> = {
-        PENDING: 'orange',
-        CONFIRMED: 'green',
-        CANCELLED: 'red'
+        // @TODO: Check Mollie API to sync the list
+        open: 'orange',
+        paid: 'green',
+        cancelled: 'red'
     }
     return colors[status?.toUpperCase() as keyof typeof colors] || 'grey'
 }
 
 // Data Fetching
-const { data: ordersData } = await useAsyncData<Order[]>('orders', () =>
+const { data: orderObjects } = await useAsyncData<OrderResponse[]>('orders', () =>
     $api('/admin/orders', { headers: { 'Accept-Language': locale.value } })
 )
 // Populate the Pinia store with orders fetched from the server
-if (ordersData.value) {
-    ordersStore.setOrders(ordersData.value)
+if (orderObjects.value) {
+    ordersStore.setOrders(orderObjects.value)
 }
-
-// Computed orders with total price
-const ordersWithTotal = computed(() =>
-    ordersStore.orders.map(order => ({
-        ...order,
-        total: order.products.reduce((sum: number, pl: OrderProductLine) => sum + pl.totalPrice, 0)
-    }))
-)
-
-// Filtered orders for search
-const filteredOrders = computed(() =>
-    ordersWithTotal.value.filter(order =>
-        Object.values(order).some(value =>
-            String(value)?.toLowerCase().includes(searchQuery.value?.toLowerCase())
-        )
-    )
-)
 
 // Formatting utilities
 const formatDate = (dateString: string) =>
@@ -338,9 +323,9 @@ const touchEnd = (e: TouchEvent, order: Order) => {
     const deltaX = touchEndX - touchStartX.value
     if (Math.abs(deltaX) > 50) {
         // For swipe, simulate moving one step in allowed statuses if possible
-        const allowed = getAllowedStatuses(order.status as OrderStatus, order.deliveryOption)
+        const allowed = getAllowedStatuses(order.orderStatus as OrderStatus, order.orderType)
         if (allowed.length) {
-            const currentIndex = allowed.indexOf(order.status as OrderStatus)
+            const currentIndex = allowed.indexOf(order.orderStatus)
             const newStatus = deltaX > 0
                 ? allowed[Math.max(currentIndex - 1, 0)]
                 : allowed[Math.min(currentIndex + 1, allowed.length - 1)]
@@ -364,16 +349,20 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
     if (!selectedOrder.value) return
 
     try {
-        await $api(`/admin/orders/${selectedOrder.value.id}`, {
+        await $api(`/admin/orders/${selectedOrder.value.order.id}`, {
             method: 'PATCH',
-            body: { status: newStatus, orderID: selectedOrder.value.id },
+            body: { status: newStatus },
             headers: { 'Content-Type': 'application/json' }
         })
         // @TODO: Update in store instead
-        ordersStore.orders = ordersStore.orders.map(order =>
-            order.id === selectedOrder.value?.id ? { ...order, status: newStatus } : order
-        )
-        printReceipt(selectedOrder.value.products)
+        ordersStore.orders = ordersStore.orders.map(orderObject => {
+            if (orderObject.order.id === selectedOrder.value?.order.id) {
+                orderObject.order.orderStatus = newStatus
+            }
+            return orderObject
+        })
+
+        printReceipt(selectedOrder.value)
         vibrate()
         showBottomSheet.value = false
     } catch (error) {
@@ -381,8 +370,9 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
     }
 }
 
-const printReceipt = (productLines: OrderProductLine[]) => {
-    const encodedProducts: string = JSON.stringify(productLines);
+const printReceipt = (orderObject: OrderResponse) => {
+    const products = orderObject.products
+    const encodedProducts: string = JSON.stringify(products);
     if (typeof window !== 'undefined' && 'PrintHandler' in window) {
         // PrintHandler is injected from Android (Sunmi V2s)
         (window as any).PrintHandler.print(encodedProducts);
@@ -422,7 +412,7 @@ const cancelCancellation = () => {
 }
 
 // Bottom Sheet and Card handlers
-const openBottomSheet = (order: Order) => {
+const openBottomSheet = (order: OrderResponse) => {
     selectedOrder.value = order
     showBottomSheet.value = true
 }
@@ -433,8 +423,8 @@ const vibrate = () => {
     }
 }
 
-const cardStyle = (order: Order) => {
-    if (order.status === 'PENDING') {
+const cardStyle = (orderObject: OrderResponse) => {
+    if (orderObject.order.orderStatus === 'PENDING') {
         return {
             transform: 'scale(1.02)',
             transition: 'transform 0.2s',
@@ -443,7 +433,7 @@ const cardStyle = (order: Order) => {
         }
     } else {
         return {
-            transform: order?.id === selectedOrder.value?.id ? 'scale(0.98)' : 'none',
+            transform: orderObject.order.id === selectedOrder.value?.order.id ? 'scale(0.98)' : 'none',
             transition: 'transform 0.2s'
         }
     }
