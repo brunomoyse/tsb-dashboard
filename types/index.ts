@@ -24,39 +24,6 @@ export interface Product {
     image?: File;
 }
 
-export interface Order {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    userId: string;
-    status: string;
-    paymentStatus: OrderStatus;
-    paymentMode: 'ONLINE' | 'CASH';
-    deliveryOption: string;
-    molliePaymentId: string;
-    molliePaymentUrl: string;
-    products: OrderProductLine[];
-    address: string;
-}
-
-export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
-
-export type OrderDeliveryStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED'
-export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'PICKED_UP' | 'CANCELLED' | 'FAILED'
-
-
-export interface OrderProductLine {
-    product: {
-        id: string;
-        categoryName: string;
-        code: string;
-        name: string;
-    };
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-}
-
 export interface ProductCategory {
     id: string;
     name: string;
@@ -76,3 +43,57 @@ export interface LoginResponse {
     user: User;
 }
 
+export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
+
+export type OrderDeliveryStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED'
+export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'PICKED_UP' | 'CANCELLED' | 'FAILED'
+export type OrderType = 'DELIVERY' | 'PICKUP';
+
+export interface Order {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    userId: string;
+    orderStatus: OrderStatus;
+    orderType: OrderType;
+    isOnlinePayment: boolean;
+    paymentID: string | null;
+    discountAmount: string;
+    deliveryFee: string | null;
+    totalPrice: string;
+    estimatedReadyTime: string | null;
+    addressId: string | null;
+    addressExtra: string | null;
+    extraComment: string | null;
+    orderExtra: {
+        name: string | null
+        options: string[] | null
+    }[] | null;
+}
+
+export interface OrderProduct {
+    product: {
+        id: string;
+        code: string | null;
+        categoryName: string
+        name: string;
+    };
+    quantity: number;
+    unitPrice: string;
+    totalPrice: string;
+}
+
+export interface MolliePayment {
+    id: string;
+    paymentUrl: string;
+    orderId: string;
+    status: string;
+    createdAt: string;
+    paidAt: string | null;
+}
+
+export interface OrderResponse {
+    order: Order;
+    products: OrderProduct[];
+    payment: MolliePayment | null;
+}
