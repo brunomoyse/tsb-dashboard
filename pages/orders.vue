@@ -46,7 +46,7 @@
                             <div class="d-flex justify-space-between">
                                 <div>
                                     <div class="text-body-1 font-weight-bold">
-                                        {{ orderObject.order.orderType === 'DELIVERY' ? orderObject.order.addressId : t('orders.pickup') }}
+                                        {{ orderObject.order.orderType === 'DELIVERY' ? getStreetAndDistance(orderObject.address) : t('orders.pickup') }}
                                     </div>
                                     <div class="text-caption text-medium-emphasis">
                                         {{ formatDate(orderObject.order.createdAt) }}
@@ -101,10 +101,10 @@
                         <div class="text-caption">
                             {{
                                 selectedOrder
-                                    ? formatDate(selectedOrder.order.createdAt) +
+                                    ? t(`orders.deliveryOption.${selectedOrder.order.orderType?.toLowerCase()}`) +
                                     ' - ' +
                                     (selectedOrder.order.orderType === 'DELIVERY'
-                                        ? selectedOrder.order.addressId
+                                        ? formatAddress(selectedOrder.address)
                                         : t('orders.pickup'))
                                     : ''
                             }}
@@ -159,7 +159,7 @@
                     <!-- Display current order info -->
                     <div v-if="selectedOrder" class="mt-2 grey--text text-caption">
                         {{ formatDate(selectedOrder.order.createdAt) }} -
-                        {{ selectedOrder.order.orderType === 'DELIVERY' ? selectedOrder.order.addressId : t('orders.pickup') }}
+                        {{ selectedOrder.order.orderType === 'DELIVERY' ? formatAddress(selectedOrder.address) : t('orders.pickup') }}
                     </div>
                     <div v-if="selectedOrder && selectedOrder.order.isOnlinePayment" class="mt-2 red--text">
                         {{ t('orders.refundNotice', 'A refund will be processed for online payments.') }}
@@ -185,6 +185,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {formatDate, belPriceFormat, getStreetAndDistance, formatAddress} from "~/utils/utils";
 import type {Order, OrderResponse, OrderStatus, OrderType} from '~/types'
 
 const { t, locale } = useI18n()
@@ -296,23 +297,6 @@ const { data: orderObjects } = await useAsyncData<OrderResponse[]>('orders', () 
 if (orderObjects.value) {
     ordersStore.setOrders(orderObjects.value)
 }
-
-// Formatting utilities
-const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString(locale.value, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })
-
-const belPriceFormat = new Intl.NumberFormat('fr-BE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    style: "currency",
-    currency: "EUR",
-})
 
 // Touch events for swipe to change status
 const touchStart = (e: TouchEvent, order: Order) => {
