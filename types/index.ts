@@ -34,9 +34,10 @@ export interface ProductCategory {
 export interface User {
     id: string;
     email: string;
-    name: string;
-    address: string;
-    phoneNumber: string;
+    firstName: string;
+    lastName: string;
+    address: Address | null;
+    phoneNumber: string | null;
 }
 
 export interface LoginResponse {
@@ -64,7 +65,7 @@ export interface Order {
     estimatedReadyTime: string | null;
     addressId: string | null;
     addressExtra: string | null;
-    extraComment: string | null;
+    orderNote: string | null;
     orderExtra: {
         name: string | null
         options: string[] | null
@@ -96,4 +97,15 @@ export interface OrderResponse {
     order: Order;
     products: OrderProduct[];
     payment: MolliePayment | null;
+    address: Address | null;
+}
+
+export interface Address {
+    id: string;
+    streetName: string;
+    houseNumber: string;
+    boxNumber: string | null;
+    municipalityName: string;
+    postcode: string;
+    distance: number;
 }
