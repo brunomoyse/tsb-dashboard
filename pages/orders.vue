@@ -281,10 +281,12 @@ const getStatusColor = (status: OrderStatus): string => {
 const getPaymentStatusColor = (status: string | undefined) => {
     if (!status) return 'grey'
     const colors: Record<string, string> = {
-        // @TODO: Check Mollie API to sync the list
         open: 'orange',
+        cancelled: 'gray', // canceled by customer
+        pending: 'gray',
+        expired: 'gray',
+        failed: 'red',
         paid: 'green',
-        cancelled: 'red'
     }
     return colors[status?.toUpperCase() as keyof typeof colors] || 'grey'
 }
@@ -338,13 +340,8 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
             body: { status: newStatus },
             headers: { 'Content-Type': 'application/json' }
         })
-        // @TODO: Update in store instead
-        ordersStore.orders = ordersStore.orders.map(orderObject => {
-            if (orderObject.order.id === selectedOrder.value?.order.id) {
-                orderObject.order.orderStatus = newStatus
-            }
-            return orderObject
-        })
+        // Update the order status in the store
+        ordersStore.updateOrderStatus(selectedOrder.value, newStatus)
 
         printReceipt(selectedOrder.value)
         vibrate()

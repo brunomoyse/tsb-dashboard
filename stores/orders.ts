@@ -12,6 +12,20 @@ export const useOrdersStore = defineStore('orders', {
             // Sort orders by updatedAt descending
             this.orders = orders.sort((a, b) => new Date(b.order.updatedAt).getTime() - new Date(a.order.updatedAt).getTime())
         },
+        updateOrderStatus(order: OrderResponse, newStatus: string) {
+            const idx = this.orders.findIndex(o => o.order.id === order.order.id)
+            if (idx !== -1) {
+                // Update existing order
+                this.orders[idx] = order
+            } else {
+                // New order
+                this.orders.push(order)
+            }
+            // Re-sort orders by updatedAt descending after the update.
+            this.orders.sort(
+                (a, b) => new Date(b.order.updatedAt).getTime() - new Date(a.order.updatedAt).getTime()
+            )
+        },
         async fetchOrderById(orderId: string, currentLocale: string) {
             const { $api } = useNuxtApp()
             try {
