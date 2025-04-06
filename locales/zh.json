@@ -55,10 +55,16 @@
       "pickup": "自取",
       "delivery": "配送"
     },
-    "paymentStatus": {
-      "pending": "待支付",
-      "confirmed": "支付确认",
-      "cancelled": "支付取消"
+    "payment": {
+      "status": {
+        "open": "未付款",
+        "cancelled": "已取消",
+        "pending": "待处理",
+        "expired": "已过期",
+        "failed": "失败",
+        "paid": "已付款",
+        "notPaid": "未付款"
+      }
     },
     "paymentMethod": {
       "online": "在线支付",

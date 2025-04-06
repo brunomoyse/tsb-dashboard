@@ -55,10 +55,16 @@
         "pickup": "Pick up",
         "delivery": "Delivery"
     },
-    "paymentStatus": {
-      "pending": "Payment Pending",
-      "confirmed": "Payment Confirmed",
-      "cancelled": "Payment Cancelled"
+    "payment": {
+      "status": {
+        "open": "Open",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "expired": "Expired",
+        "failed": "Failed",
+        "paid": "Paid",
+        "notPaid": "Not Paid"
+      }
     },
     "paymentMethod": {
       "online": "Online Payment",
