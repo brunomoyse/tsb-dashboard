@@ -55,10 +55,16 @@
       "pickup": "À emporter",
       "delivery": "Livraison"
     },
-    "paymentStatus": {
-      "pending": "Paiement en attente",
-      "confirmed": "Paiement confirmé",
-      "cancelled": "Paiement annulé"
+    "payment": {
+      "status": {
+        "open": "Ouvert",
+        "cancelled": "Annulé",
+        "pending": "En attente",
+        "expired": "Expiré",
+        "failed": "Échoué",
+        "paid": "Payé",
+        "notPaid": "Non payé"
+      }
     },
     "paymentMethod": {
       "online": "Paiement en ligne",

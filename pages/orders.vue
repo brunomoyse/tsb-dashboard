@@ -26,7 +26,6 @@
             >
                 <v-card
                     class="ma-2 rounded-lg"
-                    :class="{ heartbeat: orderObject.order.orderStatus === 'PENDING' }"
                     elevation="2"
                     :style="cardStyle(orderObject)"
                     @click="openBottomSheet(orderObject)"
@@ -52,12 +51,6 @@
                                         {{ formatDate(orderObject.order.createdAt) }}
                                     </div>
                                 </div>
-                                <v-chip
-                                    :color="getPaymentStatusColor(orderObject.payment?.status)"
-                                    size="small"
-                                >
-                                    {{ belPriceFormat.format(parseFloat(orderObject.order.totalPrice)) }}
-                                </v-chip>
                             </div>
 
                             <v-divider class="my-2" />
@@ -65,20 +58,43 @@
                             <div class="d-flex justify-space-between align-center">
                                 <div>
                                     <div class="d-flex align-center gap-2">
-                                        <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
-                                        {{ orderObject.order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
+                                        <template v-if="orderObject.order.isOnlinePayment">
+                                            <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
+                                            {{ t('orders.paymentMethod.online') }}
+                                        </template>
+                                        <template v-else>
+                                            <v-icon small class="mr-1">mdi-cash-multiple</v-icon>
+                                            {{ t('orders.paymentMethod.cash') }}
+                                        </template>
                                     </div>
                                     <div class="d-flex align-center gap-2 mt-1">
-                                        <v-icon small class="mr-1">mdi-truck-delivery-outline</v-icon>
-                                        {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
+                                        <template v-if="orderObject.order.orderType === 'DELIVERY'">
+                                            <v-icon small class="mr-1">mdi-moped-outline</v-icon>
+                                            {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
+                                        </template>
+                                        <template v-else>
+                                            <v-icon small class="mr-1">mdi-shopping-outline</v-icon>
+                                            {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
+                                        </template>
+
                                     </div>
                                 </div>
-                                <v-chip
-                                    :color="getStatusColor(orderObject.order.orderStatus)"
-                                    size="small"
-                                >
-                                    {{ t(`orders.status.${orderObject.order.orderStatus?.toLowerCase()}`) }}
-                                </v-chip>
+                                <div class="d-flex gap-2">
+                                    <!-- Payment Status Chip -->
+                                    <v-chip
+                                        :color="getPaymentStatusColor(orderObject.payment?.status)"
+                                        size="small"
+                                    >
+                                        {{ t(`orders.payment.status.${orderObject.payment?.status ? orderObject.payment.status.toLowerCase() : 'notPaid'}`) }}
+                                    </v-chip>
+                                    <!-- Order Status Chip -->
+                                    <v-chip
+                                        :color="getStatusColor(orderObject.order.orderStatus)"
+                                        size="small"
+                                    >
+                                        {{ t(`orders.status.${orderObject.order.orderStatus?.toLowerCase()}`) }}
+                                    </v-chip>
+                                </div>
                             </div>
                         </div>
                     </v-card-text>
@@ -279,7 +295,7 @@ const getStatusColor = (status: OrderStatus): string => {
 }
 
 const getPaymentStatusColor = (status: string | undefined) => {
-    if (!status) return 'grey'
+    if (!status) return 'red'
     const colors: Record<string, string> = {
         open: 'orange',
         cancelled: 'gray', // canceled by customer
@@ -288,7 +304,7 @@ const getPaymentStatusColor = (status: string | undefined) => {
         failed: 'red',
         paid: 'green',
     }
-    return colors[status?.toUpperCase() as keyof typeof colors] || 'grey'
+    return colors[status.toLowerCase()] || 'grey'
 }
 
 // Data Fetching
@@ -450,18 +466,4 @@ const cardStyle = (orderObject: OrderResponse) => {
     transform: translateY(0);
 }
 
-@keyframes heartbeat {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.015);
-    }
-}
-
-.heartbeat {
-    transform: scale(1);
-    animation: heartbeat 3s ease-in-out 3;
-    animation-fill-mode: forwards;
-}
 </style>
