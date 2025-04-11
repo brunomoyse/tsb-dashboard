@@ -47,9 +47,11 @@
       "confirmed": "Confirmé",
       "preparing": "En préparation",
       "awaiting_pick_up": "En attente de retrait",
+      "picked_up": "Retiré",
       "out_for_delivery": "En livraison",
       "delivered": "Livré",
-      "cancelled": "Annulé"
+      "cancelled": "Annulé",
+      "failed": "Échoué"
     },
     "deliveryOption": {
       "pickup": "À emporter",
