@@ -47,9 +47,11 @@
       "confirmed": "已确认",
       "preparing": "准备中",
       "awaiting_pick_up": "等待自取",
+      "picked_up": "已自取",
       "out_for_delivery": "配送中",
       "delivered": "已送达",
-      "cancelled": "已取消"
+      "cancelled": "已取消",
+      "failed": "失败"
     },
     "deliveryOption": {
       "pickup": "自取",
