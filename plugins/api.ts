@@ -14,7 +14,6 @@ export default defineNuxtPlugin(() => {
         retry: 1,
         retryStatusCodes: [401],
         headers: {
-            'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Accept-Language': userLocale
         },

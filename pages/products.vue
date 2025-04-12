@@ -98,7 +98,7 @@
             v-if="selectedProduct"
             :product="selectedProduct"
             mode="edit"
-            @update="updateProduct"
+            @update="handleUpdate"
             @close="selectedProduct = null"
         />
     </v-container>
@@ -203,24 +203,41 @@ const openCreateDialog = () => {
 }
 
 // Handle product updates (edit mode).
-const updateProduct = async (updatedProduct: Product) => {
+const handleUpdate = async (updatedProduct: Product) => {
     try {
+        // Create a FormData object.
+        const formData = new FormData();
+
+        // Destructure to separate the image file from the rest of the product data.
+        const { image, ...productData } = updatedProduct;
+
+        // Append the product data as a JSON string to a field called "data".
+        formData.append("data", JSON.stringify(productData));
+
+        // Append the image file if it exists and is indeed a File instance.
+        if (image instanceof File) {
+            formData.append("image", image);
+        }
+
+        // Send the PUT request with the FormData as body.
         const res = await $api(`/admin/products/${updatedProduct.id}`, {
             method: 'PUT',
-            body: JSON.stringify(updatedProduct)
-        })
+            body: formData,
+        });
+
         if (!res?.id || !products.value) {
-            console.error('Failed to update product:', updatedProduct)
-            return
+            console.error('Failed to update product:', updatedProduct);
+            return;
         }
+        // Update the product in your local state.
         products.value = products.value.map(p =>
             p.id === updatedProduct.id ? res : p
-        )
-        selectedProduct.value = null
+        );
+        selectedProduct.value = null;
     } catch (error) {
-        console.error('Failed to update product:', error)
+        console.error('Failed to update product:', error);
     }
-}
+};
 
 // Handle new product creation.
 const handleCreate = async (newProduct: Product) => {
@@ -242,7 +259,7 @@ const handleCreate = async (newProduct: Product) => {
         // Send the POST request with the FormData as body.
         const res = await $api('/admin/products', {
             method: 'POST',
-            body: formData
+            body: formData,
         });
 
         if (!res?.id || !products.value) {
