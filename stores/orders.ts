@@ -9,8 +9,15 @@ export const useOrdersStore = defineStore('orders', {
     }),
     actions: {
         setOrders(orders: OrderResponse[]) {
-            // Sort orders by updatedAt descending
-            this.orders = orders.sort((a, b) => new Date(b.order.updatedAt).getTime() - new Date(a.order.updatedAt).getTime())
+            // Filter orders: if an order has a payment, then its status must be "paid".
+            // If there's no payment, then include the order.
+            this.orders = orders
+                .filter(orderResponse => {
+                    const payment = orderResponse.payment;
+                    return !payment || payment.status === 'paid';
+                })
+                // Then sort orders by updatedAt descending.
+                .sort((a, b) => new Date(b.order.updatedAt).getTime() - new Date(a.order.updatedAt).getTime());
         },
         updateOrderStatus(order: OrderResponse, newStatus: string) {
             const idx = this.orders.findIndex(o => o.order.id === order.order.id)
