@@ -23,6 +23,6 @@
     "@nuxtjs/i18n": "^9.4.0",
     "@types/jsonwebtoken": "^9.0.9",
     "vite-plugin-vuetify": "^2.1.1",
-    "vuetify": "^3.8.1"
+    "vuetify": "^3.8.2"
   }
 }
