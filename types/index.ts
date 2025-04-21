@@ -1,25 +1,28 @@
 // types/index.ts
 export interface Translation {
-    locale: string;
+    language: string;
     name: string | null;
     description: string | null;
 }
 
 export interface Product {
     id: string;
+    name: string;
+    description: string;
     price: number;
-    code: string | null;
-    pieceCount: number | null;
+    code: string;
+    slug: string;
+    pieceCount: number;
     isHalal: boolean;
     isVegan: boolean;
     isVisible: boolean;
     isAvailable: boolean;
     categoryId: string;
-    isDiscountable: boolean;
+    discountable: boolean;
+    category: ProductCategory;
+
     translations: Translation[];
-    slug: string | null;
-    // Generated on fetch
-    name?: string;
+
     // Temporary file upload
     image?: File;
 }
@@ -28,6 +31,7 @@ export interface ProductCategory {
     id: string;
     name: string;
     order: number;
+
     translations: Translation[];
 }
 

@@ -10,7 +10,7 @@ export const useCategoriesStore = defineStore("categories", {
             const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base' });
             this.categories.sort((a, b) => {
                 if (locale === 'zh') {
-                    return collator.compare(a.translations?.find(t => t.locale === locale)?.name || '', b.translations?.find(t => t.locale === locale)?.name || '');
+                    return collator.compare(a.translations?.find(t => t.language === locale)?.name || '', b.translations?.find(t => t.language === locale)?.name || '');
                 }
                 // Otherwise, do a regular string comparison
                 return a.name.localeCompare(b.name);
