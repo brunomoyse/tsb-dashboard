@@ -228,9 +228,12 @@ const ORDERS_QUERY = gql`
             orderExtra
 
             address {
+                id
                 streetName
+                houseNumber
                 municipalityName
                 postcode
+                distance
             }
             customer {
                 id
@@ -341,7 +344,7 @@ const getStatusColor = (status: OrderStatus): string => {
         PENDING: 'orange',
         CONFIRMED: 'blue',
         PREPARING: 'cyan',
-        AWAITING_PICK_UP: 'amber',
+        AWAITING_PICK_UP: 'orange',
         OUT_FOR_DELIVERY: 'purple',
         DELIVERED: 'green',
         PICKED_UP: 'green',
