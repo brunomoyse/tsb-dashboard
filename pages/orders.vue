@@ -433,11 +433,9 @@ const updateOrder = async (newStatus: OrderStatus, estimatedReadyTime?: string) 
     }
 }
 
-let closeWs: () => void = () => {}
-
 onMounted(() => {
     // ORDER UPDATED
-    const { data: orderUpdatedLiveUpdate, close } = useGqlSubscription<{
+    const { data: orderUpdated, stop: stopUpdated } = useGqlSubscription<{
         orderUpdated: Partial<Order>
     }>(
         print(gql`
@@ -452,9 +450,7 @@ onMounted(() => {
         {}
     )
 
-    closeWs = close
-
-    watch(orderUpdatedLiveUpdate, (val) => {
+    watch(orderUpdated, (val) => {
         if (val?.orderUpdated && dataOrders.value?.orders) {
             const updatedOrder = val.orderUpdated
             const orderIndex = dataOrders.value.orders.findIndex(order => order.id === updatedOrder.id)
@@ -468,7 +464,7 @@ onMounted(() => {
     })
 
     // ORDER CREATED
-    const { data: orderCreatedLiveUpdate } = useGqlSubscription<{
+    const { data: orderCreated, stop: stopCreated } = useGqlSubscription<{
         orderCreated: Order
     }>(
         print(gql`
@@ -520,18 +516,12 @@ onMounted(() => {
         {}
     )
 
-    watch(orderCreatedLiveUpdate, (val) => {
+    watch(orderCreated, (val) => {
         if (val?.orderCreated) {
             ordersStore.addOrder(val.orderCreated)
         }
     })
 
-})
-
-onUnmounted(() => {
-    if (typeof closeWs === 'function') {
-        closeWs()
-    }
 })
 
 const printReceipt = (order: Order) => {
