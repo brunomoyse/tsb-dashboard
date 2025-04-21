@@ -1,30 +1,29 @@
 // types/index.ts
 export interface Translation {
     language: string;
-    name: string | null;
+    name: string;
     description: string | null;
 }
 
 export interface Product {
+    categoryId: string;
+    code: string | null;
     id: string;
-    name: string;
-    description: string;
-    price: number;
-    code: string;
-    slug: string;
-    pieceCount: number;
+    isAvailable: boolean;
+    isDiscountable?: boolean; // @TODO to add in backend
     isHalal: boolean;
     isVegan: boolean;
     isVisible: boolean;
-    isAvailable: boolean;
-    categoryId: string;
-    discountable: boolean;
+    pieceCount: number | null;
+    price: string;
+    slug: string;
+
+    name: string;
+    description: string;
+
     category: ProductCategory;
 
     translations: Translation[];
-
-    // Temporary file upload
-    image?: File;
 }
 
 export interface ProductCategory {
@@ -35,13 +34,57 @@ export interface ProductCategory {
     translations: Translation[];
 }
 
+export interface CreateProductInput {
+    categoryId: string
+    code: string | null
+    isAvailable: boolean
+    isDiscountable: boolean
+    isHalal: boolean
+    isVegan: boolean
+    isVisible: boolean
+    pieceCount: number | null
+    price: string
+
+    translations: TranslationInput[]
+
+    image?: File;
+}
+
+export interface UpdateProductInput {
+    categoryId?: string
+    code?: string | null
+    isAvailable?: boolean
+    isDiscountable?: boolean
+    isHalal?: boolean
+    isVegan?: boolean
+    isVisible?: boolean
+    pieceCount?: number | null
+    price?: string
+
+    translations?: TranslationInput[]
+
+    image?: File;
+}
+
+export interface UpdateProductRequest {
+    id: string
+    input: UpdateProductInput
+}
+
+export interface TranslationInput {
+    description: string | null
+    language: string
+    name: string
+}
+
 export interface User {
-    id: string;
     email: string;
     firstName: string;
+    id: string;
     lastName: string;
-    address: Address | null;
     phoneNumber: string | null;
+
+    address: Address | null;
 }
 
 export interface LoginResponse {
@@ -55,44 +98,43 @@ export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITIN
 export type OrderType = 'DELIVERY' | 'PICKUP';
 
 export interface Order {
-    id: string;
+    addressExtra: string | null;
+    addressId: string | null;
     createdAt: string;
+    deliveryFee: string | null;
+    discountAmount: string;
+    estimatedReadyTime: string | null;
+    id: string;
+    isOnlinePayment: boolean;
+    orderExtra: { name: string | null; options: string[] | null }[] | null;
+    orderNote: string | null;
+    paymentID: string | null;
+    status: OrderStatus;
+    totalPrice: string;
+    type: OrderType;
     updatedAt: string;
     userId: string;
-    status: OrderStatus;
-    type: OrderType;
-    isOnlinePayment: boolean;
-    paymentID: string | null;
-    discountAmount: string;
-    deliveryFee: string | null;
-    totalPrice: string;
-    estimatedReadyTime: string | null;
-    addressId: string | null;
-    addressExtra: string | null;
-    orderNote: string | null;
-    orderExtra: {
-        name: string | null
-        options: string[] | null
-    }[] | null;
-    payment: MolliePayment | null;
+
     address: Address | null;
     items: OrderProduct[];
+    payment: MolliePayment | null;
 }
 
 export interface OrderProduct {
-    product: Product;
     quantity: number;
-    unitPrice: string;
     totalPrice: string;
+    unitPrice: string;
+
+    product: Product;
 }
 
 export interface MolliePayment {
+    createdAt: string;
     id: string;
     links: object;
     orderId: string;
-    status: string;
-    createdAt: string;
     paidAt: string | null;
+    status: string;
 }
 
 export interface Address {
