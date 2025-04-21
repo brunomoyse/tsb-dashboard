@@ -1,43 +1,90 @@
 // types/index.ts
 export interface Translation {
-    locale: string;
-    name: string | null;
+    language: string;
+    name: string;
     description: string | null;
 }
 
 export interface Product {
-    id: string;
-    price: number;
+    categoryId: string;
     code: string | null;
-    pieceCount: number | null;
+    id: string;
+    isAvailable: boolean;
+    isDiscountable?: boolean; // @TODO to add in backend
     isHalal: boolean;
     isVegan: boolean;
     isVisible: boolean;
-    isAvailable: boolean;
-    categoryId: string;
-    isDiscountable: boolean;
+    pieceCount: number | null;
+    price: string;
+    slug: string;
+
+    name: string;
+    description: string;
+
+    category: ProductCategory;
+
     translations: Translation[];
-    slug: string | null;
-    // Generated on fetch
-    name?: string;
-    // Temporary file upload
-    image?: File;
 }
 
 export interface ProductCategory {
     id: string;
     name: string;
     order: number;
+
     translations: Translation[];
 }
 
+export interface CreateProductInput {
+    categoryId: string
+    code: string | null
+    isAvailable: boolean
+    isDiscountable: boolean
+    isHalal: boolean
+    isVegan: boolean
+    isVisible: boolean
+    pieceCount: number | null
+    price: string
+
+    translations: TranslationInput[]
+
+    image?: File;
+}
+
+export interface UpdateProductInput {
+    categoryId?: string
+    code?: string | null
+    isAvailable?: boolean
+    isDiscountable?: boolean
+    isHalal?: boolean
+    isVegan?: boolean
+    isVisible?: boolean
+    pieceCount?: number | null
+    price?: string
+
+    translations?: TranslationInput[]
+
+    image?: File;
+}
+
+export interface UpdateProductRequest {
+    id: string
+    input: UpdateProductInput
+}
+
+export interface TranslationInput {
+    description: string | null
+    language: string
+    name: string
+}
+
 export interface User {
-    id: string;
     email: string;
     firstName: string;
+    id: string;
     lastName: string;
-    address: Address | null;
     phoneNumber: string | null;
+
+    address: Address | null;
 }
 
 export interface LoginResponse {
@@ -51,53 +98,43 @@ export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITIN
 export type OrderType = 'DELIVERY' | 'PICKUP';
 
 export interface Order {
-    id: string;
+    addressExtra: string | null;
+    addressId: string | null;
     createdAt: string;
+    deliveryFee: string | null;
+    discountAmount: string;
+    estimatedReadyTime: string | null;
+    id: string;
+    isOnlinePayment: boolean;
+    orderExtra: { name: string | null; options: string[] | null }[] | null;
+    orderNote: string | null;
+    paymentID: string | null;
+    status: OrderStatus;
+    totalPrice: string;
+    type: OrderType;
     updatedAt: string;
     userId: string;
-    orderStatus: OrderStatus;
-    orderType: OrderType;
-    isOnlinePayment: boolean;
-    paymentID: string | null;
-    discountAmount: string;
-    deliveryFee: string | null;
-    totalPrice: string;
-    estimatedReadyTime: string | null;
-    addressId: string | null;
-    addressExtra: string | null;
-    orderNote: string | null;
-    orderExtra: {
-        name: string | null
-        options: string[] | null
-    }[] | null;
+
+    address: Address | null;
+    items: OrderProduct[];
+    payment: MolliePayment | null;
 }
 
 export interface OrderProduct {
-    product: {
-        id: string;
-        code: string | null;
-        categoryName: string
-        name: string;
-    };
     quantity: number;
-    unitPrice: string;
     totalPrice: string;
+    unitPrice: string;
+
+    product: Product;
 }
 
 export interface MolliePayment {
-    id: string;
-    paymentUrl: string;
-    orderId: string;
-    status: string;
     createdAt: string;
+    id: string;
+    links: object;
+    orderId: string;
     paidAt: string | null;
-}
-
-export interface OrderResponse {
-    order: Order;
-    products: OrderProduct[];
-    payment: MolliePayment | null;
-    address: Address | null;
+    status: string;
 }
 
 export interface Address {

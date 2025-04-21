@@ -18,26 +18,26 @@
         <!-- Order List with Transition Group -->
         <transition-group v-if="ordersStore.orders.length" name="order" tag="div">
             <div
-                v-for="orderObject in ordersStore.orders"
-                :key="orderObject.order.id"
+                v-for="order in ordersStore.orders"
+                :key="order.id"
                 class="order-item"
-                @touchstart="touchStart($event, orderObject.order)"
-                @touchend="touchEnd($event, orderObject.order)"
+                @touchstart="touchStart($event, order)"
+                @touchend="touchEnd($event, order)"
             >
                 <v-card
                     class="ma-2 rounded-lg"
                     elevation="2"
-                    :style="cardStyle(orderObject)"
-                    @click="openBottomSheet(orderObject)"
+                    :style="cardStyle(order)"
+                    @click="openBottomSheet(order)"
                 >
                     <v-card-text class="d-flex align-center">
                         <!-- Status Indicator -->
                         <v-icon
                             large
-                            :color="getStatusColor(orderObject.order.orderStatus)"
+                            :color="getStatusColor(order.status)"
                             class="mr-3"
                         >
-                            {{ getStatusIcon(orderObject.order.orderStatus) }}
+                            {{ getStatusIcon(order.status) }}
                         </v-icon>
 
                         <!-- Order Info -->
@@ -45,10 +45,10 @@
                             <div class="d-flex justify-space-between">
                                 <div>
                                     <div class="text-body-1 font-weight-bold">
-                                        {{ orderObject.order.orderType === 'DELIVERY' ? getStreetAndDistance(orderObject.address) : t('orders.pickup') }}
+                                        {{ order.type === 'DELIVERY' ? getStreetAndDistance(order.address) : t('orders.pickup') }}
                                     </div>
                                     <div class="text-caption text-medium-emphasis">
-                                        {{ formatDate(orderObject.order.createdAt) }}
+                                        {{ formatDate(order.createdAt) }}
                                     </div>
                                 </div>
                             </div>
@@ -58,7 +58,7 @@
                             <div class="d-flex justify-space-between align-center">
                                 <div>
                                     <div class="d-flex align-center gap-2">
-                                        <template v-if="orderObject.order.isOnlinePayment">
+                                        <template v-if="order.isOnlinePayment">
                                             <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
                                             {{ t('orders.paymentMethod.online') }}
                                         </template>
@@ -68,13 +68,13 @@
                                         </template>
                                     </div>
                                     <div class="d-flex align-center gap-2 mt-1">
-                                        <template v-if="orderObject.order.orderType === 'DELIVERY'">
+                                        <template v-if="order.type === 'DELIVERY'">
                                             <v-icon small class="mr-1">mdi-moped-outline</v-icon>
-                                            {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
+                                            {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
                                         </template>
                                         <template v-else>
                                             <v-icon small class="mr-1">mdi-shopping-outline</v-icon>
-                                            {{ t(`orders.deliveryOption.${orderObject.order.orderType?.toLowerCase()}`) }}
+                                            {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
                                         </template>
 
                                     </div>
@@ -82,17 +82,17 @@
                                 <div class="d-flex gap-2">
                                     <!-- Payment Status Chip -->
                                     <v-chip
-                                        :color="getPaymentStatusColor(orderObject.payment?.status)"
+                                        :color="getPaymentStatusColor(order.payment?.status)"
                                         size="small"
                                     >
-                                        {{ t(`orders.payment.status.${orderObject.payment?.status ? orderObject.payment.status.toLowerCase() : 'notPaid'}`) }}
+                                        {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
                                     </v-chip>
                                     <!-- Order Status Chip -->
                                     <v-chip
-                                        :color="getStatusColor(orderObject.order.orderStatus)"
+                                        :color="getStatusColor(order.status)"
                                         size="small"
                                     >
-                                        {{ t(`orders.status.${orderObject.order.orderStatus?.toLowerCase()}`) }}
+                                        {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
                                     </v-chip>
                                 </div>
                             </div>
@@ -117,9 +117,9 @@
                         <div class="text-caption">
                             {{
                                 selectedOrder
-                                    ? t(`orders.deliveryOption.${selectedOrder.order.orderType?.toLowerCase()}`) +
+                                    ? t(`orders.deliveryOption.${selectedOrder.type?.toLowerCase()}`) +
                                     ' - ' +
-                                    (selectedOrder.order.orderType === 'DELIVERY'
+                                    (selectedOrder.type === 'DELIVERY'
                                         ? formatAddress(selectedOrder.address)
                                         : t('orders.pickup'))
                                     : ''
@@ -174,10 +174,10 @@
                     </div>
                     <!-- Display current order info -->
                     <div v-if="selectedOrder" class="mt-2 grey--text text-caption">
-                        {{ formatDate(selectedOrder.order.createdAt) }} -
-                        {{ selectedOrder.order.orderType === 'DELIVERY' ? formatAddress(selectedOrder.address) : t('orders.pickup') }}
+                        {{ formatDate(selectedOrder.createdAt) }} -
+                        {{ selectedOrder.type === 'DELIVERY' ? formatAddress(selectedOrder.address) : t('orders.pickup') }}
                     </div>
-                    <div v-if="selectedOrder && selectedOrder.order.isOnlinePayment" class="mt-2 red--text">
+                    <div v-if="selectedOrder && selectedOrder.isOnlinePayment" class="mt-2 red--text">
                         {{ t('orders.refundNotice', 'A refund will be processed for online payments.') }}
                     </div>
                     <div class="mt-2" v-if="confirmDisabled">
@@ -199,22 +199,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {formatDate, belPriceFormat, getStreetAndDistance, formatAddress} from "~/utils/utils";
-import type {Order, OrderResponse, OrderStatus, OrderType} from '~/types'
+import {formatDate, getStreetAndDistance, formatAddress} from "~/utils/utils";
+import type {Order, OrderStatus, OrderType} from '~/types'
+import gql from "graphql-tag";
+import { print } from 'graphql'
 
-const { t, locale } = useI18n()
-const { $api } = useNuxtApp()
+const { t } = useI18n()
 
 const ordersStore = useOrdersStore()
-onMounted(() => {
-    ordersStore.initSseListener(locale.value)
-})
+
+const ORDERS_QUERY = gql`
+    query {
+        orders {
+            id
+            createdAt
+            updatedAt
+            status
+            type
+            isOnlinePayment
+            discountAmount
+            deliveryFee
+            totalPrice
+            estimatedReadyTime
+            addressExtra
+            orderNote
+            orderExtra
+
+            address {
+                id
+                streetName
+                houseNumber
+                municipalityName
+                postcode
+                distance
+            }
+            customer {
+                id
+                firstName
+                lastName
+            }
+            payment {
+                status
+            }
+            items {
+                unitPrice
+                quantity
+                totalPrice
+                product {
+                    id
+                    name
+                    category {
+                        id
+                        name
+                    }
+                }
+            }
+        }
+    }
+`
+
+const UPDATE_ORDER_MUTATION = gql`
+    mutation ($id: ID!, $input: UpdateOrderInput!) {
+        updateOrder(id: $id, input: $input) {
+            id
+            status
+            estimatedReadyTime
+        }
+    }
+`
+
+const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
 
 // State
 const searchQuery = ref('')
-const selectedOrder = ref<OrderResponse | null>(null)
+const selectedOrder = ref<Order | null>(null)
 const showBottomSheet = ref(false)
 const touchStartX = ref(0)
 
@@ -260,7 +320,7 @@ const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): Or
 
 const availableStatuses = computed(() => {
     if (!selectedOrder.value) return []
-    return getAllowedStatuses(selectedOrder.value.order.orderStatus, selectedOrder.value.order.orderType)
+    return getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
 })
 
 // Status icon mapping
@@ -284,7 +344,7 @@ const getStatusColor = (status: OrderStatus): string => {
         PENDING: 'orange',
         CONFIRMED: 'blue',
         PREPARING: 'cyan',
-        AWAITING_PICK_UP: 'amber',
+        AWAITING_PICK_UP: 'orange',
         OUT_FOR_DELIVERY: 'purple',
         DELIVERED: 'green',
         PICKED_UP: 'green',
@@ -307,13 +367,15 @@ const getPaymentStatusColor = (status: string | undefined) => {
     return colors[status.toLowerCase()] || 'grey'
 }
 
-// Data Fetching
-const { data: orderObjects } = await useAsyncData<OrderResponse[]>('orders', () =>
-    $api('/admin/orders', { headers: { 'Accept-Language': locale.value } })
+const { data: dataOrders } = await useGqlQuery<{ orders: Order[] }>(
+    ORDERS_QUERY,
+    {},
+    { immediate: true },
 )
+
 // Populate the Pinia store with orders fetched from the server
-if (orderObjects.value) {
-    ordersStore.setOrders(orderObjects.value)
+if (dataOrders.value?.orders) {
+    ordersStore.setOrders(dataOrders.value?.orders)
 }
 
 // Touch events for swipe to change status
@@ -325,9 +387,9 @@ const touchEnd = (e: TouchEvent, order: Order) => {
     const deltaX = touchEndX - touchStartX.value
     if (Math.abs(deltaX) > 50) {
         // For swipe, simulate moving one step in allowed statuses if possible
-        const allowed = getAllowedStatuses(order.orderStatus as OrderStatus, order.orderType)
+        const allowed = getAllowedStatuses(order.status as OrderStatus, order.type)
         if (allowed.length) {
-            const currentIndex = allowed.indexOf(order.orderStatus)
+            const currentIndex = allowed.indexOf(order.status)
             const newStatus = deltaX > 0
                 ? allowed[Math.max(currentIndex - 1, 0)]
                 : allowed[Math.min(currentIndex + 1, allowed.length - 1)]
@@ -342,22 +404,26 @@ const handleStatusButton = (newStatus: OrderStatus) => {
     if (newStatus === 'CANCELLED') {
         openCancelDialog()
     } else {
-        updateOrderStatus(newStatus)
+        updateOrder(newStatus)
     }
 }
 
 // Update order status (non-cancellation)
-const updateOrderStatus = async (newStatus: OrderStatus) => {
+const updateOrder = async (newStatus: OrderStatus, estimatedReadyTime?: string) => {
     if (!selectedOrder.value) return
 
+    let input = {
+        status: newStatus,
+        ...(estimatedReadyTime !== undefined && { estimatedReadyTime }),
+    }
+
     try {
-        await $api(`/admin/orders/${selectedOrder.value.order.id}`, {
-            method: 'PATCH',
-            body: { status: newStatus },
-            headers: { 'Content-Type': 'application/json' }
+        const res = await mutationUpdateOrder({
+            id: selectedOrder.value.id,
+            input: input
         })
-        // Update the order status in the store
-        ordersStore.updateOrderStatus(selectedOrder.value, newStatus)
+
+        ordersStore.updateOrder(res.updateOrder)
 
         printReceipt(selectedOrder.value)
         vibrate()
@@ -367,12 +433,102 @@ const updateOrderStatus = async (newStatus: OrderStatus) => {
     }
 }
 
-const printReceipt = (orderObject: OrderResponse) => {
-    const products = orderObject.products
-    const encodedProducts: string = JSON.stringify(products);
+onMounted(() => {
+    // ORDER UPDATED
+    const { data: orderUpdated, stop: stopUpdated } = useGqlSubscription<{
+        orderUpdated: Partial<Order>
+    }>(
+        print(gql`
+            subscription {
+                orderUpdated {
+                    id
+                    status
+                    estimatedReadyTime
+                }
+            }
+        `),
+        {}
+    )
+
+    watch(orderUpdated, (val) => {
+        if (val?.orderUpdated && dataOrders.value?.orders) {
+            const updatedOrder = val.orderUpdated
+            const orderIndex = dataOrders.value.orders.findIndex(order => order.id === updatedOrder.id)
+            if (orderIndex !== -1) {
+                dataOrders.value.orders[orderIndex] = {
+                    ...dataOrders.value.orders[orderIndex],
+                    ...updatedOrder,
+                }
+            }
+        }
+    })
+
+    // ORDER CREATED
+    const { data: orderCreated, stop: stopCreated } = useGqlSubscription<{
+        orderCreated: Order
+    }>(
+        print(gql`
+            subscription {
+                orderCreated {
+                    id
+                    createdAt
+                    updatedAt
+                    status
+                    type
+                    isOnlinePayment
+                    discountAmount
+                    deliveryFee
+                    totalPrice
+                    estimatedReadyTime
+                    addressExtra
+                    orderNote
+                    orderExtra
+
+                    address {
+                        streetName
+                        municipalityName
+                        postcode
+                    }
+                    customer {
+                        id
+                        firstName
+                        lastName
+                    }
+                    payment {
+                        status
+                    }
+                    items {
+                        unitPrice
+                        quantity
+                        totalPrice
+                        product {
+                            id
+                            name
+                            category {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        `),
+        {}
+    )
+
+    watch(orderCreated, (val) => {
+        if (val?.orderCreated) {
+            ordersStore.addOrder(val.orderCreated)
+        }
+    })
+
+})
+
+const printReceipt = (order: Order) => {
+    const encodedItems: string = JSON.stringify(order.items);
     if (typeof window !== 'undefined' && 'PrintHandler' in window) {
         // PrintHandler is injected from Android (Sunmi V2s)
-        (window as any).PrintHandler.print(encodedProducts);
+        (window as any).PrintHandler.print(encodedItems);
     } else {
         console.error('🖨️ PrintHandler not available (are you in the WebView on Sunmi V2s?)');
     }
@@ -396,7 +552,7 @@ const openCancelDialog = () => {
 
 const confirmCancellation = async () => {
     // Proceed with cancellation once confirmed
-    await updateOrderStatus('CANCELLED')
+    await updateOrder('CANCELLED')
     showCancelDialog.value = false
 }
 
@@ -409,7 +565,7 @@ const cancelCancellation = () => {
 }
 
 // Bottom Sheet and Card handlers
-const openBottomSheet = (order: OrderResponse) => {
+const openBottomSheet = (order: Order) => {
     selectedOrder.value = order
     showBottomSheet.value = true
 }
@@ -420,8 +576,8 @@ const vibrate = () => {
     }
 }
 
-const cardStyle = (orderObject: OrderResponse) => {
-    if (orderObject.order.orderStatus === 'PENDING') {
+const cardStyle = (order: Order) => {
+    if (order.status === 'PENDING') {
         return {
             transform: 'scale(1.02)',
             transition: 'transform 0.2s',
@@ -430,7 +586,7 @@ const cardStyle = (orderObject: OrderResponse) => {
         }
     } else {
         return {
-            transform: orderObject.order.id === selectedOrder.value?.order.id ? 'scale(0.98)' : 'none',
+            transform: order.id === selectedOrder.value?.id ? 'scale(0.98)' : 'none',
             transition: 'transform 0.2s'
         }
     }
