@@ -3,7 +3,7 @@
         <v-card>
             <v-card-title>{{ dialogTitle }}</v-card-title>
             <v-card-text>
-                <v-form ref="form">
+                <v-form ref="form" :lazy-validation="false">
                     <v-container>
                         <!-- Row 1: Two Columns -->
                         <v-row>
@@ -22,9 +22,13 @@
                                     :label="t('products.code')"
                                 ></v-text-field>
                                 <v-text-field
-                                    v-model.number="editedProduct.price"
-                                    :label="t('products.priceEuro')"
-                                    type="number"
+                                   v-model="editedProduct.price"
+                                   :label="t('products.priceEuro')"
+                                   type="number"
+                                   required
+                                   :rules="[
+                                     v => (v !== null && v !== '' && !isNaN(v)) || t('validation.priceRequired')
+                                   ]"
                                 ></v-text-field>
                                 <v-text-field
                                     v-model.number="editedProduct.pieceCount"
@@ -69,16 +73,16 @@
                                 cols="12"
                                 md="4"
                                 v-for="translation in editedProduct.translations"
-                                :key="translation.locale"
+                                :key="translation.language"
                             >
                                 <v-text-field
                                     v-model="translation.name"
-                                    :label="translation.locale.toUpperCase() + ' ' + t('common.name')"
-                                    :rules="translation.locale === 'fr' ? [v => (!!v && v.trim().length > 0) || t('validation.frenchNameRequired')] : []"
+                                    :label="translation.language.toUpperCase() + ' ' + t('common.name')"
+                                    :rules="translation.language === 'fr' ? [v => (!!v && v.trim().length > 0) || t('validation.frenchNameRequired')] : []"
                                 ></v-text-field>
                                 <v-textarea
                                     v-model="translation.description"
-                                    :label="translation.locale.toUpperCase() + ' ' + t('common.description')"
+                                    :label="translation.language.toUpperCase() + ' ' + t('common.description')"
                                 ></v-textarea>
                             </v-col>
                         </v-row>
@@ -114,7 +118,14 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
-import type { Product, Translation } from '~/types'
+import type {
+    CreateProductInput,
+    Product,
+    Translation,
+    TranslationInput,
+    UpdateProductInput,
+    UpdateProductRequest
+} from '~/types'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
 import type { VForm } from 'vuetify/components'
@@ -126,8 +137,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: 'update', updatedProduct: Product): void
-    (e: 'create', newProduct: Product): void
+    (e: 'update', updatedProduct: UpdateProductRequest): void
+    (e: 'create', newProduct: CreateProductInput): void
     (e: 'close'): void
 }>()
 
@@ -137,34 +148,33 @@ const { t, locale } = useI18n()
 const languages = ['fr', 'en', 'zh']
 
 // Create a copy of an existing product with exactly the languages we need.
-const createProductCopy = (product: Product): Product => {
-    const translations: Translation[] = languages.map(lang => {
-        const existing = product.translations.find(t => t.locale === lang)
+const createProductCopy = (product: Product): UpdateProductInput => {
+    const categoryId = product.category?.id || ''
+    const translations: TranslationInput[] = languages.map(lang => {
+        const existing = product.translations.find(t => t.language === lang)
         return existing
-            ? { locale: lang, name: existing.name, description: existing.description }
-            : { locale: lang, name: '', description: '' }
+            ? { language: lang, name: existing.name, description: existing.description }
+            : { language: lang, name: '', description: '' }
     })
-    return { ...product, translations }
+    return { ...product, translations, categoryId }
 }
 
 // Create a default product for create mode.
-const createDefaultProduct = (): Product => ({
-    id: '00000000-0000-0000-0000-000000000000',
-    price: 0,
+const createDefaultProduct = (): CreateProductInput => ({
+    categoryId: '',
     code: null,
-    pieceCount: null,
+    isAvailable: false,
+    isDiscountable: true,
     isHalal: false,
     isVegan: false,
     isVisible: false,
-    isAvailable: false,
-    categoryId: '',
-    isDiscountable: true,
-    slug: null,
-    translations: languages.map(locale => ({ locale, name: null, description: null }))
+    pieceCount: null,
+    price: '',
+    translations: languages.map(language => ({ language, name: '', description: null }))
 })
 
 // Initialize the edited product based on mode.
-const editedProduct = ref<Product>(
+const editedProduct = ref<CreateProductInput | UpdateProductInput>(
     props.mode === 'create' || !props.product
         ? createDefaultProduct()
         : createProductCopy(props.product)
@@ -197,14 +207,28 @@ const saveChanges = async () => {
         if (!valid) return
     }
 
-    if (selectedImage.value) {
-        editedProduct.value.image = selectedImage.value
-    }
-
     if (props.mode === 'create') {
-        emit('create', editedProduct.value)
+        let createProductInput: CreateProductInput = editedProduct.value as CreateProductInput
+
+        if (selectedImage.value) {
+            createProductInput.image = selectedImage.value
+        }
+        emit('create', createProductInput)
     } else {
-        emit('update', editedProduct.value)
+        if (!props.product?.id) return
+
+        let updateProductInput: UpdateProductInput = editedProduct.value as UpdateProductInput
+
+        if (selectedImage.value) {
+            updateProductInput.image = selectedImage.value
+        }
+
+        let updateProductRequest: UpdateProductRequest = {
+            id: props.product?.id,
+            input: updateProductInput
+        }
+
+        emit('update', updateProductRequest)
     }
     closeDialog()
 }

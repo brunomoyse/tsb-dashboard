@@ -106,16 +106,17 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-import { useCategoriesStore, useGqlQuery, useGqlMutation } from '#imports'
+import { useCategoriesStore, useGqlQuery, useNuxtApp } from '#imports'
 import { useI18n } from 'vue-i18n'
-import type { Product, ProductCategory } from '~/types'
+import type {CreateProductInput, Product, ProductCategory, UpdateProductRequest} from '~/types'
 import ProductDialog from '~/components/ProductDialog.vue'
 import gql from "graphql-tag";
 import { print } from "graphql";
 
-const { t, locale, availableLocales } = useI18n()
-
-// Categories store and API instance.
+const { $api } = useNuxtApp()
+const config = useRuntimeConfig()
+const graphqlUrl = config.public.graphqlHttp as string
+const { t, availableLocales } = useI18n()
 const categoryStore = useCategoriesStore()
 
 // Define table headers.
@@ -129,6 +130,7 @@ const headers = [
     { title: t('products.translations'), align: 'start', key: 'translationsStatus', value: 'translationsStatus', width: '160px', sortable: false },
     { title: t('common.actions'), align: 'end', key: 'actions', value: 'actions', sortable: false }
 ] as const
+
 
 // Helper: Check if a translation is complete.
 const hasTranslation = (product: Product, lang: string) => {
@@ -194,8 +196,8 @@ const PRODUCT_CATEGORIES_QUERY = gql`
 `
 
 const CREATE_PRODUCT_MUTATION = gql`
-    mutation($data: CreateProductInput!) {
-        createProduct(input: $data) {
+    mutation($input: CreateProductInput!) {
+        createProduct(input: $input) {
             id
             price
             code
@@ -222,7 +224,34 @@ const CREATE_PRODUCT_MUTATION = gql`
     }
 `
 
-const { mutate: mutationCreateProduct } = useGqlMutation<{ createProduct: Product }>(CREATE_PRODUCT_MUTATION)
+const UPDATE_PRODUCT_MUTATION = gql`
+    mutation($id: ID! $input: CreateProductInput!) {
+        updateProduct(id: $id, input: $input) {
+            id
+            price
+            code
+            slug
+            pieceCount
+            isVisible
+            isAvailable
+            isHalal
+            isVegan
+
+            name
+            description
+
+            category {
+                id
+                name
+            }
+            translations {
+                language
+                name
+                description
+            }
+        }
+    }
+`
 
 // Fetch products
 const { data: dataProducts } = await useGqlQuery<{ products: Product[] }>(print(PRODUCTS_QUERY), {}, { immediate: true, cache: true})
@@ -239,13 +268,6 @@ const { data: dataCategories } = await useGqlQuery<{ productCategories: ProductC
 if (dataCategories.value?.productCategories) {
     categoryStore.setCategories(dataCategories.value?.productCategories)
 }
-const categories = computed(() => categoryStore.getCategories(locale.value))
-
-// Helper: Get category name by ID.
-const getCategoryName = (categoryId: string) => {
-    const cat = categories.value?.find(c => c.id === categoryId)
-    return cat ? cat.name : ''
-}
 
 // State for dialogs.
 const selectedProduct = ref<Product | null>(null)
@@ -261,77 +283,137 @@ const openCreateDialog = () => {
     createDialog.value = true
 }
 
-// Handle product updates (edit mode).
-const handleUpdate = async (updatedProduct: Product) => {
+const handleCreate = async (newProductInput: CreateProductInput) => {
+    let newProduct;
+    const form = new FormData()
+    const { image, ...productData } = newProductInput
+
     try {
-        // Create a FormData object.
-        const formData = new FormData();
-
-        // Destructure to separate the image file from the rest of the product data.
-        const { image, ...productData } = updatedProduct;
-
-        // Append the product data as a JSON string to a field called "data".
-        formData.append("data", JSON.stringify(productData));
-
-        // Append the image file if it exists and is indeed a File instance.
         if (image instanceof File) {
-            formData.append("image", image);
+            // 1.a) operations: the query and variables, with a null placeholder for the file
+            const operations = {
+                query: print(CREATE_PRODUCT_MUTATION),
+                variables: {
+                    input: {
+                        ...productData,
+                        image: null,
+                    }
+                }
+            }
+            form.append('operations', JSON.stringify(operations))
+
+            // 1.b) map: tell server that file "0" goes into variables.data.image
+            form.append('map', JSON.stringify({
+                '0': ['variables.input.image']
+            }))
+
+            // 1.c) attach the actual file
+            if (image instanceof File) {
+                form.append('0', image, image.name)
+            }
+
+            // 2) POST to /graphql
+            const res = await $api(graphqlUrl, {
+                method: 'POST',
+                body: form,
+            });
+
+            // Error handling
+            if (res.errors?.length) {
+                console.error('GraphQL errors:', res.errors)
+                return
+            }
+
+            // Pull out the created product
+            newProduct = res.data.createProduct
+        } else {
+            const { mutate: mutationCreateProduct } = useGqlMutation<{ createProduct: Product }>(CREATE_PRODUCT_MUTATION)
+            const res : { createProduct: Product } = await mutationCreateProduct({
+                input: productData
+            })
+            newProduct = res.createProduct
         }
 
-        // Send the PUT request with the FormData as body.
-        const res = await $api(`/admin/products/${updatedProduct.id}`, {
-            method: 'PUT',
-            body: formData,
-        });
-
-        if (!res?.id || !products.value) {
-            console.error('Failed to update product:', updatedProduct);
-            return;
+        // Add the created product to the list of products
+        if (dataProducts.value?.products) {
+            dataProducts.value.products.unshift(newProduct)
         }
-        // Update the product in your local state.
-        products.value = products.value.map(p =>
-            p.id === updatedProduct.id ? res : p
-        );
-        selectedProduct.value = null;
-    } catch (error) {
-        console.error('Failed to update product:', error);
+
+        // Close the dialog
+        createDialog.value = false
+
+    } catch (err) {
+        console.error('handleCreate failed:', err)
     }
-};
+}
 
-// Handle new product creation.
-const handleCreate = async (newProduct: Product) => {
+
+// Handle product updates (edit mode).
+const handleUpdate = async (updateReq: UpdateProductRequest) => {
+    let updated: Product
+    const { id, input } = updateReq
+    const { image, ...productData } = input as CreateProductInput
+    const form = new FormData()
+
     try {
-        // Create a FormData object.
-        const formData = new FormData();
+        if (image instanceof File) {
+            // 1) build the multipart payload
+            const operations = {
+                query: print(UPDATE_PRODUCT_MUTATION),
+                variables: {
+                    id,
+                    input: {
+                        ...productData,
+                        image: null,
+                    },
+                },
+            }
+            form.append('operations', JSON.stringify(operations))
 
-        // Destructure to separate the image file from the rest of the product data.
-        const { image, ...productData } = newProduct;
+            form.append('map', JSON.stringify({
+                '0': ['variables.input.image'],
+            }))
 
-        // Append the product data as a JSON string to a field called "data".
-        formData.append("data", JSON.stringify(productData));
+            form.append('0', image, image.name)
 
-        // Append the image file if it exists.
-        if (image) {
-            formData.append("image", image);
+            // 2) fire it
+            const res = await $api(graphqlUrl, {
+                method: 'POST',
+                body: form,
+            })
+
+            if (res.errors?.length) {
+                console.error('GraphQL errors:', res.errors)
+                return
+            }
+
+            updated = res.data.updateProduct
+
+        } else {
+            // no file — use normal composable
+            const { mutate: mutationUpdateProduct } =
+                useGqlMutation<{ updateProduct: Product }>(UPDATE_PRODUCT_MUTATION)
+
+            const { updateProduct } = await mutationUpdateProduct({
+                id,
+                input: productData,
+            })
+            updated = updateProduct
         }
 
-        const res : { createProduct: Product } = await mutationCreateProduct({
-            input: formData
-        })
-
-        const productCreated = res.createProduct
-
-        if (!productCreated?.id) {
-            console.error('Failed to create product:', newProduct);
-            return;
+        // 3) patch your local list in place
+        if (dataProducts.value?.products) {
+            const idx = dataProducts.value.products.findIndex(p => p.id === updated.id)
+            if (idx !== -1) {
+                dataProducts.value.products.splice(idx, 1, updated)
+            }
         }
-        // Prepend the new product to the computed products
-        products.value = [productCreated, ...products.value]
 
-        createDialog.value = false;
-    } catch (error) {
-        console.error('Failed to create product:', error);
+        // 4) clear selection / close dialog
+        selectedProduct.value = null
+    } catch (err) {
+        console.error('handleUpdate failed:', err)
     }
-};
+}
 
 </script>
