@@ -22,7 +22,7 @@
         </v-card>
 
         <v-data-table
-            v-if="products"
+            v-if="products.length > 0"
             :headers="headers"
             :items="products"
             fixed-header
@@ -35,8 +35,8 @@
               {value: -1, title: '$vuetify.dataFooter.itemsPerPageAll'}
             ]"
         >
-            <template v-slot:item.categoryId="{ value }">
-                {{ getCategoryName(value) }}
+            <template v-slot:item.category="{ value }">
+                {{ value.name }}
             </template>
             <template v-slot:item.price="{ value }">
                 {{ belPriceFormat.format(value) }}
@@ -106,21 +106,22 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-import { useAsyncData, useCategoriesStore, useNuxtApp } from '#imports'
+import { useCategoriesStore, useGqlQuery, useGqlMutation } from '#imports'
 import { useI18n } from 'vue-i18n'
 import type { Product, ProductCategory } from '~/types'
 import ProductDialog from '~/components/ProductDialog.vue'
+import gql from "graphql-tag";
+import { print } from "graphql";
 
 const { t, locale, availableLocales } = useI18n()
 
 // Categories store and API instance.
 const categoryStore = useCategoriesStore()
-const { $api } = useNuxtApp()
 
 // Define table headers.
 const headers = [
     { title: t('common.code'), align: 'start', key: 'code', value: 'code' },
-    { title: t('products.category'), align: 'start', key: 'categoryId', value: 'categoryId' },
+    { title: t('products.category'), align: 'start', key: 'category', value: 'category' },
     { title: t('common.name'), align: 'start', key: 'name', value: 'name' },
     { title: t('common.price'), align: 'end', key: 'price', value: 'price' },
     { title: t('common.visibility'), align: 'start', key: 'isVisible', value: 'isVisible', width: '100px' },
@@ -131,7 +132,7 @@ const headers = [
 
 // Helper: Check if a translation is complete.
 const hasTranslation = (product: Product, lang: string) => {
-    const translation = product.translations.find(t => t.locale === lang)
+    const translation = product.translations.find(t => t.language === lang)
     return translation && translation.name && translation.name.trim() !== ''
 }
 
@@ -154,31 +155,89 @@ const belPriceFormat = new Intl.NumberFormat('fr-BE', {
 
 const searchQuery = ref('')
 
-// Fetch products.
-const { data: products } = await useAsyncData<Product[], Product[]>(
-    'products',
-    () => $api<Product[]>('/admin/products'),
-    {
-        transform: (data: Product[]) => {
-            return data.map(product => {
-                const translation = product.translations.find(t => t.locale === locale.value)
-                return {
-                    ...product,
-                    name: translation ? translation.name : product.name
-                }
-            }) as Product[]
+const PRODUCTS_QUERY = gql`
+    query {
+        products {
+            id
+            price
+            code
+            slug
+            pieceCount
+            isVisible
+            isAvailable
+            isHalal
+            isVegan
+
+            name
+            description
+
+            category {
+                id
+                name
+            }
+            translations {
+                language
+                name
+                description
+            }
         }
     }
-)
+`
+
+const PRODUCT_CATEGORIES_QUERY = gql`
+    query {
+        productCategories {
+            id
+            name
+        }
+    }
+`
+
+const CREATE_PRODUCT_MUTATION = gql`
+    mutation($data: CreateProductInput!) {
+        createProduct(input: $data) {
+            id
+            price
+            code
+            slug
+            pieceCount
+            isVisible
+            isAvailable
+            isHalal
+            isVegan
+
+            name
+            description
+
+            category {
+                id
+                name
+            }
+            translations {
+                language
+                name
+                description
+            }
+        }
+    }
+`
+
+const { mutate: mutationCreateProduct } = useGqlMutation<{ createProduct: Product }>(CREATE_PRODUCT_MUTATION)
+
+// Fetch products
+const { data: dataProducts } = await useGqlQuery<{ products: Product[] }>(print(PRODUCTS_QUERY), {}, { immediate: true, cache: true})
+const products = computed(() => dataProducts.value?.products ?? [])
 
 // Fetch categories.
-const { data: categoriesData } = await useAsyncData<ProductCategory[]>('categories', () =>
-    $api('/categories', { headers: { 'Accept-Language': locale.value } })
+const { data: dataCategories } = await useGqlQuery<{ productCategories: ProductCategory[] }>(
+    print(PRODUCT_CATEGORIES_QUERY),
+    {},
+    { immediate: true }
 )
 
 // Save categories in the store.
-if (categoriesData.value) {
-    categoryStore.setCategories(categoriesData.value)
+if (dataCategories.value?.productCategories) {
+    categoryStore.setCategories(dataCategories.value?.productCategories)
 }
 const categories = computed(() => categoryStore.getCategories(locale.value))
 
@@ -256,18 +315,19 @@ const handleCreate = async (newProduct: Product) => {
             formData.append("image", image);
         }
 
-        // Send the POST request with the FormData as body.
-        const res = await $api('/admin/products', {
-            method: 'POST',
-            body: formData,
-        });
+        const res : { createProduct: Product } = await mutationCreateProduct({
+            input: formData
+        })
 
-        if (!res?.id || !products.value) {
+        const productCreated = res.createProduct
+
+        if (!productCreated?.id) {
             console.error('Failed to create product:', newProduct);
             return;
         }
-        // Prepend the new product to the list.
-        products.value = [res, ...products.value];
+        // Prepend the new product to the computed products
+        products.value = [productCreated, ...products.value]
+
         createDialog.value = false;
     } catch (error) {
         console.error('Failed to create product:', error);
