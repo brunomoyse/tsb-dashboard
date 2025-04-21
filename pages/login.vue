@@ -45,9 +45,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useNuxtApp, useCookie, useLocalePath, navigateTo } from '#imports'
+import { useNuxtApp, useLocalePath, navigateTo } from '#imports'
 import type {LoginResponse, User} from "~/types";
 import {useAuthStore} from '@/stores/auth'
+import gql from 'graphql-tag'
+import { print } from 'graphql'
 
 definePageMeta({
     public: true,
@@ -57,6 +59,26 @@ definePageMeta({
 const { $api } = useNuxtApp()
 const localePath = useLocalePath()
 const authStore = useAuthStore()
+
+const ME = gql`
+    query {
+        me {
+            id
+            email
+            firstName
+            lastName
+            phoneNumber
+            address {
+                id
+                streetName
+                houseNumber
+                municipalityName
+                postcode
+                distance
+            }
+        }
+    }
+`
 
 const email = ref('')
 const password = ref('')
@@ -85,9 +107,10 @@ const login = async (): Promise<boolean> => {
 
 const loginSuccess = async () => {
     if (import.meta.client) {
-        const user = await $api<User>('/me')
-        if (user) authStore.setUser(user)
+        const { data: dataUser } = await useGqlQuery<{ me: User }>(print(ME))
+        if (dataUser.value) authStore.setUser(dataUser.value.me)
     }
+    navigateTo(localePath('orders'))
 }
 
 const onSubmit = async () => {
