@@ -56,7 +56,7 @@ definePageMeta({
     layout: false
 })
 
-const { $api } = useNuxtApp()
+const { $api, $gqlFetch } = useNuxtApp()
 const localePath = useLocalePath()
 const authStore = useAuthStore()
 
@@ -107,8 +107,8 @@ const login = async (): Promise<boolean> => {
 
 const loginSuccess = async () => {
     if (import.meta.client) {
-        const { data: dataUser } = await useGqlQuery<{ me: User }>(print(ME))
-        if (dataUser.value) authStore.setUser(dataUser.value.me)
+        const data = await $gqlFetch<{ me: User }>(print(ME))
+        if (data) authStore.setUser(data.me)
     }
     navigateTo(localePath('orders'))
 }
