@@ -520,6 +520,7 @@ onMounted(() => {
     watch(orderCreated, (val) => {
         if (val?.orderCreated) {
             ordersStore.addOrder(val.orderCreated)
+            notificationSound()
         }
     })
 
@@ -532,6 +533,15 @@ const printReceipt = (order: Order) => {
         (window as any).PrintHandler.print(encodedItems);
     } else {
         console.error('🖨️ PrintHandler not available (are you in the WebView on Sunmi V2s?)');
+    }
+}
+
+const notificationSound = () => {
+    if (typeof window !== 'undefined' && 'SoundHandler' in window) {
+        // SoundHandler is injected from Android (Sunmi V2s)
+        (window as any).SoundHandler.playNotificationSound()
+    } else {
+        console.error('SoundHandler not available (are you in the WebView on Sunmi V2s?)');
     }
 }
 
