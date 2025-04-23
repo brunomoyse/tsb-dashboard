@@ -249,6 +249,7 @@ const ORDERS_QUERY = gql`
                 totalPrice
                 product {
                     id
+                    code
                     name
                     category {
                         id
