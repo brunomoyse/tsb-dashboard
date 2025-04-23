@@ -7,8 +7,8 @@ WORKDIR /usr/src/app
 # @TODO: Use .env file
 ENV DASHBOARD_BASE_URL="https://admin.nuagemagique.dev"
 ENV API_BASE_URL="https://nuagemagique.dev/api/v1"
-ENV SSE_URL="https://nuagemagique.dev/api/v1/sse"
 ENV S3_BUCKET_URL="https://d1sq9yypil8nox.cloudfront.net"
+ENV GRAPHQL_WS_URL="wss://nuagemagique.dev/api/v1/graphql"
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
