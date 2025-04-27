@@ -31,6 +31,10 @@
             <NuxtLinkLocale to="orders">
                 <v-btn color="black">{{ t('navigation.orders') }}</v-btn>
             </NuxtLinkLocale>
+
+            <NuxtLinkLocale to="tracking">
+                <v-btn color="black">Tracking</v-btn>
+            </NuxtLinkLocale>
         </v-app-bar>
         <v-main>
             <nuxt-page />
