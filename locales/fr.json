@@ -41,7 +41,7 @@
     "newEstimate": "Nouvelle estimation",
     "minutes": "minutes",
     "createdAt": "Créée le",
-    "preferredTime": "Heure préférée",
+    "preferredTime": "Heure souhaitée",
     "estimatedTime": "Heure estimée",
     "updateTime": "Mettre à jour l'heure",
     "asap": "Dès que possible",
@@ -70,7 +70,7 @@
       "failed": "Échoué"
     },
     "deliveryOption": {
-      "pickup": "À emporter",
+      "pickup": "Emporter",
       "delivery": "Livraison"
     },
     "payment": {
@@ -85,8 +85,8 @@
       }
     },
     "paymentMethod": {
-      "online": "Paiement en ligne",
-      "cash": "Espèces"
+      "online": "En ligne",
+      "cash": "Cash"
     }
   },
 
