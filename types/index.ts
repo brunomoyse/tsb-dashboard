@@ -103,6 +103,7 @@ export interface Order {
     createdAt: string;
     deliveryFee: string | null;
     discountAmount: string;
+    preferredReadyTime: string | null;
     estimatedReadyTime: string | null;
     id: string;
     isOnlinePayment: boolean;
