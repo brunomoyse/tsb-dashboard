@@ -1,6 +1,7 @@
 <template>
     <v-container class="pa-0">
         <!-- Toolbar / Search -->
+        <!--
         <v-toolbar density="compact" class="elevation-2 mb-4">
             <v-text-field
                 v-model="searchQuery"
@@ -14,7 +15,7 @@
                 <v-icon>mdi-filter-variant</v-icon>
             </v-btn>
         </v-toolbar>
-
+        -->
         <!-- Order List with Transition Group -->
         <transition-group v-if="ordersStore.orders.length" name="order" tag="div">
             <div
@@ -49,12 +50,12 @@
                                     </div>
                                     <div class="text-caption text-medium-emphasis">
                                         {{ t('orders.createdAt') }}: {{ formatDate(order.createdAt) }}
-                                        <span v-if="order.preferredReadyTime" class="ml-2 font-weight-bold text-red">
-                                            <span class="text-black">• </span>{{ t('orders.preferredTime') }}: {{ formatTimeOnly(order.preferredReadyTime) }}
-                                        </span>
-                                        <span v-if="order.estimatedReadyTime">
-                                             <span class="text-black"> • </span>{{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime) }}
-                                        </span>
+                                        <div v-if="order.preferredReadyTime" class="font-weight-bold text-red">
+                                            {{ t('orders.preferredTime') }}: {{ formatTimeOnly(order.preferredReadyTime) }}
+                                        </div>
+                                        <div v-if="order.estimatedReadyTime">
+                                             {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -66,21 +67,21 @@
                                     <div class="d-flex align-center gap-2">
                                         <template v-if="order.isOnlinePayment">
                                             <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
-                                            {{ t('orders.paymentMethod.online') }}
+                                            <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.online') }}</span>
                                         </template>
                                         <template v-else>
                                             <v-icon small class="mr-1">mdi-cash-multiple</v-icon>
-                                            {{ t('orders.paymentMethod.cash') }}
+                                            <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.cash') }}</span>
                                         </template>
                                     </div>
                                     <div class="d-flex align-center gap-2 mt-1">
                                         <template v-if="order.type === 'DELIVERY'">
                                             <v-icon small class="mr-1">mdi-moped-outline</v-icon>
-                                            {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
+                                            <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
                                         </template>
                                         <template v-else>
                                             <v-icon small class="mr-1">mdi-shopping-outline</v-icon>
-                                            {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
+                                            <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
                                         </template>
                                     </div>
                                 </div>
@@ -118,13 +119,12 @@
             <v-card class="rounded-t-xl pa-4">
                 <v-card-title class="d-flex justify-space-between align-center">
                     <div>
-                        <span class="text-h6">{{ t('orders.orderManagement') }}</span>
-                        <div class="text-caption">
+                        <div>
                             {{ selectedOrder ? formatOrderSummary(selectedOrder) : '' }}
                         </div>
                     </div>
                     <div class="d-flex align-center gap-2">
-                        <v-btn icon @click="reprintOrder">
+                        <v-btn icon @click="reprintOrder" class="mr-4">
                             <v-tooltip activator="parent" location="top">{{ t('orders.reprint') }}</v-tooltip>
                             <v-icon>mdi-printer</v-icon>
                         </v-btn>

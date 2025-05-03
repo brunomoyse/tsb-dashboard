@@ -6,7 +6,13 @@ import { createVuetify } from 'vuetify'
 
 export default defineNuxtPlugin((app) => {
     const vuetify = createVuetify({
-        // ... your configuration
+        defaults: {
+            global: {
+                font: {
+                    size: '0.875rem',  // affects all text in v-app
+                }
+            }
+        }
     })
     app.vueApp.use(vuetify)
 })
