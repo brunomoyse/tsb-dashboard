@@ -603,6 +603,9 @@ onMounted(() => {
                     id
                     status
                     estimatedReadyTime
+                    payment {
+                        status
+                    }
                 }
             }
         `),
@@ -645,9 +648,12 @@ onMounted(() => {
                     orderExtra
 
                     address {
+                        id
                         streetName
+                        houseNumber
                         municipalityName
                         postcode
+                        distance
                     }
                     customer {
                         id
@@ -663,6 +669,7 @@ onMounted(() => {
                         totalPrice
                         product {
                             id
+                            code
                             name
                             category {
                                 id
