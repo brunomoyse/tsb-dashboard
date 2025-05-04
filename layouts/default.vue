@@ -68,6 +68,6 @@ const onLanguageChange = (newLocale: "fr" | "en" | "zh") => {
 
 <style>
 html {
-    font-size: 13px; /* default is usually 16px */
+    font-size: 14px; /* default is usually 16px */
 }
 </style>
