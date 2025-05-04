@@ -107,10 +107,6 @@
 
                 <v-divider class="mb-2"></v-divider>
 
-                <div class="d-flex">
-
-                </div>
-
                 <v-card-text class="pt-2">
                     <!-- Time Management Section -->
                     <div class="mb-6">
@@ -182,6 +178,17 @@
                         </div>
                     </div>
                 </v-card-text>
+
+                <v-card-actions class="justify-center px-4 pb-4">
+                    <v-btn
+                        :variant="canSave ? 'tonal' : 'outlined'"
+                        :color="canSave ? 'primary' : 'grey lighten-2'"
+                        :disabled="!canSave"
+                        @click="updateOrder(stagedStatus, /* estimatedReadyTime unused, recalculated internally */)"
+                    >
+                        {{ t('common.save') }}
+                    </v-btn>
+                </v-card-actions>
             </v-card>
         </v-bottom-sheet>
 
@@ -221,7 +228,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {formatDate, getStreetAndDistance, formatAddress, formatTimeOnly, timeToRFC3339} from '~/utils/utils'
+import {formatDate, getStreetAndDistance, formatTimeOnly, timeToRFC3339} from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import gql from "graphql-tag"
 import { print } from 'graphql'
@@ -229,8 +236,8 @@ import { print } from 'graphql'
 const { t } = useI18n()
 const ordersStore = useOrdersStore()
 const estimatedReadyTime = ref<string | null>(null)
-const sliderMinutes = ref<number>(30)
-const stagedStatus = ref<OrderStatus | null>(null)
+const sliderMinutes = ref<number>(0)
+const stagedStatus = ref<OrderStatus | undefined>(undefined)
 
 const sliderTicks = computed(() => {
     const ticks: Record<number, string> = {}
@@ -239,10 +246,6 @@ const sliderTicks = computed(() => {
     }
     return ticks
 })
-
-const hasTimeChanged = computed(() => {
-    return sliderDeltaMinutes.value !== 0;
-});
 
 watch(sliderMinutes, () => {
     updateEstimatedTimeFromSlider()
@@ -315,7 +318,7 @@ const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(U
 // State
 const selectedOrder = ref<Order | null>(null)
 const showBottomSheet = ref(false)
-const sliderDeltaMinutes = ref<number>(30);
+const sliderDeltaMinutes = ref<number>();
 const baseEstimatedTime = ref<Date | null>(null);
 
 // For cancellation confirmation dialog
@@ -437,8 +440,8 @@ const openBottomSheet = (order: Order) => {
             // Use the actual parsed date as base
             baseEstimatedTime.value = estimatedDate;
         } else {
-            sliderDeltaMinutes.value = 30;
-            // If no estimate exists, use current time + 30 minutes as base
+            sliderDeltaMinutes.value = 0;
+            // If no estimate exists, use current time + x minutes as base
             baseEstimatedTime.value = new Date();
         }
     } catch (e) {
@@ -455,7 +458,7 @@ const updateEstimatedTimeFromSlider = () => {
         const now = new Date();
 
         // Ensure sliderMinutes is a valid number between 15-90
-        const validMinutes = Math.max(15, Math.min(90, Number(sliderMinutes.value) || 30));
+        const validMinutes = Math.max(15, Math.min(90, Number(sliderMinutes.value) || 0));
 
         // Calculate target time
         const targetTime = new Date(now.getTime() + validMinutes * 60000);
@@ -470,7 +473,7 @@ const updateEstimatedTimeFromSlider = () => {
     } catch (e) {
         console.error('Time calculation error:', e);
         estimatedReadyTime.value = '--:--';
-        sliderMinutes.value = 30;
+        sliderMinutes.value = 0;
     }
 };
 
@@ -482,15 +485,20 @@ const currentEstimatedTime = computed(() => {
 });
 
 const newEstimatedTime = computed(() => {
-    if (!baseEstimatedTime.value) return '';
+    if (!baseEstimatedTime.value || !sliderDeltaMinutes.value) return '';
     const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000);
     return formatTimeOnly(newTime.toISOString());
 });
 
 const handleStatusButton = (newStatus: OrderStatus) => {
-    if (stagedStatus.value === newStatus) stagedStatus.value = null
+    if (stagedStatus.value === newStatus) stagedStatus.value = undefined
     else stagedStatus.value = newStatus
 }
+
+const canSave = computed(() => {
+    console.log('sliderDeltaMinutes', sliderDeltaMinutes.value)
+    return stagedStatus.value || (sliderDeltaMinutes.value ?? 0) > 0
+})
 
 const updateOrder = async (newStatus?: OrderStatus, estimatedReadyTime?: string) => {
     if (!selectedOrder.value) return
@@ -498,7 +506,7 @@ const updateOrder = async (newStatus?: OrderStatus, estimatedReadyTime?: string)
         openCancelDialog()
     }
     let status = newStatus;
-    if (baseEstimatedTime.value) {
+    if (baseEstimatedTime.value && sliderDeltaMinutes.value) {
         const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000);
         estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString()));
     }
@@ -570,12 +578,6 @@ const cancelCancellation = () => {
     if (cancelTimer) {
         clearInterval(cancelTimer)
         cancelTimer = undefined
-    }
-}
-
-const vibrate = () => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate(50)
     }
 }
 
