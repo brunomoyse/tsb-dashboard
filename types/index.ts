@@ -147,3 +147,8 @@ export interface Address {
     postcode: string;
     distance: number;
 }
+
+export interface UpdateOrderInput {
+    status?: OrderStatus;
+    estimatedReadyTime?: string;
+}

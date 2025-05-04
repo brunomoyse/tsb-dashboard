@@ -390,9 +390,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
             updated = res.data.updateProduct
 
         } else {
-            // no file — use normal composable
-            const { mutate: mutationUpdateProduct } =
-                useGqlMutation<{ updateProduct: Product }>(UPDATE_PRODUCT_MUTATION)
+            const { mutate: mutationUpdateProduct } = useGqlMutation<{ updateProduct: Product }>(UPDATE_PRODUCT_MUTATION)
 
             const { updateProduct } = await mutationUpdateProduct({
                 id,
