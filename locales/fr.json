@@ -46,7 +46,7 @@
     "updateTime": "Mettre à jour l'heure",
     "asap": "Dès que possible",
     "orderManagement": "Gestion de commande",
-    "reprint": "Réimprimer le ticket",
+    "print": "Réimprimer le ticket",
     "confirmCancelTitle": "Confirmer l'annulation",
     "confirmCancelMessage": "Êtes-vous sûr de vouloir annuler cette commande ?",
     "refundNotice": "Un remboursement sera effectué pour les paiements en ligne",
