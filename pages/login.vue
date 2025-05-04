@@ -1,125 +1,126 @@
 <template>
-    <v-container class="pa-4" fluid>
-        <v-alert type="error" v-if="errorMessage" class="mb-4" @click="errorMessage = ''">
-            {{ errorMessage }}
-        </v-alert>
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div class="w-full max-w-sm">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Login</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form class="space-y-4" @submit="onSubmit">
+                        <!-- Email -->
+                        <FormField
+                            name="email"
+                            :validate-on-blur="!isFieldDirty('email')"
+                            v-slot="{ field: componentField, errorMessage: emailError }"
+                        >
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        autocomplete="email"
+                                        v-bind="componentField"
+                                    />
+                                </FormControl>
+                                <FormMessage>{{ emailError }}</FormMessage>
+                            </FormItem>
+                        </FormField>
 
-        <v-row align="center" justify="center">
-            <v-col cols="12" sm="8" md="4">
-                <v-card>
-                    <v-card-title>
-                        Login
-                    </v-card-title>
-                    <v-card-text>
-                        <v-form ref="form" v-model="valid" @submit.prevent="onSubmit">
-                            <v-text-field
-                                autocomplete="email"
-                                name="email"
-                                label="Email"
-                                v-model="email"
-                                :rules="[rules.required]"
-                                required
-                            ></v-text-field>
-                            <v-text-field
-                                autocomplete="current-password"
-                                name="password"
-                                label="Password"
-                                type="password"
-                                v-model="password"
-                                :rules="[rules.required]"
-                                required
-                            ></v-text-field>
-                            <v-card-actions>
-                                <v-btn type="submit" :disabled="!valid" color="primary">
-                                    Submit
-                                </v-btn>
-                            </v-card-actions>
-                        </v-form>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
-
-    </v-container>
+                        <!-- Password -->
+                        <FormField
+                            name="password"
+                            :validate-on-blur="!isFieldDirty('password')"
+                            v-slot="{ field: componentField, errorMessage: passwordError }"
+                        >
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        autocomplete="current-password"
+                                        v-bind="componentField"
+                                    />
+                                </FormControl>
+                                <FormMessage>{{ passwordError }}</FormMessage>
+                            </FormItem>
+                        </FormField>
+                        <Button type="submit" class="w-full" :disabled="isSubmitting">
+                            {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useNuxtApp, useLocalePath, navigateTo } from '#imports'
-import type {LoginResponse, User} from "~/types";
-import {useAuthStore} from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import * as z from 'zod'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 
-definePageMeta({
-    public: true,
-    layout: false
-})
+// Page meta
+definePageMeta({ public: true, layout: false })
 
+// Validation schema
+const loginSchema = toTypedSchema(
+    z.object({
+        email: z.string().email('Must be a valid email'),
+        password: z.string().min(1, 'Password is required'),
+    })
+)
+
+const { handleSubmit, isSubmitting, isFieldDirty } = useForm({ validationSchema: loginSchema })
+
+// GraphQL and API
 const { $api, $gqlFetch } = useNuxtApp()
 const localePath = useLocalePath()
 const authStore = useAuthStore()
 
 const ME = gql`
-    query {
-        me {
-            id
-            email
-            firstName
-            lastName
-            phoneNumber
-            address {
-                id
-                streetName
-                houseNumber
-                municipalityName
-                postcode
-                distance
-            }
-        }
+  query {
+    me {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      address {
+        id
+        streetName
+        houseNumber
+        municipalityName
+        postcode
+        distance
+      }
     }
+  }
 `
 
-const email = ref('')
-const password = ref('')
-const valid = ref(false)
-
-const rules = {
-    required: (value: unknown) => !!value || 'This field is required.'
-}
-
-// Regular email/password login
-const errorMessage = ref('')
-
-const login = async (): Promise<boolean> => {
-    errorMessage.value = ''
+// Submit handler
+const onSubmit = handleSubmit(async (values) => {
     try {
-        await $api<LoginResponse>('/login', {
+        await $api('/login', {
             method: 'POST',
-            body: { email: email.value, password: password.value },
-        });
-        return true
-    } catch (error: any) {
-        errorMessage.value = 'Invalid email or password'
-        return false
-    }
-}
-
-const loginSuccess = async () => {
-    if (import.meta.client) {
-        const data = await $gqlFetch<{ me: User }>(print(ME))
+            body: values,
+        })
+        // fetch user
+        const data = await $gqlFetch<{ me: any }>(print(ME))
         if (data) authStore.setUser(data.me)
+        navigateTo(localePath('orders'))
+    } catch (err: any) {
+        console.error(err)
     }
-    navigateTo(localePath('orders'))
-}
-
-const onSubmit = async () => {
-    if (!valid.value) return
-
-    const success = await login();
-    if (!success) return // don't redirect if login failed
-
-    await loginSuccess()
-    navigateTo(localePath('orders'));
-}
+})
 </script>
