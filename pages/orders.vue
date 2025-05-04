@@ -96,7 +96,7 @@
                 <v-card-title class="flex justify-space-between p-0">
                     <div class="d-flex">
                         <div></div>
-                        <v-btn icon flat class="mr-auto" @click="printOrder">
+                        <v-btn icon flat class="mr-auto" @click="printReceipt">
                             <v-icon>mdi-printer</v-icon>
                         </v-btn>
                         <v-btn icon flat class="ms-auto" @click="showBottomSheet = false">
@@ -281,6 +281,7 @@ const ORDERS_QUERY = gql`
                 id
                 firstName
                 lastName
+                phoneNumber
             }
             payment {
                 status
@@ -527,20 +528,18 @@ const updateOrder = async (newStatus?: OrderStatus, estimatedReadyTime?: string)
     }
 }
 
-const printOrder = () => {
-    if (selectedOrder.value) printReceipt(selectedOrder.value)
-}
-
 const formatOrderSummary = (order: Order) => {
     return order.type === 'DELIVERY'
         ? t('orders.delivery')
         : t('orders.pickup')
 }
 
-const printReceipt = (order: Order) => {
-    const encodedItems: string = JSON.stringify(order.items);
+const printReceipt = () => {
+    if (!selectedOrder.value) return
+
+    const encodedOrder: string = JSON.stringify(selectedOrder.value);
     if (typeof window !== 'undefined' && 'PrintHandler' in window) {
-        (window as any).PrintHandler.print(encodedItems);
+        (window as any).PrintHandler.print(encodedOrder);
     } else {
         console.error('🖨️ PrintHandler not available');
     }
