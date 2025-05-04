@@ -22,8 +22,6 @@
                 v-for="order in ordersStore.orders"
                 :key="order.id"
                 class="order-item"
-                @touchstart="touchStart($event, order)"
-                @touchend="touchEnd($event, order)"
             >
                 <v-card
                     class="ma-2 rounded-lg"
@@ -456,27 +454,6 @@ if (dataOrders.value?.orders) {
     ordersStore.setOrders(dataOrders.value?.orders)
 }
 
-// Touch events for swipe to change status
-const touchStart = (e: TouchEvent, order: Order) => {
-    touchStartX.value = e.touches[0].clientX
-}
-const touchEnd = (e: TouchEvent, order: Order) => {
-    const touchEndX = e.changedTouches[0].clientX
-    const deltaX = touchEndX - touchStartX.value
-    if (Math.abs(deltaX) > 50) {
-        // For swipe, simulate moving one step in allowed statuses if possible
-        const allowed = getAllowedStatuses(order.status as OrderStatus, order.type)
-        if (allowed.length) {
-            const currentIndex = allowed.indexOf(order.status)
-            const newStatus = deltaX > 0
-                ? allowed[Math.max(currentIndex - 1, 0)]
-                : allowed[Math.min(currentIndex + 1, allowed.length - 1)]
-            handleStatusButton(newStatus)
-            vibrate()
-        }
-    }
-}
-
 // Component methods
 const openBottomSheet = (order: Order) => {
     selectedOrder.value = order;
@@ -650,14 +627,11 @@ const vibrate = () => {
 const cardStyle = (order: Order) => {
     if (order.status === 'PENDING') {
         return {
-            transform: 'scale(1.02)',
-            transition: 'transform 0.2s',
             border: '3px solid #ff0000',
             boxShadow: '0 0 15px rgba(255, 0, 0, 0.5)'
         }
     } else {
         return {
-            transform: order.id === selectedOrder.value?.id ? 'scale(0.98)' : 'none',
             transition: 'transform 0.2s'
         }
     }
