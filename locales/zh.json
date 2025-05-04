@@ -46,7 +46,7 @@
     "updateTime": "更新时间",
     "asap": "尽快",
     "orderManagement": "订单管理",
-    "reprint": "重新打印小票",
+    "print": "重新打印小票",
     "confirmCancelTitle": "确认取消",
     "confirmCancelMessage": "确定要取消此订单吗？",
     "refundNotice": "在线支付订单将自动退款",

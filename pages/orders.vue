@@ -1,111 +1,89 @@
 <template>
     <v-container class="pa-0">
-        <!-- Toolbar / Search -->
-        <!--
-        <v-toolbar density="compact" class="elevation-2 mb-4">
-            <v-text-field
-                v-model="searchQuery"
-                :label="t('orders.search')"
-                prepend-inner-icon="mdi-magnify"
-                single-line
-                hide-details
-                density="compact"
-            ></v-text-field>
-            <v-btn icon>
-                <v-icon>mdi-filter-variant</v-icon>
-            </v-btn>
-        </v-toolbar>
-        -->
         <!-- Order List with Transition Group -->
-        <transition-group v-if="ordersStore.orders.length" name="order" tag="div">
-            <div
-                v-for="order in ordersStore.orders"
-                :key="order.id"
-                class="order-item"
-            >
-                <v-card
-                    class="ma-2 rounded-lg"
-                    elevation="2"
-                    :style="cardStyle(order)"
-                    @click="openBottomSheet(order)"
+        <v-card
+            v-if="ordersStore.orders.length"
+            v-for="order in ordersStore.orders"
+            :key="order.id"
+            class="order-item ma-2 rounded-lg"
+            elevation="2"
+            :style="cardStyle(order)"
+            @click="openBottomSheet(order)"
+        >
+            <v-card-text class="d-flex align-center">
+                <!-- Status Indicator -->
+                <v-icon
+                    large
+                    :color="getStatusColor(order.status)"
+                    class="mr-3"
                 >
-                    <v-card-text class="d-flex align-center">
-                        <!-- Status Indicator -->
-                        <v-icon
-                            large
-                            :color="getStatusColor(order.status)"
-                            class="mr-3"
-                        >
-                            {{ getStatusIcon(order.status) }}
-                        </v-icon>
+                    {{ getStatusIcon(order.status) }}
+                </v-icon>
 
-                        <!-- Order Info -->
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-space-between">
-                                <div>
-                                    <div class="text-body-1 font-weight-bold">
-                                        {{ order.type === 'DELIVERY' ? getStreetAndDistance(order.address) : t('orders.pickup') }}
-                                    </div>
-                                    <div class="text-caption text-medium-emphasis">
-                                        {{ t('orders.createdAt') }}: {{ formatDate(order.createdAt) }}
-                                        <div v-if="order.preferredReadyTime" class="font-weight-bold text-red">
-                                            {{ t('orders.preferredTime') }}: {{ formatTimeOnly(order.preferredReadyTime) }}
-                                        </div>
-                                        <div v-if="order.estimatedReadyTime">
-                                             {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime) }}
-                                        </div>
-                                    </div>
-                                </div>
+                <!-- Order Info -->
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-space-between">
+                        <div>
+                            <div class="text-body-1 font-weight-bold">
+                                {{ order.type === 'DELIVERY' ? getStreetAndDistance(order.address) : t('orders.pickup') }}
                             </div>
-
-                            <v-divider class="my-2" />
-
-                            <div class="d-flex justify-space-between align-center">
-                                <div>
-                                    <div class="d-flex align-center gap-2">
-                                        <template v-if="order.isOnlinePayment">
-                                            <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
-                                            <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.online') }}</span>
-                                        </template>
-                                        <template v-else>
-                                            <v-icon small class="mr-1">mdi-cash-multiple</v-icon>
-                                            <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.cash') }}</span>
-                                        </template>
-                                    </div>
-                                    <div class="d-flex align-center gap-2 mt-1">
-                                        <template v-if="order.type === 'DELIVERY'">
-                                            <v-icon small class="mr-1">mdi-moped-outline</v-icon>
-                                            <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
-                                        </template>
-                                        <template v-else>
-                                            <v-icon small class="mr-1">mdi-shopping-outline</v-icon>
-                                            <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
-                                        </template>
-                                    </div>
+                            <div class="text-caption text-medium-emphasis">
+                                {{ t('orders.createdAt') }}: {{ formatDate(order.createdAt) }}
+                                <div v-if="order.preferredReadyTime" class="font-weight-bold text-red">
+                                    {{ t('orders.preferredTime') }}: {{ formatTimeOnly(order.preferredReadyTime) }}
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <!-- Payment Status Chip -->
-                                    <v-chip
-                                        :color="getPaymentStatusColor(order.payment?.status)"
-                                        size="small"
-                                    >
-                                        {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
-                                    </v-chip>
-                                    <!-- Order Status Chip -->
-                                    <v-chip
-                                        :color="getStatusColor(order.status)"
-                                        size="small"
-                                    >
-                                        {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
-                                    </v-chip>
+                                <div v-if="order.estimatedReadyTime">
+                                    {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime) }}
                                 </div>
                             </div>
                         </div>
-                    </v-card-text>
-                </v-card>
-            </div>
-        </transition-group>
+                    </div>
 
+                    <v-divider class="my-2" />
+
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <div class="d-flex align-center gap-2">
+                                <template v-if="order.isOnlinePayment">
+                                    <v-icon small class="mr-1">mdi-credit-card-outline</v-icon>
+                                    <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.online') }}</span>
+                                </template>
+                                <template v-else>
+                                    <v-icon small class="mr-1">mdi-cash-multiple</v-icon>
+                                    <span style="font-size:0.75rem;">{{ t('orders.paymentMethod.cash') }}</span>
+                                </template>
+                            </div>
+                            <div class="d-flex align-center gap-2 mt-1">
+                                <template v-if="order.type === 'DELIVERY'">
+                                    <v-icon small class="mr-1">mdi-moped-outline</v-icon>
+                                    <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
+                                </template>
+                                <template v-else>
+                                    <v-icon small class="mr-1">mdi-shopping-outline</v-icon>
+                                    <span style="font-size:0.75rem;">{{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <!-- Payment Status Chip -->
+                            <v-chip
+                                :color="getPaymentStatusColor(order.payment?.status)"
+                                size="small"
+                            >
+                                {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+                            </v-chip>
+                            <!-- Order Status Chip -->
+                            <v-chip
+                                :color="getStatusColor(order.status)"
+                                size="small"
+                            >
+                                {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
+                            </v-chip>
+                        </div>
+                    </div>
+                </div>
+            </v-card-text>
+        </v-card>
         <!-- Empty State -->
         <v-card v-else class="ma-4 text-center pa-6">
             <v-icon size="64" class="mb-2">mdi-package-variant-closed</v-icon>
@@ -114,25 +92,24 @@
 
         <!-- Bottom Sheet for Order Management -->
         <v-bottom-sheet v-model="showBottomSheet" inset>
-            <v-card class="rounded-t-xl pa-4">
-                <v-card-title class="d-flex justify-space-between align-center">
-                    <div>
-                        <div>
-                            {{ selectedOrder ? formatOrderSummary(selectedOrder) : '' }}
-                        </div>
-                    </div>
-                    <div class="d-flex align-center gap-2">
-                        <v-btn icon @click="reprintOrder" class="mr-4">
-                            <v-tooltip activator="parent" location="top">{{ t('orders.reprint') }}</v-tooltip>
+            <v-card class="rounded-t-xl px-4">
+                <v-card-title class="flex justify-space-between p-0">
+                    <div class="d-flex">
+                        <div></div>
+                        <v-btn icon flat class="mr-auto" @click="printOrder">
                             <v-icon>mdi-printer</v-icon>
                         </v-btn>
-                        <v-btn icon @click="showBottomSheet = false">
+                        <v-btn icon flat class="ms-auto" @click="showBottomSheet = false">
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
                     </div>
                 </v-card-title>
 
-                <v-divider class="my-2"></v-divider>
+                <v-divider class="mb-2"></v-divider>
+
+                <div class="d-flex">
+
+                </div>
 
                 <v-card-text class="pt-2">
                     <!-- Time Management Section -->
@@ -153,7 +130,7 @@
                         <v-slider
                             v-model="sliderDeltaMinutes"
                             :min="0"
-                            :max="120"
+                            :max="90"
                             :step="5"
                             thumb-label="always"
                             :thumb-size="24"
@@ -170,52 +147,40 @@
 
                         <!-- New Estimate Display -->
                         <div class="d-flex justify-space-between text-caption text-medium-emphasis">
-                        <span>
-                            {{ t('orders.newEstimate') }}:
-                            <span class="font-weight-bold text-primary">
-                                {{ newEstimatedTime }}
+                            <span>
+                                {{ t('orders.newEstimate') }}:
+                                <span class="font-weight-bold text-primary">
+                                    {{ newEstimatedTime }}
+                                </span>
                             </span>
-                        </span>
-                            <v-btn
-                                color="primary"
-                                variant="tonal"
-                                @click="saveEstimatedTime"
-                                :disabled="!hasTimeChanged"
-                                size="small"
-                            >
-                                {{ t('orders.updateTime') }}
-                            </v-btn>
                         </div>
                     </div>
 
                     <!-- Status Update Section -->
-                    <div class="text-caption text-medium-emphasis mb-2">
-                        {{ t('orders.updateStatus') }}
-                    </div>
-                    <v-row class="justify-center" align="stretch" dense>
-                        <v-col
-                            v-for="status in availableStatuses"
-                            :key="status"
-                            cols="6"
-                            sm="4"
-                            class="d-flex"
-                        >
-                            <v-btn
-                                block
-                                large
+                    <div class="mb-4">
+                        <div class="text-caption text-medium-emphasis mb-2">
+                            {{ t('orders.updateStatus') }}
+                        </div>
+
+                        <div class="d-flex flex-column">
+                            <v-chip
+                                v-for="status in availableStatuses"
+                                :key="status"
+                                class="w-100 mb-2"
                                 variant="tonal"
-                                :color="getStatusColor(status)"
-                                class="mx-auto my-2"
+                                :color="stagedStatus === status
+                                    ? getStatusColor(status)
+                                    : 'grey lighten-2'"
+                                :text-color="stagedStatus === status
+                                    ? 'white'
+                                    : 'rgba(0,0,0,0.7)'"
                                 @click="handleStatusButton(status)"
-                                style="min-height: 56px;"
                             >
-                                <v-icon left class="mr-1">{{ getStatusIcon(status) }}</v-icon>
-                                <span class="text-subtitle-2">
-                                    {{ t(`orders.status.${status.toLowerCase()}`) }}
-                                </span>
-                            </v-btn>
-                        </v-col>
-                    </v-row>
+                                <v-icon left class="mr-2">{{ getStatusIcon(status) }}</v-icon>
+                                {{ t(`orders.status.${status.toLowerCase()}`) }}
+                            </v-chip>
+                        </div>
+                    </div>
                 </v-card-text>
             </v-card>
         </v-bottom-sheet>
@@ -265,6 +230,7 @@ const { t } = useI18n()
 const ordersStore = useOrdersStore()
 const estimatedReadyTime = ref<string | null>(null)
 const sliderMinutes = ref<number>(30)
+const stagedStatus = ref<OrderStatus | null>(null)
 
 const sliderTicks = computed(() => {
     const ticks: Record<number, string> = {}
@@ -347,10 +313,8 @@ const UPDATE_ORDER_MUTATION = gql`
 const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
 
 // State
-const searchQuery = ref('')
 const selectedOrder = ref<Order | null>(null)
 const showBottomSheet = ref(false)
-const touchStartX = ref(0)
 const sliderDeltaMinutes = ref<number>(30);
 const baseEstimatedTime = ref<Date | null>(null);
 
@@ -510,19 +474,6 @@ const updateEstimatedTimeFromSlider = () => {
     }
 };
 
-const saveEstimatedTime = async () => {
-    if (!selectedOrder.value || !baseEstimatedTime.value) return;
-
-    // Calculate new time based on delta
-    const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000);
-
-    await updateOrder(
-        undefined,
-        timeToRFC3339(formatTimeOnly(newTime.toISOString()))
-    );
-};
-
-
 const hasExistingEstimate = computed(() => !!selectedOrder.value?.estimatedReadyTime);
 
 const currentEstimatedTime = computed(() => {
@@ -537,17 +488,21 @@ const newEstimatedTime = computed(() => {
 });
 
 const handleStatusButton = (newStatus: OrderStatus) => {
-    if (newStatus === 'CANCELLED') {
-        openCancelDialog()
-    } else {
-        updateOrder(newStatus)
-    }
+    if (stagedStatus.value === newStatus) stagedStatus.value = null
+    else stagedStatus.value = newStatus
 }
 
 const updateOrder = async (newStatus?: OrderStatus, estimatedReadyTime?: string) => {
     if (!selectedOrder.value) return
-
+    if (newStatus === 'CANCELLED') {
+        openCancelDialog()
+    }
     let status = newStatus;
+    if (baseEstimatedTime.value) {
+        const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000);
+        estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString()));
+    }
+
     try {
         const res = await mutationUpdateOrder({
             id: selectedOrder.value.id,
@@ -564,13 +519,13 @@ const updateOrder = async (newStatus?: OrderStatus, estimatedReadyTime?: string)
     }
 }
 
-const reprintOrder = () => {
+const printOrder = () => {
     if (selectedOrder.value) printReceipt(selectedOrder.value)
 }
 
 const formatOrderSummary = (order: Order) => {
     return order.type === 'DELIVERY'
-        ? `${t('orders.delivery')}: ${formatAddress(order.address)}`
+        ? t('orders.delivery')
         : t('orders.pickup')
 }
 
@@ -593,7 +548,7 @@ const notificationSound = () => {
 
 // Cancellation confirmation dialog
 const openCancelDialog = () => {
-    cancelDelay.value = 5
+    cancelDelay.value = 3
     showCancelDialog.value = true
     cancelTimer = window.setInterval(() => {
         if (cancelDelay.value > 0) {

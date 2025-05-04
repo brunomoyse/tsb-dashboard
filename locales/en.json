@@ -46,7 +46,7 @@
     "updateTime": "Update Time",
     "asap": "ASAP",
     "orderManagement": "Order Management",
-    "reprint": "Reprint Ticket",
+    "print": "Print Ticket",
     "confirmCancelTitle": "Confirm Cancellation",
     "confirmCancelMessage": "Are you sure you want to cancel this order?",
     "refundNotice": "A refund will be processed for online payments",
