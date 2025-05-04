@@ -1,24 +1,21 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-
-import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
+  ssr: true,
+  css: ["~/assets/css/main.css"],
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  build: {
-    transpile: ['vuetify'],
-  },
   modules: [
-    (_options, nuxt) => {
-      nuxt.hooks.hook('vite:extendConfig', (config) => {
-        // @ts-expect-error
-        config.plugins.push(vuetify({ autoImport: true }))
-      })
-    },
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     'pinia-plugin-persistedstate/nuxt'
   ],
+  vite: {
+    plugins: [
+      tailwindcss(),
+    ],
+  },
 
   runtimeConfig: {
     public: {
@@ -70,18 +67,9 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
-      redirectOn: 'root' // recommended for SEO
+      redirectOn: 'root',
     },
     baseUrl: process.env.DASHBOARD_BASE_URL,
     vueI18n: "../i18n.config.ts",
-  },
-
-
-  vite: {
-    vue: {
-      template: {
-        transformAssetUrls,
-      },
-    },
   },
 })
