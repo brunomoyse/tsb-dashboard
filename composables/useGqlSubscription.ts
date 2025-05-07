@@ -1,8 +1,8 @@
 // composables/useGqlSubscription.ts
 import { ref, onScopeDispose } from 'vue'
-import { print } from 'graphql'
+import { print, type DocumentNode } from 'graphql'
 import { useRuntimeConfig, useCookie } from '#imports'
-import type { Client, createClient } from 'graphql-ws'
+import type { Client } from 'graphql-ws'
 
 let wsClient: Client | null = null
 let wsClientPromise: Promise<Client> | null = null
@@ -11,15 +11,12 @@ async function getWsClient(): Promise<Client> {
     if (wsClient) return wsClient
     if (!wsClientPromise) {
         wsClientPromise = import('graphql-ws').then(({ createClient }) => {
-            const cfg = useRuntimeConfig()
+            const cfg   = useRuntimeConfig()
+            const token = useCookie('access_token').value
             const client = createClient({
-                url: cfg.public.graphqlWs as string,
-                connectionParams: {
-                    Authorization: useCookie('access_token').value
-                        ? `Bearer ${useCookie('access_token').value}`
-                        : undefined,
-                },
-                retryAttempts: Infinity,
+                url:              cfg.public.graphqlWs as string,
+                connectionParams: token ? { Authorization: `Bearer ${token}` } : undefined,
+                retryAttempts:    Infinity,
             })
             wsClient = client
             return client
@@ -29,50 +26,75 @@ async function getWsClient(): Promise<Client> {
 }
 
 export function useGqlSubscription<T = any>(
-    rawSub: string | import('graphql').DocumentNode,
+    rawSub: string | DocumentNode,
     variables: Record<string, unknown> = {}
 ) {
-    const data  = ref<T>()
-    const error = ref<any>(null)
-
+    const data      = ref<T>()
+    const error     = ref<Error | null>(null)
     let stop: () => void = () => {}
 
-    // when the component/composable scope is torn down:
-    onScopeDispose(() => {
+    // --------------------------------------------------
+    // track if we’ve genuinely gone offline
+    let wentOffline = false
+
+    function handleOffline() {
+        wentOffline = true
+        error.value  = new Error('Lost internet connection')
         stop()
-        // note: we do not dispose() here, so other subs stay alive
-    })
+    }
+
+    function handleOnline() {
+        if (!wentOffline) return
+        // only reload if we truly were offline
+        window.location.reload()
+    }
+    // --------------------------------------------------
 
     if (import.meta.client) {
-        ;(async () => {
-            try {
-                const client = await getWsClient()
+        // initial subscription
+        getWsClient()
+            .then(client => {
                 stop = client.subscribe(
                     {
-                        query: typeof rawSub === 'string' ? rawSub : print(rawSub),
+                        query:     typeof rawSub === 'string' ? rawSub : print(rawSub),
                         variables,
                     },
                     {
-                        next: (msg)   => msg.data   !== undefined && (data.value = msg.data as T),
-                        error: (e)   => (error.value = e),
+                        next:    msg => {
+                            if (msg.data !== undefined) data.value = msg.data as T
+                        },
+                        error:   e => {
+                            error.value = e instanceof Error ? e : new Error(String(e))
+                        },
                         complete: () => {},
                     }
                 )
-            } catch (e: any) {
-                error.value = e
-            }
-        })()
+            })
+            .catch(e => {
+                error.value = e instanceof Error ? e : new Error(String(e))
+            })
+
+        // listen for real offline/online transitions
+        window.addEventListener('offline', handleOffline)
+        window.addEventListener('online',  handleOnline)
+    }
+
+    onScopeDispose(() => {
+        stop()
+        window.removeEventListener('offline', handleOffline)
+        window.removeEventListener('online',  handleOnline)
+    })
+
+    function closeAll() {
+        wsClient?.dispose()
+        wsClient = null
+        wsClientPromise = null
     }
 
     return {
         data,
         error,
         stop,
-        /** to fully tear down the socket: */
-        closeAll: () => {
-            wsClient?.dispose()
-            wsClient = null
-            wsClientPromise = null
-        },
+        closeAll,
     }
 }
