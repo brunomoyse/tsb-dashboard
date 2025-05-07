@@ -88,7 +88,9 @@ export default defineNuxtConfig({
         // include runtime polyfills for Array.at()
         // plugin-legacy will inject core-js usage‐based polyfills by default,
         // but Array.at is newer so we add it explicitly:
-        polyfills: ['es.array.at']
+        polyfills: ['es.array.at'],
+
+        additionalLegacyPolyfills: ['systemjs'],
       })
     ],
     vue: {
