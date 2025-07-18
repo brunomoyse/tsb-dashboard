@@ -13,7 +13,7 @@
     "@awesome-cordova-library/vibration": "^1.0.2",
     "@intlify/core-base": "^11.1.6",
     "@mdi/font": "^7.4.47",
-    "@pinia/nuxt": "^0.11.0",
+    "@pinia/nuxt": "^0.11.2",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^6.0.5",
