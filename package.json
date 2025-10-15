@@ -20,13 +20,13 @@
     "jsonwebtoken": "^9.0.2",
     "nuxt": "^3.17.4",
     "ol": "^10.6.1",
-    "pinia-plugin-persistedstate": "^4.3.0",
+    "pinia-plugin-persistedstate": "^4.5.0",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@nuxtjs/i18n": "^9.5.5",
-    "@types/jsonwebtoken": "^9.0.9",
+    "@types/jsonwebtoken": "^9.0.10",
     "@vitejs/plugin-legacy": "^6.1.1",
     "terser": "^5.44.0",
     "vite-plugin-vuetify": "^2.1.1",
