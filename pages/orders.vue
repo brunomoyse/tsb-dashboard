@@ -92,22 +92,27 @@
 
         <!-- Bottom Sheet for Order Management -->
         <v-bottom-sheet v-model="showBottomSheet" inset>
-            <v-card class="rounded-t-xl px-4">
-                <v-card-title class="flex justify-space-between p-0">
-                    <div class="d-flex">
-                        <div></div>
-                        <v-btn icon flat class="mr-auto" @click="printReceipt">
-                            <v-icon>mdi-printer</v-icon>
-                        </v-btn>
-                        <v-btn icon flat class="ms-auto" @click="showBottomSheet = false">
-                            <v-icon>mdi-close</v-icon>
-                        </v-btn>
-                    </div>
+            <v-card class="rounded-t-xl">
+                <v-card-title class="d-flex justify-space-between align-center px-4 py-3 sticky-header">
+                    <v-btn
+                        icon
+                        size="large"
+                        @click="printReceipt"
+                    >
+                        <v-icon>mdi-printer</v-icon>
+                    </v-btn>
+                    <v-btn
+                        icon
+                        size="large"
+                        @click="showBottomSheet = false"
+                    >
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
 
-                <v-divider class="mb-2"></v-divider>
+                <v-divider></v-divider>
 
-                <v-card-text class="pt-2">
+                <v-card-text class="pt-4 pb-2 px-4 scrollable-content">
                     <!-- Time Management Section -->
                     <div class="mb-6">
                         <div class="text-caption text-medium-emphasis mb-2">
@@ -123,18 +128,33 @@
                         </span>
                         </div>
 
+                        <!-- Quick Time Buttons -->
+                        <div class="d-flex gap-2 mb-4">
+                            <v-btn
+                                v-for="minutes in [15, 30, 45, 60]"
+                                :key="minutes"
+                                :variant="sliderDeltaMinutes === minutes ? 'elevated' : 'outlined'"
+                                :color="sliderDeltaMinutes === minutes ? 'primary' : 'default'"
+                                size="large"
+                                class="flex-1 touch-target"
+                                @click="sliderDeltaMinutes = minutes"
+                            >
+                                +{{ minutes }}min
+                            </v-btn>
+                        </div>
+
                         <v-slider
                             v-model="sliderDeltaMinutes"
                             :min="0"
                             :max="90"
                             :step="5"
                             thumb-label="always"
-                            :thumb-size="24"
+                            :thumb-size="32"
                             thumb-color="primary"
                             track-color="grey-lighten-2"
                             :ticks="sliderTicks"
                             tick-size="4"
-                            class="mt-8"
+                            class="mt-2"
                         >
                             <template v-slot:thumb-label="{ modelValue }">
                                 +{{ modelValue }}&#160;{{ t('orders.minutes') }}
@@ -142,7 +162,7 @@
                         </v-slider>
 
                         <!-- New Estimate Display -->
-                        <div class="d-flex justify-space-between text-caption text-medium-emphasis">
+                        <div class="d-flex justify-space-between text-body-2 mt-2">
                             <span>
                                 {{ t('orders.newEstimate') }}:
                                 <span class="font-weight-bold text-primary">
@@ -159,14 +179,14 @@
                         </div>
 
                         <!-- Current Payment Status Display -->
-                        <div class="d-flex align-center justify-space-between mb-3 pa-3 rounded"
-                             :style="{ backgroundColor: getPaymentStatusColor(selectedOrder?.payment?.status) + '20' }">
-                            <div class="d-flex align-center">
-                                <v-icon :color="getPaymentStatusColor(selectedOrder?.payment?.status)" class="mr-2">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-center pa-3 rounded"
+                                 :style="{ backgroundColor: getPaymentStatusColor(selectedOrder?.payment?.status) + '20' }">
+                                <v-icon :color="getPaymentStatusColor(selectedOrder?.payment?.status)" size="large" class="mr-3">
                                     {{ selectedOrder?.payment?.status?.toLowerCase() === 'paid' ? 'mdi-check-circle' : 'mdi-cash-clock' }}
                                 </v-icon>
-                                <div>
-                                    <div class="text-body-2 font-weight-medium">
+                                <div class="flex-1">
+                                    <div class="text-body-1 font-weight-medium">
                                         {{ t(`orders.payment.status.${selectedOrder?.payment?.status ? selectedOrder.payment.status.toLowerCase() : 'notPaid'}`) }}
                                     </div>
                                     <div class="text-caption text-medium-emphasis">
@@ -180,24 +200,15 @@
                                 v-if="selectedOrder?.payment?.status?.toLowerCase() !== 'paid'"
                                 variant="elevated"
                                 color="green"
-                                size="small"
+                                size="x-large"
+                                block
+                                class="touch-target"
                                 @click="markAsPaid"
                                 :loading="isUpdatingPayment"
                             >
-                                <v-icon left size="small">mdi-cash-check</v-icon>
+                                <v-icon left>mdi-cash-check</v-icon>
                                 {{ t('orders.payment.markAsPaid') }}
                             </v-btn>
-
-                            <!-- Paid indicator -->
-                            <v-chip
-                                v-else
-                                color="green"
-                                variant="flat"
-                                size="small"
-                            >
-                                <v-icon left size="small">mdi-check-circle</v-icon>
-                                {{ t('orders.payment.paidLabel') }}
-                            </v-chip>
                         </div>
                     </div>
 
@@ -207,34 +218,34 @@
                             {{ t('orders.updateStatus') }}
                         </div>
 
-                        <div class="d-flex flex-column">
-                            <v-chip
+                        <div class="d-flex flex-column gap-2">
+                            <v-btn
                                 v-for="status in availableStatuses"
                                 :key="status"
-                                class="w-100 mb-2"
-                                variant="tonal"
-                                :color="stagedStatus === status
-                                    ? getStatusColor(status)
-                                    : 'grey lighten-2'"
-                                :text-color="stagedStatus === status
-                                    ? 'white'
-                                    : 'rgba(0,0,0,0.7)'"
+                                :variant="stagedStatus === status ? 'elevated' : 'outlined'"
+                                :color="stagedStatus === status ? getStatusColor(status) : 'default'"
+                                size="large"
+                                class="touch-target justify-start"
                                 @click="handleStatusButton(status)"
                             >
                                 <v-icon left class="mr-2">{{ getStatusIcon(status) }}</v-icon>
                                 {{ t(`orders.status.${status.toLowerCase()}`) }}
-                            </v-chip>
+                            </v-btn>
                         </div>
                     </div>
                 </v-card-text>
 
-                <v-card-actions class="justify-center px-4 pb-4">
+                <v-card-actions class="sticky-actions px-4 pb-4 pt-2">
                     <v-btn
-                        :variant="canSave ? 'tonal' : 'outlined'"
-                        :color="canSave ? 'primary' : 'grey lighten-2'"
+                        :variant="canSave ? 'elevated' : 'outlined'"
+                        :color="canSave ? 'primary' : 'grey'"
                         :disabled="!canSave"
+                        size="x-large"
+                        block
+                        class="touch-target"
                         @click="updateOrder(stagedStatus, /* estimatedReadyTime unused, recalculated internally */)"
                     >
+                        <v-icon left>mdi-content-save</v-icon>
                         {{ t('common.save') }}
                     </v-btn>
                 </v-card-actions>
@@ -787,9 +798,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Order Cards */
 .order-item {
     touch-action: pan-y;
     user-select: none;
+    min-height: 48px; /* Minimum touch target */
+    cursor: pointer;
+}
+
+.order-item:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
 }
 
 .fab {
@@ -801,6 +820,39 @@ onMounted(() => {
     text-transform: none;
 }
 
+/* Touch targets - 48px minimum per Apple/Google guidelines */
+.touch-target {
+    min-height: 48px !important;
+    min-width: 48px !important;
+}
+
+/* Sticky header for bottom sheet */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Scrollable content area */
+.scrollable-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Sticky save button */
+.sticky-actions {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 10;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Order animations */
 .order-enter-active, .order-leave-active {
     transition: all 0.5s ease;
 }
@@ -811,6 +863,26 @@ onMounted(() => {
 .order-enter-to {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Improve slider touch area */
+:deep(.v-slider-thumb) {
+    cursor: pointer !important;
+}
+
+:deep(.v-slider-track__fill),
+:deep(.v-slider-track__background) {
+    height: 6px !important;
+}
+
+/* Button press feedback */
+.v-btn:active {
+    transform: scale(0.96);
+}
+
+/* Remove tap highlight on mobile */
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 .time-input {
