@@ -74,6 +74,9 @@
       "delivery": "Livraison"
     },
     "payment": {
+      "title": "Statut du paiement",
+      "markAsPaid": "Marquer comme payé",
+      "paidLabel": "Payé",
       "status": {
         "open": "Ouvert",
         "cancelled": "Annulé",

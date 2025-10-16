@@ -152,6 +152,55 @@
                         </div>
                     </div>
 
+                    <!-- Payment Status Section -->
+                    <div class="mb-6">
+                        <div class="text-caption text-medium-emphasis mb-2">
+                            {{ t('orders.payment.title') }}
+                        </div>
+
+                        <!-- Current Payment Status Display -->
+                        <div class="d-flex align-center justify-space-between mb-3 pa-3 rounded"
+                             :style="{ backgroundColor: getPaymentStatusColor(selectedOrder?.payment?.status) + '20' }">
+                            <div class="d-flex align-center">
+                                <v-icon :color="getPaymentStatusColor(selectedOrder?.payment?.status)" class="mr-2">
+                                    {{ selectedOrder?.payment?.status?.toLowerCase() === 'paid' ? 'mdi-check-circle' : 'mdi-cash-clock' }}
+                                </v-icon>
+                                <div>
+                                    <div class="text-body-2 font-weight-medium">
+                                        {{ t(`orders.payment.status.${selectedOrder?.payment?.status ? selectedOrder.payment.status.toLowerCase() : 'notPaid'}`) }}
+                                    </div>
+                                    <div class="text-caption text-medium-emphasis">
+                                        {{ selectedOrder?.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mark as Paid Button (only show if not already paid) -->
+                            <v-btn
+                                v-if="selectedOrder?.payment?.status?.toLowerCase() !== 'paid'"
+                                variant="elevated"
+                                color="green"
+                                size="small"
+                                @click="markAsPaid"
+                                :loading="isUpdatingPayment"
+                            >
+                                <v-icon left size="small">mdi-cash-check</v-icon>
+                                {{ t('orders.payment.markAsPaid') }}
+                            </v-btn>
+
+                            <!-- Paid indicator -->
+                            <v-chip
+                                v-else
+                                color="green"
+                                variant="flat"
+                                size="small"
+                            >
+                                <v-icon left size="small">mdi-check-circle</v-icon>
+                                {{ t('orders.payment.paidLabel') }}
+                            </v-chip>
+                        </div>
+                    </div>
+
                     <!-- Status Update Section -->
                     <div class="mb-4">
                         <div class="text-caption text-medium-emphasis mb-2">
@@ -314,13 +363,24 @@ const UPDATE_ORDER_MUTATION = gql`
     }
 `
 
+const UPDATE_PAYMENT_STATUS_MUTATION = gql`
+    mutation ($orderId: ID!, $status: String!) {
+        updatePaymentStatus(orderId: $orderId, status: $status) {
+            id
+            status
+        }
+    }
+`
+
 const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
+const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
 
 // State
 const selectedOrder = ref<Order | null>(null)
 const showBottomSheet = ref(false)
 const sliderDeltaMinutes = ref<number>();
 const baseEstimatedTime = ref<Date | null>(null);
+const isUpdatingPayment = ref(false)
 
 // For cancellation confirmation dialog
 const showCancelDialog = ref(false)
@@ -577,6 +637,39 @@ const cancelCancellation = () => {
     if (cancelTimer) {
         clearInterval(cancelTimer)
         cancelTimer = undefined
+    }
+}
+
+// Mark payment as paid
+const markAsPaid = async () => {
+    if (!selectedOrder.value) return
+
+    isUpdatingPayment.value = true
+
+    try {
+        const res = await mutationUpdatePaymentStatus({
+            orderId: selectedOrder.value.id,
+            status: 'paid'
+        })
+
+        // Update the local order with new payment status
+        if (selectedOrder.value.payment) {
+            selectedOrder.value.payment.status = res.updatePaymentStatus.status
+        }
+
+        // Update the order in the store
+        ordersStore.updateOrder({
+            id: selectedOrder.value.id,
+            payment: {
+                ...selectedOrder.value.payment,
+                status: res.updatePaymentStatus.status
+            }
+        })
+
+    } catch (error) {
+        console.error('Failed to update payment status:', error)
+    } finally {
+        isUpdatingPayment.value = false
     }
 }
 
