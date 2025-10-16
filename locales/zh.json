@@ -74,6 +74,9 @@
       "delivery": "配送"
     },
     "payment": {
+      "title": "支付状态",
+      "markAsPaid": "标记为已付款",
+      "paidLabel": "已付款",
       "status": {
         "open": "未付款",
         "cancelled": "已取消",

@@ -74,6 +74,9 @@
         "delivery": "Delivery"
     },
     "payment": {
+      "title": "Payment Status",
+      "markAsPaid": "Mark as Paid",
+      "paidLabel": "Paid",
       "status": {
         "open": "Open",
         "cancelled": "Cancelled",
