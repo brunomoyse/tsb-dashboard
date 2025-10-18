@@ -10,6 +10,7 @@
     <UTabs
       v-model="selectedTab"
       :items="tabItems"
+      :content="false"
       class="mb-6"
     />
 
@@ -20,7 +21,7 @@
         :key="order.id"
         :class="[
           'cursor-pointer hover:shadow-lg transition-shadow',
-          order.status === 'PENDING' ? 'ring-2 ring-error' : ''
+          order.status === 'PENDING' ? 'border-l-4 border-l-warning bg-warning/5' : ''
         ]"
         @click="openOrderDetails(order)"
       >
@@ -81,15 +82,15 @@
           <div class="border-t pt-3 space-y-1">
             <p class="text-sm font-medium">{{ t('orders.items') }}:</p>
             <div v-for="item in order.items" :key="item.product.id" class="flex justify-between text-sm">
-              <span>{{ item.quantity }}x {{ item.product.name }}</span>
-              <span>€{{ Number(item.totalPrice).toFixed(2) }}</span>
+              <span>{{ item.quantity }}x {{ item.product.code || item.product.name }}</span>
+              <span>{{ formatPrice(item.totalPrice) }}</span>
             </div>
           </div>
 
           <!-- Total -->
           <div class="border-t pt-3 flex justify-between font-bold">
             <span>Total</span>
-            <span>€{{ Number(order.totalPrice).toFixed(2) }}</span>
+            <span>{{ formatPrice(order.totalPrice) }}</span>
           </div>
 
           <!-- Time Info -->
@@ -110,21 +111,59 @@
     <!-- Order Details Slideover -->
     <USlideover
       v-model:open="showOrderDetails"
-      title="Order Details"
+      :title="t('orders.orderDetails')"
       :ui="{ content: 'min-h-full' }"
     >
       <template v-if="selectedOrder" #body>
         <div class="space-y-6">
-          <!-- Print Button -->
-          <div class="flex justify-end">
-            <UButton
-              icon="i-lucide-printer"
-              color="neutral"
-              variant="outline"
-              @click="printReceipt"
-            >
-              {{ t('common.print') }}
-            </UButton>
+          <!-- Order Header -->
+          <div class="pb-4 border-b border-default">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1">
+                <h2 class="text-xl font-bold text-highlighted">
+                  {{ selectedOrder.customer?.firstName }} {{ selectedOrder.customer?.lastName }}
+                </h2>
+                <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt) }}</p>
+              </div>
+              <UButton
+                icon="i-lucide-printer"
+                :label="t('common.print')"
+                color="neutral"
+                variant="outline"
+                @click="printReceipt"
+              />
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-3">
+              <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft">
+                {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
+              </UBadge>
+              <UBadge color="neutral" variant="subtle" size="sm">
+                <UIcon
+                  :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
+                  class="mr-1"
+                />
+                {{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
+              </UBadge>
+              <UBadge color="neutral" variant="subtle" size="sm">
+                <UIcon
+                  :name="selectedOrder.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                  class="mr-1"
+                />
+                {{ t(`orders.deliveryOption.${selectedOrder.type?.toLowerCase()}`) }}
+              </UBadge>
+            </div>
+
+            <div class="text-sm space-y-1">
+              <p class="flex items-center gap-1 text-muted">
+                <UIcon name="i-lucide-phone" class="size-4" />
+                {{ selectedOrder.customer?.phoneNumber }}
+              </p>
+              <p v-if="selectedOrder.type === 'DELIVERY'" class="flex items-center gap-1 text-muted">
+                <UIcon name="i-lucide-map-pin" class="size-4" />
+                {{ getStreetAndDistance(selectedOrder.address) }}
+              </p>
+            </div>
           </div>
 
           <!-- Time Management Section -->
@@ -295,7 +334,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatDate, getStreetAndDistance, formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
+import { formatDate, getStreetAndDistance, formatTimeOnly, timeToRFC3339, formatPrice } from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
@@ -307,11 +346,11 @@ const ordersStore = useOrdersStore()
 const selectedTab = ref(0)
 
 const tabItems = computed(() => [
-  { label: `${t('orders.all')} (${ordersStore.orders.length})` },
-  { label: `${t('orders.pending')} (${ordersStore.orders.filter(o => o.status === 'PENDING').length})` },
-  { label: `${t('orders.preparing')} (${ordersStore.orders.filter(o => o.status === 'PREPARING').length})` },
-  { label: `${t('orders.ready')} (${ordersStore.orders.filter(o => o.status === 'AWAITING_PICK_UP').length})` },
-  { label: `${t('orders.completed')} (${ordersStore.orders.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})` }
+  { label: `${t('orders.all')} (${ordersStore.orders.length})`, value: 0 },
+  { label: `${t('orders.pending')} (${ordersStore.orders.filter(o => o.status === 'PENDING').length})`, value: 1 },
+  { label: `${t('orders.preparing')} (${ordersStore.orders.filter(o => o.status === 'PREPARING').length})`, value: 2 },
+  { label: `${t('orders.ready')} (${ordersStore.orders.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
+  { label: `${t('orders.completed')} (${ordersStore.orders.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
 ])
 
 const filteredOrders = computed(() => {
@@ -694,15 +733,8 @@ onMounted(() => {
   )
 
   watch(orderUpdated, (val) => {
-    if (val?.orderUpdated && dataOrders.value?.orders) {
-      const updatedOrder = val.orderUpdated
-      const orderIndex = dataOrders.value.orders.findIndex(order => order.id === updatedOrder.id)
-      if (orderIndex !== -1) {
-        dataOrders.value.orders[orderIndex] = {
-          ...dataOrders.value.orders[orderIndex],
-          ...updatedOrder
-        }
-      }
+    if (val?.orderUpdated) {
+      ordersStore.updateOrder(val.orderUpdated)
     }
   })
 

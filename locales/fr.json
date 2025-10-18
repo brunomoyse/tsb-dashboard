@@ -69,6 +69,7 @@
     "noOrders": "Aucune commande trouvée",
     "updateStatus": "Mettre à jour le statut",
     "waitMessage": "Veuillez patienter {seconds} secondes avant de confirmer l'annulation.",
+    "orderDetails": "Détails de la commande",
     "status": {
       "pending": "En attente",
       "confirmed": "Confirmé",
@@ -109,6 +110,11 @@
     "orders": "Commandes",
     "booking": "Réservation",
     "logout": "Déconnexion"
+  },
+
+  "theme": {
+    "light": "Mode Clair",
+    "dark": "Mode Sombre"
   },
 
   "validation": {
