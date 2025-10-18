@@ -1,4 +1,4 @@
-FROM node:24.10-alpine3.22 AS builder
+FROM node:24.10-slim AS builder
 
 # Set working directory
 WORKDIR /usr/src/app
@@ -14,7 +14,7 @@ ENV GRAPHQL_WS_URL="wss://tokyo.brunomoyse.be/api/v1/graphql"
 COPY package*.json ./
 
 # Install dependencies (including dev dependencies for building)
-RUN npm install --frozen-lockfile
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
@@ -37,7 +37,7 @@ COPY --from=builder /usr/src/app/.output ./.output
 COPY --from=builder /usr/src/app/package*.json ./
 
 # Install only production dependencies
-RUN npm install --production --frozen-lockfile
+RUN npm ci --production
 
 # Clean npm cache to reduce image size
 RUN npm cache clean --force

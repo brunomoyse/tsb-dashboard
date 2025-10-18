@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@awesome-cordova-library/vibration": "^1.0.2",
-    "@intlify/core-base": "^11.1.12",
     "@mdi/font": "^7.4.47",
     "@pinia/nuxt": "^0.11.2",
     "graphql": "^16.11.0",
