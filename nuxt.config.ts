@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     'pinia-plugin-persistedstate/nuxt'
   ],
 
+  icon: {
+    serverBundle: {
+      collections: ['lucide']
+    }
+  },
+
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {

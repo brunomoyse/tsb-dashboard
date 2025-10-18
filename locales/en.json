@@ -69,6 +69,7 @@
     "noOrders": "No orders found",
     "updateStatus": "Update Order Status",
     "waitMessage": "Please wait {seconds} seconds before confirming cancellation.",
+    "orderDetails": "Order Details",
     "status": {
       "pending": "Pending",
       "confirmed": "Confirmed",
@@ -109,6 +110,11 @@
     "orders": "Orders",
     "booking": "Booking",
     "logout": "Logout"
+  },
+
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
   },
 
   "validation": {

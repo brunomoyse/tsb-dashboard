@@ -3,18 +3,36 @@
     <UDashboardSidebar
       collapsible
       :ui="{
-        footer: 'border-t border-default',
-        body: 'flex flex-col gap-4'
+        footer: 'border-t border-default flex flex-col gap-4',
+        body: 'flex flex-col gap-4',
+        header: 'lg:flex lg:justify-center hidden border-b border-default'
       }"
     >
       <template #header="{ collapsed }">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-utensils" class="size-5 text-primary shrink-0" />
-          <span v-if="!collapsed" class="font-bold text-lg">TSB Dashboard</span>
+        <div class="flex items-center justify-center py-6 w-full">
+          <img
+            :src="colorMode.value === 'dark' ? '/tsb-logo-w.png' : '/tsb-logo-b.png'"
+            alt="TSB Logo"
+            class="h-16 w-auto"
+          />
         </div>
       </template>
 
       <template #default="{ collapsed }">
+        <!-- Navigation Menu -->
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="navigationItems"
+          orientation="vertical"
+          size="lg"
+          class="flex-1"
+          :ui="{
+            link: 'py-8 px-4 text-base w-full'
+          }"
+        />
+      </template>
+
+      <template #footer="{ collapsed }">
         <!-- Language Switcher -->
         <UDropdownMenu :items="languageItems">
           <UButton
@@ -22,26 +40,31 @@
             :icon="currentLocaleIcon"
             color="neutral"
             variant="ghost"
+            size="lg"
             block
             :square="collapsed"
           />
         </UDropdownMenu>
 
-        <!-- Navigation Menu -->
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="navigationItems"
-          orientation="vertical"
-          class="flex-1"
+        <!-- Theme Toggle -->
+        <UButton
+          :label="collapsed ? undefined : (colorMode === 'dark' ? t('theme.dark') : t('theme.light'))"
+          :icon="colorMode === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          block
+          :square="collapsed"
+          @click="toggleTheme"
         />
-      </template>
 
-      <template #footer="{ collapsed }">
+        <!-- Logout Button -->
         <UButton
           :label="collapsed ? undefined : t('navigation.logout')"
           icon="i-lucide-log-out"
           color="neutral"
           variant="ghost"
+          size="lg"
           block
           :square="collapsed"
           @click="handleLogout"
@@ -50,6 +73,10 @@
     </UDashboardSidebar>
 
     <UDashboardPanel>
+      <template #header>
+        <UDashboardNavbar />
+      </template>
+
       <template #body>
         <slot />
       </template>
@@ -64,6 +91,7 @@ const { locale, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const localePath = useLocalePath()
 const route = useRoute()
+const colorMode = useColorMode()
 
 const languages = [
   { value: 'fr', label: '🇫🇷 Français', icon: 'i-lucide-flag' },
@@ -112,9 +140,33 @@ const onLanguageChange = (newLocale: 'fr' | 'en' | 'zh') => {
   }
 }
 
-const handleLogout = () => {
-  // Add logout logic here
-  console.log('Logout clicked')
+const handleLogout = async () => {
+  const config = useRuntimeConfig()
+
+  try {
+    const response = await fetch(`${config.public.api}/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      // Server successfully cleared cookies (200 OK)
+      // Redirect to localized login page with full reload
+      await navigateTo(localePath('/login'), { external: true })
+    } else {
+      console.error('Logout failed with status:', response.status)
+      // Still redirect to login even if logout fails
+      await navigateTo(localePath('/login'), { external: true })
+    }
+  } catch (error) {
+    console.error('Logout error:', error)
+    // Still redirect to login even if logout fails
+    await navigateTo(localePath('/login'), { external: true })
+  }
+}
+
+const toggleTheme = () => {
+  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 </script>
 
