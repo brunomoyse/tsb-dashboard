@@ -1,16 +1,22 @@
 <template>
-    <v-container class="pa-0">
-        <!-- Order List with Transition Group -->
-        <v-card
-            v-if="ordersStore.orders.length"
-            v-for="order in ordersStore.orders"
-            :key="order.id"
-            class="order-item ma-2 rounded-lg"
-            elevation="2"
-            :style="cardStyle(order)"
-            @click="openBottomSheet(order)"
-        >
-            <v-card-text class="d-flex align-center">
+    <v-container fluid class="pa-2 orders-container">
+        <!-- Order List with Responsive Grid -->
+        <v-row v-if="ordersStore.orders.length" class="orders-grid">
+            <v-col
+                v-for="order in ordersStore.orders"
+                :key="order.id"
+                cols="12"
+                sm="6"
+                lg="4"
+                xl="3"
+            >
+                <v-card
+                    class="order-item rounded-lg h-100"
+                    elevation="2"
+                    :style="cardStyle(order)"
+                    @click="openBottomSheet(order)"
+                >
+                    <v-card-text class="d-flex align-center">
                 <!-- Status Indicator -->
                 <v-icon
                     large
@@ -83,16 +89,23 @@
                     </div>
                 </div>
             </v-card-text>
-        </v-card>
+                </v-card>
+            </v-col>
+        </v-row>
+
         <!-- Empty State -->
-        <v-card v-else class="ma-4 text-center pa-6">
-            <v-icon size="64" class="mb-2">mdi-package-variant-closed</v-icon>
-            <div class="text-h6">{{ t('orders.noOrders') }}</div>
-        </v-card>
+        <v-row v-else>
+            <v-col cols="12">
+                <v-card class="ma-4 text-center pa-6">
+                    <v-icon size="64" class="mb-2">mdi-package-variant-closed</v-icon>
+                    <div class="text-h6">{{ t('orders.noOrders') }}</div>
+                </v-card>
+            </v-col>
+        </v-row>
 
         <!-- Bottom Sheet for Order Management -->
-        <v-bottom-sheet v-model="showBottomSheet" inset>
-            <v-card class="rounded-t-xl">
+        <v-bottom-sheet v-model="showBottomSheet" inset :max-width="mdAndUp ? '600px' : undefined">
+            <v-card class="rounded-t-xl bottom-sheet-card">
                 <v-card-title class="d-flex justify-space-between align-center px-4 py-3 sticky-header">
                     <v-btn
                         icon
@@ -288,12 +301,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import {formatDate, getStreetAndDistance, formatTimeOnly, timeToRFC3339} from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import gql from "graphql-tag"
 import { print } from 'graphql'
 
 const { t } = useI18n()
+const { mdAndUp } = useDisplay()
 const ordersStore = useOrdersStore()
 const estimatedReadyTime = ref<string | null>(null)
 const sliderMinutes = ref<number>(0)
@@ -798,17 +813,34 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Container */
+.orders-container {
+    max-width: 1920px;
+    margin: 0 auto;
+}
+
 /* Order Cards */
 .order-item {
     touch-action: pan-y;
     user-select: none;
-    min-height: 48px; /* Minimum touch target */
+    min-height: 48px;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.order-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .order-item:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
+}
+
+/* Grid Layout */
+.orders-grid {
+    margin: 0;
 }
 
 .fab {
@@ -826,6 +858,11 @@ onMounted(() => {
     min-width: 48px !important;
 }
 
+/* Bottom Sheet Responsive Width */
+.bottom-sheet-card {
+    margin: 0 auto;
+}
+
 /* Sticky header for bottom sheet */
 .sticky-header {
     position: sticky;
@@ -839,7 +876,7 @@ onMounted(() => {
 .scrollable-content {
     max-height: 60vh;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Sticky save button */
@@ -887,5 +924,41 @@ onMounted(() => {
 
 .time-input {
     max-width: 120px;
+}
+
+/* Desktop Optimizations */
+@media (min-width: 960px) {
+    /* Hover effects on desktop */
+    .order-item:hover {
+        cursor: pointer;
+    }
+
+    /* Reduce button sizes slightly on desktop */
+    .touch-target {
+        min-height: 44px !important;
+    }
+
+    /* Better scrolling on desktop */
+    .scrollable-content {
+        max-height: 70vh;
+    }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 600px) and (max-width: 959px) {
+    .orders-container {
+        padding: 8px !important;
+    }
+}
+
+/* Large Desktop */
+@media (min-width: 1920px) {
+    .orders-container {
+        padding: 16px !important;
+    }
+
+    .order-item {
+        font-size: 1.05em;
+    }
 }
 </style>
