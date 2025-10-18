@@ -1,6 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
-import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import legacy from '@vitejs/plugin-legacy'
 
 export default defineNuxtConfig({
@@ -8,22 +7,16 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-  ssr: false,
+  ssr: true,
   devtools: { enabled: true },
-  build: {
-    transpile: ['vuetify'],
-  },
   modules: [
-    (_options, nuxt) => {
-      nuxt.hooks.hook('vite:extendConfig', (config) => {
-        // @ts-expect-error
-        config.plugins.push(vuetify({ autoImport: true }))
-      })
-    },
+    "@nuxt/ui",
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     'pinia-plugin-persistedstate/nuxt'
   ],
+
+  css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
     public: {
@@ -93,10 +86,5 @@ export default defineNuxtConfig({
         additionalLegacyPolyfills: ['systemjs'],
       })
     ],
-    vue: {
-      template: {
-        transformAssetUrls,
-      },
-    },
   },
 })

@@ -4,6 +4,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "create": "Create",
+    "print": "Print",
     "itemsPerPage": "Items per page",
     "name": "Name",
     "description": "Description",
@@ -21,6 +22,7 @@
     "search": "Search Products",
     "add": "Add Product",
     "edit": "Edit Product",
+    "noProducts": "No products found",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"
@@ -33,10 +35,19 @@
     "vegan": "Vegan",
     "discountable": "Discountable",
     "translations": "Translations",
-    "image": "Change Image"
+    "image": "Change Image",
+    "removeImage": "Remove Image"
   },
 
   "orders": {
+    "subtitle": "Manage your orders in real-time",
+    "all": "All",
+    "pending": "Pending",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "completed": "Completed",
+    "items": "Items",
+    "timeManagement": "Time Management",
     "currentEstimate": "Current estimate",
     "newEstimate": "New estimate",
     "minutes": "minutes",
@@ -96,7 +107,8 @@
   "navigation": {
     "products": "Products",
     "orders": "Orders",
-    "booking": "Booking"
+    "booking": "Booking",
+    "logout": "Logout"
   },
 
   "validation": {
