@@ -5,6 +5,9 @@ import legacy from '@vitejs/plugin-legacy'
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
+  future: {
+    compatibilityVersion: 4,
+  },
   ssr: false,
   devtools: { enabled: true },
   build: {
@@ -50,9 +53,6 @@ export default defineNuxtConfig({
   ],
 
   i18n: {
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
     defaultLocale: 'fr',
     strategy: 'prefix',
     locales: [
@@ -72,7 +72,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
-      redirectOn: 'root' // recommended for SEO
+      redirectOn: 'all' // changed from 'root' to maintain v9 behavior (redirect on all pages)
     },
     baseUrl: process.env.DASHBOARD_BASE_URL,
     vueI18n: "../i18n.config.ts",
