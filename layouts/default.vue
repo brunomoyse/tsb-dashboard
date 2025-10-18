@@ -1,73 +1,125 @@
 <template>
-    <v-app>
-        <v-app-bar app>
-            <!-- Fixed Language Switcher -->
-            <v-menu offset-y>
-                <template v-slot:activator="{ props }">
-                    <v-btn icon v-bind="props">
-                        <v-avatar size="32">
-                            <span class="text-h5">{{ currentLocaleIcon }}</span>
-                        </v-avatar>
-                    </v-btn>
-                </template>
-                <v-list>
-                    <v-list-item
-                        v-for="lang in languages"
-                        :key="lang.value"
-                        @click="onLanguageChange(lang.value)"
-                    >
-                        <v-list-item-title>{{ lang.label }}</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-menu>
+  <UDashboardGroup storage="local" storage-key="tsb-dashboard">
+    <UDashboardSidebar
+      collapsible
+      :ui="{
+        footer: 'border-t border-default',
+        body: 'flex flex-col gap-4'
+      }"
+    >
+      <template #header="{ collapsed }">
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-utensils" class="size-5 text-primary shrink-0" />
+          <span v-if="!collapsed" class="font-bold text-lg">TSB Dashboard</span>
+        </div>
+      </template>
 
-            <v-spacer></v-spacer>
+      <template #default="{ collapsed }">
+        <!-- Language Switcher -->
+        <UDropdownMenu :items="languageItems">
+          <UButton
+            :label="collapsed ? undefined : currentLocaleLabel"
+            :icon="currentLocaleIcon"
+            color="neutral"
+            variant="ghost"
+            block
+            :square="collapsed"
+          />
+        </UDropdownMenu>
 
-            <!-- Navigation Buttons -->
-            <NuxtLinkLocale to="products">
-                <v-btn color="black">{{ t('navigation.products') }}</v-btn>
-            </NuxtLinkLocale>
+        <!-- Navigation Menu -->
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="navigationItems"
+          orientation="vertical"
+          class="flex-1"
+        />
+      </template>
 
-            <NuxtLinkLocale to="orders">
-                <v-btn color="black">{{ t('navigation.orders') }}</v-btn>
-            </NuxtLinkLocale>
-            <!--
-            <NuxtLinkLocale to="tracking">
-                <v-btn color="black">Tracking</v-btn>
-            </NuxtLinkLocale>
-            -->
-        </v-app-bar>
-        <v-main>
-            <nuxt-page />
-        </v-main>
-    </v-app>
+      <template #footer="{ collapsed }">
+        <UButton
+          :label="collapsed ? undefined : t('navigation.logout')"
+          icon="i-lucide-log-out"
+          color="neutral"
+          variant="ghost"
+          block
+          :square="collapsed"
+          @click="handleLogout"
+        />
+      </template>
+    </UDashboardSidebar>
+
+    <UDashboardPanel>
+      <template #body>
+        <slot />
+      </template>
+    </UDashboardPanel>
+  </UDashboardGroup>
 </template>
 
 <script setup lang="ts">
+import type { NavigationMenuItem } from '#ui/types'
+
 const { locale, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
+const localePath = useLocalePath()
+const route = useRoute()
 
 const languages = [
-    { value: 'fr', label: '🇫🇷 Français' },
-    { value: 'en', label: '🇬🇧 English' },
-    { value: 'zh', label: '🇨🇳 中文' }
+  { value: 'fr', label: '🇫🇷 Français', icon: 'i-lucide-flag' },
+  { value: 'en', label: '🇬🇧 English', icon: 'i-lucide-flag' },
+  { value: 'zh', label: '🇨🇳 中文', icon: 'i-lucide-flag' }
 ]
 
-const currentLocaleIcon = computed(() =>
-    languages.find(l => l.value === locale.value)?.label.split(' ')[0] || '🌐'
+const currentLocaleLabel = computed(() =>
+  languages.find(l => l.value === locale.value)?.label || '🌐'
 )
 
-const onLanguageChange = (newLocale: "fr" | "en" | "zh") => {
-    const newPath = switchLocalePath(newLocale)
-    if (newPath) {
-        navigateTo(newPath)
-    }
+const currentLocaleIcon = computed(() => 'i-lucide-languages')
+
+const languageItems = computed(() =>
+  languages.map(lang => ({
+    label: lang.label,
+    onClick: () => onLanguageChange(lang.value)
+  }))
+)
+
+const navigationItems = computed<NavigationMenuItem[][]>(() => [[
+  {
+    label: t('navigation.orders'),
+    icon: 'i-lucide-shopping-bag',
+    to: `/${locale.value}/orders`,
+    active: route.path.includes('/orders')
+  },
+  {
+    label: t('navigation.products'),
+    icon: 'i-lucide-package',
+    to: `/${locale.value}/products`,
+    active: route.path.includes('/products')
+  },
+  {
+    label: 'Live Tracking',
+    icon: 'i-lucide-map-pin',
+    to: `/${locale.value}/tracking`,
+    active: route.path.includes('/tracking')
+  }
+]])
+
+const onLanguageChange = (newLocale: 'fr' | 'en' | 'zh') => {
+  const newPath = switchLocalePath(newLocale)
+  if (newPath) {
+    navigateTo(newPath)
+  }
 }
 
+const handleLogout = () => {
+  // Add logout logic here
+  console.log('Logout clicked')
+}
 </script>
 
 <style>
 html {
-    font-size: 14px; /* default is usually 16px */
+  font-size: 14px;
 }
 </style>

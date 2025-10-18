@@ -4,6 +4,7 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "create": "Créer",
+    "print": "Imprimer",
     "itemsPerPage": "Éléments par page",
     "name": "Nom",
     "description": "Description",
@@ -21,6 +22,7 @@
     "search": "Rechercher des produits",
     "add": "Ajouter un produit",
     "edit": "Modifier le produit",
+    "noProducts": "Aucun produit trouvé",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"
@@ -33,10 +35,19 @@
     "vegan": "Végétalien",
     "discountable": "Pouvant être remisé",
     "translations": "Traductions",
-    "image": "Changer l'image"
+    "image": "Changer l'image",
+    "removeImage": "Supprimer l'image"
   },
 
   "orders": {
+    "subtitle": "Gérez vos commandes en temps réel",
+    "all": "Toutes",
+    "pending": "En attente",
+    "preparing": "En préparation",
+    "ready": "Prêtes",
+    "completed": "Terminées",
+    "items": "Articles",
+    "timeManagement": "Gestion du temps",
     "currentEstimate": "Estimation actuelle",
     "newEstimate": "Nouvelle estimation",
     "minutes": "minutes",
@@ -96,7 +107,8 @@
   "navigation": {
     "products": "Produits",
     "orders": "Commandes",
-    "booking": "Réservation"
+    "booking": "Réservation",
+    "logout": "Déconnexion"
   },
 
   "validation": {
