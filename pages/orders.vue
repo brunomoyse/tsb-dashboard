@@ -552,7 +552,7 @@ const UPDATE_PAYMENT_STATUS_MUTATION = gql`
 const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
 const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
 
-const { data: dataOrders } = await useGqlQuery<{ orders: Order[] }>(
+const { data: dataOrders, execute: fetchOrders } = await useGqlQuery<{ orders: Order[] }>(
   ORDERS_QUERY,
   {},
   { immediate: true }
@@ -562,6 +562,13 @@ const { data: dataOrders } = await useGqlQuery<{ orders: Order[] }>(
 if (dataOrders.value?.orders) {
   ordersStore.setOrders(dataOrders.value?.orders)
 }
+
+// Watch for data changes and update store
+watch(dataOrders, (newData) => {
+  if (newData?.orders) {
+    ordersStore.setOrders(newData.orders)
+  }
+}, { deep: true })
 
 // Component methods
 const openOrderDetails = (order: Order) => {
@@ -712,7 +719,10 @@ const markAsPaid = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Fetch orders on mount to ensure data is loaded on client-side navigation
+  await fetchOrders()
+
   // ORDER UPDATED
   const { data: orderUpdated } = useGqlSubscription<{
     orderUpdated: Partial<Order>

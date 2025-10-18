@@ -11,9 +11,14 @@
       <template #header="{ collapsed }">
         <div class="flex items-center justify-center py-6 w-full">
           <img
-            :src="colorMode.value === 'dark' ? '/tsb-logo-w.png' : '/tsb-logo-b.png'"
+            src="/tsb-logo-b.png"
             alt="TSB Logo"
-            class="h-16 w-auto"
+            class="h-16 w-auto dark:hidden"
+          />
+          <img
+            src="/tsb-logo-w.png"
+            alt="TSB Logo"
+            class="h-16 w-auto hidden dark:block"
           />
         </div>
       </template>
