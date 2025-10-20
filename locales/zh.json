@@ -4,6 +4,7 @@
     "cancel": "取消",
     "save": "保存",
     "create": "创建",
+    "print": "打印",
     "itemsPerPage": "每页项目数",
     "name": "名称",
     "description": "描述",
@@ -21,6 +22,7 @@
     "search": "搜索产品",
     "add": "添加产品",
     "edit": "编辑产品",
+    "noProducts": "未找到产品",
     "visibility": {
       "visible": "可见",
       "invisible": "不可见"
@@ -33,10 +35,19 @@
     "vegan": "纯素",
     "discountable": "可折扣",
     "translations": "翻译",
-    "image": "更改图片"
+    "image": "更改图片",
+    "removeImage": "删除图片"
   },
 
   "orders": {
+    "subtitle": "实时管理您的订单",
+    "all": "全部",
+    "pending": "待处理",
+    "preparing": "准备中",
+    "ready": "已准备",
+    "completed": "已完成",
+    "items": "商品",
+    "timeManagement": "时间管理",
     "currentEstimate": "当前估计",
     "newEstimate": "新估计",
     "minutes": "分钟",
@@ -58,6 +69,7 @@
     "noOrders": "未找到订单",
     "updateStatus": "更新订单状态",
     "waitMessage": "请等待 {seconds} 秒后再确认取消。",
+    "orderDetails": "订单详情",
     "status": {
       "pending": "待处理",
       "confirmed": "已确认",
@@ -96,7 +108,13 @@
   "navigation": {
     "products": "产品",
     "orders": "订单",
-    "booking": "预订"
+    "booking": "预订",
+    "logout": "登出"
+  },
+
+  "theme": {
+    "light": "浅色模式",
+    "dark": "深色模式"
   },
 
   "validation": {

@@ -1,119 +1,168 @@
 <template>
-    <v-dialog v-model="dialog" max-width="800px" persistent>
-        <v-card>
-            <v-card-title>{{ dialogTitle }}</v-card-title>
-            <v-card-text>
-                <v-form ref="form" :lazy-validation="false">
-                    <v-container>
-                        <!-- Row 1: Two Columns -->
-                        <v-row>
-                            <!-- Left Column: Category, Code, Price, Piece Count -->
-                            <v-col cols="12" md="6">
-                                <v-select
-                                    v-model="editedProduct.categoryId"
-                                    :items="categories"
-                                    :item-title="item => item.name"
-                                    item-value="id"
-                                    :label="t('products.category')"
-                                    :rules="[v => (!!v && v.trim().length > 0) || t('validation.categoryRequired')]"
-                                ></v-select>
-                                <v-text-field
-                                    v-model="editedProduct.code"
-                                    :label="t('products.code')"
-                                ></v-text-field>
-                                <v-text-field
-                                   v-model="editedProduct.price"
-                                   :label="t('products.priceEuro')"
-                                   type="number"
-                                   required
-                                   :rules="[
-                                     v => (v !== null && v !== '' && !isNaN(v)) || t('validation.priceRequired')
-                                   ]"
-                                ></v-text-field>
-                                <v-text-field
-                                    v-model.number="editedProduct.pieceCount"
-                                    :label="t('products.pieceCount')"
-                                    type="number"
-                                ></v-text-field>
-                            </v-col>
-                            <!-- Right Column: Image Preview / Upload -->
-                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
-                                <div v-if="hasImage" class="d-flex flex-column align-center justify-center">
-                                    <v-img
-                                        :src="imageUrl"
-                                        class="mb-4"
-                                        width="150"
-                                    ></v-img>
-                                    <v-btn text @click="removeImage">{{ t('products.image') }}</v-btn>
-                                </div>
-                                <div v-else class="d-flex flex-column align-center justify-center">
-                                    <!-- Image preview -->
-                                    <v-img
-                                        v-if="imagePreview"
-                                        :src="imagePreview"
-                                        width="150"
-                                        height="150"
-                                        class="mb-4"
-                                        cover
-                                    ></v-img>
+  <UModal
+    v-model:open="dialog"
+    :title="dialogTitle"
+    description=" "
+    :overlay="true"
+    :ui="{
+      content: 'sm:max-w-4xl',
+      overlay: 'backdrop-blur-sm bg-gray-950/75',
+      footer: 'justify-end'
+    }"
+  >
+    <template #body>
+      <div class="space-y-6">
+        <!-- Row 1: Two Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left Column: Category, Code, Price, Piece Count -->
+          <div class="space-y-4">
+            <UFormField :label="t('products.category')" name="category" required>
+              <USelectMenu
+                v-model="editedProduct.categoryId"
+                :options="categories"
+                value-attribute="id"
+                :option-attribute="(item) => item.name"
+                :placeholder="t('products.category')"
+              />
+            </UFormField>
 
-                                    <!-- File input -->
-                                    <v-file-input
-                                        v-model="selectedImage"
-                                        label="Upload Image"
-                                        accept="image/*"
-                                        style="width: 300px;"
-                                    ></v-file-input>
-                                </div>
-                            </v-col>
-                        </v-row>
-                        <!-- Row 2: Translations (3 columns) -->
-                        <v-row>
-                            <v-col
-                                cols="12"
-                                md="4"
-                                v-for="translation in editedProduct.translations"
-                                :key="translation.language"
-                            >
-                                <v-text-field
-                                    v-model="translation.name"
-                                    :label="translation.language.toUpperCase() + ' ' + t('common.name')"
-                                    :rules="translation.language === 'fr' ? [v => (!!v && v.trim().length > 0) || t('validation.frenchNameRequired')] : []"
-                                ></v-text-field>
-                                <v-textarea
-                                    v-model="translation.description"
-                                    :label="translation.language.toUpperCase() + ' ' + t('common.description')"
-                                ></v-textarea>
-                            </v-col>
-                        </v-row>
-                        <!-- Row 3: Checkboxes -->
-                        <v-row dense class="pa-0 ma-0">
-                            <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isVisible" :label="t('common.visible')"></v-checkbox>
-                            </v-col>
-                            <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isAvailable" :label="t('common.available')"></v-checkbox>
-                            </v-col>
-                            <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isDiscountable" :label="t('products.discountable')"></v-checkbox>
-                            </v-col>
-                            <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isHalal" :label="t('products.halal')"></v-checkbox>
-                            </v-col>
-                            <v-col cols="12" md="4" class="pa-1">
-                                <v-checkbox dense v-model="editedProduct.isVegan" :label="t('products.vegan')"></v-checkbox>
-                            </v-col>
-                        </v-row>
-                    </v-container>
-                </v-form>
-            </v-card-text>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn @click="closeDialog">{{ t('common.cancel') }}</v-btn>
-                <v-btn color="primary" @click="saveChanges">{{ saveLabel }}</v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
+            <UFormField :label="t('products.code')" name="code">
+              <UInput
+                v-model="editedProduct.code"
+                :placeholder="t('products.code')"
+              />
+            </UFormField>
+
+            <UFormField :label="t('products.priceEuro')" name="price" required>
+              <UInput
+                v-model="editedProduct.price"
+                type="number"
+                :placeholder="t('products.priceEuro')"
+              />
+            </UFormField>
+
+            <UFormField :label="t('products.pieceCount')" name="pieceCount">
+              <UInput
+                v-model.number="editedProduct.pieceCount"
+                type="number"
+                :placeholder="t('products.pieceCount')"
+              />
+            </UFormField>
+          </div>
+
+          <!-- Right Column: Image Preview / Upload -->
+          <div class="flex flex-col items-center justify-center">
+            <div v-if="hasImage" class="flex flex-col items-center justify-center gap-4">
+              <img
+                :src="imageUrl"
+                alt="Product image"
+                class="w-40 h-40 object-cover rounded-lg"
+              />
+              <UButton
+                variant="ghost"
+                color="neutral"
+                @click="removeImage"
+              >
+                {{ t('products.removeImage') }}
+              </UButton>
+            </div>
+            <div v-else class="flex flex-col items-center justify-center gap-4 w-full">
+              <!-- Image preview -->
+              <img
+                v-if="imagePreview"
+                :src="imagePreview"
+                alt="Preview"
+                class="w-40 h-40 object-cover rounded-lg"
+              />
+
+              <!-- File input -->
+              <div class="w-full max-w-xs">
+                <UFormField label="Upload Image" name="image">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    @change="handleFileChange"
+                  />
+                </UFormField>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Translations (3 columns) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div
+            v-for="translation in editedProduct.translations"
+            :key="translation.language"
+            class="space-y-3"
+          >
+            <UFormField
+              :label="translation.language.toUpperCase() + ' ' + t('common.name')"
+              :name="`translation-${translation.language}-name`"
+              :required="translation.language === 'fr'"
+            >
+              <UInput
+                v-model="translation.name"
+                :placeholder="t('common.name')"
+              />
+            </UFormField>
+
+            <UFormField
+              :label="translation.language.toUpperCase() + ' ' + t('common.description')"
+              :name="`translation-${translation.language}-description`"
+            >
+              <UTextarea
+                v-model="translation.description"
+                :placeholder="t('common.description')"
+                :rows="3"
+              />
+            </UFormField>
+          </div>
+        </div>
+
+        <!-- Row 3: Checkboxes -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <UCheckbox
+            v-model="editedProduct.isVisible"
+            :label="t('common.visible')"
+          />
+          <UCheckbox
+            v-model="editedProduct.isAvailable"
+            :label="t('common.available')"
+          />
+          <UCheckbox
+            v-model="editedProduct.isDiscountable"
+            :label="t('products.discountable')"
+          />
+          <UCheckbox
+            v-model="editedProduct.isHalal"
+            :label="t('products.halal')"
+          />
+          <UCheckbox
+            v-model="editedProduct.isVegan"
+            :label="t('products.vegan')"
+          />
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <UButton
+        variant="outline"
+        color="neutral"
+        @click="closeDialog"
+      >
+        {{ t('common.cancel') }}
+      </UButton>
+      <UButton
+        color="primary"
+        @click="saveChanges"
+      >
+        {{ saveLabel }}
+      </UButton>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
@@ -128,7 +177,6 @@ import type {
 } from '~/types'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
-import type { VForm } from 'vuetify/components'
 
 // Props and emits definition.
 const props = defineProps<{
@@ -191,20 +239,33 @@ if (props.mode !== 'create') {
 
 const dialog = ref(true)
 
+// Watch dialog state and emit close when it becomes false
+watch(dialog, (newValue) => {
+    if (!newValue) {
+        emit('close')
+    }
+})
+
 const categoryStore = useCategoriesStore()
 const categories = computed(() => categoryStore.getCategories(locale.value))
 
 const closeDialog = () => {
     dialog.value = false
-    emit('close')
 }
 
-const form = ref<InstanceType<typeof VForm> | null>(null)
-
 const saveChanges = async () => {
-    if (form.value) {
-        const valid = await form.value.validate()
-        if (!valid) return
+    // Basic validation
+    if (!editedProduct.value.categoryId || editedProduct.value.categoryId.trim() === '') {
+        return
+    }
+
+    const frTranslation = editedProduct.value.translations.find(t => t.language === 'fr')
+    if (!frTranslation?.name || frTranslation.name.trim() === '') {
+        return
+    }
+
+    if (!editedProduct.value.price || editedProduct.value.price === '') {
+        return
     }
 
     if (props.mode === 'create') {
@@ -255,14 +316,24 @@ const hasImage = ref(false)
 const selectedImage = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 
-watch(selectedImage, (file) => {
+const handleFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
     if (file) {
+        selectedImage.value = file
         const reader = new FileReader()
         reader.onload = (e) => {
             imagePreview.value = e.target?.result as string
         }
-        reader.readAsDataURL(file as File)
+        reader.readAsDataURL(file)
     } else {
+        selectedImage.value = null
+        imagePreview.value = null
+    }
+}
+
+watch(selectedImage, (file) => {
+    if (!file) {
         imagePreview.value = null
     }
 })

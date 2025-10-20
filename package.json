@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@awesome-cordova-library/vibration": "^1.0.2",
-    "@mdi/font": "^7.4.47",
+    "@iconify-json/lucide": "^1.2.70",
+    "@nuxt/icon": "^2.0.0",
+    "@nuxt/ui": "^4.0.1",
     "@pinia/nuxt": "^0.11.2",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
@@ -27,6 +29,7 @@
     "@nuxtjs/i18n": "^10.1.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@vitejs/plugin-legacy": "^7.2.1",
+    "tailwindcss": "^4.1.14",
     "terser": "^5.44.0",
     "vite-plugin-vuetify": "^2.1.2",
     "vuetify": "^3.10.5"
