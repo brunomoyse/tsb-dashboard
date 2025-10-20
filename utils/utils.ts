@@ -63,6 +63,10 @@ export const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     currency: "EUR",
 })
 
+export const formatPrice = (price: number | string): string => {
+    return belPriceFormat.format(Number(price));
+}
+
 /**
  * Pads a number to 2 digits.
  */
