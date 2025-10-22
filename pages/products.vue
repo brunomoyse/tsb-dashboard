@@ -5,14 +5,26 @@
       <div>
         <h1 class="text-2xl font-bold text-highlighted">{{ t('navigation.products') }}</h1>
       </div>
-      <UButton
-        icon="i-lucide-plus"
-        @click="openCreateDialog"
-      >
-        {{ t('products.add') }}
-      </UButton>
+      <div class="flex gap-2">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :title="t('products.syncToDeliveroo')"
+          @click="openSyncModal"
+        >
+          <div class="flex items-center gap-1.5">
+            <img src="/deliveroo-logo.svg" alt="Deliveroo" class="size-4" />
+            <UIcon name="i-lucide-refresh-cw" class="size-3.5" />
+          </div>
+        </UButton>
+        <UButton
+          icon="i-lucide-plus"
+          @click="openCreateDialog"
+        >
+          {{ t('products.add') }}
+        </UButton>
+      </div>
     </div>
-
     <!-- Search Bar -->
     <div class="mb-4">
       <UInput
@@ -129,23 +141,39 @@
       @update="handleUpdate"
       @close="selectedProduct = null"
     />
+
+    <!-- Deliveroo Sync Modal -->
+    <DeliverooSyncModal
+      v-model:open="showSyncModal"
+      :preview-data="syncPreviewData"
+      :loading="isLoadingPreview"
+      :syncing="isSyncing"
+      @confirm="confirmSync"
+    />
   </Teleport>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
-import { useCategoriesStore, useGqlQuery, useNuxtApp } from '#imports'
+import { useCategoriesStore, useGqlQuery, useGqlMutation, useNuxtApp } from '#imports'
 import { useI18n } from 'vue-i18n'
-import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
+import { useToast } from '#imports'
+import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest, SyncPreviewData } from '~/types'
 import ProductDialog from '~/components/ProductDialog.vue'
+import DeliverooSyncModal from '~/components/DeliverooSyncModal.vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 
-const { $api } = useNuxtApp()
+const { $api, $gqlFetch } = useNuxtApp()
 const config = useRuntimeConfig()
 const graphqlUrl = config.public.graphqlHttp as string
 const { t, availableLocales } = useI18n()
 const categoryStore = useCategoriesStore()
+const toast = useToast()
+
+// Hardcoded Deliveroo credentials (temporary)
+const DELIVEROO_BRAND_ID = 'b7f3e9a2-4c8d-4e5f-9b2a-1d6c8e4f7a9b'
+const DELIVEROO_MENU_ID = 'a5a8c2f1-7e4b-4d9c-8a3f-6b9e1c4d7f2a'
 
 // Define table columns
 const columns = [
@@ -282,6 +310,50 @@ const UPDATE_PRODUCT_MUTATION = gql`
   }
 `
 
+const PREVIEW_SYNC_MENU_QUERY = gql`
+  query PreviewSyncMenu($source: OrderSource!, $brandId: ID!, $menuId: ID!) {
+    previewSyncMenuPlatform(
+      source: $source
+      brandId: $brandId
+      menuId: $menuId
+    ) {
+      toCreate {
+        name
+        price
+        description
+        category
+        isAvailable
+        isVisible
+      }
+      toUpdate {
+        id
+        name
+        currentPrice
+        newPrice
+        currentDescription
+        newDescription
+        currentAvailability
+        newAvailability
+      }
+      toDelete {
+        id
+        name
+        reason
+      }
+    }
+  }
+`
+
+const SYNC_MENU_MUTATION = gql`
+  mutation SyncMenu($source: OrderSource!, $brandId: ID!, $menuId: ID!) {
+    syncMenuToPlatform(
+      source: $source
+      brandId: $brandId
+      menuId: $menuId
+    )
+  }
+`
+
 // Fetch products
 const { data: dataProducts } = await useGqlQuery<{ products: Product[] }>(
   print(PRODUCTS_QUERY),
@@ -332,6 +404,12 @@ if (dataCategories.value?.productCategories) {
 const selectedProduct = ref<Product | null>(null)
 const createDialog = ref(false)
 
+// State for Deliveroo sync
+const showSyncModal = ref(false)
+const syncPreviewData = ref<SyncPreviewData | null>(null)
+const isLoadingPreview = ref(false)
+const isSyncing = ref(false)
+
 // Open the edit dialog.
 const openEditDialog = (product: Product) => {
   selectedProduct.value = product
@@ -340,6 +418,70 @@ const openEditDialog = (product: Product) => {
 // Open the create dialog.
 const openCreateDialog = () => {
   createDialog.value = true
+}
+
+// Open the Deliveroo sync modal with preview data
+const openSyncModal = async () => {
+  try {
+    isLoadingPreview.value = true
+    showSyncModal.value = true
+
+    const result = await $gqlFetch<{ previewSyncMenuPlatform: SyncPreviewData }>(
+      print(PREVIEW_SYNC_MENU_QUERY),
+      {
+        variables: {
+          source: 'DELIVEROO',
+          brandId: DELIVEROO_BRAND_ID,
+          menuId: DELIVEROO_MENU_ID
+        }
+      }
+    )
+
+    syncPreviewData.value = result?.previewSyncMenuPlatform ?? null
+  } catch (err) {
+    console.error('Failed to load sync preview:', err)
+    toast.add({
+      title: t('products.syncModal.syncError'),
+      color: 'error'
+    })
+    showSyncModal.value = false
+  } finally {
+    isLoadingPreview.value = false
+  }
+}
+
+// Confirm and execute the Deliveroo sync
+const confirmSync = async () => {
+  try {
+    isSyncing.value = true
+
+    const { mutate: mutateSyncMenu } = useGqlMutation<{ syncMenuToPlatform: boolean }>(
+      SYNC_MENU_MUTATION
+    )
+
+    await mutateSyncMenu({
+      source: 'DELIVEROO',
+      brandId: DELIVEROO_BRAND_ID,
+      menuId: DELIVEROO_MENU_ID
+    })
+
+    toast.add({
+      title: t('products.syncModal.syncSuccess'),
+      color: 'success'
+    })
+
+    // Close modal and reset state
+    showSyncModal.value = false
+    syncPreviewData.value = null
+  } catch (err) {
+    console.error('Failed to sync menu:', err)
+    toast.add({
+      title: t('products.syncModal.syncError'),
+      color: 'error'
+    })
+  } finally {
+    isSyncing.value = false
+  }
 }
 
 const handleCreate = async (newProductInput: CreateProductInput) => {
