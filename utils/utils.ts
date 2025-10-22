@@ -27,8 +27,8 @@ export function getStreetAndDistance(address: Address | null): string {
     return `${streetName} ${houseNumber} (${formattedKm} km)`;
 }
 
-export const formatDate = (dateString: string) =>
-    new Intl.DateTimeFormat("fr-BE", {
+export const formatDate = (dateString: string, locale: string = 'fr-BE') =>
+    new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -36,7 +36,7 @@ export const formatDate = (dateString: string) =>
         minute: "2-digit"
     }).format(new Date(dateString));
 
-export const formatTimeOnly = (dateString: string) => {
+export const formatTimeOnly = (dateString: string, locale: string = 'fr-BE') => {
     try {
         const date = new Date(dateString);
 
@@ -46,7 +46,7 @@ export const formatTimeOnly = (dateString: string) => {
             return '--:--';
         }
 
-        return new Intl.DateTimeFormat("fr-BE", {
+        return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
             hour: "2-digit",
             minute: "2-digit"
         }).format(date);

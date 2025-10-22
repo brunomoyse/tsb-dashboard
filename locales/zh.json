@@ -88,6 +88,7 @@
     "updateStatus": "更新订单状态",
     "waitMessage": "请等待 {seconds} 秒后再确认取消。",
     "orderDetails": "订单详情",
+    "orderDetailsDescription": "查看和管理订单信息",
     "status": {
       "pending": "待处理",
       "confirmed": "已确认",

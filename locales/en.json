@@ -88,6 +88,7 @@
     "updateStatus": "Update Order Status",
     "waitMessage": "Please wait {seconds} seconds before confirming cancellation.",
     "orderDetails": "Order Details",
+    "orderDetailsDescription": "View and manage order information",
     "status": {
       "pending": "Pending",
       "confirmed": "Confirmed",
