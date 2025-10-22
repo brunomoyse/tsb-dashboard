@@ -13,10 +13,8 @@ ENV GRAPHQL_WS_URL="wss://tokyo.brunomoyse.be/api/v1/graphql"
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Clean npm cache and install dependencies (including dev dependencies for building)
-# Use --no-optional=false to ensure optional dependencies are installed correctly
-RUN npm cache clean --force && \
-    npm ci --prefer-offline --no-audit --include=optional
+# Install dependencies (optionalDependencies in package.json handle native bindings)
+RUN npm ci --prefer-offline --no-audit
 
 # Copy the rest of the application code
 COPY . .
@@ -38,10 +36,11 @@ ENV NITRO_PRESET=node-server
 COPY --from=builder /usr/src/app/.output ./.output
 COPY --from=builder /usr/src/app/package*.json ./
 
-# Install only production dependencies
-RUN npm cache clean --force && \
-    npm ci --production --prefer-offline --no-audit && \
-    npm cache clean --force
+# Install only production dependencies (skip postinstall since .output is already built)
+RUN npm install --production --ignore-scripts
+
+# Clean npm cache to reduce image size
+RUN npm cache clean --force
 
 # Expose the port that the application will run on
 EXPOSE 3000
