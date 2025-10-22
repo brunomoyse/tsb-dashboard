@@ -1,5 +1,6 @@
 import {defineStore} from "pinia";
 import type {User} from "@/types";
+import {useRuntimeConfig} from "#imports";
 
 export const useAuthStore = defineStore("auth", {
     state: () => ({
@@ -25,11 +26,18 @@ export const useAuthStore = defineStore("auth", {
         },
         async logout() {
             try {
-                // @TODO: To implement
+                const config = useRuntimeConfig()
+                const apiUrl = config.public.api as string
+
+                await $fetch(`${apiUrl}/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                })
             } catch (error) {
-                console.error('Token evocation error:', error)
+                console.error('Logout error:', error)
             } finally {
-                this.accessValid = false
+                this.clearUser()
+                localStorage.removeItem('token_expires')
             }
         }
     },
