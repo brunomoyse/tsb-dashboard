@@ -39,18 +39,24 @@ export default defineNuxtPlugin(() => {
                 !request.toString().includes('/tokens/refresh') &&
                 !request.toString().includes('/login')) {
                 try {
-                    // Server-side refresh handling
-                    if (!import.meta.server) {
-                        // Client-side handling
-                        await $fetch(`${apiUrl}/tokens/refresh`, {
+                    // Attempt token refresh
+                    await $fetch(`${apiUrl}/tokens/refresh`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    })
+                    // Retry the original request
+                    // @ts-ignore
+                    return $fetch(request, options)
+                } catch (error) {
+                    // Refresh failed, logout and redirect
+                    try {
+                        await $fetch(`${apiUrl}/logout`, {
                             method: 'POST',
                             credentials: 'include'
                         })
-                        // @ts-ignore
-                        return $fetch(request, options)
+                    } catch {
+                        // Ignore logout errors
                     }
-                } catch (error) {
-                    await $fetch(`${apiUrl}/tokens/revoke`, { credentials: 'include' })
                     navigateTo(localePath('login'));
                 }
             }
