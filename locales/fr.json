@@ -23,6 +23,7 @@
     "add": "Ajouter un produit",
     "edit": "Modifier le produit",
     "noProducts": "Aucun produit trouvé",
+    "syncToDeliveroo": "Synchroniser avec Deliveroo",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"
@@ -36,7 +37,24 @@
     "discountable": "Pouvant être remisé",
     "translations": "Traductions",
     "image": "Changer l'image",
-    "removeImage": "Supprimer l'image"
+    "removeImage": "Supprimer l'image",
+    "syncModal": {
+      "title": "Synchroniser le menu avec Deliveroo",
+      "loading": "Chargement de l'aperçu...",
+      "toCreate": "Produits à créer",
+      "toUpdate": "Produits à mettre à jour",
+      "toDelete": "Produits à supprimer",
+      "confirmSync": "Confirmer la synchronisation",
+      "syncing": "Synchronisation en cours...",
+      "syncSuccess": "Menu synchronisé avec succès sur Deliveroo",
+      "syncError": "Échec de la synchronisation du menu avec Deliveroo",
+      "noChanges": "Aucun changement à synchroniser",
+      "current": "Actuel",
+      "new": "Nouveau",
+      "emptyCreate": "Aucun produit à créer",
+      "emptyUpdate": "Aucun produit à mettre à jour",
+      "emptyDelete": "Aucun produit à supprimer"
+    }
   },
 
   "orders": {
@@ -102,6 +120,11 @@
     "paymentMethod": {
       "online": "En ligne",
       "cash": "Cash"
+    },
+    "source": {
+      "tokyo": "Tokyo",
+      "deliveroo": "Deliveroo",
+      "uber": "Uber Eats"
     }
   },
 
