@@ -99,9 +99,9 @@ const route = useRoute()
 const colorMode = useColorMode()
 
 const languages = [
-  { value: 'fr', label: '🇫🇷 Français', icon: 'i-lucide-flag' },
-  { value: 'en', label: '🇬🇧 English', icon: 'i-lucide-flag' },
-  { value: 'zh', label: '🇨🇳 中文', icon: 'i-lucide-flag' }
+  { value: 'fr', label: 'Français', icon: 'i-lucide-flag' },
+  { value: 'en', label: 'English', icon: 'i-lucide-flag' },
+  { value: 'zh', label: '中文', icon: 'i-lucide-flag' }
 ]
 
 const currentLocaleLabel = computed(() =>
