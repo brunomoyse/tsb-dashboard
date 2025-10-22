@@ -13,8 +13,10 @@ ENV GRAPHQL_WS_URL="wss://tokyo.brunomoyse.be/api/v1/graphql"
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies (including dev dependencies for building)
-RUN npm ci
+# Clean npm cache and install dependencies (including dev dependencies for building)
+# Use --no-optional=false to ensure optional dependencies are installed correctly
+RUN npm cache clean --force && \
+    npm ci --prefer-offline --no-audit --include=optional
 
 # Copy the rest of the application code
 COPY . .
@@ -37,10 +39,9 @@ COPY --from=builder /usr/src/app/.output ./.output
 COPY --from=builder /usr/src/app/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --production
-
-# Clean npm cache to reduce image size
-RUN npm cache clean --force
+RUN npm cache clean --force && \
+    npm ci --production --prefer-offline --no-audit && \
+    npm cache clean --force
 
 # Expose the port that the application will run on
 EXPOSE 3000
