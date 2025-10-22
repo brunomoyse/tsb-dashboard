@@ -28,8 +28,18 @@
         <!-- Card Header -->
         <template #header>
           <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-lg font-bold">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</h3>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="text-lg font-bold">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</h3>
+                <UBadge
+                  :color="getSourceColor(order.source)"
+                  variant="subtle"
+                  size="sm"
+                >
+                  <UIcon :name="getSourceIcon(order.source)" class="mr-1" />
+                  {{ t(`orders.source.${order.source?.toLowerCase() || 'tokyo'}`) }}
+                </UBadge>
+              </div>
               <p class="text-sm text-muted">{{ formatDate(order.createdAt) }}</p>
             </div>
             <UBadge :color="getStatusColor(order.status)" variant="soft">
@@ -137,6 +147,14 @@
             <div class="flex flex-wrap gap-2 mb-3">
               <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft">
                 {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
+              </UBadge>
+              <UBadge
+                :color="getSourceColor(selectedOrder.source)"
+                variant="subtle"
+                size="sm"
+              >
+                <UIcon :name="getSourceIcon(selectedOrder.source)" class="mr-1" />
+                {{ t(`orders.source.${selectedOrder.source?.toLowerCase() || 'tokyo'}`) }}
               </UBadge>
               <UBadge color="neutral" variant="subtle" size="sm">
                 <UIcon
@@ -345,27 +363,29 @@ const ordersStore = useOrdersStore()
 // Tab state
 const selectedTab = ref(0)
 
+const orders = computed(() => dataOrders.value?.orders ?? [])
+
 const tabItems = computed(() => [
-  { label: `${t('orders.all')} (${ordersStore.orders.length})`, value: 0 },
-  { label: `${t('orders.pending')} (${ordersStore.orders.filter(o => o.status === 'PENDING').length})`, value: 1 },
-  { label: `${t('orders.preparing')} (${ordersStore.orders.filter(o => o.status === 'PREPARING').length})`, value: 2 },
-  { label: `${t('orders.ready')} (${ordersStore.orders.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
-  { label: `${t('orders.completed')} (${ordersStore.orders.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
+  { label: `${t('orders.all')} (${orders.value.length})`, value: 0 },
+  { label: `${t('orders.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 1 },
+  { label: `${t('orders.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
+  { label: `${t('orders.ready')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
+  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
 ])
 
 const filteredOrders = computed(() => {
-  const orders = ordersStore.orders
+  const ordersList = orders.value
   switch (selectedTab.value) {
     case 1:
-      return orders.filter(o => o.status === 'PENDING')
+      return ordersList.filter(o => o.status === 'PENDING')
     case 2:
-      return orders.filter(o => o.status === 'PREPARING')
+      return ordersList.filter(o => o.status === 'PREPARING')
     case 3:
-      return orders.filter(o => o.status === 'AWAITING_PICK_UP')
+      return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
     case 4:
-      return orders.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status))
+      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status))
     default:
-      return orders
+      return ordersList
   }
 })
 
@@ -467,6 +487,27 @@ const getPaymentStatusColor = (status: string | undefined) => {
   return colors[status.toLowerCase()] || 'neutral'
 }
 
+// Order source color and icon mapping
+const getSourceColor = (source: string | undefined): string => {
+  if (!source) return 'neutral'
+  const colors: Record<string, string> = {
+    TOKYO: 'purple',
+    DELIVEROO: 'cyan',
+    UBER: 'green'
+  }
+  return colors[source] || 'neutral'
+}
+
+const getSourceIcon = (source: string | undefined): string => {
+  if (!source) return 'i-lucide-store'
+  const icons: Record<string, string> = {
+    TOKYO: 'i-lucide-store',
+    DELIVEROO: 'i-lucide-package',
+    UBER: 'i-lucide-car'
+  }
+  return icons[source] || 'i-lucide-store'
+}
+
 const newEstimatedTime = computed(() => {
   if (!baseEstimatedTime.value || !sliderDeltaMinutes.value) return ''
   const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000)
@@ -486,6 +527,7 @@ const ORDERS_QUERY = gql`
       updatedAt
       status
       type
+      source
       isOnlinePayment
       discountAmount
       deliveryFee
@@ -552,10 +594,10 @@ const UPDATE_PAYMENT_STATUS_MUTATION = gql`
 const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
 const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
 
-const { data: dataOrders, execute: fetchOrders } = await useGqlQuery<{ orders: Order[] }>(
+const { data: dataOrders } = await useGqlQuery<{ orders: Order[] }>(
   ORDERS_QUERY,
   {},
-  { immediate: true }
+  { immediate: true, cache: true }
 )
 
 // Populate the Pinia store with orders fetched from the server
@@ -569,6 +611,96 @@ watch(dataOrders, (newData) => {
     ordersStore.setOrders(newData.orders)
   }
 }, { deep: true })
+
+// ORDER UPDATED SUBSCRIPTION
+const { data: orderUpdated } = useGqlSubscription<{
+  orderUpdated: Partial<Order>
+}>(
+  print(gql`
+    subscription {
+      orderUpdated {
+        id
+        status
+        estimatedReadyTime
+        payment {
+          status
+        }
+      }
+    }
+  `),
+  {}
+)
+
+watch(orderUpdated, (val) => {
+  if (val?.orderUpdated) {
+    ordersStore.updateOrder(val.orderUpdated)
+  }
+})
+
+// ORDER CREATED SUBSCRIPTION
+const { data: orderCreated } = useGqlSubscription<{
+  orderCreated: Order
+}>(
+  print(gql`
+    subscription {
+      orderCreated {
+        id
+        createdAt
+        updatedAt
+        status
+        type
+        source
+        isOnlinePayment
+        discountAmount
+        deliveryFee
+        totalPrice
+        preferredReadyTime
+        estimatedReadyTime
+        addressExtra
+        orderNote
+        orderExtra
+        address {
+          id
+          streetName
+          houseNumber
+          municipalityName
+          postcode
+          distance
+        }
+        customer {
+          id
+          firstName
+          lastName
+        }
+        payment {
+          status
+        }
+        items {
+          unitPrice
+          quantity
+          totalPrice
+          product {
+            id
+            code
+            name
+            category {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  `),
+  {}
+)
+
+watch(orderCreated, (val) => {
+  if (val?.orderCreated) {
+    ordersStore.addOrder(val.orderCreated)
+    notificationSound()
+  }
+})
 
 // Component methods
 const openOrderDetails = (order: Order) => {
@@ -718,98 +850,4 @@ const markAsPaid = async () => {
     isUpdatingPayment.value = false
   }
 }
-
-onMounted(async () => {
-  // Fetch orders on mount to ensure data is loaded on client-side navigation
-  await fetchOrders()
-
-  // ORDER UPDATED
-  const { data: orderUpdated } = useGqlSubscription<{
-    orderUpdated: Partial<Order>
-  }>(
-    print(gql`
-      subscription {
-        orderUpdated {
-          id
-          status
-          estimatedReadyTime
-          payment {
-            status
-          }
-        }
-      }
-    `),
-    {}
-  )
-
-  watch(orderUpdated, (val) => {
-    if (val?.orderUpdated) {
-      ordersStore.updateOrder(val.orderUpdated)
-    }
-  })
-
-  // ORDER CREATED
-  const { data: orderCreated } = useGqlSubscription<{
-    orderCreated: Order
-  }>(
-    print(gql`
-      subscription {
-        orderCreated {
-          id
-          createdAt
-          updatedAt
-          status
-          type
-          isOnlinePayment
-          discountAmount
-          deliveryFee
-          totalPrice
-          preferredReadyTime
-          estimatedReadyTime
-          addressExtra
-          orderNote
-          orderExtra
-          address {
-            id
-            streetName
-            houseNumber
-            municipalityName
-            postcode
-            distance
-          }
-          customer {
-            id
-            firstName
-            lastName
-          }
-          payment {
-            status
-          }
-          items {
-            unitPrice
-            quantity
-            totalPrice
-            product {
-              id
-              code
-              name
-              category {
-                id
-                name
-              }
-            }
-          }
-        }
-      }
-    `),
-    {}
-  )
-
-  watch(orderCreated, (val) => {
-    if (val?.orderCreated) {
-      ordersStore.addOrder(val.orderCreated)
-      notificationSound()
-    }
-  })
-})
 </script>
