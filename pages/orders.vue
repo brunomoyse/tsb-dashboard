@@ -11,7 +11,7 @@
       v-model="selectedTab"
       :items="tabItems"
       :content="false"
-      class="mb-6"
+      class="mb-6 tabs-ssr-fix"
     />
 
     <!-- Orders Grid -->
@@ -40,7 +40,7 @@
                   {{ t(`orders.source.${order.source?.toLowerCase() || 'tokyo'}`) }}
                 </UBadge>
               </div>
-              <p class="text-sm text-muted">{{ formatDate(order.createdAt) }}</p>
+              <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
             </div>
             <UBadge :color="getStatusColor(order.status)" variant="soft">
               {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
@@ -106,7 +106,7 @@
           <!-- Time Info -->
           <div v-if="order.estimatedReadyTime" class="text-sm flex items-center gap-1 text-muted">
             <UIcon name="i-lucide-clock" class="size-4" />
-            {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime) }}
+            {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
           </div>
         </div>
       </UCard>
@@ -122,6 +122,7 @@
     <USlideover
       v-model:open="showOrderDetails"
       :title="t('orders.orderDetails')"
+      :description="t('orders.orderDetailsDescription')"
       :ui="{ content: 'min-h-full' }"
     >
       <template v-if="selectedOrder" #body>
@@ -133,7 +134,7 @@
                 <h2 class="text-xl font-bold text-highlighted">
                   {{ selectedOrder.customer?.firstName }} {{ selectedOrder.customer?.lastName }}
                 </h2>
-                <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt) }}</p>
+                <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt, locale) }}</p>
               </div>
               <UButton
                 icon="i-lucide-printer"
@@ -189,13 +190,13 @@
             <h3 class="text-sm font-medium mb-2">{{ t('orders.timeManagement') }}</h3>
             <p class="text-sm text-muted mb-4">
               {{ t('orders.preferredTime') }}:
-              {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime) : t('orders.asap') }}
+              {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime, locale) : t('orders.asap') }}
             </p>
 
             <div v-if="selectedOrder.estimatedReadyTime" class="mb-4">
               <p class="text-sm text-muted">
                 {{ t('orders.currentEstimate') }}:
-                <span class="font-bold">{{ formatTimeOnly(selectedOrder.estimatedReadyTime) }}</span>
+                <span class="font-bold">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
               </p>
             </div>
 
@@ -212,19 +213,19 @@
               </UButton>
             </div>
 
+            <!-- Time Display -->
+            <div class="mb-2 flex items-center justify-between">
+              <span class="text-sm text-muted">+{{ sliderDeltaMinutes }}{{ t('orders.minutes') }}</span>
+              <span class="text-lg font-bold text-primary">{{ newEstimatedTime || formatTimeOnly(selectedOrder.estimatedReadyTime, locale.value) }}</span>
+            </div>
+
             <!-- Time Slider -->
             <USlider
               v-model="sliderDeltaMinutes"
               :min="0"
               :max="90"
               :step="5"
-              class="mb-4"
             />
-
-            <p class="text-sm">
-              {{ t('orders.newEstimate') }}:
-              <span class="font-bold text-primary">{{ newEstimatedTime }}</span>
-            </p>
           </div>
 
           <!-- Payment Status Section -->
@@ -308,17 +309,14 @@
     <!-- Confirmation Dialog for Cancellation -->
     <UModal
       v-model:open="showCancelDialog"
+      :title="t('orders.confirmCancelTitle')"
+      :description="t('orders.confirmCancelMessage')"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
-      <template #header>
-        <h3 class="font-bold">{{ t('orders.confirmCancelTitle') }}</h3>
-      </template>
-
       <template #body>
         <div class="space-y-3">
-          <p>{{ t('orders.confirmCancelMessage') }}</p>
           <p v-if="selectedOrder" class="text-sm text-muted">
-            {{ formatDate(selectedOrder.createdAt) }} - {{ formatOrderSummary(selectedOrder) }}
+            {{ formatDate(selectedOrder.createdAt, locale) }} - {{ formatOrderSummary(selectedOrder) }}
           </p>
           <p v-if="selectedOrder?.isOnlinePayment" class="text-error">
             {{ t('orders.refundNotice') }}
@@ -357,42 +355,17 @@ import type { Order, OrderStatus, OrderType } from '~/types'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const ordersStore = useOrdersStore()
 
-// Tab state
-const selectedTab = ref(0)
-
-const orders = computed(() => dataOrders.value?.orders ?? [])
-
-const tabItems = computed(() => [
-  { label: `${t('orders.all')} (${orders.value.length})`, value: 0 },
-  { label: `${t('orders.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 1 },
-  { label: `${t('orders.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
-  { label: `${t('orders.ready')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
-  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
-])
-
-const filteredOrders = computed(() => {
-  const ordersList = orders.value
-  switch (selectedTab.value) {
-    case 1:
-      return ordersList.filter(o => o.status === 'PENDING')
-    case 2:
-      return ordersList.filter(o => o.status === 'PREPARING')
-    case 3:
-      return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
-    case 4:
-      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status))
-    default:
-      return ordersList
-  }
-})
+// Tab state - start as null for SSR, set on client
+const selectedTab = ref<number | null>(null)
 
 // Order details state
 const selectedOrder = ref<Order | null>(null)
 const showOrderDetails = ref(false)
 const sliderDeltaMinutes = ref<number>(0)
+const initialSliderValue = ref<number>(0)
 const baseEstimatedTime = ref<Date | null>(null)
 const stagedStatus = ref<OrderStatus | undefined>(undefined)
 const isUpdatingPayment = ref(false)
@@ -509,13 +482,15 @@ const getSourceIcon = (source: string | undefined): string => {
 }
 
 const newEstimatedTime = computed(() => {
-  if (!baseEstimatedTime.value || !sliderDeltaMinutes.value) return ''
-  const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000)
-  return formatTimeOnly(newTime.toISOString())
+  if (!baseEstimatedTime.value) return ''
+  // Calculate the adjustment: how many minutes to add to the base estimate
+  const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
+  const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
+  return formatTimeOnly(newTime.toISOString(), locale.value)
 })
 
 const canSave = computed(() => {
-  return stagedStatus.value || (sliderDeltaMinutes.value ?? 0) > 0
+  return stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value
 })
 
 // GraphQL Queries and Mutations
@@ -594,7 +569,7 @@ const UPDATE_PAYMENT_STATUS_MUTATION = gql`
 const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
 const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
 
-const { data: dataOrders } = await useGqlQuery<{ orders: Order[] }>(
+const { data: dataOrders, pending } = await useGqlQuery<{ orders: Order[] }>(
   ORDERS_QUERY,
   {},
   { immediate: true, cache: true }
@@ -605,12 +580,48 @@ if (dataOrders.value?.orders) {
   ordersStore.setOrders(dataOrders.value?.orders)
 }
 
+// Use store data for reactive updates and SSR support
+const orders = computed(() => ordersStore.orders)
+
+const tabItems = computed(() => [
+  { label: `${t('orders.all')} (${orders.value.length})`, value: 0 },
+  { label: `${t('orders.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 1 },
+  { label: `${t('orders.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
+  { label: `${t('orders.ready')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
+  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
+])
+
+const filteredOrders = computed(() => {
+  const ordersList = orders.value
+  // During SSR, selectedTab is null, show all orders
+  if (selectedTab.value === null) {
+    return ordersList
+  }
+  switch (selectedTab.value) {
+    case 1:
+      return ordersList.filter(o => o.status === 'PENDING')
+    case 2:
+      return ordersList.filter(o => o.status === 'PREPARING')
+    case 3:
+      return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
+    case 4:
+      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status))
+    default:
+      return ordersList
+  }
+})
+
 // Watch for data changes and update store
 watch(dataOrders, (newData) => {
   if (newData?.orders) {
     ordersStore.setOrders(newData.orders)
   }
 }, { deep: true })
+
+// Set active tab on client side
+onMounted(() => {
+  selectedTab.value = 0
+})
 
 // ORDER UPDATED SUBSCRIPTION
 const { data: orderUpdated } = useGqlSubscription<{
@@ -708,22 +719,44 @@ const openOrderDetails = (order: Order) => {
   stagedStatus.value = undefined
 
   try {
-    if (order.estimatedReadyTime) {
-      sliderDeltaMinutes.value = 0
+    const now = new Date()
+
+    // For pending orders, default to 30 minutes from now
+    if (order.status === 'PENDING') {
+      // Base is NOW for pending orders
+      baseEstimatedTime.value = now
+
+      // Set slider to 30 minutes for pending orders
+      sliderDeltaMinutes.value = 30
+      initialSliderValue.value = 0
+    } else if (order.estimatedReadyTime) {
       const estimatedDate = new Date(order.estimatedReadyTime)
 
       if (isNaN(estimatedDate.getTime())) {
         throw new Error('Invalid date format')
       }
 
+      // Base is the existing estimated time
       baseEstimatedTime.value = estimatedDate
+
+      // Calculate minutes from now to the estimated time to display it
+      const diffMs = estimatedDate.getTime() - now.getTime()
+      const diffMinutes = Math.max(0, Math.round(diffMs / 60000))
+
+      // Set slider to show current estimated time (rounded to nearest 5 minutes)
+      const roundedMinutes = Math.round(diffMinutes / 5) * 5
+      sliderDeltaMinutes.value = roundedMinutes
+      initialSliderValue.value = roundedMinutes
     } else {
+      baseEstimatedTime.value = now
       sliderDeltaMinutes.value = 0
-      baseEstimatedTime.value = new Date()
+      initialSliderValue.value = 0
     }
   } catch (e) {
     console.error('Error initializing time:', e)
     baseEstimatedTime.value = new Date()
+    sliderDeltaMinutes.value = 0
+    initialSliderValue.value = 0
   }
 
   showOrderDetails.value = true
@@ -748,9 +781,11 @@ const updateOrder = async (newStatus?: OrderStatus) => {
   let status = newStatus
   let estimatedReadyTime: string | undefined
 
-  if (baseEstimatedTime.value && sliderDeltaMinutes.value) {
-    const newTime = new Date(baseEstimatedTime.value.getTime() + sliderDeltaMinutes.value * 60000)
-    estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString()))
+  if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
+    // Calculate the adjustment: how many minutes to add to the base estimate
+    const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
+    const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
+    estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString(), locale.value))
   }
 
   try {
