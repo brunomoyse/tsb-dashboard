@@ -252,6 +252,12 @@ const PRODUCT_CATEGORIES_QUERY = gql`
     productCategories {
       id
       name
+      order
+      translations {
+        language
+        name
+        description
+      }
     }
   }
 `

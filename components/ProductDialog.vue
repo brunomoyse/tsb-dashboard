@@ -5,24 +5,26 @@
     description=" "
     :overlay="true"
     :ui="{
-      content: 'sm:max-w-4xl',
+      content: 'max-sm:h-full max-sm:max-h-full max-sm:rounded-none sm:max-w-4xl',
       overlay: 'backdrop-blur-sm bg-gray-950/75',
-      footer: 'justify-end'
+      body: 'max-sm:p-4',
+      footer: 'max-sm:flex-col max-sm:gap-2 sm:justify-end'
     }"
   >
     <template #body>
-      <div class="space-y-6">
+      <div class="space-y-4 sm:space-y-6">
         <!-- Row 1: Two Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <!-- Left Column: Category, Code, Price, Piece Count -->
-          <div class="space-y-4">
+          <div class="space-y-3 sm:space-y-4">
             <UFormField :label="t('products.category')" name="category" required>
               <USelectMenu
                 v-model="editedProduct.categoryId"
-                :options="categories"
-                value-attribute="id"
-                :option-attribute="(item) => item.name"
+                :items="localizedCategories"
+                value-key="id"
+                label-key="name"
                 :placeholder="t('products.category')"
+                :ui="{ content: 'min-w-[200px]' }"
               />
             </UFormField>
 
@@ -52,11 +54,11 @@
 
           <!-- Right Column: Image Preview / Upload -->
           <div class="flex flex-col items-center justify-center">
-            <div v-if="hasImage" class="flex flex-col items-center justify-center gap-4">
+            <div v-if="hasImage" class="flex flex-col items-center justify-center gap-3 sm:gap-4">
               <img
                 :src="imageUrl"
                 alt="Product image"
-                class="w-40 h-40 object-cover rounded-lg"
+                class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg"
               />
               <UButton
                 variant="ghost"
@@ -66,13 +68,13 @@
                 {{ t('products.removeImage') }}
               </UButton>
             </div>
-            <div v-else class="flex flex-col items-center justify-center gap-4 w-full">
+            <div v-else class="flex flex-col items-center justify-center gap-3 sm:gap-4 w-full">
               <!-- Image preview -->
               <img
                 v-if="imagePreview"
                 :src="imagePreview"
                 alt="Preview"
-                class="w-40 h-40 object-cover rounded-lg"
+                class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg"
               />
 
               <!-- File input -->
@@ -95,7 +97,7 @@
           <div
             v-for="translation in editedProduct.translations"
             :key="translation.language"
-            class="space-y-3"
+            class="space-y-2 sm:space-y-3"
           >
             <UFormField
               :label="translation.language.toUpperCase() + ' ' + t('common.name')"
@@ -115,14 +117,15 @@
               <UTextarea
                 v-model="translation.description"
                 :placeholder="t('common.description')"
-                :rows="3"
+                :rows="2"
+                class="sm:!min-h-[4.5rem]"
               />
             </UFormField>
           </div>
         </div>
 
         <!-- Row 3: Checkboxes -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
           <UCheckbox
             v-model="editedProduct.isVisible"
             :label="t('common.visible')"
@@ -151,12 +154,14 @@
       <UButton
         variant="outline"
         color="neutral"
+        class="max-sm:w-full"
         @click="closeDialog"
       >
         {{ t('common.cancel') }}
       </UButton>
       <UButton
         color="primary"
+        class="max-sm:w-full"
         @click="saveChanges"
       >
         {{ saveLabel }}
@@ -248,6 +253,22 @@ watch(dialog, (newValue) => {
 
 const categoryStore = useCategoriesStore()
 const categories = computed(() => categoryStore.getCategories(locale.value))
+
+// Localized categories with the correct language name
+const localizedCategories = computed(() => {
+    return categories.value.map(cat => {
+        // Find translation for current locale
+        const translation = cat.translations?.find(t => t.language === locale.value)
+        // Use translated name if available, otherwise fallback to default
+        const localizedName = translation?.name || cat.name
+        return {
+            id: cat.id,
+            name: localizedName,
+            order: cat.order,
+            translations: cat.translations
+        }
+    })
+})
 
 const closeDialog = () => {
     dialog.value = false
