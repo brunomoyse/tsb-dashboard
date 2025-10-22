@@ -243,6 +243,60 @@ mutation ReplaceAll {
 }
 ```
 
+### Preview Menu Sync
+
+Preview what changes will be made before syncing:
+
+**Schema:**
+```graphql
+previewSyncMenuPlatform(
+  source: OrderSource!
+  brandId: ID!
+  menuId: ID!
+): MenuSyncPreview!
+
+type MenuSyncPreview {
+  toCreate: [ProductToCreate!]!
+  toUpdate: [ProductToUpdate!]!
+  toDelete: [ProductToDelete!]!
+}
+```
+
+**Example Query:**
+```graphql
+query PreviewSyncMenu($source: OrderSource!, $brandId: ID!, $menuId: ID!) {
+  previewSyncMenuPlatform(
+    source: $source
+    brandId: $brandId
+    menuId: $menuId
+  ) {
+    toCreate {
+      name
+      price
+      description
+      category
+      isAvailable
+      isVisible
+    }
+    toUpdate {
+      id
+      name
+      currentPrice
+      newPrice
+      currentDescription
+      newDescription
+      currentAvailability
+      newAvailability
+    }
+    toDelete {
+      id
+      name
+      reason
+    }
+  }
+}
+```
+
 ### Sync Menu to Platform
 
 Push your local menu to the platform:
