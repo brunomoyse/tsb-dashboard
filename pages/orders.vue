@@ -133,13 +133,23 @@
                 </h2>
                 <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt, locale) }}</p>
               </div>
-              <UButton
-                icon="i-lucide-printer"
-                :label="t('common.print')"
-                color="neutral"
-                variant="outline"
-                @click="printReceipt"
-              />
+              <div class="flex">
+                <UButton
+                  icon="i-lucide-printer"
+                  :label="t('orders.print.label')"
+                  color="primary"
+                  class="rounded-r-none"
+                  @click="printBoth"
+                />
+                <UDropdownMenu :items="printMenuItems">
+                  <UButton
+                    icon="i-lucide-chevron-down"
+                    color="primary"
+                    class="rounded-l-none border-l border-primary-400/30"
+                    square
+                  />
+                </UDropdownMenu>
+              </div>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-3">
@@ -369,6 +379,25 @@ const showCancelDialog = ref(false)
 const cancelDelay = ref(5)
 const confirmDisabled = computed(() => cancelDelay.value > 0)
 let cancelTimer: number | undefined = undefined
+
+// Print menu items
+const printMenuItems = computed(() => [[
+  {
+    label: t('orders.print.both'),
+    icon: 'i-lucide-printer',
+    click: () => printBoth()
+  },
+  {
+    label: t('orders.print.client'),
+    icon: 'i-lucide-receipt',
+    click: () => printReceipt()
+  },
+  {
+    label: t('orders.print.kitchen'),
+    icon: 'i-lucide-chef-hat',
+    click: () => printKitchen()
+  }
+]])
 
 // Define allowed transitions based on current status and delivery option
 const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): OrderStatus[] => {
@@ -818,14 +847,42 @@ const formatOrderSummary = (order: Order) => {
   return order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
 }
 
-const printReceipt = () => {
+const printReceipt = async () => {
   if (!selectedOrder.value) return
 
+  const { $printer } = useNuxtApp()
   const encodedOrder: string = JSON.stringify(selectedOrder.value)
-  if (typeof window !== 'undefined' && 'PrintHandler' in window) {
-    (window as any).PrintHandler.print(encodedOrder)
-  } else {
-    console.error('🖨️ PrintHandler not available')
+
+  try {
+    await $printer.print(encodedOrder)
+  } catch (error) {
+    console.error('🖨️ Print failed:', error)
+  }
+}
+
+const printKitchen = async () => {
+  if (!selectedOrder.value) return
+
+  const { $printer } = useNuxtApp()
+  const encodedOrder: string = JSON.stringify(selectedOrder.value)
+
+  try {
+    await $printer.printKitchen(encodedOrder)
+  } catch (error) {
+    console.error('🖨️ Kitchen print failed:', error)
+  }
+}
+
+const printBoth = async () => {
+  if (!selectedOrder.value) return
+
+  const { $printer } = useNuxtApp()
+  const encodedOrder: string = JSON.stringify(selectedOrder.value)
+
+  try {
+    await $printer.printBoth(encodedOrder)
+  } catch (error) {
+    console.error('🖨️ Print both failed:', error)
   }
 }
 

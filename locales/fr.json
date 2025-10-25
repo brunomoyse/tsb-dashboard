@@ -78,7 +78,12 @@
     "updateTime": "Mettre à jour l'heure",
     "asap": "Dès que possible",
     "orderManagement": "Gestion de commande",
-    "print": "Réimprimer le ticket",
+    "print": {
+      "label": "Imprimer",
+      "both": "Imprimer les deux",
+      "client": "Imprimer ticket client",
+      "kitchen": "Imprimer ticket cuisine"
+    },
     "confirmCancelTitle": "Confirmer l'annulation",
     "confirmCancelMessage": "Êtes-vous sûr de vouloir annuler cette commande ?",
     "refundNotice": "Un remboursement sera effectué pour les paiements en ligne",

@@ -30,6 +30,9 @@ export default defineNuxtConfig({
       api: process.env.API_BASE_URL,
       graphqlHttp: process.env.API_BASE_URL + '/graphql',
       graphqlWs: process.env.GRAPHQL_WS_URL,
+      printer: {
+        enabled: process.env.PRINTER_ENABLED === 'true',
+      },
       cookie: {
         accessToken: {
           name: 'access_token',
@@ -46,9 +49,21 @@ export default defineNuxtConfig({
     jwtSecret: process.env.JWT_SECRET,
   },
 
+  app: {
+    head: {
+      script: [
+        {
+          src: 'https://cdn.jsdelivr.net/npm/epson-epos-sdk@2.27.0/epos-2.27.0.js',
+          defer: true,
+        }
+      ]
+    }
+  },
+
   plugins: [
     '~/plugins/api',
     '~/plugins/gqlFetch',
+    '~/plugins/printer.client',
   ],
 
   i18n: {
