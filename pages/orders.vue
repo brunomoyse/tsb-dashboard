@@ -31,14 +31,11 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <h3 class="text-lg font-bold">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</h3>
-                <UBadge
-                  :color="getSourceColor(order.source)"
-                  variant="subtle"
-                  size="sm"
-                >
-                  <UIcon :name="getSourceIcon(order.source)" class="mr-1" />
-                  {{ t(`orders.source.${order.source?.toLowerCase() || 'tokyo'}`) }}
-                </UBadge>
+                <img
+                  :src="getSourceLogo(order.source)"
+                  :alt="order.source || 'Tokyo'"
+                  class="h-5 object-contain"
+                />
               </div>
               <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
             </div>
@@ -149,14 +146,11 @@
               <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft">
                 {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
               </UBadge>
-              <UBadge
-                :color="getSourceColor(selectedOrder.source)"
-                variant="subtle"
-                size="sm"
-              >
-                <UIcon :name="getSourceIcon(selectedOrder.source)" class="mr-1" />
-                {{ t(`orders.source.${selectedOrder.source?.toLowerCase() || 'tokyo'}`) }}
-              </UBadge>
+              <img
+                :src="getSourceLogo(selectedOrder.source)"
+                :alt="selectedOrder.source || 'Tokyo'"
+                class="h-5 object-contain"
+              />
               <UBadge color="neutral" variant="subtle" size="sm">
                 <UIcon
                   :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
@@ -481,6 +475,16 @@ const getSourceIcon = (source: string | undefined): string => {
   return icons[source] || 'i-lucide-store'
 }
 
+const getSourceLogo = (source: string | undefined): string => {
+  if (!source) return '/tsb-logo-w.png'
+  const logos: Record<string, string> = {
+    TOKYO: '/tsb-logo-w.png',
+    DELIVEROO: '/deliveroo-logo.png',
+    UBER: '/ubereats-logo.png'
+  }
+  return logos[source] || '/tsb-logo-w.png'
+}
+
 const newEstimatedTime = computed(() => {
   if (!baseEstimatedTime.value) return ''
   // Calculate the adjustment: how many minutes to add to the base estimate
@@ -584,30 +588,36 @@ if (dataOrders.value?.orders) {
 const orders = computed(() => ordersStore.orders)
 
 const tabItems = computed(() => [
-  { label: `${t('orders.all')} (${orders.value.length})`, value: 0 },
-  { label: `${t('orders.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 1 },
-  { label: `${t('orders.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
-  { label: `${t('orders.ready')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
-  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status)).length})`, value: 4 }
+  { label: `${t('orders.status.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 0 },
+  { label: `${t('orders.status.confirmed')} (${orders.value.filter(o => o.status === 'CONFIRMED').length})`, value: 1 },
+  { label: `${t('orders.status.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
+  { label: `${t('orders.status.awaiting_pick_up')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
+  { label: `${t('orders.status.out_for_delivery')} (${orders.value.filter(o => o.status === 'OUT_FOR_DELIVERY').length})`, value: 4 },
+  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status)).length})`, value: 5 }
 ])
 
 const filteredOrders = computed(() => {
   const ordersList = orders.value
-  // During SSR, selectedTab is null, show all orders
+  // During SSR, selectedTab is null, show pending orders by default
   if (selectedTab.value === null) {
-    return ordersList
+    return ordersList.filter(o => o.status === 'PENDING')
   }
   switch (selectedTab.value) {
-    case 1:
+    case 0:
       return ordersList.filter(o => o.status === 'PENDING')
+    case 1:
+      return ordersList.filter(o => o.status === 'CONFIRMED')
     case 2:
       return ordersList.filter(o => o.status === 'PREPARING')
     case 3:
       return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
     case 4:
-      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP'].includes(o.status))
+      return ordersList.filter(o => o.status === 'OUT_FOR_DELIVERY')
+    case 5:
+      // Completed: DELIVERED, PICKED_UP, CANCELLED, FAILED
+      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status))
     default:
-      return ordersList
+      return ordersList.filter(o => o.status === 'PENDING')
   }
 })
 
