@@ -32,7 +32,7 @@
     "tailwindcss": "^4.1.16",
     "terser": "^5.44.0",
     "vite-plugin-vuetify": "^2.1.2",
-    "vuetify": "^3.10.5"
+    "vuetify": "^3.10.7"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.24.2",
