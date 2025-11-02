@@ -118,6 +118,10 @@ export interface Order {
     updatedAt: string;
     userId: string;
 
+    // Computed helper fields
+    displayCustomerName: string;
+    displayAddress: string;
+
     address: Address | null;
     items: OrderProduct[];
     payment: MolliePayment | null;

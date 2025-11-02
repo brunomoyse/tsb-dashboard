@@ -30,7 +30,7 @@
           <div class="flex items-center justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-lg font-bold">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</h3>
+                <h3 class="text-lg font-bold">{{ order.displayCustomerName }}</h3>
                 <img
                   :src="getSourceLogo(order.source)"
                   :alt="order.source || 'Tokyo'"
@@ -80,7 +80,7 @@
             </p>
             <p v-if="order.type === 'DELIVERY'" class="text-sm text-muted flex items-center gap-1">
               <UIcon name="i-lucide-map-pin" class="size-4" />
-              {{ getStreetAndDistance(order.address) }}
+              {{ order.displayAddress }}
             </p>
             <p v-else class="text-sm text-muted">{{ t('orders.pickup') }}</p>
           </div>
@@ -129,7 +129,7 @@
             <div class="flex items-start justify-between mb-3">
               <div class="flex-1">
                 <h2 class="text-xl font-bold text-highlighted">
-                  {{ selectedOrder.customer?.firstName }} {{ selectedOrder.customer?.lastName }}
+                  {{ selectedOrder.displayCustomerName }}
                 </h2>
                 <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt, locale) }}</p>
               </div>
@@ -184,7 +184,7 @@
               </p>
               <p v-if="selectedOrder.type === 'DELIVERY'" class="flex items-center gap-1 text-muted">
                 <UIcon name="i-lucide-map-pin" class="size-4" />
-                {{ getStreetAndDistance(selectedOrder.address) }}
+                {{ selectedOrder.displayAddress }}
               </p>
             </div>
           </div>
@@ -354,7 +354,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatDate, getStreetAndDistance, formatTimeOnly, timeToRFC3339, formatPrice } from '~/utils/utils'
+import { formatDate, formatTimeOnly, timeToRFC3339, formatPrice } from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
@@ -508,8 +508,8 @@ const getSourceLogo = (source: string | undefined): string => {
   if (!source) return '/tsb-logo-w.png'
   const logos: Record<string, string> = {
     TOKYO: '/tsb-logo-w.png',
-    DELIVEROO: '/deliveroo-logo.png',
-    UBER: '/ubereats-logo.png'
+    DELIVEROO: '/deliveroo-logo.svg',
+    UBER: '/ubereats-logo.svg'
   }
   return logos[source] || '/tsb-logo-w.png'
 }
@@ -545,6 +545,8 @@ const ORDERS_QUERY = gql`
       addressExtra
       orderNote
       orderExtra
+      displayCustomerName
+      displayAddress
       address {
         id
         streetName
@@ -709,6 +711,8 @@ const { data: orderCreated } = useGqlSubscription<{
         addressExtra
         orderNote
         orderExtra
+        displayCustomerName
+        displayAddress
         address {
           id
           streetName
@@ -721,6 +725,7 @@ const { data: orderCreated } = useGqlSubscription<{
           id
           firstName
           lastName
+          phoneNumber
         }
         payment {
           status
