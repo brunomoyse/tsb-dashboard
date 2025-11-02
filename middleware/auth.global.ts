@@ -29,6 +29,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         try {
             const refreshResponse = await $fetch.raw(`${apiUrl}/tokens/refresh`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { cookie: event?.node.req.headers.cookie || '' }
             })
 
