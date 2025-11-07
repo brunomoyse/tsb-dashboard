@@ -180,6 +180,8 @@ import type {
     UpdateProductInput,
     UpdateProductRequest
 } from '~/types'
+// Local UI type: keep categoryId for form binding, map to categoryID for API
+type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryId?: string }
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
 
@@ -201,7 +203,7 @@ const { t, locale } = useI18n()
 const languages = ['fr', 'en', 'zh']
 
 // Create a copy of an existing product with exactly the languages we need.
-const createProductCopy = (product: Product): UpdateProductInput => {
+const createProductCopy = (product: Product): UIUpdateProductInput => {
     const categoryId = product.category?.id || ''
     const translations: TranslationInput[] = languages.map(lang => {
         const existing = product.translations.find(t => t.language === lang)
@@ -227,7 +229,7 @@ const createDefaultProduct = (): CreateProductInput => ({
 })
 
 // Initialize the edited product based on mode.
-const editedProduct = ref<CreateProductInput | UpdateProductInput>(
+const editedProduct = ref<CreateProductInput | UIUpdateProductInput>(
     props.mode === 'create' || !props.product
         ? createDefaultProduct()
         : createProductCopy(props.product)
@@ -280,7 +282,8 @@ const saveChanges = async () => {
         return
     }
 
-    const frTranslation = editedProduct.value.translations.find(t => t.language === 'fr')
+    const frTranslations = editedProduct.value.translations ?? []
+    const frTranslation = frTranslations.find(t => t.language === 'fr')
     if (!frTranslation?.name || frTranslation.name.trim() === '') {
         return
     }
@@ -305,9 +308,11 @@ const saveChanges = async () => {
             updateProductInput.image = selectedImage.value
         }
 
+        const { categoryId, ...rest } = (updateProductInput as any)
+        const inputForApi = categoryId ? { ...rest, categoryID: categoryId } : rest
         let updateProductRequest: UpdateProductRequest = {
             id: props.product?.id,
-            input: updateProductInput
+            input: inputForApi as UpdateProductInput
         }
 
         emit('update', updateProductRequest)

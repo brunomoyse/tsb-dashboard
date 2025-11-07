@@ -10,7 +10,7 @@ export interface Product {
     code: string | null;
     id: string;
     isAvailable: boolean;
-    isDiscountable?: boolean; // @TODO to add in backend
+    isDiscountable: boolean;
     isHalal: boolean;
     isVegan: boolean;
     isVisible: boolean;
@@ -19,7 +19,7 @@ export interface Product {
     slug: string;
 
     name: string;
-    description: string;
+    description: string | null;
 
     category: ProductCategory;
 
@@ -51,7 +51,7 @@ export interface CreateProductInput {
 }
 
 export interface UpdateProductInput {
-    categoryId?: string
+    categoryID?: string
     code?: string | null
     isAvailable?: boolean
     isDiscountable?: boolean
