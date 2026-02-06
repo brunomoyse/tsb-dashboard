@@ -36,7 +36,7 @@
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.27.0",
-    "@esbuild/linux-arm64": "^0.27.2",
+    "@esbuild/linux-arm64": "^0.27.3",
     "@oxc-parser/binding-linux-x64-gnu": "^0.111.0",
     "@oxc-parser/binding-linux-arm64-gnu": "^0.112.0",
     "@oxc-transform/binding-linux-x64-gnu": "^0.112.0",
