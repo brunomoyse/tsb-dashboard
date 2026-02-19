@@ -31,11 +31,6 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <h3 class="text-lg font-bold">{{ order.displayCustomerName }}</h3>
-                <img
-                  :src="getSourceLogo(order.source)"
-                  :alt="order.source || 'Tokyo'"
-                  class="h-5 object-contain"
-                />
               </div>
               <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
             </div>
@@ -156,11 +151,6 @@
               <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft">
                 {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
               </UBadge>
-              <img
-                :src="getSourceLogo(selectedOrder.source)"
-                :alt="selectedOrder.source || 'Tokyo'"
-                class="h-5 object-contain"
-              />
               <UBadge color="neutral" variant="subtle" size="sm">
                 <UIcon
                   :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
@@ -360,6 +350,7 @@ import gql from 'graphql-tag'
 import { print } from 'graphql'
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const ordersStore = useOrdersStore()
 
 // Tab state - start as null for SSR, set on client
@@ -483,37 +474,6 @@ const getPaymentStatusColor = (status: string | undefined) => {
   return colors[status.toLowerCase()] || 'neutral'
 }
 
-// Order source color and icon mapping
-const getSourceColor = (source: string | undefined): string => {
-  if (!source) return 'neutral'
-  const colors: Record<string, string> = {
-    TOKYO: 'purple',
-    DELIVEROO: 'cyan',
-    UBER: 'green'
-  }
-  return colors[source] || 'neutral'
-}
-
-const getSourceIcon = (source: string | undefined): string => {
-  if (!source) return 'i-lucide-store'
-  const icons: Record<string, string> = {
-    TOKYO: 'i-lucide-store',
-    DELIVEROO: 'i-lucide-package',
-    UBER: 'i-lucide-car'
-  }
-  return icons[source] || 'i-lucide-store'
-}
-
-const getSourceLogo = (source: string | undefined): string => {
-  if (!source) return '/tsb-logo-w.png'
-  const logos: Record<string, string> = {
-    TOKYO: '/tsb-logo-w.png',
-    DELIVEROO: '/deliveroo-logo.svg',
-    UBER: '/ubereats-logo.svg'
-  }
-  return logos[source] || '/tsb-logo-w.png'
-}
-
 const newEstimatedTime = computed(() => {
   if (!baseEstimatedTime.value) return ''
   // Calculate the adjustment: how many minutes to add to the base estimate
@@ -535,7 +495,6 @@ const ORDERS_QUERY = gql`
       updatedAt
       status
       type
-      source
       isOnlinePayment
       discountAmount
       deliveryFee
@@ -845,6 +804,7 @@ const updateOrder = async (newStatus?: OrderStatus) => {
     showOrderDetails.value = false
   } catch (error) {
     console.error('Update failed:', error)
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
 }
 
@@ -861,7 +821,8 @@ const printReceipt = async () => {
   try {
     await $printer.print(encodedOrder)
   } catch (error) {
-    console.error('🖨️ Print failed:', error)
+    console.error('Print failed:', error)
+    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
 
@@ -874,7 +835,8 @@ const printKitchen = async () => {
   try {
     await $printer.printKitchen(encodedOrder)
   } catch (error) {
-    console.error('🖨️ Kitchen print failed:', error)
+    console.error('Kitchen print failed:', error)
+    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
 
@@ -887,7 +849,8 @@ const printBoth = async () => {
   try {
     await $printer.printBoth(encodedOrder)
   } catch (error) {
-    console.error('🖨️ Print both failed:', error)
+    console.error('Print both failed:', error)
+    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
 
@@ -953,6 +916,7 @@ const markAsPaid = async () => {
     })
   } catch (error) {
     console.error('Failed to update payment status:', error)
+    toast.add({ title: t('orders.errors.paymentUpdateFailed'), color: 'error' })
   } finally {
     isUpdatingPayment.value = false
   }

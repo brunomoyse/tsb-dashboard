@@ -11,11 +11,13 @@ async function getWsClient(): Promise<Client> {
     if (wsClient) return wsClient
     if (!wsClientPromise) {
         wsClientPromise = import('graphql-ws').then(({ createClient }) => {
-            const cfg   = useRuntimeConfig()
-            const token = useCookie('access_token').value
+            const cfg = useRuntimeConfig()
             const client = createClient({
                 url:              cfg.public.graphqlWs as string,
-                connectionParams: token ? { Authorization: `Bearer ${token}` } : undefined,
+                connectionParams: () => {
+                    const token = useCookie('access_token').value
+                    return token ? { Authorization: `Bearer ${token}` } : {}
+                },
                 retryAttempts:    Infinity,
             })
             wsClient = client
