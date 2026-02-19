@@ -1,7 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
-import legacy from '@vitejs/plugin-legacy'
-
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   future: {
@@ -103,19 +101,4 @@ export default defineNuxtConfig({
     },
   },
 
-  vite: {
-    plugins: [
-      legacy({
-        // only generate a legacy bundle for Chrome ≥56
-        targets: ['chrome <57'],
-
-        // include runtime polyfills for Array.at()
-        // plugin-legacy will inject core-js usage‐based polyfills by default,
-        // but Array.at is newer so we add it explicitly:
-        polyfills: ['es.array.at'],
-
-        additionalLegacyPolyfills: ['systemjs'],
-      })
-    ],
-  },
 })
