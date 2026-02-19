@@ -22,7 +22,6 @@
     "add": "Add Product",
     "edit": "Edit Product",
     "noProducts": "No products found",
-    "syncToDeliveroo": "Sync to Deliveroo",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"
@@ -36,24 +35,7 @@
     "discountable": "Discountable",
     "translations": "Translations",
     "image": "Change Image",
-    "removeImage": "Remove Image",
-    "syncModal": {
-      "title": "Sync Menu to Deliveroo",
-      "loading": "Loading preview...",
-      "toCreate": "Products to Create",
-      "toUpdate": "Products to Update",
-      "toDelete": "Products to Delete",
-      "confirmSync": "Confirm Sync",
-      "syncing": "Syncing...",
-      "syncSuccess": "Menu synced successfully to Deliveroo",
-      "syncError": "Failed to sync menu to Deliveroo",
-      "noChanges": "No changes to sync",
-      "current": "Current",
-      "new": "New",
-      "emptyCreate": "No products to create",
-      "emptyUpdate": "No products to update",
-      "emptyDelete": "No products to delete"
-    }
+    "removeImage": "Remove Image"
   },
 
   "orders": {
@@ -129,10 +111,10 @@
       "online": "Online Payment",
       "cash": "Cash"
     },
-    "source": {
-      "tokyo": "Tokyo",
-      "deliveroo": "Deliveroo",
-      "uber": "Uber Eats"
+    "errors": {
+      "updateFailed": "Failed to update order",
+      "printFailed": "Print failed",
+      "paymentUpdateFailed": "Failed to update payment status"
     }
   },
 

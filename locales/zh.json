@@ -23,7 +23,6 @@
     "add": "添加产品",
     "edit": "编辑产品",
     "noProducts": "未找到产品",
-    "syncToDeliveroo": "同步到Deliveroo",
     "visibility": {
       "visible": "可见",
       "invisible": "不可见"
@@ -37,24 +36,7 @@
     "discountable": "可折扣",
     "translations": "翻译",
     "image": "更改图片",
-    "removeImage": "删除图片",
-    "syncModal": {
-      "title": "同步菜单到Deliveroo",
-      "loading": "加载预览中...",
-      "toCreate": "要创建的产品",
-      "toUpdate": "要更新的产品",
-      "toDelete": "要删除的产品",
-      "confirmSync": "确认同步",
-      "syncing": "同步中...",
-      "syncSuccess": "菜单成功同步到Deliveroo",
-      "syncError": "同步菜单到Deliveroo失败",
-      "noChanges": "没有要同步的更改",
-      "current": "当前",
-      "new": "新",
-      "emptyCreate": "没有要创建的产品",
-      "emptyUpdate": "没有要更新的产品",
-      "emptyDelete": "没有要删除的产品"
-    }
+    "removeImage": "删除图片"
   },
 
   "orders": {
@@ -130,10 +112,10 @@
       "online": "在线支付",
       "cash": "现金"
     },
-    "source": {
-      "tokyo": "Tokyo",
-      "deliveroo": "Deliveroo",
-      "uber": "Uber Eats"
+    "errors": {
+      "updateFailed": "更新订单失败",
+      "printFailed": "打印失败",
+      "paymentUpdateFailed": "更新支付状态失败"
     }
   },
 
