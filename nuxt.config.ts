@@ -46,7 +46,6 @@ export default defineNuxtConfig({
         },
       }
     },
-    jwtSecret: process.env.JWT_SECRET,
   },
 
   app: {
@@ -92,6 +91,17 @@ export default defineNuxtConfig({
     vueI18n: "../i18n.config.ts",
   },
 
+
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      },
+    },
+  },
 
   vite: {
     plugins: [
