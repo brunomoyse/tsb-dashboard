@@ -96,8 +96,6 @@ export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
 export type OrderDeliveryStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED'
 export type OrderPickUpStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'PICKED_UP' | 'CANCELLED' | 'FAILED'
 export type OrderType = 'DELIVERY' | 'PICKUP';
-export type OrderSource = 'TOKYO' | 'DELIVEROO' | 'UBER';
-
 export interface Order {
     addressExtra: string | null;
     addressId: string | null;
@@ -111,7 +109,6 @@ export interface Order {
     orderExtra: { name: string | null; options: string[] | null }[] | null;
     orderNote: string | null;
     paymentID: string | null;
-    source: OrderSource;
     status: OrderStatus;
     totalPrice: string;
     type: OrderType;
@@ -152,37 +149,4 @@ export interface Address {
     municipalityName: string;
     postcode: string;
     distance: number;
-}
-
-// Deliveroo Sync Types
-export interface SyncPreviewCreateItem {
-    name: string;
-    price: number;
-    description?: string;
-    category: string;
-    isAvailable: boolean;
-    isVisible: boolean;
-}
-
-export interface SyncPreviewUpdateItem {
-    id: string;
-    name: string;
-    currentPrice: number;
-    newPrice: number;
-    currentDescription?: string;
-    newDescription?: string;
-    currentAvailability: boolean;
-    newAvailability: boolean;
-}
-
-export interface SyncPreviewDeleteItem {
-    id: string;
-    name: string;
-    reason?: string;
-}
-
-export interface SyncPreviewData {
-    toCreate: SyncPreviewCreateItem[];
-    toUpdate: SyncPreviewUpdateItem[];
-    toDelete: SyncPreviewDeleteItem[];
 }
