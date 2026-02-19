@@ -80,7 +80,6 @@ Three composables wrap the `$gqlFetch` plugin:
 - `/login`: Public login page (uses `definePageMeta({ public: true })`)
 - `/products`: Product CRUD with category filtering
 - `/orders`: Order management with real-time updates
-- `/tracking`: Order tracking map (uses OpenLayers)
 
 All non-public routes require authentication via global middleware.
 
