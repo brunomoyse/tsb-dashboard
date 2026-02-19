@@ -242,13 +242,6 @@ const addKitchenFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
     cmd.addText('--------------------------------\n')
   }
 
-  // Source (for kitchen reference)
-  cmd.addTextAlign('center')
-  const source = order.source === 'TOKYO' ? 'Tokyo Direct' :
-                 order.source === 'DELIVEROO' ? 'Deliveroo' :
-                 order.source === 'UBER' ? 'Uber Eats' : 'Autre'
-  cmd.addText(`Source: ${source}\n`)
-
   cmd.addFeedLine(2)
 }
 
@@ -276,7 +269,6 @@ export const createTestOrder = (): Order => {
     updatedAt: new Date().toISOString(),
     status: 'PENDING',
     type: 'DELIVERY',
-    source: 'TOKYO',
     isOnlinePayment: false,
     discountAmount: 0,
     deliveryFee: 2.5,
