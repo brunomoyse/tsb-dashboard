@@ -168,7 +168,15 @@
     "categoryRequired": "La catégorie est requise",
     "frenchNameRequired": "Le nom français est requis",
     "priceRequired": "Le prix est requis",
-    "invalidPrice": "Format de prix invalide"
+    "invalidPrice": "Format de prix invalide",
+    "pricePositive": "Le prix doit être supérieur à 0",
+    "descriptionTooLong": "La description ({lang}) ne doit pas dépasser 500 caractères",
+    "imageTooLarge": "L'image ne doit pas dépasser 5 Mo",
+    "imageInvalidType": "L'image doit être au format PNG, JPEG ou WebP",
+    "codeFormat": "Le code produit doit être composé de lettres majuscules suivies de chiffres (ex: A10)",
+    "pieceCountPositive": "Le nombre de pièces doit être un entier positif",
+    "choiceNameRequired": "L'option #{index} doit avoir au moins un nom renseigné",
+    "choicePriceRequired": "L'option #{index} doit avoir un modificateur de prix valide"
   },
 
   "notifications": {
