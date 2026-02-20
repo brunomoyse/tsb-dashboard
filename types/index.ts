@@ -5,6 +5,38 @@ export interface Translation {
     description: string | null;
 }
 
+export interface ChoiceTranslation {
+    locale: string;
+    name: string;
+}
+
+export interface ProductChoice {
+    id: string;
+    productId: string;
+    priceModifier: string;
+    sortOrder: number;
+    name: string;
+    translations: ChoiceTranslation[];
+}
+
+export interface ChoiceTranslationInput {
+    locale: string;
+    name: string;
+}
+
+export interface CreateProductChoiceInput {
+    productId: string;
+    priceModifier: string;
+    sortOrder: number;
+    translations: ChoiceTranslationInput[];
+}
+
+export interface UpdateProductChoiceInput {
+    priceModifier?: string;
+    sortOrder?: number;
+    translations?: ChoiceTranslationInput[];
+}
+
 export interface Product {
     categoryId: string;
     code: string | null;
@@ -22,6 +54,7 @@ export interface Product {
     description: string | null;
 
     category: ProductCategory;
+    choices: ProductChoice[];
 
     translations: Translation[];
 }
@@ -81,6 +114,7 @@ export interface User {
     email: string;
     firstName: string;
     id: string;
+    isAdmin: boolean;
     lastName: string;
     phoneNumber: string | null;
 
@@ -130,6 +164,7 @@ export interface OrderProduct {
     unitPrice: string;
 
     product: Product;
+    choice: ProductChoice | null;
 }
 
 export interface MolliePayment {

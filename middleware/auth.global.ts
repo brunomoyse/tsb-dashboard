@@ -49,6 +49,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
     else {
         const authStore = useAuthStore()
 
+        // 0. Reject non-admin users
+        if (authStore.user && authStore.user.isAdmin === false) {
+            await authStore.logout()
+            return navigateTo(localePath('login'))
+        }
+
         // 1. Check memory store first
         if (authStore.accessValid) return
 

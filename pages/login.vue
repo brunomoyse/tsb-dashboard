@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useNuxtApp, useLocalePath, navigateTo } from '#imports'
+import { useI18n } from 'vue-i18n'
 import type { LoginResponse, User } from "~/types"
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -37,6 +38,7 @@ definePageMeta({
 })
 
 const { $api, $gqlFetch } = useNuxtApp()
+const { t } = useI18n()
 const localePath = useLocalePath()
 const authStore = useAuthStore()
 
@@ -48,6 +50,7 @@ const ME = gql`
             firstName
             lastName
             phoneNumber
+            isAdmin
             address {
                 id
                 streetName
@@ -95,12 +98,18 @@ const login = async (email: string, password: string): Promise<boolean> => {
     }
 }
 
-const loginSuccess = async () => {
+const loginSuccess = async (): Promise<boolean> => {
     if (import.meta.client) {
         const data = await $gqlFetch<{ me: User }>(print(ME))
-        if (data) authStore.setUser(data.me)
+        if (data) {
+            if (!data.me.isAdmin) {
+                await authStore.logout()
+                return false
+            }
+            authStore.setUser(data.me)
+        }
     }
-    navigateTo(localePath('orders'))
+    return true
 }
 
 const onSubmit = async (event: FormSubmitEvent<{ email: string; password: string }>) => {
@@ -109,7 +118,11 @@ const onSubmit = async (event: FormSubmitEvent<{ email: string; password: string
     const success = await login(email, password)
     if (!success) return
 
-    await loginSuccess()
+    const isAdmin = await loginSuccess()
+    if (!isAdmin) {
+        errorMessage.value = t('login.accessDenied')
+        return
+    }
     navigateTo(localePath('orders'))
 }
 </script>

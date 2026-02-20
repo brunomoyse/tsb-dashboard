@@ -35,7 +35,15 @@
     "discountable": "Discountable",
     "translations": "Translations",
     "image": "Change Image",
-    "removeImage": "Remove Image"
+    "removeImage": "Remove Image",
+    "choices": {
+      "title": "Product Choices",
+      "add": "Add Choice",
+      "none": "No choices defined",
+      "new": "New choice",
+      "priceModifier": "Price Modifier (€)",
+      "sortOrder": "Sort Order"
+    }
   },
 
   "orders": {
@@ -122,12 +130,37 @@
     "products": "Products",
     "orders": "Orders",
     "booking": "Booking",
+    "settings": "Settings",
     "logout": "Logout"
+  },
+
+  "settings": {
+    "title": "Restaurant Settings",
+    "ordering": {
+      "title": "Online Ordering",
+      "description": "Enable or disable online ordering"
+    },
+    "hours": {
+      "title": "Opening Hours",
+      "description": "Set opening hours for each day of the week",
+      "closed": "Closed",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
   },
 
   "theme": {
     "light": "Light Mode",
     "dark": "Dark Mode"
+  },
+
+  "login": {
+    "accessDenied": "Access denied. Only administrators can access the dashboard."
   },
 
   "validation": {
