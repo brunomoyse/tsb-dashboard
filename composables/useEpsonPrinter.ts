@@ -150,7 +150,7 @@ export const useEpsonPrinter = () => {
     return new Promise((resolve, reject) => {
       // Set up discovery callbacks
       ePosDev.onreceive = (device: any) => {
-        console.log('🖨️ Discovered printer:', device)
+        if (import.meta.dev) console.log('Discovered printer:', device)
         discoveredPrinters.push({
           ip: device.ipaddress,
           deviceId: device.deviceid,
@@ -160,7 +160,7 @@ export const useEpsonPrinter = () => {
       }
 
       ePosDev.ondiscovery = () => {
-        console.log('✅ Discovery completed')
+        if (import.meta.dev) console.log('Discovery completed')
         ePosDev.stopDiscovery()
         resolve(discoveredPrinters)
       }
@@ -231,7 +231,7 @@ export const useEpsonPrinter = () => {
       // Send to printer
       await send(printer)
 
-      console.log('✅ Print job completed successfully')
+      if (import.meta.dev) console.log('Print job completed successfully')
     } catch (error) {
       console.error('❌ Print error:', error)
       throw error
