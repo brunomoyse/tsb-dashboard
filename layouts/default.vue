@@ -129,6 +129,12 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
     icon: 'i-lucide-package',
     to: `/${locale.value}/products`,
     active: route.path.includes('/products')
+  },
+  {
+    label: t('navigation.settings'),
+    icon: 'i-lucide-settings',
+    to: `/${locale.value}/settings`,
+    active: route.path.includes('/settings')
   }
 ]])
 

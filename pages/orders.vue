@@ -83,8 +83,11 @@
           <!-- Order Items -->
           <div class="border-t pt-3 space-y-1">
             <p class="text-sm font-medium">{{ t('orders.items') }}:</p>
-            <div v-for="item in order.items" :key="item.product.id" class="flex justify-between text-sm">
-              <span>{{ item.quantity }}x {{ item.product.code || item.product.name }}</span>
+            <div v-for="(item, idx) in order.items" :key="`${item.product.id}-${item.choice?.id ?? idx}`" class="flex justify-between text-sm">
+              <span>
+                {{ item.quantity }}x {{ item.product.code || item.product.name }}
+                <span v-if="item.choice" class="text-xs text-muted">({{ item.choice.name }})</span>
+              </span>
               <span>{{ formatPrice(item.totalPrice) }}</span>
             </div>
           </div>
@@ -536,6 +539,10 @@ const ORDERS_QUERY = gql`
             name
           }
         }
+        choice {
+          id
+          name
+        }
       }
     }
   }
@@ -701,6 +708,10 @@ const { data: orderCreated } = useGqlSubscription<{
               id
               name
             }
+          }
+          choice {
+            id
+            name
           }
         }
       }

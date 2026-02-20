@@ -128,6 +128,7 @@
       :product="selectedProduct"
       mode="edit"
       @update="handleUpdate"
+      @choices-changed="handleChoicesChanged"
       @close="selectedProduct = null"
     />
 
@@ -211,6 +212,17 @@ const PRODUCTS_QUERY = gql`
         id
         name
       }
+      choices {
+        id
+        productId
+        priceModifier
+        sortOrder
+        name
+        translations {
+          locale
+          name
+        }
+      }
       translations {
         language
         name
@@ -253,6 +265,17 @@ const CREATE_PRODUCT_MUTATION = gql`
         id
         name
       }
+      choices {
+        id
+        productId
+        priceModifier
+        sortOrder
+        name
+        translations {
+          locale
+          name
+        }
+      }
       translations {
         language
         name
@@ -280,6 +303,17 @@ const UPDATE_PRODUCT_MUTATION = gql`
         id
         name
       }
+      choices {
+        id
+        productId
+        priceModifier
+        sortOrder
+        name
+        translations {
+          locale
+          name
+        }
+      }
       translations {
         language
         name
@@ -290,7 +324,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
 `
 
 // Fetch products
-const { data: dataProducts } = await useGqlQuery<{ products: Product[] }>(
+const { data: dataProducts, refetch: refetchProducts } = await useGqlQuery<{ products: Product[] }>(
   print(PRODUCTS_QUERY),
   {},
   { immediate: true, cache: true }
@@ -486,5 +520,10 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
   } catch (err) {
     console.error('handleUpdate failed:', err)
   }
+}
+
+// Handle choices changed (created/updated/deleted)
+const handleChoicesChanged = async () => {
+  await refetchProducts()
 }
 </script>

@@ -36,7 +36,15 @@
     "discountable": "Pouvant être remisé",
     "translations": "Traductions",
     "image": "Changer l'image",
-    "removeImage": "Supprimer l'image"
+    "removeImage": "Supprimer l'image",
+    "choices": {
+      "title": "Options du produit",
+      "add": "Ajouter une option",
+      "none": "Aucune option définie",
+      "new": "Nouvelle option",
+      "priceModifier": "Modificateur de prix (€)",
+      "sortOrder": "Ordre d'affichage"
+    }
   },
 
   "orders": {
@@ -123,12 +131,37 @@
     "products": "Produits",
     "orders": "Commandes",
     "booking": "Réservation",
+    "settings": "Paramètres",
     "logout": "Déconnexion"
+  },
+
+  "settings": {
+    "title": "Paramètres du restaurant",
+    "ordering": {
+      "title": "Commandes en ligne",
+      "description": "Activer ou désactiver les commandes en ligne"
+    },
+    "hours": {
+      "title": "Horaires d'ouverture",
+      "description": "Définir les horaires d'ouverture pour chaque jour de la semaine",
+      "closed": "Fermé",
+      "monday": "Lundi",
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi",
+      "sunday": "Dimanche"
+    }
   },
 
   "theme": {
     "light": "Mode Clair",
     "dark": "Mode Sombre"
+  },
+
+  "login": {
+    "accessDenied": "Accès refusé. Seuls les administrateurs peuvent accéder au tableau de bord."
   },
 
   "validation": {

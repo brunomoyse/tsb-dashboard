@@ -148,6 +148,78 @@
           />
         </div>
 
+        <!-- Row 4: Product Choices (edit mode only) -->
+        <div v-if="props.mode === 'edit' && props.product" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">{{ t('products.choices.title') }}</h3>
+            <UButton
+              icon="i-lucide-plus"
+              size="xs"
+              variant="outline"
+              @click="addNewChoice"
+            >
+              {{ t('products.choices.add') }}
+            </UButton>
+          </div>
+
+          <div v-if="editedChoices.length === 0" class="text-sm text-muted italic">
+            {{ t('products.choices.none') }}
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="(choice, cIdx) in editedChoices"
+              :key="choice.id || `new-${cIdx}`"
+              class="border rounded-lg p-3 space-y-2"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-muted">
+                  {{ choice.id ? `#${cIdx + 1}` : t('products.choices.new') }}
+                </span>
+                <UButton
+                  icon="i-lucide-trash-2"
+                  size="xs"
+                  color="error"
+                  variant="ghost"
+                  @click="removeChoice(cIdx)"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <UFormField :label="t('products.choices.priceModifier')" :name="`choice-${cIdx}-price`">
+                  <UInput
+                    v-model="choice.priceModifier"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                </UFormField>
+                <UFormField :label="t('products.choices.sortOrder')" :name="`choice-${cIdx}-sort`">
+                  <UInput
+                    v-model.number="choice.sortOrder"
+                    type="number"
+                    placeholder="0"
+                  />
+                </UFormField>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <UFormField
+                  v-for="lang in languages"
+                  :key="lang"
+                  :label="`${lang.toUpperCase()} ${t('common.name')}`"
+                  :name="`choice-${cIdx}-${lang}`"
+                >
+                  <UInput
+                    v-model="getChoiceTranslation(choice, lang).name"
+                    :placeholder="t('common.name')"
+                  />
+                </UFormField>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Validation Errors -->
         <div v-if="validationErrors.length > 0" class="rounded-md bg-red-50 p-3">
           <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
@@ -181,7 +253,9 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import type {
     CreateProductInput,
+    ChoiceTranslation,
     Product,
+    ProductChoice,
     Translation,
     TranslationInput,
     UpdateProductInput,
@@ -191,6 +265,7 @@ import type {
 type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryId?: string }
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
+import gql from 'graphql-tag'
 
 // Props and emits definition.
 const props = defineProps<{
@@ -201,6 +276,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'update', updatedProduct: UpdateProductRequest): void
     (e: 'create', newProduct: CreateProductInput): void
+    (e: 'choicesChanged'): void
     (e: 'close'): void
 }>()
 
@@ -254,6 +330,122 @@ if (props.mode !== 'create') {
 
 const validationErrors = ref<string[]>([])
 const dialog = ref(true)
+
+// ---- Product Choices Management ----
+interface EditableChoice {
+    id?: string
+    priceModifier: string
+    sortOrder: number
+    translations: ChoiceTranslation[]
+    _deleted?: boolean
+    _isNew?: boolean
+}
+
+const editedChoices = ref<EditableChoice[]>(
+    props.product?.choices?.map(c => ({
+        id: c.id,
+        priceModifier: c.priceModifier,
+        sortOrder: c.sortOrder,
+        translations: languages.map(lang => {
+            const existing = c.translations?.find(t => t.locale === lang)
+            return { locale: lang, name: existing?.name || '' }
+        })
+    })) ?? []
+)
+
+const getChoiceTranslation = (choice: EditableChoice, lang: string) => {
+    let t = choice.translations.find(tr => tr.locale === lang)
+    if (!t) {
+        t = { locale: lang, name: '' }
+        choice.translations.push(t)
+    }
+    return t
+}
+
+const addNewChoice = () => {
+    editedChoices.value.push({
+        priceModifier: '0',
+        sortOrder: editedChoices.value.length,
+        translations: languages.map(lang => ({ locale: lang, name: '' })),
+        _isNew: true
+    })
+}
+
+const removeChoice = async (idx: number) => {
+    const choice = editedChoices.value[idx]
+    if (choice.id) {
+        // Delete existing choice via GraphQL
+        try {
+            const DELETE_CHOICE = gql`
+              mutation ($id: ID!) {
+                deleteProductChoice(id: $id)
+              }
+            `
+            const { mutate } = useGqlMutation<{ deleteProductChoice: boolean }>(DELETE_CHOICE)
+            await mutate({ id: choice.id })
+        } catch (err) {
+            console.error('Failed to delete choice:', err)
+            return
+        }
+    }
+    editedChoices.value.splice(idx, 1)
+    emit('choicesChanged')
+}
+
+const saveChoices = async () => {
+    if (!props.product?.id) return
+
+    const CREATE_CHOICE = gql`
+      mutation ($input: CreateProductChoiceInput!) {
+        createProductChoice(input: $input) {
+          id
+          productId
+          priceModifier
+          sortOrder
+          name
+          translations { locale name }
+        }
+      }
+    `
+    const UPDATE_CHOICE = gql`
+      mutation ($id: ID!, $input: UpdateProductChoiceInput!) {
+        updateProductChoice(id: $id, input: $input) {
+          id
+          productId
+          priceModifier
+          sortOrder
+          name
+          translations { locale name }
+        }
+      }
+    `
+
+    for (const choice of editedChoices.value) {
+        if (choice._isNew) {
+            const { mutate } = useGqlMutation<{ createProductChoice: ProductChoice }>(CREATE_CHOICE)
+            await mutate({
+                input: {
+                    productId: props.product.id,
+                    priceModifier: choice.priceModifier,
+                    sortOrder: choice.sortOrder,
+                    translations: choice.translations.filter(t => t.name.trim() !== '')
+                }
+            })
+        } else if (choice.id) {
+            const { mutate } = useGqlMutation<{ updateProductChoice: ProductChoice }>(UPDATE_CHOICE)
+            await mutate({
+                id: choice.id,
+                input: {
+                    priceModifier: choice.priceModifier,
+                    sortOrder: choice.sortOrder,
+                    translations: choice.translations.filter(t => t.name.trim() !== '')
+                }
+            })
+        }
+    }
+
+    emit('choicesChanged')
+}
 
 // Watch dialog state and emit close when it becomes false
 watch(dialog, (newValue) => {
@@ -316,6 +508,9 @@ const saveChanges = async () => {
         emit('create', createProductInput)
     } else {
         if (!props.product?.id) return
+
+        // Save choices first
+        await saveChoices()
 
         let updateProductInput: UpdateProductInput = editedProduct.value as UpdateProductInput
 
