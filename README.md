@@ -1,42 +1,61 @@
 # tsb-dashboard
 
-**tsb-dashboard** is a modern, responsive dashboard for managing products and customer orders in your restaurant webshop. It offers a simple interface for administrators to update product details, monitor orders, and manage user access.
+**tsb-dashboard** is a restaurant management dashboard for handling product catalog and customer orders. It provides administrators with a responsive interface to manage products, monitor orders in real time, and print receipts.
 
 ## Features
 
-- **Product Management**  
-  Create, update, and delete products with multi-language support.
+- **Product Management**: Create, update, and delete products with multi-language support (French, English, Chinese)
+- **Order Management**: View and manage customer orders with real-time updates via GraphQL subscriptions
+- **Printer Integration**: Epson ePOS printer support for receipts and kitchen tickets with auto-discovery
+- **Role-based Access Control**: JWT-based authentication with dual-token system (access + refresh)
+- **Responsive Design**: Works on desktop and mobile devices
 
-- **Order Management**  
-  View detailed customer orders and payment statuses. Each order includes a link to the corresponding Mollie record.
+## Technologies
 
-- **User-friendly Interface**  
-  A responsive design that works seamlessly on both desktop and mobile devices.
+- **Nuxt 4** (Vue 3, SSR enabled)
+- **Nuxt UI 4** with Tailwind CSS 4
+- **Pinia** with persisted state for state management
+- **GraphQL** with graphql-ws for real-time subscriptions
+- **@nuxtjs/i18n v10** for multi-language support (fr, en, zh)
 
-- **Role-based Access Control**  
-  Secure the dashboard with role-based permissions for administrative tasks.
+## Getting Started
 
-## Technologies Used
+### 1. Setup Environment Variables
 
-- **Nuxt 3**  
-  Fast, server-side rendered Vue.js application.
+```bash
+cp .env.example .env
+```
 
-- **Vuetify**  
-  Material Design components for a rich and responsive user interface.
+Configure:
+- `DASHBOARD_BASE_URL` — Dashboard URL
+- `API_BASE_URL` — Backend API base URL
+- `S3_BUCKET_URL` — CloudFront/S3 bucket URL for product images
+- `GRAPHQL_WS_URL` — WebSocket URL for GraphQL subscriptions
+- `PRINTER_ENABLED` — Enable/disable Epson printer integration
 
-- **Pinia**  
-  Global state management to keep your application state organized.
+### 2. Install Dependencies
 
-## Future Enhancements
+```bash
+npm install
+```
 
-- **Advanced Analytics**  
-  Enhance reporting with deeper insights into sales trends and inventory levels.
+### 3. Run Development Server
 
-- **Real-time Notifications**  
-  Implement alerts for new orders, stock changes, and payment updates.
+```bash
+npm run dev
+```
 
-- **Customizable Reporting**  
-  Enable generation and export of custom reports.
+### 4. Build for Production
 
-- **Enhanced Security**  
-  Continuous improvements to security protocols and access control.
+```bash
+npm run build
+```
+
+## Docker
+
+```bash
+docker build -t tsb-dashboard .
+docker run --name tsb-dashboard --env-file .env -p 3000:3000 tsb-dashboard
+```
+
+Multi-stage Dockerfile with health check. Supports multi-arch builds (AMD64/ARM64).
