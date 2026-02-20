@@ -167,7 +167,15 @@
     "categoryRequired": "Category is required",
     "frenchNameRequired": "French name is required",
     "priceRequired": "Price is required",
-    "invalidPrice": "Invalid price format"
+    "invalidPrice": "Invalid price format",
+    "pricePositive": "Price must be greater than 0",
+    "descriptionTooLong": "Description ({lang}) must not exceed 500 characters",
+    "imageTooLarge": "Image must not exceed 5 MB",
+    "imageInvalidType": "Image must be PNG, JPEG or WebP",
+    "codeFormat": "Product code must be uppercase letters followed by digits (e.g. A10)",
+    "pieceCountPositive": "Piece count must be a positive integer",
+    "choiceNameRequired": "Choice #{index} must have at least one name",
+    "choicePriceRequired": "Choice #{index} must have a valid price modifier"
   },
 
   "notifications": {

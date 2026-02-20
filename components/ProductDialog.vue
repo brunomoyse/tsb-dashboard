@@ -82,7 +82,7 @@
                 <UFormField label="Upload Image" name="image">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp"
                     class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                     @change="handleFileChange"
                   />
@@ -477,22 +477,81 @@ const closeDialog = () => {
     dialog.value = false
 }
 
+const LANG_LABELS: Record<string, string> = { fr: 'FR', en: 'EN', zh: 'ZH' }
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5 MB
+const CODE_REGEX = /^[A-Z]+\d+$/
+
 const saveChanges = async () => {
-    // Basic validation
     validationErrors.value = []
 
+    // Category required
     if (!editedProduct.value.categoryId || editedProduct.value.categoryId.trim() === '') {
         validationErrors.value.push(t('validation.categoryRequired'))
     }
 
+    // French name required
     const frTranslations = editedProduct.value.translations ?? []
     const frTranslation = frTranslations.find(t => t.language === 'fr')
     if (!frTranslation?.name || frTranslation.name.trim() === '') {
         validationErrors.value.push(t('validation.frenchNameRequired'))
     }
 
+    // Price required and positive
     if (!editedProduct.value.price || editedProduct.value.price === '') {
         validationErrors.value.push(t('validation.priceRequired'))
+    } else {
+        const priceNum = parseFloat(String(editedProduct.value.price).replace(',', '.'))
+        if (isNaN(priceNum) || priceNum <= 0) {
+            validationErrors.value.push(t('validation.pricePositive'))
+        }
+    }
+
+    // Description max 500 chars per language
+    for (const tr of (editedProduct.value.translations ?? [])) {
+        if (tr.description && tr.description.length > 500) {
+            validationErrors.value.push(t('validation.descriptionTooLong', { lang: LANG_LABELS[tr.language] || tr.language }))
+        }
+    }
+
+    // Image validation
+    if (selectedImage.value) {
+        if (selectedImage.value.size > MAX_IMAGE_SIZE) {
+            validationErrors.value.push(t('validation.imageTooLarge'))
+        }
+        if (!ALLOWED_IMAGE_TYPES.includes(selectedImage.value.type)) {
+            validationErrors.value.push(t('validation.imageInvalidType'))
+        }
+    }
+
+    // Code format (optional field)
+    if (editedProduct.value.code && editedProduct.value.code.trim() !== '') {
+        if (!CODE_REGEX.test(editedProduct.value.code.trim())) {
+            validationErrors.value.push(t('validation.codeFormat'))
+        }
+    }
+
+    // Piece count: positive integer (optional field)
+    if (editedProduct.value.pieceCount != null) {
+        const pc = Number(editedProduct.value.pieceCount)
+        if (!Number.isInteger(pc) || pc <= 0) {
+            validationErrors.value.push(t('validation.pieceCountPositive'))
+        }
+    }
+
+    // Choice validation (edit mode only)
+    if (props.mode === 'edit') {
+        for (let i = 0; i < editedChoices.value.length; i++) {
+            const choice = editedChoices.value[i]
+            const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
+            if (!hasAnyName) {
+                validationErrors.value.push(t('validation.choiceNameRequired', { index: i + 1 }))
+            }
+            const pm = parseFloat(String(choice.priceModifier).replace(',', '.'))
+            if (isNaN(pm)) {
+                validationErrors.value.push(t('validation.choicePriceRequired', { index: i + 1 }))
+            }
+        }
     }
 
     if (validationErrors.value.length > 0) {

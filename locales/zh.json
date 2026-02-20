@@ -168,7 +168,15 @@
     "categoryRequired": "必须填写类别",
     "frenchNameRequired": "必须填写法语名称",
     "priceRequired": "必须填写价格",
-    "invalidPrice": "价格格式无效"
+    "invalidPrice": "价格格式无效",
+    "pricePositive": "价格必须大于0",
+    "descriptionTooLong": "{lang}描述不得超过500个字符",
+    "imageTooLarge": "图片大小不得超过5MB",
+    "imageInvalidType": "图片必须是PNG、JPEG或WebP格式",
+    "codeFormat": "产品代码必须由大写字母和数字组成（如A10）",
+    "pieceCountPositive": "件数必须为正整数",
+    "choiceNameRequired": "选项#{index}必须至少有一个名称",
+    "choicePriceRequired": "选项#{index}必须有有效的价格调整值"
   },
 
   "notifications": {
