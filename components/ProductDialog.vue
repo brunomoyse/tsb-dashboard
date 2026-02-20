@@ -147,6 +147,13 @@
             :label="t('products.vegan')"
           />
         </div>
+
+        <!-- Validation Errors -->
+        <div v-if="validationErrors.length > 0" class="rounded-md bg-red-50 p-3">
+          <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
+            <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
+          </ul>
+        </div>
       </div>
     </template>
 
@@ -198,6 +205,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const toast = useToast()
 
 // Languages used for translations.
 const languages = ['fr', 'en', 'zh']
@@ -244,6 +252,7 @@ if (props.mode !== 'create') {
     })
 }
 
+const validationErrors = ref<string[]>([])
 const dialog = ref(true)
 
 // Watch dialog state and emit close when it becomes false
@@ -278,17 +287,23 @@ const closeDialog = () => {
 
 const saveChanges = async () => {
     // Basic validation
+    validationErrors.value = []
+
     if (!editedProduct.value.categoryId || editedProduct.value.categoryId.trim() === '') {
-        return
+        validationErrors.value.push(t('validation.categoryRequired'))
     }
 
     const frTranslations = editedProduct.value.translations ?? []
     const frTranslation = frTranslations.find(t => t.language === 'fr')
     if (!frTranslation?.name || frTranslation.name.trim() === '') {
-        return
+        validationErrors.value.push(t('validation.frenchNameRequired'))
     }
 
     if (!editedProduct.value.price || editedProduct.value.price === '') {
+        validationErrors.value.push(t('validation.priceRequired'))
+    }
+
+    if (validationErrors.value.length > 0) {
         return
     }
 

@@ -34,7 +34,7 @@ export default defineNuxtPlugin(() => {
       return cachedPrinter
     }
 
-    console.log('🔍 Discovering printers on network...')
+    if (import.meta.dev) console.log('Discovering printers on network...')
 
     // Discover printers on network
     const printers = await discoverPrinters(5000)
@@ -48,7 +48,7 @@ export default defineNuxtPlugin(() => {
 
     // Use first discovered printer
     const printer = printers[0]
-    console.log('✅ Using printer:', printer.ip)
+    if (import.meta.dev) console.log('Using printer:', printer.ip)
 
     // Cache for subsequent prints
     cachedPrinter = {
