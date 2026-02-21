@@ -110,6 +110,42 @@ export interface TranslationInput {
     name: string
 }
 
+export interface Coupon {
+    id: string;
+    code: string;
+    discountType: string;
+    discountValue: string;
+    minOrderAmount: string | null;
+    maxUses: number | null;
+    usedCount: number;
+    isActive: boolean;
+    validFrom: string | null;
+    validUntil: string | null;
+    createdAt: string;
+}
+
+export interface CreateCouponInput {
+    code: string;
+    discountType: string;
+    discountValue: string;
+    minOrderAmount?: string | null;
+    maxUses?: number | null;
+    isActive: boolean;
+    validFrom?: string | null;
+    validUntil?: string | null;
+}
+
+export interface UpdateCouponInput {
+    code?: string;
+    discountType?: string;
+    discountValue?: string;
+    minOrderAmount?: string | null;
+    maxUses?: number | null;
+    isActive?: boolean;
+    validFrom?: string | null;
+    validUntil?: string | null;
+}
+
 export interface User {
     email: string;
     firstName: string;

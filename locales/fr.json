@@ -127,9 +127,33 @@
     }
   },
 
+  "coupons": {
+    "title": "Coupons",
+    "add": "Ajouter un coupon",
+    "search": "Rechercher des coupons...",
+    "code": "Code",
+    "type": "Type",
+    "value": "Valeur",
+    "minOrder": "Commande min.",
+    "maxUses": "Utilisations max.",
+    "used": "Utilisé",
+    "active": "Actif",
+    "validFrom": "Valide à partir de",
+    "validUntil": "Valide jusqu'à",
+    "percentage": "Pourcentage",
+    "fixed": "Montant fixe",
+    "unlimited": "Illimité",
+    "editTitle": "Modifier le coupon",
+    "createTitle": "Nouveau coupon",
+    "noResults": "Aucun coupon trouvé",
+    "created": "Coupon créé avec succès",
+    "updated": "Coupon mis à jour avec succès"
+  },
+
   "navigation": {
     "products": "Produits",
     "orders": "Commandes",
+    "coupons": "Coupons",
     "booking": "Réservation",
     "settings": "Paramètres",
     "logout": "Déconnexion"
