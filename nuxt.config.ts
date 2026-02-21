@@ -1,5 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+// Derive origins for CSP from environment variables (dev defaults)
+const apiOrigin = new URL(process.env.API_BASE_URL || 'http://localhost:8080/api/v1').origin
+const wsOrigin = apiOrigin.replace(/^http/, 'ws')
+const s3Url = process.env.S3_BUCKET_URL
+
+const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data:${s3Url ? ' ' + s3Url : ''}`,
+    "font-src 'self'",
+    `connect-src 'self' ${apiOrigin} ${wsOrigin}`,
+].join('; ') + ';'
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   future: {
@@ -100,7 +114,7 @@ export default defineNuxtConfig({
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://d1sq9yypil8nox.cloudfront.net; font-src 'self'; connect-src 'self' https://api.tokyosushi.be wss://api.tokyosushi.be;",
+        'Content-Security-Policy': csp,
       },
     },
   },
