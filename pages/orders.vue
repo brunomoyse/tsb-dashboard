@@ -211,16 +211,16 @@
       <div v-else class="flex gap-5 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
         <div
           v-for="column in kanbanColumns"
-          :key="column.status"
+          :key="column.key"
           class="kanban-column flex-shrink-0 w-80 lg:w-96 flex flex-col transition-all duration-200"
           :class="[
-            getColumnAccentClass(column.status),
-            dragOverStatus === column.status ? 'kanban-drop-target' : '',
-            draggedOrder && draggedOrder.status === column.status ? 'kanban-drag-source' : ''
+            column.accentClass,
+            dragOverColumnKey === column.key ? 'kanban-drop-target' : '',
+            draggedOrder && column.statuses.includes(draggedOrder.status) ? 'kanban-drag-source' : ''
           ]"
-          @dragover="(e: DragEvent) => onColumnDragOver(e, column.status)"
+          @dragover="(e: DragEvent) => onColumnDragOver(e, column)"
           @dragleave="onColumnDragLeave"
-          @drop="(e: DragEvent) => onColumnDrop(e, column.status)"
+          @drop="(e: DragEvent) => onColumnDrop(e, column)"
         >
           <!-- Column Header -->
           <div class="kanban-column-header">
@@ -228,13 +228,13 @@
               <div class="flex items-center gap-2.5">
                 <div
                   class="size-8 rounded-lg flex items-center justify-center"
-                  :class="getColumnIconBgClass(column.status)"
+                  :class="column.iconBgClass"
                 >
-                  <UIcon :name="getStatusIcon(column.status)" class="size-4.5" />
+                  <UIcon :name="column.icon" class="size-4.5" />
                 </div>
                 <div>
                   <h3 class="font-semibold text-sm text-highlighted leading-tight">
-                    {{ t(`orders.status.${column.status.toLowerCase()}`) }}
+                    {{ column.label }}
                   </h3>
                   <p class="text-xs text-muted">
                     {{ column.orders.length }} {{ t('orders.items') }}
@@ -242,7 +242,7 @@
                 </div>
               </div>
               <UBadge
-                :color="getStatusColor(column.status)"
+                :color="column.badgeColor"
                 variant="soft"
                 size="md"
                 class="tabular-nums font-bold"
@@ -257,7 +257,7 @@
             <UCard
               v-for="order in column.orders"
               :key="order.id"
-              draggable="true"
+              :draggable="column.dropStatus !== null ? 'true' : 'false'"
               class="cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all"
               :class="draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
@@ -276,9 +276,14 @@
                       {{ getTimeSince(order.createdAt).text }}
                     </p>
                   </div>
-                  <UBadge :color="getPaymentStatusColor(order.payment?.status)" variant="soft" size="xs">
-                    {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
-                  </UBadge>
+                  <div class="flex flex-col items-end gap-1">
+                    <UBadge v-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="soft" size="xs">
+                      {{ t(`orders.status.${order.status.toLowerCase()}`) }}
+                    </UBadge>
+                    <UBadge :color="getPaymentStatusColor(order.payment?.status)" variant="soft" size="xs">
+                      {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+                    </UBadge>
+                  </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -312,7 +317,7 @@
 
             <!-- Empty column -->
             <div v-if="column.orders.length === 0" class="text-center py-12 text-muted text-sm">
-              <UIcon :name="getStatusIcon(column.status)" class="size-10 mx-auto mb-2 opacity-30" />
+              <UIcon :name="column.icon" class="size-10 mx-auto mb-2 opacity-30" />
               <p>{{ t('orders.noOrders') }}</p>
             </div>
           </div>
@@ -571,9 +576,29 @@ const ordersStore = useOrdersStore()
 // Tab state - start as null for SSR, set on client
 const selectedTab = ref<number | null>(null)
 
+// Kanban column definitions
+interface KanbanColumnDef {
+  key: string
+  statuses: OrderStatus[]
+  dropStatus: OrderStatus | null
+  icon: string
+  iconBgClass: string
+  accentClass: string
+  badgeColor: string
+}
+
+const kanbanColumnDefs: KanbanColumnDef[] = [
+  { key: 'PENDING', statuses: ['PENDING'], dropStatus: 'PENDING', icon: 'i-lucide-clock', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
+  { key: 'CONFIRMED', statuses: ['CONFIRMED'], dropStatus: 'CONFIRMED', icon: 'i-lucide-circle-check', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
+  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
+  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
+  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-violet-500/15 text-violet-700 dark:text-violet-400', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
+  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: null, icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
+]
+
 // Drag state (kanban)
 const draggedOrder = ref<Order | null>(null)
-const dragOverStatus = ref<OrderStatus | null>(null)
+const dragOverColumnKey = ref<string | null>(null)
 
 const onDragStart = (e: DragEvent, order: Order) => {
   draggedOrder.value = order
@@ -583,27 +608,28 @@ const onDragStart = (e: DragEvent, order: Order) => {
 
 const onDragEnd = () => {
   draggedOrder.value = null
-  dragOverStatus.value = null
+  dragOverColumnKey.value = null
 }
 
-const onColumnDragOver = (e: DragEvent, status: OrderStatus) => {
-  if (!draggedOrder.value || draggedOrder.value.status === status) return
+const onColumnDragOver = (e: DragEvent, column: KanbanColumnDef) => {
+  if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
   e.preventDefault()
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
-  dragOverStatus.value = status
+  dragOverColumnKey.value = column.key
 }
 
 const onColumnDragLeave = () => {
-  dragOverStatus.value = null
+  dragOverColumnKey.value = null
 }
 
-const onColumnDrop = async (e: DragEvent, targetStatus: OrderStatus) => {
+const onColumnDrop = async (e: DragEvent, column: KanbanColumnDef) => {
   e.preventDefault()
-  dragOverStatus.value = null
-  if (!draggedOrder.value || draggedOrder.value.status === targetStatus) return
+  dragOverColumnKey.value = null
+  if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
 
   const order = draggedOrder.value
   const previousStatus = order.status
+  const targetStatus = column.dropStatus
   draggedOrder.value = null
 
   // Optimistic update
@@ -736,28 +762,6 @@ const availableStatuses = computed(() => {
   if (!selectedOrder.value) return []
   return getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
 })
-
-// Column accent class based on status
-const getColumnAccentClass = (status: OrderStatus): string => {
-  const classes: Record<string, string> = {
-    PENDING: 'kanban-accent-warning',
-    CONFIRMED: 'kanban-accent-info',
-    PREPARING: 'kanban-accent-info',
-    AWAITING_PICK_UP: 'kanban-accent-warning'
-  }
-  return classes[status] || ''
-}
-
-// Column icon background class
-const getColumnIconBgClass = (status: OrderStatus): string => {
-  const classes: Record<string, string> = {
-    PENDING: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
-    CONFIRMED: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
-    PREPARING: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
-    AWAITING_PICK_UP: 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
-  }
-  return classes[status] || 'bg-(--ui-bg-accented) text-(--ui-text-muted)'
-}
 
 // Status icon mapping
 const getStatusIcon = (status: OrderStatus): string => {
@@ -911,12 +915,13 @@ if (dataOrders.value?.orders) {
 const orders = computed(() => ordersStore.orders)
 
 // Kanban columns (tablet+ view)
-const kanbanStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'AWAITING_PICK_UP']
-
 const kanbanColumns = computed(() =>
-  kanbanStatuses.map(status => ({
-    status,
-    orders: orders.value.filter(o => o.status === status)
+  kanbanColumnDefs.map(def => ({
+    ...def,
+    label: def.key === 'COMPLETED'
+      ? t('orders.statusShort.completed')
+      : t(`orders.status.${def.key.toLowerCase()}`),
+    orders: orders.value.filter(o => def.statuses.includes(o.status))
   }))
 )
 

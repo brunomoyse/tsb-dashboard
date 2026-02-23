@@ -85,7 +85,8 @@
 /* Status accent colors for column headers */
 .kanban-accent-warning { border-top: 3px solid var(--color-amber-500); }
 .kanban-accent-info { border-top: 3px solid var(--color-sky-500); }
-.kanban-accent-primary { border-top: 3px solid var(--color-amber-700); }
+.kanban-accent-primary { border-top: 3px solid var(--color-violet-500); }
+.kanban-accent-success { border-top: 3px solid var(--color-emerald-500); }
 
 /* Kanban drag-and-drop feedback */
 .kanban-drop-target {
