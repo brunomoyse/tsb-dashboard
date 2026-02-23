@@ -250,6 +250,34 @@
                 {{ column.orders.length }}
               </UBadge>
             </div>
+
+            <!-- Date filter for completed column -->
+            <div v-if="column.key === 'COMPLETED'" class="flex items-center justify-between mt-2 pt-2 border-t border-default">
+              <UButton
+                icon="i-lucide-chevron-left"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                square
+                @click="shiftCompletedDate(-1)"
+              />
+              <button
+                class="text-xs font-medium text-muted hover:text-highlighted transition-colors"
+                :class="isCompletedFilterToday ? '' : 'underline'"
+                @click="completedFilterDate = new Date().toISOString().slice(0, 10)"
+              >
+                {{ completedFilterLabel }}
+              </button>
+              <UButton
+                icon="i-lucide-chevron-right"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                square
+                :disabled="isCompletedFilterToday"
+                @click="shiftCompletedDate(1)"
+              />
+            </div>
           </div>
 
           <!-- Column Body -->
@@ -264,53 +292,60 @@
               @dragend="onDragEnd"
               @click="openOrderDetails(order)"
             >
-              <div class="space-y-2.5">
-                <div class="flex items-start justify-between">
-                  <div>
-                    <p class="font-bold text-sm text-highlighted">{{ order.displayCustomerName }}</p>
-                    <p class="text-xs text-muted mt-0.5">{{ formatDate(order.createdAt, locale) }}</p>
-                    <p
-                      v-if="isActiveStatus(order.status)"
-                      :class="['text-xs font-semibold mt-0.5', getTimeSince(order.createdAt).color]"
-                    >
-                      {{ getTimeSince(order.createdAt).text }}
-                    </p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1">
-                    <UBadge v-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="soft" size="xs">
-                      {{ t(`orders.status.${order.status.toLowerCase()}`) }}
-                    </UBadge>
-                    <UBadge :color="getPaymentStatusColor(order.payment?.status)" variant="soft" size="xs">
-                      {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
-                    </UBadge>
-                  </div>
+              <div class="space-y-2">
+                <!-- Row 1: Type icon + name + total -->
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                    class="size-4 shrink-0 text-muted"
+                  />
+                  <span class="font-bold text-sm text-highlighted truncate flex-1">{{ order.displayCustomerName }}</span>
+                  <span class="font-bold text-sm text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <UBadge color="neutral" variant="subtle" size="xs">
+                <!-- Address (delivery only) -->
+                <p v-if="order.type === 'DELIVERY' && order.displayAddress" class="text-xs text-muted truncate">
+                  {{ order.displayAddress }}
+                </p>
+
+                <!-- Row 2: Items + payment icon + time-since -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2 text-muted">
+                    <span>{{ order.items.length }} {{ t('orders.items') }}</span>
                     <UIcon
                       :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                      class="mr-1"
+                      class="size-3.5"
                     />
-                    {{ order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
-                  </UBadge>
-                  <UBadge color="neutral" variant="subtle" size="xs">
-                    <UIcon
-                      :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                      class="mr-1"
-                    />
-                    {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
+                  </div>
+                  <span
+                    v-if="isActiveStatus(order.status)"
+                    :class="['font-bold', getTimeSince(order.createdAt).color]"
+                  >
+                    {{ getTimeSince(order.createdAt).text }}
+                  </span>
+                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="soft" size="xs">
+                    {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                   </UBadge>
                 </div>
 
-                <div class="flex justify-between items-center pt-2 border-t border-default">
-                  <span class="text-xs text-muted">{{ order.items.length }} {{ t('orders.items') }}</span>
-                  <span class="font-bold text-sm text-highlighted">{{ formatPrice(order.totalPrice) }}</span>
-                </div>
-
-                <div v-if="order.estimatedReadyTime" class="text-xs flex items-center gap-1 text-muted">
-                  <UIcon name="i-lucide-clock" class="size-3" />
-                  {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
+                <!-- Row 3: Estimated time + payment status (only when noteworthy) -->
+                <div
+                  v-if="order.estimatedReadyTime || order.payment?.status?.toLowerCase() !== 'paid'"
+                  class="flex items-center justify-between pt-1.5 border-t border-default"
+                >
+                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1">
+                    <UIcon name="i-lucide-clock" class="size-3" />
+                    {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
+                  </span>
+                  <span v-else />
+                  <UBadge
+                    v-if="order.payment?.status?.toLowerCase() !== 'paid'"
+                    :color="getPaymentStatusColor(order.payment?.status)"
+                    variant="soft"
+                    size="xs"
+                  >
+                    {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+                  </UBadge>
                 </div>
               </div>
             </UCard>
@@ -333,103 +368,147 @@
       :ui="{ content: 'min-h-full' }"
     >
       <template v-if="selectedOrder" #body>
-        <div class="space-y-6">
-          <!-- Order Header -->
-          <div class="pb-4 border-b border-default">
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex-1">
-                <h2 class="text-xl font-bold text-highlighted">
-                  {{ selectedOrder.displayCustomerName }}
-                </h2>
-                <p class="text-sm text-muted">{{ formatDate(selectedOrder.createdAt, locale) }}</p>
-              </div>
-              <div class="flex">
-                <UButton
-                  icon="i-lucide-printer"
-                  :label="t('orders.print.label')"
-                  color="primary"
-                  class="rounded-r-none"
-                  @click="printBoth"
-                />
-                <UDropdownMenu :items="printMenuItems">
-                  <UButton
-                    icon="i-lucide-chevron-down"
-                    color="primary"
-                    class="rounded-l-none border-l border-primary-400/30"
-                    square
-                  />
-                </UDropdownMenu>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap gap-2 mb-3">
-              <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft">
-                {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
-              </UBadge>
-              <UBadge color="neutral" variant="subtle" size="sm">
-                <UIcon
-                  :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                  class="mr-1"
-                />
-                {{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
-              </UBadge>
-              <UBadge color="neutral" variant="subtle" size="sm">
+        <div class="space-y-5">
+          <!-- 1. Header: identity + status + print -->
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
                 <UIcon
                   :name="selectedOrder.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                  class="mr-1"
+                  class="size-5 shrink-0 text-muted"
                 />
-                {{ t(`orders.deliveryOption.${selectedOrder.type?.toLowerCase()}`) }}
-              </UBadge>
+                <h2 class="text-lg font-bold text-highlighted truncate">
+                  {{ selectedOrder.displayCustomerName }}
+                </h2>
+              </div>
+              <div class="flex items-center gap-2 text-sm text-muted">
+                <span>{{ formatDate(selectedOrder.createdAt, locale) }}</span>
+                <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft" size="xs">
+                  {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
+                </UBadge>
+              </div>
             </div>
-
-            <div class="text-sm space-y-1">
-              <p class="flex items-center gap-1 text-muted">
-                <UIcon name="i-lucide-phone" class="size-4" />
-                {{ selectedOrder.customer?.phoneNumber }}
-              </p>
-              <p v-if="selectedOrder.type === 'DELIVERY'" class="flex items-center gap-1 text-muted">
-                <UIcon name="i-lucide-map-pin" class="size-4" />
-                {{ selectedOrder.displayAddress }}
-              </p>
+            <div class="flex shrink-0">
+              <UButton
+                icon="i-lucide-printer"
+                :label="t('orders.print.label')"
+                color="primary"
+                size="sm"
+                class="rounded-r-none"
+                @click="printBoth"
+              />
+              <UDropdownMenu :items="printMenuItems">
+                <UButton
+                  icon="i-lucide-chevron-down"
+                  color="primary"
+                  size="sm"
+                  class="rounded-l-none border-l border-primary-400/30"
+                  square
+                />
+              </UDropdownMenu>
             </div>
           </div>
 
-          <!-- Time Management Section -->
-          <div>
-            <h3 class="text-sm font-medium mb-2">{{ t('orders.timeManagement') }}</h3>
-            <p class="text-sm text-muted mb-4">
-              {{ t('orders.preferredTime') }}:
-              {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime, locale) : t('orders.asap') }}
-            </p>
+          <!-- 2. Order Items -->
+          <div class="border border-default rounded-lg overflow-hidden">
+            <div class="divide-y divide-default">
+              <div
+                v-for="(item, idx) in selectedOrder.items"
+                :key="`${item.product.id}-${item.choice?.id ?? idx}`"
+                class="flex items-center justify-between px-3 py-2"
+              >
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <span class="text-sm font-bold text-highlighted shrink-0">{{ item.quantity }}x</span>
+                  <span class="text-sm truncate">
+                    {{ item.product.code ? `${item.product.code} -` : '' }} {{ item.product.name }}
+                    <span v-if="item.choice" class="text-muted">({{ item.choice.name }})</span>
+                  </span>
+                </div>
+                <span class="text-sm font-medium text-highlighted shrink-0 ml-2">{{ formatPrice(item.totalPrice) }}</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between px-3 py-2.5 bg-(--ui-bg-accented) border-t border-default">
+              <span class="text-sm font-bold text-highlighted">Total</span>
+              <span class="text-base font-bold text-highlighted">{{ formatPrice(selectedOrder.totalPrice) }}</span>
+            </div>
+          </div>
 
-            <div v-if="selectedOrder.estimatedReadyTime" class="mb-4">
-              <p class="text-sm text-muted">
+          <!-- 3. Customer & Delivery Info -->
+          <div class="space-y-1.5 text-sm">
+            <div class="flex items-center gap-2 text-muted">
+              <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
+              <span>{{ selectedOrder.customer?.phoneNumber }}</span>
+            </div>
+            <div v-if="selectedOrder.type === 'DELIVERY'" class="flex items-center gap-2 text-muted">
+              <UIcon name="i-lucide-map-pin" class="size-4 shrink-0" />
+              <span>{{ selectedOrder.displayAddress }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-muted">
+              <UIcon
+                :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
+                class="size-4 shrink-0"
+              />
+              <span>{{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}</span>
+              <UBadge
+                :color="getPaymentStatusColor(selectedOrder.payment?.status)"
+                variant="soft"
+                size="xs"
+              >
+                {{ t(`orders.payment.status.${selectedOrder.payment?.status ? selectedOrder.payment.status.toLowerCase() : 'notPaid'}`) }}
+              </UBadge>
+            </div>
+            <div v-if="selectedOrder.orderNote" class="flex items-start gap-2 text-muted">
+              <UIcon name="i-lucide-message-square" class="size-4 shrink-0 mt-0.5" />
+              <span class="italic">{{ selectedOrder.orderNote }}</span>
+            </div>
+          </div>
+
+          <!-- 4. Payment action (only if not paid) -->
+          <UButton
+            v-if="selectedOrder.payment?.status?.toLowerCase() !== 'paid'"
+            color="success"
+            block
+            size="lg"
+            :loading="isUpdatingPayment"
+            @click="markAsPaid"
+          >
+            <UIcon name="i-lucide-check-circle" class="mr-2" />
+            {{ t('orders.payment.markAsPaid') }}
+          </UButton>
+
+          <!-- 5. Time Management -->
+          <div class="border border-default rounded-lg p-3 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted">
+                {{ t('orders.preferredTime') }}:
+                <span class="font-medium text-highlighted">
+                  {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime, locale) : t('orders.asap') }}
+                </span>
+              </span>
+              <span v-if="selectedOrder.estimatedReadyTime" class="text-sm text-muted">
                 {{ t('orders.currentEstimate') }}:
-                <span class="font-bold">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
-              </p>
+                <span class="font-bold text-primary">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
+              </span>
             </div>
 
-            <!-- Quick Time Buttons -->
-            <div class="grid grid-cols-4 gap-2 mb-4">
+            <div class="grid grid-cols-4 gap-1.5">
               <UButton
                 v-for="minutes in [15, 30, 45, 60]"
                 :key="minutes"
-                size="lg"
+                size="sm"
                 :variant="sliderDeltaMinutes === minutes ? 'solid' : 'outline'"
                 :color="sliderDeltaMinutes === minutes ? 'primary' : 'neutral'"
                 @click="sliderDeltaMinutes = minutes"
               >
-                +{{ minutes }}min
+                +{{ minutes }}m
               </UButton>
             </div>
 
-            <!-- Time Display -->
-            <div class="mb-2 flex items-center justify-between">
-              <span class="text-sm text-muted">+{{ sliderDeltaMinutes }}{{ t('orders.minutes') }}</span>
-              <span class="text-lg font-bold text-primary">{{ newEstimatedTime || formatTimeOnly(selectedOrder.estimatedReadyTime, locale.value) }}</span>
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-muted">+{{ sliderDeltaMinutes }}{{ t('orders.minutes') }}</span>
+              <span class="font-bold text-primary">{{ newEstimatedTime || formatTimeOnly(selectedOrder.estimatedReadyTime, locale.value) }}</span>
             </div>
 
-            <!-- Time Slider -->
             <USlider
               v-model="sliderDeltaMinutes"
               :min="0"
@@ -438,57 +517,20 @@
             />
           </div>
 
-          <!-- Payment Status Section -->
-          <div>
-            <h3 class="text-sm font-medium mb-2">{{ t('orders.payment.title') }}</h3>
-            <UCard
-              :ui="{
-                body: 'p-4 flex items-center gap-3',
-                background: `bg-${getPaymentStatusColor(selectedOrder.payment?.status)}/10`
-              }"
-            >
-              <UIcon
-                :name="selectedOrder.payment?.status?.toLowerCase() === 'paid' ? 'i-lucide-circle-check' : 'i-lucide-clock'"
-                :class="`size-8 text-${getPaymentStatusColor(selectedOrder.payment?.status)}`"
-              />
-              <div class="flex-1">
-                <p class="font-medium">
-                  {{ t(`orders.payment.status.${selectedOrder.payment?.status ? selectedOrder.payment.status.toLowerCase() : 'notPaid'}`) }}
-                </p>
-                <p class="text-sm text-muted">
-                  {{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
-                </p>
-              </div>
-            </UCard>
-
-            <UButton
-              v-if="selectedOrder.payment?.status?.toLowerCase() !== 'paid'"
-              color="success"
-              block
-              class="mt-4"
-              size="lg"
-              :loading="isUpdatingPayment"
-              @click="markAsPaid"
-            >
-              <UIcon name="i-lucide-check-circle" class="mr-2" />
-              {{ t('orders.payment.markAsPaid') }}
-            </UButton>
-          </div>
-
-          <!-- Status Update Section -->
-          <div>
-            <h3 class="text-sm font-medium mb-2">{{ t('orders.updateStatus') }}</h3>
-            <div class="space-y-2">
+          <!-- 6. Status Update -->
+          <div class="space-y-2">
+            <h3 class="text-sm font-medium">{{ t('orders.updateStatus') }}</h3>
+            <div class="grid grid-cols-2 gap-2">
               <UButton
                 v-for="status in availableStatuses"
                 :key="status"
-                size="lg"
+                size="md"
                 :variant="stagedStatus === status ? 'solid' : 'outline'"
                 :color="stagedStatus === status ? getStatusColor(status) : 'neutral'"
-                block
+                :class="status === 'CANCELLED' ? 'col-span-2' : ''"
                 @click="handleStatusButton(status)"
               >
-                <UIcon :name="getStatusIcon(status)" class="mr-2" />
+                <UIcon :name="getStatusIcon(status)" class="mr-1" />
                 {{ t(`orders.status.${status.toLowerCase()}`) }}
               </UButton>
             </div>
@@ -595,6 +637,26 @@ const kanbanColumnDefs: KanbanColumnDef[] = [
   { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
   { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: null, icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
 ]
+
+// Completed column date filter (defaults to today)
+const completedFilterDate = ref<string>(new Date().toISOString().slice(0, 10))
+
+const completedFilterLabel = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  const date = new Date(completedFilterDate.value + 'T12:00:00')
+  if (completedFilterDate.value === today) {
+    return new Intl.DateTimeFormat(locale.value, { weekday: 'short' }).format(date)
+  }
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(date)
+})
+
+const isCompletedFilterToday = computed(() => completedFilterDate.value === new Date().toISOString().slice(0, 10))
+
+const shiftCompletedDate = (days: number) => {
+  const d = new Date(completedFilterDate.value + 'T12:00:00')
+  d.setDate(d.getDate() + days)
+  completedFilterDate.value = d.toISOString().slice(0, 10)
+}
 
 // Drag state (kanban)
 const draggedOrder = ref<Order | null>(null)
@@ -916,13 +978,19 @@ const orders = computed(() => ordersStore.orders)
 
 // Kanban columns (tablet+ view)
 const kanbanColumns = computed(() =>
-  kanbanColumnDefs.map(def => ({
-    ...def,
-    label: def.key === 'COMPLETED'
-      ? t('orders.statusShort.completed')
-      : t(`orders.status.${def.key.toLowerCase()}`),
-    orders: orders.value.filter(o => def.statuses.includes(o.status))
-  }))
+  kanbanColumnDefs.map(def => {
+    let filtered = orders.value.filter(o => def.statuses.includes(o.status))
+    if (def.key === 'COMPLETED') {
+      filtered = filtered.filter(o => o.updatedAt?.slice(0, 10) === completedFilterDate.value)
+    }
+    return {
+      ...def,
+      label: def.key === 'COMPLETED'
+        ? t('orders.statusShort.completed')
+        : t(`orders.status.${def.key.toLowerCase()}`),
+      orders: filtered
+    }
+  })
 )
 
 // Mobile filter chips
