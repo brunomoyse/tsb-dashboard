@@ -189,8 +189,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
-import { useGqlQuery, useGqlMutation } from '#imports'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useGqlQuery, useGqlMutation, useGqlSubscription } from '#imports'
 import { useI18n } from 'vue-i18n'
 import type { Coupon, CreateCouponInput, UpdateCouponInput } from '~/types'
 import gql from 'graphql-tag'
@@ -260,6 +260,24 @@ const CREATE_COUPON_MUTATION = gql`
 const UPDATE_COUPON_MUTATION = gql`
   mutation ($id: ID!, $input: UpdateCouponInput!) {
     updateCoupon(id: $id, input: $input) {
+      id
+      code
+      discountType
+      discountValue
+      minOrderAmount
+      maxUses
+      usedCount
+      isActive
+      validFrom
+      validUntil
+      createdAt
+    }
+  }
+`
+
+const SUB_COUPON_UPDATED = gql`
+  subscription CouponUpdated {
+    couponUpdated {
       id
       code
       discountType
@@ -437,4 +455,20 @@ const handleSubmit = async () => {
     isSaving.value = false
   }
 }
+
+// Subscribe to real-time coupon updates
+onMounted(() => {
+  const { data: liveCoupon } = useGqlSubscription<{ couponUpdated: Coupon }>(
+    print(SUB_COUPON_UPDATED)
+  )
+  watch(liveCoupon, (val) => {
+    if (!val?.couponUpdated?.id || !dataCoupons.value?.coupons) return
+    const idx = dataCoupons.value.coupons.findIndex(c => c.id === val.couponUpdated.id)
+    if (idx !== -1) {
+      dataCoupons.value.coupons.splice(idx, 1, val.couponUpdated)
+    } else {
+      dataCoupons.value.coupons.unshift(val.couponUpdated)
+    }
+  })
+})
 </script>

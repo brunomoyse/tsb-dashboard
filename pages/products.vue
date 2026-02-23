@@ -174,8 +174,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
-import { useCategoriesStore, useGqlQuery, useGqlMutation, useNuxtApp } from '#imports'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useCategoriesStore, useGqlQuery, useGqlMutation, useGqlSubscription, useNuxtApp } from '#imports'
 import { useI18n } from 'vue-i18n'
 import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
 import ProductDialog from '~/components/ProductDialog.vue'
@@ -358,6 +358,24 @@ const TOGGLE_PRODUCT_MUTATION = gql`
       id
       isVisible
       isAvailable
+    }
+  }
+`
+
+const SUB_PRODUCT_UPDATED = gql`
+  subscription ProductUpdated {
+    productUpdated {
+      id
+      isAvailable
+      isVisible
+      price
+      code
+      pieceCount
+      isHalal
+      isVegan
+      isDiscountable
+      name
+      slug
     }
   }
 `
@@ -584,4 +602,21 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 const handleChoicesChanged = async () => {
   await refetchProducts()
 }
+
+// Subscribe to real-time product updates
+onMounted(() => {
+  const { data: liveProduct } = useGqlSubscription<{ productUpdated: Partial<Product> }>(
+    print(SUB_PRODUCT_UPDATED)
+  )
+  watch(liveProduct, (val) => {
+    if (!val?.productUpdated?.id || !dataProducts.value?.products) return
+    const idx = dataProducts.value.products.findIndex(p => p.id === val.productUpdated.id)
+    if (idx !== -1) {
+      dataProducts.value.products.splice(idx, 1, {
+        ...dataProducts.value.products[idx],
+        ...val.productUpdated,
+      })
+    }
+  })
+})
 </script>

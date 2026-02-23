@@ -89,9 +89,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useNuxtApp } from '#imports'
+import { useNuxtApp, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 
@@ -217,5 +217,33 @@ const saveOpeningHours = async () => {
   }
 }
 
-onMounted(loadConfig)
+const SUB_CONFIG_UPDATED = gql`
+  subscription RestaurantConfigUpdated {
+    restaurantConfigUpdated {
+      orderingEnabled
+      openingHours
+    }
+  }
+`
+
+onMounted(() => {
+  loadConfig()
+
+  const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap } }>(
+    print(SUB_CONFIG_UPDATED)
+  )
+  watch(liveConfig, (val) => {
+    if (!val?.restaurantConfigUpdated) return
+    const cfg = val.restaurantConfigUpdated
+    orderingEnabled.value = cfg.orderingEnabled
+    if (cfg.openingHours) {
+      for (const day of days) {
+        const schedule = cfg.openingHours[day.key]
+        localHours[day.key] = schedule
+          ? { open: schedule.open || '11:00', close: schedule.close || '14:00', dinnerOpen: schedule.dinnerOpen || '17:00', dinnerClose: schedule.dinnerClose || '22:00' }
+          : null
+      }
+    }
+  })
+})
 </script>
