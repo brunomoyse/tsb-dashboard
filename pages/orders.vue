@@ -590,9 +590,9 @@ interface KanbanColumnDef {
 const kanbanColumnDefs: KanbanColumnDef[] = [
   { key: 'PENDING', statuses: ['PENDING'], dropStatus: 'PENDING', icon: 'i-lucide-clock', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
   { key: 'CONFIRMED', statuses: ['CONFIRMED'], dropStatus: 'CONFIRMED', icon: 'i-lucide-circle-check', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
-  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
-  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
-  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-violet-500/15 text-violet-700 dark:text-violet-400', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
+  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-amber-800/15 text-amber-900 dark:text-amber-500', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
+  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' },
+  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
   { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: null, icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
 ]
 
@@ -784,9 +784,9 @@ const getStatusColor = (status: OrderStatus): string => {
   const colors: Record<string, string> = {
     PENDING: 'warning',
     CONFIRMED: 'info',
-    PREPARING: 'info',
-    AWAITING_PICK_UP: 'warning',
-    OUT_FOR_DELIVERY: 'primary',
+    PREPARING: 'primary',
+    AWAITING_PICK_UP: 'success',
+    OUT_FOR_DELIVERY: 'info',
     DELIVERED: 'success',
     PICKED_UP: 'success',
     FAILED: 'error',

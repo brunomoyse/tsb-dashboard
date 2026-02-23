@@ -85,7 +85,7 @@
 
     <UDashboardPanel>
       <template #header>
-        <UDashboardNavbar>
+        <UDashboardNavbar class="md:hidden">
           <!-- Mobile header: logo + menu -->
           <template #left>
             <div class="flex items-center gap-2 md:hidden">
