@@ -5,10 +5,10 @@
     description=" "
     :overlay="true"
     :ui="{
-      content: 'max-sm:h-full max-sm:max-h-full max-sm:rounded-none sm:max-w-4xl',
+      content: 'max-lg:h-full max-lg:max-h-full max-lg:rounded-none lg:max-w-4xl',
       overlay: 'backdrop-blur-sm bg-gray-950/75',
-      body: 'max-sm:p-4',
-      footer: 'max-sm:flex-col max-sm:gap-2 sm:justify-end'
+      body: 'max-lg:p-4',
+      footer: 'max-lg:flex-col max-lg:gap-2 lg:justify-end'
     }"
   >
     <template #body>

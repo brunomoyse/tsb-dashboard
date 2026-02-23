@@ -97,6 +97,14 @@
       "cancelled": "Cancelled",
       "failed": "Failed"
     },
+    "statusShort": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "preparing": "Prep.",
+      "awaiting_pick_up": "Pickup",
+      "out_for_delivery": "Delivery",
+      "completed": "Done"
+    },
     "deliveryOption": {
         "pickup": "Pick up",
         "delivery": "Delivery"
@@ -118,6 +126,10 @@
     "paymentMethod": {
       "online": "Online Payment",
       "cash": "Cash"
+    },
+    "timeSince": {
+      "minutes": "{count} min ago",
+      "hours": "{count}h ago"
     },
     "errors": {
       "updateFailed": "Failed to update order",

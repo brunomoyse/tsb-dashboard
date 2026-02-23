@@ -81,7 +81,7 @@
         <div class="flex justify-end">
           <UButton
             icon="i-lucide-pencil"
-            size="sm"
+            size="md"
             color="neutral"
             variant="ghost"
             @click="openEditDialog(cell.row.original)"

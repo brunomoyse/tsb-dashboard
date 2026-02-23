@@ -98,6 +98,14 @@
       "cancelled": "已取消",
       "failed": "失败"
     },
+    "statusShort": {
+      "pending": "待处理",
+      "confirmed": "已确认",
+      "preparing": "准备中",
+      "awaiting_pick_up": "自取",
+      "out_for_delivery": "配送",
+      "completed": "完成"
+    },
     "deliveryOption": {
       "pickup": "自取",
       "delivery": "配送"
@@ -119,6 +127,10 @@
     "paymentMethod": {
       "online": "在线支付",
       "cash": "现金"
+    },
+    "timeSince": {
+      "minutes": "{count}分钟前",
+      "hours": "{count}小时前"
     },
     "errors": {
       "updateFailed": "更新订单失败",
