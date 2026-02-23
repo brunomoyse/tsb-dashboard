@@ -6,112 +6,282 @@
       <p class="text-muted">{{ t('orders.subtitle') }}</p>
     </div>
 
-    <!-- Filter Tabs -->
-    <UTabs
-      v-model="selectedTab"
-      :items="tabItems"
-      :content="false"
-      class="mb-6 tabs-ssr-fix"
-    />
+    <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
+    <div class="md:hidden">
+      <!-- Filter Chips (horizontally scrollable) -->
+      <div class="flex gap-2 overflow-x-auto pb-3 mb-4 -mx-4 px-4 scrollbar-hide">
+        <button
+          v-for="chip in mobileChips"
+          :key="chip.value"
+          class="relative flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-sm font-medium transition-all border"
+          :class="selectedTab === chip.value
+            ? 'bg-(--ui-primary) text-white border-transparent shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border) active:scale-95'
+          "
+          @click="selectedTab = chip.value"
+        >
+          <UIcon :name="chip.icon" class="size-4" />
+          <span>{{ chip.label }}</span>
+          <span
+            v-if="chip.count > 0"
+            class="ml-0.5 min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold px-1"
+            :class="selectedTab === chip.value
+              ? 'bg-white/25 text-white'
+              : 'bg-(--ui-bg-accented) text-(--ui-text)'
+            "
+          >
+            {{ chip.count }}
+          </span>
+          <!-- Unacknowledged pulse dot -->
+          <span
+            v-if="chip.value === 0 && ordersStore.unacknowledgedPendingCount > 0"
+            class="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-red-500 animate-pulse"
+          />
+        </button>
+      </div>
 
-    <!-- Orders Grid -->
-    <div v-if="filteredOrders.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <UCard
-        v-for="order in filteredOrders"
-        :key="order.id"
-        :class="[
-          'cursor-pointer hover:shadow-lg transition-shadow',
-          order.status === 'PENDING' ? 'border-l-4 border-l-warning bg-warning/5' : ''
-        ]"
-        @click="openOrderDetails(order)"
-      >
-        <!-- Card Header -->
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-lg font-bold">{{ order.displayCustomerName }}</h3>
+      <!-- Skeleton Loading -->
+      <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UCard v-for="i in 4" :key="i">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <div class="space-y-2 flex-1">
+                <USkeleton class="h-5 w-32" />
+                <USkeleton class="h-3 w-24" />
               </div>
-              <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
+              <USkeleton class="h-6 w-20 rounded-full" />
             </div>
-            <UBadge :color="getStatusColor(order.status)" variant="soft">
-              {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
-            </UBadge>
-          </div>
-        </template>
-
-        <!-- Card Body -->
-        <div class="space-y-4">
-          <!-- Order Type & Payment Badges -->
-          <div class="flex flex-wrap gap-2">
-            <UBadge color="neutral" variant="subtle" size="sm">
-              <UIcon
-                :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                class="mr-1"
-              />
-              {{ order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
-            </UBadge>
-            <UBadge color="neutral" variant="subtle" size="sm">
-              <UIcon
-                :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                class="mr-1"
-              />
-              {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
-            </UBadge>
-            <UBadge
-              :color="getPaymentStatusColor(order.payment?.status)"
-              variant="soft"
-              size="sm"
-            >
-              {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
-            </UBadge>
-          </div>
-
-          <!-- Customer Info -->
-          <div>
-            <p class="text-sm text-muted flex items-center gap-1">
-              <UIcon name="i-lucide-phone" class="size-4" />
-              {{ order.customer?.phoneNumber }}
-            </p>
-            <p v-if="order.type === 'DELIVERY'" class="text-sm text-muted flex items-center gap-1">
-              <UIcon name="i-lucide-map-pin" class="size-4" />
-              {{ order.displayAddress }}
-            </p>
-            <p v-else class="text-sm text-muted">{{ t('orders.pickup') }}</p>
-          </div>
-
-          <!-- Order Items -->
-          <div class="border-t pt-3 space-y-1">
-            <p class="text-sm font-medium">{{ t('orders.items') }}:</p>
-            <div v-for="(item, idx) in order.items" :key="`${item.product.id}-${item.choice?.id ?? idx}`" class="flex justify-between text-sm">
-              <span>
-                {{ item.quantity }}x {{ item.product.code || item.product.name }}
-                <span v-if="item.choice" class="text-xs text-muted">({{ item.choice.name }})</span>
-              </span>
-              <span>{{ formatPrice(item.totalPrice) }}</span>
+          </template>
+          <div class="space-y-3">
+            <div class="flex gap-2">
+              <USkeleton class="h-5 w-24 rounded-full" />
+              <USkeleton class="h-5 w-20 rounded-full" />
+            </div>
+            <USkeleton class="h-4 w-40" />
+            <div class="border-t pt-3 space-y-1">
+              <USkeleton class="h-3 w-full" />
+              <USkeleton class="h-3 w-3/4" />
+            </div>
+            <div class="border-t pt-3 flex justify-between">
+              <USkeleton class="h-4 w-12" />
+              <USkeleton class="h-4 w-16" />
             </div>
           </div>
+        </UCard>
+      </div>
 
-          <!-- Total -->
-          <div class="border-t pt-3 flex justify-between font-bold">
-            <span>Total</span>
-            <span>{{ formatPrice(order.totalPrice) }}</span>
-          </div>
+      <!-- Orders Grid -->
+      <div v-else-if="filteredOrders.length" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UCard
+          v-for="order in filteredOrders"
+          :key="order.id"
+          :class="[
+            'cursor-pointer hover:shadow-lg transition-shadow',
+            order.status === 'PENDING' ? 'border-l-4 border-l-warning bg-warning/5' : ''
+          ]"
+          @click="openOrderDetails(order)"
+        >
+          <template #header>
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-lg font-bold">{{ order.displayCustomerName }}</h3>
+                </div>
+                <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
+                <p
+                  v-if="isActiveStatus(order.status)"
+                  :class="['text-xs font-medium', getTimeSince(order.createdAt).color]"
+                >
+                  {{ getTimeSince(order.createdAt).text }}
+                </p>
+              </div>
+              <UBadge :color="getStatusColor(order.status)" variant="soft">
+                {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
+              </UBadge>
+            </div>
+          </template>
 
-          <!-- Time Info -->
-          <div v-if="order.estimatedReadyTime" class="text-sm flex items-center gap-1 text-muted">
-            <UIcon name="i-lucide-clock" class="size-4" />
-            {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <UBadge color="neutral" variant="subtle" size="sm">
+                <UIcon
+                  :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
+                  class="mr-1"
+                />
+                {{ order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
+              </UBadge>
+              <UBadge color="neutral" variant="subtle" size="sm">
+                <UIcon
+                  :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                  class="mr-1"
+                />
+                {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
+              </UBadge>
+              <UBadge
+                :color="getPaymentStatusColor(order.payment?.status)"
+                variant="soft"
+                size="sm"
+              >
+                {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+              </UBadge>
+            </div>
+
+            <div>
+              <p class="text-sm text-muted flex items-center gap-1">
+                <UIcon name="i-lucide-phone" class="size-4" />
+                {{ order.customer?.phoneNumber }}
+              </p>
+              <p v-if="order.type === 'DELIVERY'" class="text-sm text-muted flex items-center gap-1">
+                <UIcon name="i-lucide-map-pin" class="size-4" />
+                {{ order.displayAddress }}
+              </p>
+              <p v-else class="text-sm text-muted">{{ t('orders.pickup') }}</p>
+            </div>
+
+            <div class="border-t pt-3 space-y-1">
+              <p class="text-sm font-medium">{{ t('orders.items') }}:</p>
+              <div v-for="(item, idx) in order.items" :key="`${item.product.id}-${item.choice?.id ?? idx}`" class="flex justify-between text-sm">
+                <span>
+                  {{ item.quantity }}x {{ item.product.code || item.product.name }}
+                  <span v-if="item.choice" class="text-xs text-muted">({{ item.choice.name }})</span>
+                </span>
+                <span>{{ formatPrice(item.totalPrice) }}</span>
+              </div>
+            </div>
+
+            <div class="border-t pt-3 flex justify-between font-bold">
+              <span>Total</span>
+              <span>{{ formatPrice(order.totalPrice) }}</span>
+            </div>
+
+            <div v-if="order.estimatedReadyTime" class="text-sm flex items-center gap-1 text-muted">
+              <UIcon name="i-lucide-clock" class="size-4" />
+              {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
+            </div>
           </div>
-        </div>
+        </UCard>
+      </div>
+
+      <!-- Empty State -->
+      <UCard v-else class="text-center py-12">
+        <UIcon name="i-lucide-package-x" class="size-16 mx-auto mb-4 text-muted" />
+        <p class="text-lg text-muted">{{ t('orders.noOrders') }}</p>
       </UCard>
     </div>
 
-    <!-- Empty State -->
-    <UCard v-else class="text-center py-12">
-      <UIcon name="i-lucide-package-x" class="size-16 mx-auto mb-4 text-muted" />
-      <p class="text-lg text-muted">{{ t('orders.noOrders') }}</p>
-    </UCard>
+    <!-- ========== TABLET+ VIEW: Kanban board (md:) ========== -->
+    <div class="hidden md:block">
+      <!-- Skeleton Loading -->
+      <div v-if="pending" class="flex gap-4 overflow-x-auto pb-4">
+        <div v-for="i in 4" :key="i" class="flex-shrink-0 w-80 lg:w-96">
+          <div class="flex items-center justify-between mb-3 px-2">
+            <USkeleton class="h-5 w-28" />
+            <USkeleton class="h-5 w-8 rounded-full" />
+          </div>
+          <div class="space-y-3 px-1">
+            <UCard v-for="j in 2" :key="j">
+              <div class="space-y-2">
+                <div class="flex items-start justify-between">
+                  <div class="space-y-1">
+                    <USkeleton class="h-4 w-28" />
+                    <USkeleton class="h-3 w-20" />
+                  </div>
+                  <USkeleton class="h-5 w-14 rounded-full" />
+                </div>
+                <USkeleton class="h-5 w-20 rounded-full" />
+                <div class="flex justify-between pt-1 border-t border-default">
+                  <USkeleton class="h-3 w-16" />
+                  <USkeleton class="h-4 w-14" />
+                </div>
+              </div>
+            </UCard>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban Board -->
+      <div v-else class="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+        <div
+          v-for="column in kanbanColumns"
+          :key="column.status"
+          class="flex-shrink-0 w-80 lg:w-96 flex flex-col"
+        >
+          <!-- Column Header -->
+          <div class="flex items-center justify-between mb-3 px-2">
+            <div class="flex items-center gap-2">
+              <UIcon :name="getStatusIcon(column.status)" class="size-5" />
+              <h3 class="font-semibold text-sm">
+                {{ t(`orders.status.${column.status.toLowerCase()}`) }}
+              </h3>
+            </div>
+            <UBadge :color="getStatusColor(column.status)" variant="soft" size="sm">
+              {{ column.orders.length }}
+            </UBadge>
+          </div>
+
+          <!-- Column Body -->
+          <div class="flex-1 overflow-y-auto space-y-3 px-1">
+            <UCard
+              v-for="order in column.orders"
+              :key="order.id"
+              class="cursor-pointer hover:shadow-lg transition-shadow"
+              :class="order.status === 'PENDING' ? 'border-l-4 border-l-warning' : ''"
+              @click="openOrderDetails(order)"
+            >
+              <div class="space-y-2">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="font-bold text-sm">{{ order.displayCustomerName }}</p>
+                    <p class="text-xs text-muted">{{ formatDate(order.createdAt, locale) }}</p>
+                    <p
+                      v-if="isActiveStatus(order.status)"
+                      :class="['text-xs font-medium', getTimeSince(order.createdAt).color]"
+                    >
+                      {{ getTimeSince(order.createdAt).text }}
+                    </p>
+                  </div>
+                  <UBadge :color="getPaymentStatusColor(order.payment?.status)" variant="soft" size="xs">
+                    {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+                  </UBadge>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <UBadge color="neutral" variant="subtle" size="xs">
+                    <UIcon
+                      :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
+                      class="mr-1"
+                    />
+                    {{ order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
+                  </UBadge>
+                  <UBadge color="neutral" variant="subtle" size="xs">
+                    <UIcon
+                      :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                      class="mr-1"
+                    />
+                    {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
+                  </UBadge>
+                </div>
+
+                <div class="flex justify-between items-center pt-1 border-t border-default">
+                  <span class="text-xs text-muted">{{ order.items.length }} {{ t('orders.items') }}</span>
+                  <span class="font-bold text-sm">{{ formatPrice(order.totalPrice) }}</span>
+                </div>
+
+                <div v-if="order.estimatedReadyTime" class="text-xs flex items-center gap-1 text-muted">
+                  <UIcon name="i-lucide-clock" class="size-3" />
+                  {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Empty column -->
+            <div v-if="column.orders.length === 0" class="text-center py-8 text-muted text-sm">
+              {{ t('orders.noOrders') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Order Details Slideover -->
     <USlideover
@@ -202,6 +372,7 @@
               <UButton
                 v-for="minutes in [15, 30, 45, 60]"
                 :key="minutes"
+                size="lg"
                 :variant="sliderDeltaMinutes === minutes ? 'solid' : 'outline'"
                 :color="sliderDeltaMinutes === minutes ? 'primary' : 'neutral'"
                 @click="sliderDeltaMinutes = minutes"
@@ -253,6 +424,7 @@
               color="success"
               block
               class="mt-4"
+              size="lg"
               :loading="isUpdatingPayment"
               @click="markAsPaid"
             >
@@ -268,6 +440,7 @@
               <UButton
                 v-for="status in availableStatuses"
                 :key="status"
+                size="lg"
                 :variant="stagedStatus === status ? 'solid' : 'outline'"
                 :color="stagedStatus === status ? getStatusColor(status) : 'neutral'"
                 block
@@ -287,6 +460,7 @@
             color="neutral"
             variant="outline"
             block
+            size="lg"
             @click="showOrderDetails = false"
           >
             {{ t('common.cancel') }}
@@ -294,6 +468,7 @@
           <UButton
             :disabled="!canSave"
             block
+            size="lg"
             @click="updateOrder(stagedStatus)"
           >
             <UIcon name="i-lucide-save" class="mr-2" />
@@ -345,7 +520,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDate, formatTimeOnly, timeToRFC3339, formatPrice } from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
@@ -367,6 +542,50 @@ const initialSliderValue = ref<number>(0)
 const baseEstimatedTime = ref<Date | null>(null)
 const stagedStatus = ref<OrderStatus | undefined>(undefined)
 const isUpdatingPayment = ref(false)
+
+// Time-since tracking (updates every 30s)
+const now = ref(new Date())
+let nowInterval: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  selectedTab.value = 0
+  nowInterval = setInterval(() => {
+    now.value = new Date()
+  }, 30000)
+})
+
+onUnmounted(() => {
+  if (nowInterval) clearInterval(nowInterval)
+})
+
+const isActiveStatus = (status: OrderStatus): boolean => {
+  return ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
+}
+
+const getTimeSince = (createdAt: string): { text: string; color: string } => {
+  const created = new Date(createdAt)
+  const diffMs = now.value.getTime() - created.getTime()
+  const diffMin = Math.max(0, Math.floor(diffMs / 60000))
+
+  let text: string
+  if (diffMin < 60) {
+    text = t('orders.timeSince.minutes', { count: diffMin })
+  } else {
+    const hours = Math.floor(diffMin / 60)
+    text = t('orders.timeSince.hours', { count: hours })
+  }
+
+  let color: string
+  if (diffMin < 5) {
+    color = 'text-success'
+  } else if (diffMin < 15) {
+    color = 'text-warning'
+  } else {
+    color = 'text-error'
+  }
+
+  return { text, color }
+}
 
 // Cancellation dialog state
 const showCancelDialog = ref(false)
@@ -420,7 +639,6 @@ const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): Or
       allowed = []
       break
   }
-  // "CANCELLED" can be chosen from any state except if already cancelled.
   if (current !== 'CANCELLED') {
     allowed.push('CANCELLED')
   }
@@ -479,7 +697,6 @@ const getPaymentStatusColor = (status: string | undefined) => {
 
 const newEstimatedTime = computed(() => {
   if (!baseEstimatedTime.value) return ''
-  // Calculate the adjustment: how many minutes to add to the base estimate
   const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
   const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
   return formatTimeOnly(newTime.toISOString(), locale.value)
@@ -584,18 +801,58 @@ if (dataOrders.value?.orders) {
 // Use store data for reactive updates and SSR support
 const orders = computed(() => ordersStore.orders)
 
-const tabItems = computed(() => [
-  { label: `${t('orders.status.pending')} (${orders.value.filter(o => o.status === 'PENDING').length})`, value: 0 },
-  { label: `${t('orders.status.confirmed')} (${orders.value.filter(o => o.status === 'CONFIRMED').length})`, value: 1 },
-  { label: `${t('orders.status.preparing')} (${orders.value.filter(o => o.status === 'PREPARING').length})`, value: 2 },
-  { label: `${t('orders.status.awaiting_pick_up')} (${orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length})`, value: 3 },
-  { label: `${t('orders.status.out_for_delivery')} (${orders.value.filter(o => o.status === 'OUT_FOR_DELIVERY').length})`, value: 4 },
-  { label: `${t('orders.completed')} (${orders.value.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status)).length})`, value: 5 }
+// Kanban columns (tablet+ view)
+const kanbanStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'AWAITING_PICK_UP']
+
+const kanbanColumns = computed(() =>
+  kanbanStatuses.map(status => ({
+    status,
+    orders: orders.value.filter(o => o.status === status)
+  }))
+)
+
+// Mobile filter chips
+const mobileChips = computed(() => [
+  {
+    label: t('orders.statusShort.pending'),
+    icon: 'i-lucide-clock',
+    value: 0,
+    count: orders.value.filter(o => o.status === 'PENDING').length
+  },
+  {
+    label: t('orders.statusShort.confirmed'),
+    icon: 'i-lucide-circle-check',
+    value: 1,
+    count: orders.value.filter(o => o.status === 'CONFIRMED').length
+  },
+  {
+    label: t('orders.statusShort.preparing'),
+    icon: 'i-lucide-chef-hat',
+    value: 2,
+    count: orders.value.filter(o => o.status === 'PREPARING').length
+  },
+  {
+    label: t('orders.statusShort.awaiting_pick_up'),
+    icon: 'i-lucide-hourglass',
+    value: 3,
+    count: orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length
+  },
+  {
+    label: t('orders.statusShort.out_for_delivery'),
+    icon: 'i-lucide-bike',
+    value: 4,
+    count: orders.value.filter(o => o.status === 'OUT_FOR_DELIVERY').length
+  },
+  {
+    label: t('orders.statusShort.completed'),
+    icon: 'i-lucide-circle-check-big',
+    value: 5,
+    count: orders.value.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status)).length
+  }
 ])
 
 const filteredOrders = computed(() => {
   const ordersList = orders.value
-  // During SSR, selectedTab is null, show pending orders by default
   if (selectedTab.value === null) {
     return ordersList.filter(o => o.status === 'PENDING')
   }
@@ -611,7 +868,6 @@ const filteredOrders = computed(() => {
     case 4:
       return ordersList.filter(o => o.status === 'OUT_FOR_DELIVERY')
     case 5:
-      // Completed: DELIVERED, PICKED_UP, CANCELLED, FAILED
       return ordersList.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status))
     default:
       return ordersList.filter(o => o.status === 'PENDING')
@@ -624,11 +880,6 @@ watch(dataOrders, (newData) => {
     ordersStore.setOrders(newData.orders)
   }
 }, { deep: true })
-
-// Set active tab on client side
-onMounted(() => {
-  selectedTab.value = 0
-})
 
 // ORDER UPDATED SUBSCRIPTION
 const { data: orderUpdated } = useGqlSubscription<{
@@ -729,18 +980,15 @@ watch(orderCreated, (val) => {
 
 // Component methods
 const openOrderDetails = (order: Order) => {
+  ordersStore.acknowledgeOrder(order.id)
   selectedOrder.value = order
   stagedStatus.value = undefined
 
   try {
-    const now = new Date()
+    const currentNow = new Date()
 
-    // For pending orders, default to 30 minutes from now
     if (order.status === 'PENDING') {
-      // Base is NOW for pending orders
-      baseEstimatedTime.value = now
-
-      // Set slider to 30 minutes for pending orders
+      baseEstimatedTime.value = currentNow
       sliderDeltaMinutes.value = 30
       initialSliderValue.value = 0
     } else if (order.estimatedReadyTime) {
@@ -750,19 +998,14 @@ const openOrderDetails = (order: Order) => {
         throw new Error('Invalid date format')
       }
 
-      // Base is the existing estimated time
       baseEstimatedTime.value = estimatedDate
-
-      // Calculate minutes from now to the estimated time to display it
-      const diffMs = estimatedDate.getTime() - now.getTime()
+      const diffMs = estimatedDate.getTime() - currentNow.getTime()
       const diffMinutes = Math.max(0, Math.round(diffMs / 60000))
-
-      // Set slider to show current estimated time (rounded to nearest 5 minutes)
       const roundedMinutes = Math.round(diffMinutes / 5) * 5
       sliderDeltaMinutes.value = roundedMinutes
       initialSliderValue.value = roundedMinutes
     } else {
-      baseEstimatedTime.value = now
+      baseEstimatedTime.value = currentNow
       sliderDeltaMinutes.value = 0
       initialSliderValue.value = 0
     }
@@ -796,7 +1039,6 @@ const updateOrder = async (newStatus?: OrderStatus) => {
   let estimatedReadyTime: string | undefined
 
   if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
-    // Calculate the adjustment: how many minutes to add to the base estimate
     const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
     const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
     estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString(), locale.value))
@@ -912,12 +1154,10 @@ const markAsPaid = async () => {
       status: 'paid'
     })
 
-    // Update the local order with new payment status
     if (selectedOrder.value.payment) {
       selectedOrder.value.payment.status = res.updatePaymentStatus.status
     }
 
-    // Update the order in the store
     ordersStore.updateOrder({
       id: selectedOrder.value.id,
       payment: {

@@ -98,6 +98,14 @@
       "cancelled": "Annulé",
       "failed": "Échoué"
     },
+    "statusShort": {
+      "pending": "Attente",
+      "confirmed": "Confirmé",
+      "preparing": "Prépa.",
+      "awaiting_pick_up": "Retrait",
+      "out_for_delivery": "Livraison",
+      "completed": "Terminées"
+    },
     "deliveryOption": {
       "pickup": "Emporter",
       "delivery": "Livraison"
@@ -119,6 +127,10 @@
     "paymentMethod": {
       "online": "En ligne",
       "cash": "Cash"
+    },
+    "timeSince": {
+      "minutes": "il y a {count} min",
+      "hours": "il y a {count}h"
     },
     "errors": {
       "updateFailed": "Échec de la mise à jour de la commande",

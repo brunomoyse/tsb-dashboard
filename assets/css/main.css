@@ -1,46 +1,62 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-/* Light Theme - White, Beige, and Pure Black for actions */
+/* Light Theme - Warm sushi restaurant identity */
 :root {
   --ui-bg: theme('colors.white');
-  --ui-bg-elevated: theme('colors.stone.50');
-  --ui-bg-accented: theme('colors.stone.100');
-  --ui-border: theme('colors.stone.200');
-  --ui-border-accented: theme('colors.stone.300');
+  --ui-bg-elevated: #faf8f5;
+  --ui-bg-accented: #f5f0ea;
+  --ui-border: #e8dfd4;
+  --ui-border-accented: #d4c5b3;
 
   /* Text colors */
-  --ui-text: theme('colors.stone.900');
-  --ui-text-highlighted: theme('colors.black');
-  --ui-text-muted: theme('colors.stone.500');
+  --ui-text: #3d2e1f;
+  --ui-text-highlighted: #1a0f05;
+  --ui-text-muted: #8a7560;
 
-  /* Actions - Pure Black */
-  --ui-primary: theme('colors.black');
-  --ui-primary-highlighted: theme('colors.stone.800');
+  /* Actions - Warm amber */
+  --ui-primary: theme('colors.amber.800');
+  --ui-primary-highlighted: theme('colors.amber.900');
 
   /* Neutral */
-  --ui-neutral: theme('colors.stone.300');
-  --ui-neutral-highlighted: theme('colors.stone.400');
+  --ui-neutral: #d4c5b3;
+  --ui-neutral-highlighted: #c4b29e;
 }
 
-/* Dark Theme - Minimalist and Sober */
+/* Dark Theme - Deep warm dark */
 .dark {
-  --ui-bg: theme('colors.zinc.950');
-  --ui-bg-elevated: theme('colors.zinc.900');
-  --ui-bg-accented: theme('colors.zinc.800');
-  --ui-border: theme('colors.zinc.800');
-  --ui-border-accented: theme('colors.zinc.700');
+  --ui-bg: #1a1410;
+  --ui-bg-elevated: #231c15;
+  --ui-bg-accented: #2d241b;
+  --ui-border: #3d3228;
+  --ui-border-accented: #4d4238;
 
   /* Text colors */
-  --ui-text: theme('colors.zinc.100');
-  --ui-text-highlighted: theme('colors.white');
-  --ui-text-muted: theme('colors.zinc.400');
+  --ui-text: #e8dfd4;
+  --ui-text-highlighted: #faf8f5;
+  --ui-text-muted: #9a8570;
 
-  /* Actions - Subtle accent */
-  --ui-primary: theme('colors.zinc.300');
-  --ui-primary-highlighted: theme('colors.zinc.200');
+  /* Actions - Amber accent */
+  --ui-primary: theme('colors.amber.600');
+  --ui-primary-highlighted: theme('colors.amber.500');
 
   /* Neutral */
-  --ui-neutral: theme('colors.zinc.700');
-  --ui-neutral-highlighted: theme('colors.zinc.600');
+  --ui-neutral: #3d3228;
+  --ui-neutral-highlighted: #4d4238;
+}
+
+/* Global minimum touch targets for touch devices */
+@media (pointer: coarse) {
+  button, [role="button"], a[href], [tabindex="0"] {
+    min-height: 44px;
+  }
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

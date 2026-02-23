@@ -14,6 +14,7 @@
         </UButton>
       </div>
     </div>
+
     <!-- Search Bar -->
     <div class="mb-4">
       <UInput
@@ -24,78 +25,115 @@
       />
     </div>
 
-    <!-- Products Table -->
-    <UTable
-      v-if="filteredProducts.length > 0"
-      :columns="columns"
-      :data="paginatedProducts"
-    >
-      <template #code-cell="{ cell }">
-        {{ cell.row.original.code || '-' }}
-      </template>
-
-      <template #name-cell="{ cell }">
-        {{ cell.row.original.name }}
-      </template>
-
-      <template #category-cell="{ cell }">
-        {{ cell.row.original.category.name }}
-      </template>
-
-      <template #price-cell="{ cell }">
-        {{ belPriceFormat.format(cell.row.original.price) }}
-      </template>
-
-      <template #isAvailable-cell="{ cell }">
-        <UBadge
-          :color="cell.row.original.isAvailable ? 'success' : 'error'"
-          variant="soft"
-          size="sm"
-        >
-          {{ cell.row.original.isAvailable ? t('common.available') : t('common.unavailable') }}
-        </UBadge>
-      </template>
-
-      <template #isVisible-cell="{ cell }">
-        <UBadge
-          :color="cell.row.original.isVisible ? 'success' : 'error'"
-          variant="soft"
-          size="sm"
-        >
-          {{ cell.row.original.isVisible ? t('common.visible') : t('common.invisible') }}
-        </UBadge>
-      </template>
-
-      <template #translationsStatus-cell="{ cell }">
-        <div class="flex gap-1">
-          <UBadge
-            v-for="lang in availableLocales"
-            :key="lang"
-            :color="hasTranslation(cell.row.original, lang) ? 'success' : 'error'"
-            variant="soft"
-            size="sm"
-            class="w-8 h-8 flex items-center justify-center"
-          >
-            {{ getFlagEmoji(lang) }}
-          </UBadge>
+    <!-- Skeleton Loading -->
+    <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <UCard v-for="i in 8" :key="i">
+        <div class="space-y-3">
+          <div class="flex items-start justify-between">
+            <div class="space-y-1">
+              <USkeleton class="h-3 w-12" />
+              <USkeleton class="h-4 w-28" />
+              <USkeleton class="h-3 w-20" />
+            </div>
+            <USkeleton class="h-5 w-14" />
+          </div>
+          <div class="flex gap-4">
+            <USkeleton class="h-5 w-20" />
+            <USkeleton class="h-5 w-20" />
+          </div>
+          <div class="flex justify-between pt-2 border-t border-default">
+            <div class="flex gap-1">
+              <USkeleton class="h-5 w-5 rounded" />
+              <USkeleton class="h-5 w-5 rounded" />
+              <USkeleton class="h-5 w-5 rounded" />
+            </div>
+            <USkeleton class="h-8 w-8 rounded" />
+          </div>
         </div>
-      </template>
+      </UCard>
+    </div>
 
-      <template #actions-cell="{ cell }">
-        <div class="flex justify-end">
-          <UButton
-            icon="i-lucide-pencil"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            @click="openEditDialog(cell.row.original)"
-          />
+    <!-- Products Card Grid -->
+    <div v-else-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <UCard
+        v-for="product in paginatedProducts"
+        :key="product.id"
+        class="relative"
+      >
+        <div class="space-y-3">
+          <!-- Header: Code + Name + Category | Price -->
+          <div class="flex items-start justify-between">
+            <div class="min-w-0 flex-1">
+              <span v-if="product.code" class="text-xs font-mono text-muted">{{ product.code }}</span>
+              <h3 class="font-semibold text-sm truncate">{{ product.name }}</h3>
+              <p class="text-xs text-muted">{{ product.category.name }}</p>
+            </div>
+            <span class="text-base font-bold ml-2 shrink-0">{{ belPriceFormat.format(product.price) }}</span>
+          </div>
+
+          <!-- Status Toggles -->
+          <div class="flex items-center gap-2">
+            <button
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95"
+              :class="product.isVisible
+                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
+                : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
+              "
+              :disabled="togglingField === `${product.id}-isVisible`"
+              @click="toggleProductField(product, 'isVisible', !product.isVisible)"
+            >
+              <UIcon
+                :name="product.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+                class="size-3.5"
+                :class="{ 'animate-spin': togglingField === `${product.id}-isVisible` }"
+              />
+              {{ product.isVisible ? t('common.visible') : t('common.invisible') }}
+            </button>
+            <button
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95"
+              :class="product.isAvailable
+                ? 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400 dark:border-blue-400/20'
+                : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
+              "
+              :disabled="togglingField === `${product.id}-isAvailable`"
+              @click="toggleProductField(product, 'isAvailable', !product.isAvailable)"
+            >
+              <UIcon
+                :name="product.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+                class="size-3.5"
+                :class="{ 'animate-spin': togglingField === `${product.id}-isAvailable` }"
+              />
+              {{ product.isAvailable ? t('common.available') : t('common.unavailable') }}
+            </button>
+          </div>
+
+          <!-- Translations + Actions Footer -->
+          <div class="flex items-center justify-between pt-2 border-t border-default">
+            <div class="flex gap-1">
+              <UBadge
+                v-for="lang in availableLocales"
+                :key="lang"
+                :color="hasTranslation(product, lang) ? 'success' : 'error'"
+                variant="soft"
+                size="xs"
+              >
+                {{ getFlagEmoji(lang) }}
+              </UBadge>
+            </div>
+            <UButton
+              icon="i-lucide-pencil"
+              size="md"
+              color="neutral"
+              variant="ghost"
+              @click="openEditDialog(product)"
+            />
+          </div>
         </div>
-      </template>
-    </UTable>
+      </UCard>
+    </div>
 
     <!-- Pagination -->
-    <div v-if="filteredProducts.length > pageSize" class="flex justify-center mt-6">
+    <div v-if="!pending && filteredProducts.length > pageSize" class="flex justify-center mt-6">
       <UPagination
         v-model:page="page"
         :total="filteredProducts.length"
@@ -105,7 +143,7 @@
     </div>
 
     <!-- Empty State -->
-    <UCard v-else-if="filteredProducts.length === 0" class="text-center py-12">
+    <UCard v-else-if="!pending && filteredProducts.length === 0" class="text-center py-12">
       <UIcon name="i-lucide-package-x" class="size-16 mx-auto mb-4 text-muted" />
       <p class="text-lg text-muted">{{ t('products.noProducts') }}</p>
     </UCard>
@@ -149,17 +187,7 @@ const config = useRuntimeConfig()
 const graphqlUrl = config.public.graphqlHttp as string
 const { t, availableLocales } = useI18n()
 const categoryStore = useCategoriesStore()
-// Define table columns
-const columns = [
-  { id: 'code', key: 'code', label: t('common.code') },
-  { id: 'category', key: 'category', label: t('products.category') },
-  { id: 'name', key: 'name', label: t('common.name') },
-  { id: 'price', key: 'price', label: t('common.price') },
-  { id: 'isVisible', key: 'isVisible', label: t('common.visibility') },
-  { id: 'isAvailable', key: 'isAvailable', label: t('common.availability') },
-  { id: 'translationsStatus', key: 'translationsStatus', label: t('products.translations'), sortable: false },
-  { id: 'actions', key: 'actions', label: t('common.actions'), sortable: false }
-]
+const toast = useToast()
 
 // Helper: Check if a translation is complete.
 const hasTranslation = (product: Product, lang: string) => {
@@ -192,7 +220,7 @@ const searchQuery = ref('')
 
 // Pagination state
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(12)
 
 const PRODUCTS_QUERY = gql`
   query {
@@ -323,8 +351,19 @@ const UPDATE_PRODUCT_MUTATION = gql`
   }
 `
 
+// Lightweight mutation for inline toggles
+const TOGGLE_PRODUCT_MUTATION = gql`
+  mutation ($id: ID!, $input: UpdateProductInput!) {
+    updateProduct(id: $id, input: $input) {
+      id
+      isVisible
+      isAvailable
+    }
+  }
+`
+
 // Fetch products
-const { data: dataProducts, refetch: refetchProducts } = await useGqlQuery<{ products: Product[] }>(
+const { data: dataProducts, refetch: refetchProducts, pending } = await useGqlQuery<{ products: Product[] }>(
   print(PRODUCTS_QUERY),
   {},
   { immediate: true, cache: true }
@@ -373,6 +412,38 @@ if (dataCategories.value?.productCategories) {
 const selectedProduct = ref<Product | null>(null)
 const createDialog = ref(false)
 
+// Inline toggle state
+const togglingField = ref<string | null>(null)
+
+const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVisible', value: boolean) => {
+  const fieldKey = `${product.id}-${field}`
+  togglingField.value = fieldKey
+
+  try {
+    const { mutate } = useGqlMutation<{ updateProduct: Product }>(TOGGLE_PRODUCT_MUTATION)
+    await mutate({
+      id: product.id,
+      input: { [field]: value }
+    })
+
+    // Update local data
+    if (dataProducts.value?.products) {
+      const idx = dataProducts.value.products.findIndex(p => p.id === product.id)
+      if (idx !== -1) {
+        dataProducts.value.products[idx] = {
+          ...dataProducts.value.products[idx],
+          [field]: value
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`Toggle ${field} failed:`, err)
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  } finally {
+    togglingField.value = null
+  }
+}
+
 // Open the edit dialog.
 const openEditDialog = (product: Product) => {
   selectedProduct.value = product
@@ -390,7 +461,6 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
 
   try {
     if (image instanceof File) {
-      // 1.a) operations: the query and variables, with a null placeholder for the file
       const operations = {
         query: print(CREATE_PRODUCT_MUTATION),
         variables: {
@@ -402,7 +472,6 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
       }
       form.append('operations', JSON.stringify(operations))
 
-      // 1.b) map: tell server that file "0" goes into variables.data.image
       form.append(
         'map',
         JSON.stringify({
@@ -410,24 +479,20 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
         })
       )
 
-      // 1.c) attach the actual file
       if (image instanceof File) {
         form.append('0', image, image.name)
       }
 
-      // 2) POST to /graphql
       const res = await $api(graphqlUrl, {
         method: 'POST',
         body: form
       })
 
-      // Error handling
       if (res.errors?.length) {
         console.error('GraphQL errors:', res.errors)
         return
       }
 
-      // Pull out the created product
       newProduct = res.data.createProduct
     } else {
       const { mutate: mutationCreateProduct } = useGqlMutation<{ createProduct: Product }>(
@@ -439,12 +504,10 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
       newProduct = res.createProduct
     }
 
-    // Add the created product to the list of products
     if (dataProducts.value?.products) {
       dataProducts.value.products.unshift(newProduct)
     }
 
-    // Close the dialog
     createDialog.value = false
   } catch (err) {
     console.error('handleCreate failed:', err)
@@ -460,7 +523,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
   try {
     if (image instanceof File) {
-      // 1) build the multipart payload
       const operations = {
         query: print(UPDATE_PRODUCT_MUTATION),
         variables: {
@@ -482,7 +544,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
       form.append('0', image, image.name)
 
-      // 2) fire it
       const res = await $api(graphqlUrl, {
         method: 'POST',
         body: form
@@ -495,7 +556,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
       updated = res.data.updateProduct
     } else {
-      // no file — use normal composable
       const { mutate: mutationUpdateProduct } = useGqlMutation<{ updateProduct: Product }>(
         UPDATE_PRODUCT_MUTATION
       )
@@ -507,7 +567,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
       updated = updateProduct
     }
 
-    // 3) patch your local list in place
     if (dataProducts.value?.products) {
       const idx = dataProducts.value.products.findIndex(p => p.id === updated.id)
       if (idx !== -1) {
@@ -515,7 +574,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
       }
     }
 
-    // 4) clear selection / close dialog
     selectedProduct.value = null
   } catch (err) {
     console.error('handleUpdate failed:', err)
