@@ -402,9 +402,11 @@ const handleSubmit = async () => {
       const res = await mutate({ id: editingCouponId.value, input })
 
       if (dataCoupons.value?.coupons) {
-        const idx = dataCoupons.value.coupons.findIndex(c => c.id === res.updateCoupon.id)
-        if (idx !== -1) {
-          dataCoupons.value.coupons.splice(idx, 1, res.updateCoupon)
+        dataCoupons.value = {
+          ...dataCoupons.value,
+          coupons: dataCoupons.value.coupons.map(c =>
+            c.id === res.updateCoupon.id ? res.updateCoupon : c
+          )
         }
       }
     } else {
@@ -422,8 +424,9 @@ const handleSubmit = async () => {
       const { mutate } = useGqlMutation<{ createCoupon: Coupon }>(CREATE_COUPON_MUTATION)
       const res = await mutate({ input })
 
-      if (dataCoupons.value?.coupons) {
-        dataCoupons.value.coupons.unshift(res.createCoupon)
+      dataCoupons.value = {
+        ...dataCoupons.value,
+        coupons: [res.createCoupon, ...(dataCoupons.value?.coupons ?? [])]
       }
     }
 

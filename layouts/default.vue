@@ -15,12 +15,14 @@
           <img
             src="/tsb-logo-b.png"
             alt="TSB Logo"
-            class="h-16 w-auto dark:hidden"
+            class="w-auto object-contain dark:hidden transition-all duration-300"
+            :class="collapsed ? 'h-10' : 'h-16'"
           />
           <img
             src="/tsb-logo-w.png"
             alt="TSB Logo"
-            class="h-16 w-auto hidden dark:block"
+            class="w-auto object-contain hidden dark:block transition-all duration-300"
+            :class="collapsed ? 'h-10' : 'h-16'"
           />
         </div>
       </template>
@@ -33,7 +35,7 @@
           size="lg"
           class="flex-1"
           :ui="{
-            link: 'py-8 px-4 text-base w-full'
+            link: collapsed ? 'py-8 px-0 text-base justify-center' : 'py-8 px-4 text-base w-full'
           }"
         />
       </template>
@@ -75,6 +77,9 @@
           :square="collapsed"
           @click="handleLogout"
         />
+
+        <!-- Collapse Toggle -->
+        <UDashboardSidebarCollapse />
       </template>
     </UDashboardSidebar>
 
