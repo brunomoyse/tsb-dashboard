@@ -172,8 +172,8 @@
     <!-- ========== TABLET+ VIEW: Kanban board (md:) ========== -->
     <div class="hidden md:block">
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="flex gap-5 overflow-x-auto pb-4">
-        <div v-for="i in 4" :key="i" class="kanban-column flex-shrink-0 w-80 lg:w-96">
+      <div v-if="pending" class="flex gap-3 overflow-x-auto pb-4">
+        <div v-for="i in 4" :key="i" class="kanban-column flex-shrink-0 w-60 xl:w-72">
           <div class="kanban-column-header">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
@@ -208,11 +208,11 @@
       </div>
 
       <!-- Kanban Board -->
-      <div v-else class="flex gap-5 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+      <div v-else class="flex gap-3 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
         <div
           v-for="column in kanbanColumns"
           :key="column.key"
-          class="kanban-column flex-shrink-0 w-80 lg:w-96 flex flex-col transition-all duration-200"
+          class="kanban-column flex-shrink-0 w-60 xl:w-72 flex flex-col transition-all duration-200"
           :class="[
             column.accentClass,
             dragOverColumnKey === column.key ? 'kanban-drop-target' : '',
