@@ -4,6 +4,7 @@
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-highlighted">{{ t('navigation.products') }}</h1>
+        <p class="text-sm text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
       </div>
       <div class="flex gap-2">
         <UButton

@@ -172,13 +172,21 @@
     <!-- ========== TABLET+ VIEW: Kanban board (md:) ========== -->
     <div class="hidden md:block">
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="flex gap-4 overflow-x-auto pb-4">
-        <div v-for="i in 4" :key="i" class="flex-shrink-0 w-80 lg:w-96">
-          <div class="flex items-center justify-between mb-3 px-2">
-            <USkeleton class="h-5 w-28" />
-            <USkeleton class="h-5 w-8 rounded-full" />
+      <div v-if="pending" class="flex gap-5 overflow-x-auto pb-4">
+        <div v-for="i in 4" :key="i" class="kanban-column flex-shrink-0 w-80 lg:w-96">
+          <div class="kanban-column-header">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <USkeleton class="size-8 rounded-lg" />
+                <div class="space-y-1">
+                  <USkeleton class="h-4 w-24" />
+                  <USkeleton class="h-3 w-16" />
+                </div>
+              </div>
+              <USkeleton class="h-6 w-8 rounded-full" />
+            </div>
           </div>
-          <div class="space-y-3 px-1">
+          <div class="kanban-column-body space-y-3">
             <UCard v-for="j in 2" :key="j">
               <div class="space-y-2">
                 <div class="flex items-start justify-between">
@@ -189,7 +197,7 @@
                   <USkeleton class="h-5 w-14 rounded-full" />
                 </div>
                 <USkeleton class="h-5 w-20 rounded-full" />
-                <div class="flex justify-between pt-1 border-t border-default">
+                <div class="flex justify-between pt-2 border-t border-default">
                   <USkeleton class="h-3 w-16" />
                   <USkeleton class="h-4 w-14" />
                 </div>
@@ -200,42 +208,70 @@
       </div>
 
       <!-- Kanban Board -->
-      <div v-else class="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+      <div v-else class="flex gap-5 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
         <div
           v-for="column in kanbanColumns"
           :key="column.status"
-          class="flex-shrink-0 w-80 lg:w-96 flex flex-col"
+          class="kanban-column flex-shrink-0 w-80 lg:w-96 flex flex-col transition-all duration-200"
+          :class="[
+            getColumnAccentClass(column.status),
+            dragOverStatus === column.status ? 'kanban-drop-target' : '',
+            draggedOrder && draggedOrder.status === column.status ? 'kanban-drag-source' : ''
+          ]"
+          @dragover="(e: DragEvent) => onColumnDragOver(e, column.status)"
+          @dragleave="onColumnDragLeave"
+          @drop="(e: DragEvent) => onColumnDrop(e, column.status)"
         >
           <!-- Column Header -->
-          <div class="flex items-center justify-between mb-3 px-2">
-            <div class="flex items-center gap-2">
-              <UIcon :name="getStatusIcon(column.status)" class="size-5" />
-              <h3 class="font-semibold text-sm">
-                {{ t(`orders.status.${column.status.toLowerCase()}`) }}
-              </h3>
+          <div class="kanban-column-header">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="size-8 rounded-lg flex items-center justify-center"
+                  :class="getColumnIconBgClass(column.status)"
+                >
+                  <UIcon :name="getStatusIcon(column.status)" class="size-4.5" />
+                </div>
+                <div>
+                  <h3 class="font-semibold text-sm text-highlighted leading-tight">
+                    {{ t(`orders.status.${column.status.toLowerCase()}`) }}
+                  </h3>
+                  <p class="text-xs text-muted">
+                    {{ column.orders.length }} {{ t('orders.items') }}
+                  </p>
+                </div>
+              </div>
+              <UBadge
+                :color="getStatusColor(column.status)"
+                variant="soft"
+                size="md"
+                class="tabular-nums font-bold"
+              >
+                {{ column.orders.length }}
+              </UBadge>
             </div>
-            <UBadge :color="getStatusColor(column.status)" variant="soft" size="sm">
-              {{ column.orders.length }}
-            </UBadge>
           </div>
 
           <!-- Column Body -->
-          <div class="flex-1 overflow-y-auto space-y-3 px-1">
+          <div class="kanban-column-body flex-1 overflow-y-auto space-y-3">
             <UCard
               v-for="order in column.orders"
               :key="order.id"
-              class="cursor-pointer hover:shadow-lg transition-shadow"
-              :class="order.status === 'PENDING' ? 'border-l-4 border-l-warning' : ''"
+              draggable="true"
+              class="cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all"
+              :class="draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''"
+              @dragstart="(e: DragEvent) => onDragStart(e, order)"
+              @dragend="onDragEnd"
               @click="openOrderDetails(order)"
             >
-              <div class="space-y-2">
+              <div class="space-y-2.5">
                 <div class="flex items-start justify-between">
                   <div>
-                    <p class="font-bold text-sm">{{ order.displayCustomerName }}</p>
-                    <p class="text-xs text-muted">{{ formatDate(order.createdAt, locale) }}</p>
+                    <p class="font-bold text-sm text-highlighted">{{ order.displayCustomerName }}</p>
+                    <p class="text-xs text-muted mt-0.5">{{ formatDate(order.createdAt, locale) }}</p>
                     <p
                       v-if="isActiveStatus(order.status)"
-                      :class="['text-xs font-medium', getTimeSince(order.createdAt).color]"
+                      :class="['text-xs font-semibold mt-0.5', getTimeSince(order.createdAt).color]"
                     >
                       {{ getTimeSince(order.createdAt).text }}
                     </p>
@@ -262,9 +298,9 @@
                   </UBadge>
                 </div>
 
-                <div class="flex justify-between items-center pt-1 border-t border-default">
+                <div class="flex justify-between items-center pt-2 border-t border-default">
                   <span class="text-xs text-muted">{{ order.items.length }} {{ t('orders.items') }}</span>
-                  <span class="font-bold text-sm">{{ formatPrice(order.totalPrice) }}</span>
+                  <span class="font-bold text-sm text-highlighted">{{ formatPrice(order.totalPrice) }}</span>
                 </div>
 
                 <div v-if="order.estimatedReadyTime" class="text-xs flex items-center gap-1 text-muted">
@@ -275,8 +311,9 @@
             </UCard>
 
             <!-- Empty column -->
-            <div v-if="column.orders.length === 0" class="text-center py-8 text-muted text-sm">
-              {{ t('orders.noOrders') }}
+            <div v-if="column.orders.length === 0" class="text-center py-12 text-muted text-sm">
+              <UIcon :name="getStatusIcon(column.status)" class="size-10 mx-auto mb-2 opacity-30" />
+              <p>{{ t('orders.noOrders') }}</p>
             </div>
           </div>
         </div>
@@ -534,6 +571,56 @@ const ordersStore = useOrdersStore()
 // Tab state - start as null for SSR, set on client
 const selectedTab = ref<number | null>(null)
 
+// Drag state (kanban)
+const draggedOrder = ref<Order | null>(null)
+const dragOverStatus = ref<OrderStatus | null>(null)
+
+const onDragStart = (e: DragEvent, order: Order) => {
+  draggedOrder.value = order
+  e.dataTransfer?.setData('text/plain', order.id)
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+const onDragEnd = () => {
+  draggedOrder.value = null
+  dragOverStatus.value = null
+}
+
+const onColumnDragOver = (e: DragEvent, status: OrderStatus) => {
+  if (!draggedOrder.value || draggedOrder.value.status === status) return
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+  dragOverStatus.value = status
+}
+
+const onColumnDragLeave = () => {
+  dragOverStatus.value = null
+}
+
+const onColumnDrop = async (e: DragEvent, targetStatus: OrderStatus) => {
+  e.preventDefault()
+  dragOverStatus.value = null
+  if (!draggedOrder.value || draggedOrder.value.status === targetStatus) return
+
+  const order = draggedOrder.value
+  const previousStatus = order.status
+  draggedOrder.value = null
+
+  // Optimistic update
+  ordersStore.updateOrder({ id: order.id, status: targetStatus })
+
+  try {
+    await mutationUpdateOrder({
+      id: order.id,
+      input: { status: targetStatus }
+    })
+  } catch {
+    // Revert on failure
+    ordersStore.updateOrder({ id: order.id, status: previousStatus })
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  }
+}
+
 // Order details state
 const selectedOrder = ref<Order | null>(null)
 const showOrderDetails = ref(false)
@@ -649,6 +736,28 @@ const availableStatuses = computed(() => {
   if (!selectedOrder.value) return []
   return getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
 })
+
+// Column accent class based on status
+const getColumnAccentClass = (status: OrderStatus): string => {
+  const classes: Record<string, string> = {
+    PENDING: 'kanban-accent-warning',
+    CONFIRMED: 'kanban-accent-info',
+    PREPARING: 'kanban-accent-info',
+    AWAITING_PICK_UP: 'kanban-accent-warning'
+  }
+  return classes[status] || ''
+}
+
+// Column icon background class
+const getColumnIconBgClass = (status: OrderStatus): string => {
+  const classes: Record<string, string> = {
+    PENDING: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+    CONFIRMED: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
+    PREPARING: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
+    AWAITING_PICK_UP: 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+  }
+  return classes[status] || 'bg-(--ui-bg-accented) text-(--ui-text-muted)'
+}
 
 // Status icon mapping
 const getStatusIcon = (status: OrderStatus): string => {

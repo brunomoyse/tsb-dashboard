@@ -117,7 +117,7 @@
       </template>
 
       <template #body>
-        <div class="pb-20 md:pb-0">
+        <div class="dashboard-page-area pb-20 md:pb-0">
           <slot />
         </div>
       </template>

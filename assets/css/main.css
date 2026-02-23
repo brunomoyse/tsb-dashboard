@@ -60,3 +60,54 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Kanban column styling */
+.kanban-column {
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
+  border-radius: 1rem;
+}
+
+.kanban-column-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ui-bg-elevated);
+  border-bottom: 1px solid var(--ui-border);
+  border-radius: 1rem 1rem 0 0;
+  padding: 0.875rem 1rem;
+}
+
+.kanban-column-body {
+  padding: 0.75rem;
+}
+
+/* Status accent colors for column headers */
+.kanban-accent-warning { border-top: 3px solid var(--color-amber-500); }
+.kanban-accent-info { border-top: 3px solid var(--color-sky-500); }
+.kanban-accent-primary { border-top: 3px solid var(--color-amber-700); }
+
+/* Kanban drag-and-drop feedback */
+.kanban-drop-target {
+  outline: 2px dashed var(--color-amber-500);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--ui-bg-elevated) 85%, var(--color-amber-500));
+}
+
+.kanban-drag-source {
+  opacity: 0.6;
+}
+
+[draggable="true"] {
+  cursor: grab;
+}
+
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Dashboard page area background for depth */
+.dashboard-page-area {
+  background: var(--ui-bg-accented);
+  min-height: 100%;
+}
