@@ -67,6 +67,11 @@
           </div>
         </template>
 
+        <!-- Code -->
+        <template #code-cell="{ row }">
+          <span class="text-sm font-mono text-muted">{{ row.original.code ?? '-' }}</span>
+        </template>
+
         <!-- Category -->
         <template #category-cell="{ row }">
           <span class="text-sm">{{ row.original.category.name }}</span>
@@ -272,11 +277,12 @@ const selectedCategoryId = ref<string | null>(null)
 
 // Pagination state
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 
 // Table columns
 const columns = computed(() => [
   { accessorKey: 'name', header: t('common.name') },
+  { accessorKey: 'code', header: t('products.code'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
   { accessorKey: 'category', header: t('products.category') },
   { accessorKey: 'price', header: t('common.price'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
   { accessorKey: 'pieceCount', header: t('products.pieceCount'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
@@ -465,6 +471,15 @@ if (dataCategories.value?.productCategories) {
   categoryStore.setCategories(dataCategories.value?.productCategories)
 }
 
+// Category order lookup: categoryId → order
+const categoryOrderMap = computed(() => {
+  const map = new Map<string, number>()
+  for (const cat of dataCategories.value?.productCategories ?? []) {
+    map.set(cat.id, cat.order)
+  }
+  return map
+})
+
 // Category filter dropdown items
 const categoryFilterItems = computed(() => {
   const all = { id: null as string | null, name: t('orders.all') }
@@ -475,7 +490,7 @@ const categoryFilterItems = computed(() => {
   return [all, ...cats]
 })
 
-// Filter products based on search query + category
+// Filter and sort products (same order as /menu: category order, then product code)
 const filteredProducts = computed(() => {
   let result = products.value
 
@@ -493,7 +508,25 @@ const filteredProducts = computed(() => {
     )
   }
 
-  return result
+  // Sort by category order, then by product code (alphanumeric)
+  const orderMap = categoryOrderMap.value
+  return result.slice().sort((a, b) => {
+    const catOrderA = orderMap.get(a.category.id) ?? Infinity
+    const catOrderB = orderMap.get(b.category.id) ?? Infinity
+    if (catOrderA !== catOrderB) return catOrderA - catOrderB
+
+    const codeA = a.code ?? ''
+    const codeB = b.code ?? ''
+    const alphaA = codeA.match(/^[A-Za-z]+/)?.[0] ?? ''
+    const alphaB = codeB.match(/^[A-Za-z]+/)?.[0] ?? ''
+    if (alphaA !== alphaB) return alphaA.localeCompare(alphaB)
+
+    const numA = parseInt(codeA.match(/[0-9]+/)?.[0] ?? '0', 10)
+    const numB = parseInt(codeB.match(/[0-9]+/)?.[0] ?? '0', 10)
+    if (numA !== numB) return numA - numB
+
+    return a.name.localeCompare(b.name)
+  })
 })
 
 // Paginate the filtered products
