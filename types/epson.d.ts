@@ -37,12 +37,21 @@ interface EpsonPrinter {
   ALIGN_CENTER: number
   ALIGN_RIGHT: number
   CUT_FEED: number
+  FONT_A: number
+  FONT_B: number
+  COLOR_1: number
 
   addTextAlign(align: number): void
   addTextSize(width: number, height: number): void
   addText(text: string): void
+  addTextStyle(reverse: boolean | undefined, ul: boolean | undefined, em: boolean | undefined, color?: number): void
+  addTextFont(font: number): void
+  addFeedLine(lines: number): void
   addCut(type: number): void
-  send(callback: (success: boolean) => void): void
+  send(): void
+
+  onreceive?: (res: { success: boolean; code: string; status: number }) => void
+  onerror?: (err: { status: number }) => void
 }
 
 interface DiscoveredDevice {

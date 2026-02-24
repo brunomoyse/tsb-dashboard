@@ -157,6 +157,13 @@ export interface User {
     address: Address | null;
 }
 
+export interface Customer {
+    id: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string | null;
+}
+
 export interface LoginResponse {
     user: User;
 }
@@ -190,6 +197,7 @@ export interface Order {
     displayAddress: string;
 
     address: Address | null;
+    customer: Customer | null;
     items: OrderProduct[];
     payment: MolliePayment | null;
 }

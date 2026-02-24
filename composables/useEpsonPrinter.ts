@@ -16,6 +16,8 @@ export interface EpsonPrinterCommands {
   addTextAlign(align: 'left' | 'center' | 'right'): void
   addTextSize(width: number, height: number): void
   addText(text: string): void
+  addTextStyle(options: { bold?: boolean; underline?: boolean; reverse?: boolean }): void
+  addTextFont(font: 'A' | 'B'): void
   addFeedLine(lines: number): void
   addCut(): void
 }
@@ -41,7 +43,7 @@ export const useEpsonPrinter = () => {
       // Timeout after 10 seconds
       setTimeout(() => {
         clearInterval(checkInterval)
-        console.warn('⚠️ Epson SDK not loaded after 10 seconds')
+        console.warn('Epson SDK not loaded after 10 seconds')
         resolve()
       }, 10000)
     })
@@ -101,15 +103,36 @@ export const useEpsonPrinter = () => {
   /**
    * Send print job to printer
    */
-  const send = async (printer: any): Promise<void> => {
+  const send = async (printer: any, timeout: number = 30000): Promise<void> => {
     return new Promise((resolve, reject) => {
-      printer.send((success: boolean) => {
-        if (success) {
+      let settled = false
+
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true
+          reject(new Error('Print job timed out'))
+        }
+      }, timeout)
+
+      printer.onreceive = (res: { success: boolean; code: string; status: number }) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        if (res.success) {
           resolve()
         } else {
-          reject(new Error('Print job failed'))
+          reject(new Error(`Print job failed: ${res.code}`))
         }
-      })
+      }
+
+      printer.onerror = (err: { status: number }) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        reject(new Error(`Printer communication error (status: ${err.status})`))
+      }
+
+      printer.send()
     })
   }
 
@@ -166,7 +189,7 @@ export const useEpsonPrinter = () => {
       }
 
       ePosDev.ondiscoveryerror = (error: string) => {
-        console.error('❌ Discovery error:', error)
+        console.error('Discovery error:', error)
         ePosDev.stopDiscovery()
         reject(new Error(`Discovery failed: ${error}`))
       }
@@ -217,6 +240,17 @@ export const useEpsonPrinter = () => {
         addText: (text: string) => {
           printer.addText(text)
         },
+        addTextStyle: (options: { bold?: boolean; underline?: boolean; reverse?: boolean }) => {
+          printer.addTextStyle(
+            options.reverse ?? false,
+            options.underline ?? false,
+            options.bold ?? false,
+            printer.COLOR_1
+          )
+        },
+        addTextFont: (font: 'A' | 'B') => {
+          printer.addTextFont(font === 'A' ? printer.FONT_A : printer.FONT_B)
+        },
         addFeedLine: (lines: number) => {
           printer.addFeedLine(lines)
         },
@@ -233,7 +267,7 @@ export const useEpsonPrinter = () => {
 
       if (import.meta.dev) console.log('Print job completed successfully')
     } catch (error) {
-      console.error('❌ Print error:', error)
+      console.error('Print error:', error)
       throw error
     } finally {
       // Always disconnect
