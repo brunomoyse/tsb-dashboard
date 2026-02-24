@@ -1,6 +1,5 @@
 // plugins/api.ts
-import { defineNuxtPlugin, useRequestEvent, navigateTo, useCookie, useRuntimeConfig } from '#imports'
-import { useLocalePath } from "#imports";
+import { defineNuxtPlugin, useRequestEvent, navigateTo, useCookie, useRuntimeConfig, useLocalePath } from '#imports'
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
@@ -14,6 +13,7 @@ export default defineNuxtPlugin(() => {
         retry: 1,
         retryStatusCodes: [401],
         headers: {
+            'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Accept-Language': userLocale
         },
@@ -37,27 +37,25 @@ export default defineNuxtPlugin(() => {
         async onResponseError({ response, request, options }) {
             if (response.status === 401 &&
                 !request.toString().includes('/tokens/refresh') &&
-                !request.toString().includes('/login')) {
+                !request.toString().includes('login')) {
                 try {
-                    // Attempt token refresh
-                    await $fetch(`${apiUrl}/tokens/refresh`, {
-                        method: 'POST',
-                        credentials: 'include'
-                    })
-                    // Retry the original request
-                    // @ts-ignore
-                    return $fetch(request, options)
+                    if (!import.meta.server) {
+                        // Client-side handling
+                        await $fetch(`${apiUrl}/tokens/refresh`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        })
+                        // @ts-ignore
+                        return $fetch(request, options)
+                    }
                 } catch (error) {
-                    // Refresh failed, logout and redirect
                     try {
                         await $fetch(`${apiUrl}/logout`, {
                             method: 'POST',
                             credentials: 'include'
                         })
-                    } catch {
-                        // Ignore logout errors
-                    }
-                    navigateTo(localePath('login'));
+                    } catch { /* ignore logout errors */ }
+                    navigateTo(localePath('login'))
                 }
             }
         }
