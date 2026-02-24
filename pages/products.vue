@@ -46,7 +46,7 @@
         }"
         @select="(_e: Event, row: any) => openEditDialog(row.original)"
       >
-        <!-- Product name + code + image -->
+        <!-- Product name + image -->
         <template #name-cell="{ row }">
           <div class="flex items-center gap-3">
             <div
@@ -60,10 +60,7 @@
               />
               <UIcon v-else name="i-lucide-image-off" class="size-4 text-muted" />
             </div>
-            <div class="min-w-0">
-              <p class="font-medium text-sm text-highlighted truncate">{{ row.original.name }}</p>
-              <p v-if="row.original.code" class="text-xs font-mono text-muted">{{ row.original.code }}</p>
-            </div>
+            <p class="font-medium text-sm text-highlighted truncate">{{ row.original.name }}</p>
           </div>
         </template>
 
@@ -281,9 +278,9 @@ const pageSize = ref(10)
 
 // Table columns
 const columns = computed(() => [
-  { accessorKey: 'name', header: t('common.name') },
-  { accessorKey: 'code', header: t('products.code'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
+  { accessorKey: 'code', header: t('products.code') },
   { accessorKey: 'category', header: t('products.category') },
+  { accessorKey: 'name', header: t('common.name') },
   { accessorKey: 'price', header: t('common.price'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
   { accessorKey: 'pieceCount', header: t('products.pieceCount'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'isVisible', header: t('common.visibility'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
