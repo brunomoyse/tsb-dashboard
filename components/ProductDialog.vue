@@ -124,27 +124,32 @@
           </div>
         </div>
 
-        <!-- Row 3: Checkboxes -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
-          <UCheckbox
+        <!-- Row 3: Toggles -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <USwitch
             v-model="editedProduct.isVisible"
             :label="t('common.visible')"
+            size="sm"
           />
-          <UCheckbox
+          <USwitch
             v-model="editedProduct.isAvailable"
             :label="t('common.available')"
+            size="sm"
           />
-          <UCheckbox
+          <USwitch
             v-model="editedProduct.isDiscountable"
             :label="t('products.discountable')"
+            size="sm"
           />
-          <UCheckbox
+          <USwitch
             v-model="editedProduct.isHalal"
             :label="t('products.halal')"
+            size="sm"
           />
-          <UCheckbox
+          <USwitch
             v-model="editedProduct.isVegan"
             :label="t('products.vegan')"
+            size="sm"
           />
         </div>
 
