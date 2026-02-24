@@ -6,131 +6,184 @@
         <h1 class="text-2xl font-bold text-highlighted">{{ t('navigation.products') }}</h1>
         <p class="text-sm text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
       </div>
-      <div class="flex gap-2">
-        <UButton
-          icon="i-lucide-plus"
-          @click="openCreateDialog"
-        >
-          {{ t('products.add') }}
-        </UButton>
-      </div>
+      <UButton
+        icon="i-lucide-plus"
+        @click="openCreateDialog"
+      >
+        {{ t('products.add') }}
+      </UButton>
     </div>
 
-    <!-- Search Bar -->
-    <div class="mb-4">
+    <!-- Toolbar: Search + Category Filter -->
+    <div class="mb-4 flex flex-col sm:flex-row gap-3">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('products.search')"
         size="lg"
+        class="flex-1"
+      />
+      <USelectMenu
+        v-model="selectedCategoryId"
+        :items="categoryFilterItems"
+        value-key="id"
+        label-key="name"
+        size="lg"
+        class="w-full sm:w-56"
       />
     </div>
 
-    <!-- Skeleton Loading -->
-    <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <UCard v-for="i in 8" :key="i">
-        <div class="space-y-3">
-          <div class="flex items-start justify-between">
-            <div class="space-y-1">
-              <USkeleton class="h-3 w-12" />
-              <USkeleton class="h-4 w-28" />
-              <USkeleton class="h-3 w-20" />
-            </div>
-            <USkeleton class="h-5 w-14" />
-          </div>
-          <div class="flex gap-4">
-            <USkeleton class="h-5 w-20" />
-            <USkeleton class="h-5 w-20" />
-          </div>
-          <div class="flex justify-between pt-2 border-t border-default">
-            <div class="flex gap-1">
-              <USkeleton class="h-5 w-5 rounded" />
-              <USkeleton class="h-5 w-5 rounded" />
-              <USkeleton class="h-5 w-5 rounded" />
-            </div>
-            <USkeleton class="h-8 w-8 rounded" />
-          </div>
-        </div>
-      </UCard>
-    </div>
-
-    <!-- Products Card Grid -->
-    <div v-else-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <UCard
-        v-for="product in paginatedProducts"
-        :key="product.id"
-        class="relative"
+    <!-- Data Table -->
+    <div class="rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+      <UTable
+        v-if="!pending && filteredProducts.length > 0"
+        :data="paginatedProducts"
+        :columns="columns"
+        :loading="pending"
+        :ui="{
+          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          td: 'py-3 px-4'
+        }"
+        @select="(_e: Event, row: any) => openEditDialog(row.original)"
       >
-        <div class="space-y-3">
-          <!-- Header: Code + Name + Category | Price -->
-          <div class="flex items-start justify-between">
-            <div class="min-w-0 flex-1">
-              <span v-if="product.code" class="text-xs font-mono text-muted">{{ product.code }}</span>
-              <h3 class="font-semibold text-sm truncate">{{ product.name }}</h3>
-              <p class="text-xs text-muted">{{ product.category.name }}</p>
-            </div>
-            <span class="text-base font-bold ml-2 shrink-0">{{ belPriceFormat.format(product.price) }}</span>
-          </div>
-
-          <!-- Status Toggles -->
-          <div class="flex items-center gap-2">
-            <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95"
-              :class="product.isVisible
-                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
-                : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
-              "
-              :disabled="togglingField === `${product.id}-isVisible`"
-              @click="toggleProductField(product, 'isVisible', !product.isVisible)"
+        <!-- Product name + code + image -->
+        <template #name-cell="{ row }">
+          <div class="flex items-center gap-3">
+            <div
+              class="size-9 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) overflow-hidden shrink-0 flex items-center justify-center"
             >
-              <UIcon
-                :name="product.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-                class="size-3.5"
-                :class="{ 'animate-spin': togglingField === `${product.id}-isVisible` }"
+              <img
+                v-if="getProductImageUrl(row.original)"
+                :src="getProductImageUrl(row.original)"
+                :alt="row.original.name"
+                class="size-full object-cover"
               />
-              {{ product.isVisible ? t('common.visible') : t('common.invisible') }}
-            </button>
-            <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95"
-              :class="product.isAvailable
-                ? 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400 dark:border-blue-400/20'
-                : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
-              "
-              :disabled="togglingField === `${product.id}-isAvailable`"
-              @click="toggleProductField(product, 'isAvailable', !product.isAvailable)"
-            >
-              <UIcon
-                :name="product.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
-                class="size-3.5"
-                :class="{ 'animate-spin': togglingField === `${product.id}-isAvailable` }"
-              />
-              {{ product.isAvailable ? t('common.available') : t('common.unavailable') }}
-            </button>
-          </div>
-
-          <!-- Translations + Actions Footer -->
-          <div class="flex items-center justify-between pt-2 border-t border-default">
-            <div class="flex gap-1">
-              <UBadge
-                v-for="lang in availableLocales"
-                :key="lang"
-                :color="hasTranslation(product, lang) ? 'success' : 'error'"
-                variant="soft"
-                size="xs"
-              >
-                {{ getFlagEmoji(lang) }}
-              </UBadge>
+              <UIcon v-else name="i-lucide-image-off" class="size-4 text-muted" />
             </div>
+            <div class="min-w-0">
+              <p class="font-medium text-sm text-highlighted truncate">{{ row.original.name }}</p>
+              <p v-if="row.original.code" class="text-xs font-mono text-muted">{{ row.original.code }}</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- Category -->
+        <template #category-cell="{ row }">
+          <span class="text-sm">{{ row.original.category.name }}</span>
+        </template>
+
+        <!-- Price -->
+        <template #price-cell="{ row }">
+          <span class="text-sm font-semibold tabular-nums">{{ belPriceFormat.format(Number(row.original.price)) }}</span>
+        </template>
+
+        <!-- Pieces -->
+        <template #pieceCount-cell="{ row }">
+          <span class="text-sm tabular-nums text-muted">{{ row.original.pieceCount ?? '-' }}</span>
+        </template>
+
+        <!-- Visibility toggle -->
+        <template #isVisible-cell="{ row }">
+          <button
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
+            :class="row.original.isVisible
+              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
+              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
+            "
+            :disabled="togglingField === `${row.original.id}-isVisible`"
+            @click.stop="toggleProductField(row.original, 'isVisible', !row.original.isVisible)"
+          >
+            <UIcon
+              :name="row.original.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+              class="size-3.5"
+              :class="{ 'animate-spin': togglingField === `${row.original.id}-isVisible` }"
+            />
+            {{ row.original.isVisible ? t('common.visible') : t('common.invisible') }}
+          </button>
+        </template>
+
+        <!-- Availability toggle -->
+        <template #isAvailable-cell="{ row }">
+          <button
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
+            :class="row.original.isAvailable
+              ? 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400 dark:border-blue-400/20'
+              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
+            "
+            :disabled="togglingField === `${row.original.id}-isAvailable`"
+            @click.stop="toggleProductField(row.original, 'isAvailable', !row.original.isAvailable)"
+          >
+            <UIcon
+              :name="row.original.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              class="size-3.5"
+              :class="{ 'animate-spin': togglingField === `${row.original.id}-isAvailable` }"
+            />
+            {{ row.original.isAvailable ? t('common.available') : t('common.unavailable') }}
+          </button>
+        </template>
+
+        <!-- Dietary badges -->
+        <template #tags-cell="{ row }">
+          <div class="flex gap-1">
+            <UBadge v-if="row.original.isHalal" color="success" variant="subtle" size="xs">
+              {{ t('products.halal') }}
+            </UBadge>
+            <UBadge v-if="row.original.isVegan" color="success" variant="subtle" size="xs">
+              {{ t('products.vegan') }}
+            </UBadge>
+          </div>
+        </template>
+
+        <!-- Translation flags -->
+        <template #translations-cell="{ row }">
+          <div class="flex gap-1">
+            <UBadge
+              v-for="lang in availableLocales"
+              :key="lang"
+              :color="hasTranslation(row.original, lang) ? 'success' : 'error'"
+              variant="soft"
+              size="xs"
+            >
+              {{ getFlagEmoji(lang) }}
+            </UBadge>
+          </div>
+        </template>
+
+        <!-- Actions -->
+        <template #actions-cell="{ row }">
+          <div class="flex justify-end">
             <UButton
               icon="i-lucide-pencil"
-              size="md"
+              size="sm"
               color="neutral"
               variant="ghost"
-              @click="openEditDialog(product)"
+              @click.stop="openEditDialog(row.original)"
             />
           </div>
+        </template>
+      </UTable>
+
+      <!-- Skeleton Loading -->
+      <div v-if="pending" class="divide-y divide-(--ui-border)">
+        <div v-for="i in 8" :key="i" class="flex items-center gap-4 px-4 py-3">
+          <USkeleton class="size-9 rounded-lg" />
+          <div class="flex-1 space-y-1.5">
+            <USkeleton class="h-3.5 w-32" />
+            <USkeleton class="h-3 w-16" />
+          </div>
+          <USkeleton class="h-3.5 w-20 hidden sm:block" />
+          <USkeleton class="h-3.5 w-16 hidden sm:block" />
+          <USkeleton class="h-6 w-20 rounded-full hidden md:block" />
+          <USkeleton class="h-6 w-20 rounded-full hidden md:block" />
+          <USkeleton class="h-5 w-5 rounded hidden lg:block" />
         </div>
-      </UCard>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!pending && filteredProducts.length === 0" class="flex flex-col items-center justify-center py-16">
+        <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
+        <p class="text-muted text-sm">{{ t('products.noProducts') }}</p>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -142,18 +195,10 @@
         show-edges
       />
     </div>
-
-    <!-- Empty State -->
-    <UCard v-else-if="!pending && filteredProducts.length === 0" class="text-center py-12">
-      <UIcon name="i-lucide-package-x" class="size-16 mx-auto mb-4 text-muted" />
-      <p class="text-lg text-muted">{{ t('products.noProducts') }}</p>
-    </UCard>
-
   </div>
 
-  <!-- Modals (teleported to body) -->
+  <!-- Modals -->
   <Teleport to="body">
-    <!-- Create Product Dialog -->
     <ProductDialog
       v-if="createDialog"
       mode="create"
@@ -161,7 +206,6 @@
       @close="createDialog = false"
     />
 
-    <!-- Edit Product Dialog -->
     <ProductDialog
       v-if="selectedProduct"
       :product="selectedProduct"
@@ -170,7 +214,6 @@
       @choices-changed="handleChoicesChanged"
       @close="selectedProduct = null"
     />
-
   </Teleport>
 </template>
 
@@ -186,6 +229,7 @@ import { print } from 'graphql'
 const { $api } = useNuxtApp()
 const config = useRuntimeConfig()
 const graphqlUrl = config.public.graphqlHttp as string
+const s3bucketUrl = config.public.s3bucketUrl as string
 const { t, availableLocales } = useI18n()
 const categoryStore = useCategoriesStore()
 const toast = useToast()
@@ -210,6 +254,12 @@ const getFlagEmoji = (lang: string) => {
   }
 }
 
+// Helper: Get product thumbnail URL
+const getProductImageUrl = (product: Product) => {
+  if (!s3bucketUrl || !product.slug) return null
+  return `${s3bucketUrl}/images/thumbnails/${product.slug}.png`
+}
+
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -218,10 +268,24 @@ const belPriceFormat = new Intl.NumberFormat('fr-BE', {
 })
 
 const searchQuery = ref('')
+const selectedCategoryId = ref<string | null>(null)
 
 // Pagination state
 const page = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(20)
+
+// Table columns
+const columns = computed(() => [
+  { accessorKey: 'name', header: t('common.name') },
+  { accessorKey: 'category', header: t('products.category') },
+  { accessorKey: 'price', header: t('common.price'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
+  { accessorKey: 'pieceCount', header: t('products.pieceCount'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'isVisible', header: t('common.visibility'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
+  { accessorKey: 'isAvailable', header: t('common.availability'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
+  { accessorKey: 'tags', header: '', enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
+  { accessorKey: 'translations', header: t('products.translations'), enableSorting: false, meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'actions', header: '', enableSorting: false }
+])
 
 const PRODUCTS_QUERY = gql`
   query {
@@ -390,17 +454,46 @@ const { data: dataProducts, refetch: refetchProducts, pending } = await useGqlQu
 
 const products = computed(() => dataProducts.value?.products ?? [])
 
-// Filter products based on search query
-const filteredProducts = computed(() => {
-  if (!searchQuery.value) return products.value
+// Fetch categories
+const { data: dataCategories } = await useGqlQuery<{ productCategories: ProductCategory[] }>(
+  print(PRODUCT_CATEGORIES_QUERY),
+  {},
+  { immediate: true }
+)
 
-  const query = searchQuery.value.toLowerCase()
-  return products.value.filter(
-    product =>
-      product.name.toLowerCase().includes(query) ||
-      (product.code && product.code.toLowerCase().includes(query)) ||
-      product.category.name.toLowerCase().includes(query)
-  )
+if (dataCategories.value?.productCategories) {
+  categoryStore.setCategories(dataCategories.value?.productCategories)
+}
+
+// Category filter dropdown items
+const categoryFilterItems = computed(() => {
+  const all = { id: null as string | null, name: t('orders.all') }
+  const cats = (dataCategories.value?.productCategories ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map(c => ({ id: c.id, name: c.name }))
+  return [all, ...cats]
+})
+
+// Filter products based on search query + category
+const filteredProducts = computed(() => {
+  let result = products.value
+
+  if (selectedCategoryId.value) {
+    result = result.filter(p => p.category.id === selectedCategoryId.value)
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(
+      product =>
+        product.name.toLowerCase().includes(query) ||
+        (product.code && product.code.toLowerCase().includes(query)) ||
+        product.category.name.toLowerCase().includes(query)
+    )
+  }
+
+  return result
 })
 
 // Paginate the filtered products
@@ -410,24 +503,12 @@ const paginatedProducts = computed(() => {
   return filteredProducts.value.slice(start, end)
 })
 
-// Reset page to 1 when search changes
-watch(searchQuery, () => {
+// Reset page to 1 when filters change
+watch([searchQuery, selectedCategoryId], () => {
   page.value = 1
 })
 
-// Fetch categories.
-const { data: dataCategories } = await useGqlQuery<{ productCategories: ProductCategory[] }>(
-  print(PRODUCT_CATEGORIES_QUERY),
-  {},
-  { immediate: true }
-)
-
-// Save categories in the store.
-if (dataCategories.value?.productCategories) {
-  categoryStore.setCategories(dataCategories.value?.productCategories)
-}
-
-// State for dialogs.
+// State for dialogs
 const selectedProduct = ref<Product | null>(null)
 const createDialog = ref(false)
 
@@ -463,12 +544,12 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
   }
 }
 
-// Open the edit dialog.
+// Open the edit dialog
 const openEditDialog = (product: Product) => {
   selectedProduct.value = product
 }
 
-// Open the create dialog.
+// Open the create dialog
 const openCreateDialog = () => {
   createDialog.value = true
 }
@@ -533,7 +614,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
   }
 }
 
-// Handle product updates (edit mode).
+// Handle product updates (edit mode)
 const handleUpdate = async (updateReq: UpdateProductRequest) => {
   let updated: Product
   const { id, input } = updateReq
