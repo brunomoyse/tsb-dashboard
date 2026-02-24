@@ -1,8 +1,9 @@
 <template>
-  <UDashboardGroup storage="local" storage-key="tsb-dashboard">
+  <UDashboardGroup storage="cookie" storage-key="tsb-dashboard">
     <!-- Sidebar (tablet+ : collapsible) -->
     <UDashboardSidebar
       collapsible
+      collapsed
       class="hidden md:flex"
       :ui="{
         footer: 'border-t border-default flex flex-col gap-4',
