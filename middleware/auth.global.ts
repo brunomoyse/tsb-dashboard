@@ -1,5 +1,5 @@
 // middleware/auth.global.ts
-import { defineNuxtRouteMiddleware, useRequestEvent, navigateTo, useRuntimeConfig} from 'nuxt/app'
+import { defineNuxtRouteMiddleware, useRequestEvent, navigateTo, useRuntimeConfig, useCookie} from 'nuxt/app'
 import { useAuthStore } from '@/stores/auth'
 import { useLocalePath } from "#imports";
 
@@ -25,15 +25,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
             const isValid = checkTokenExpiration(cookies.access_token)
             if (isValid) return
         }
+
         // 3. Attempt refresh if no valid access token
         try {
             const refreshResponse = await $fetch.raw(`${apiUrl}/tokens/refresh`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: { cookie: event?.node.req.headers.cookie || '' }
             })
-
-
             // Update client cookies
             const setCookies = refreshResponse.headers.get('set-cookie')
             if (setCookies && event) {
@@ -62,8 +60,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
         const expiresAt = localStorage.getItem('token_expires')
         if (expiresAt && Date.now() < Number(expiresAt)) return
 
+        // 3. Check refresh token existence
+        const refreshToken = useCookie('refresh_token')
+        if (!refreshToken.value) {
+            return navigateTo(localePath('login'));
+        }
+
         try {
-            // 3. Silent refresh attempt
+            // 4. Silent refresh attempt
             await $fetch(`${apiUrl}/tokens/refresh`, {
                 method: 'POST',
                 credentials: 'include'
@@ -81,7 +85,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 // utils/jwt.ts
 function checkTokenExpiration(token: string): boolean {
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
+        const payload = JSON.parse(atob(token.split('.')[1]!))
         return payload.exp * 1000 > Date.now()
     } catch {
         return false
