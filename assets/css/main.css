@@ -107,6 +107,15 @@
   cursor: grabbing;
 }
 
+/* On touch devices, prevent browser scroll interception on draggable cards */
+@media (pointer: coarse) {
+  .kanban-touch-draggable {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 /* Dashboard page area background for depth */
 .dashboard-page-area {
   background: var(--ui-bg-accented);
