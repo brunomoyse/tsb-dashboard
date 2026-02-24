@@ -11,6 +11,7 @@ export class MockPrinter implements EpsonPrinterCommands {
   private output: string[] = []
   private currentAlign: 'left' | 'center' | 'right' = 'left'
   private currentSize: { width: number; height: number } = { width: 1, height: 1 }
+  private currentBold = false
   private lineWidth = 48 // Standard 80mm thermal printer width in characters
 
   addTextAlign(align: 'left' | 'center' | 'right'): void {
@@ -19,6 +20,14 @@ export class MockPrinter implements EpsonPrinterCommands {
 
   addTextSize(width: number, height: number): void {
     this.currentSize = { width, height }
+  }
+
+  addTextStyle(options: { bold?: boolean; underline?: boolean; reverse?: boolean }): void {
+    this.currentBold = options.bold ?? false
+  }
+
+  addTextFont(_font: 'A' | 'B'): void {
+    // No visual difference in text preview
   }
 
   addText(text: string): void {
@@ -46,9 +55,15 @@ export class MockPrinter implements EpsonPrinterCommands {
       }
 
       // Apply text size styling
+      const markers: string[] = []
       if (this.currentSize.width > 1 || this.currentSize.height > 1) {
-        const sizeMarker = `[${this.currentSize.width}x${this.currentSize.height}]`
-        formattedLine = `${sizeMarker} ${formattedLine}`
+        markers.push(`${this.currentSize.width}x${this.currentSize.height}`)
+      }
+      if (this.currentBold) {
+        markers.push('B')
+      }
+      if (markers.length > 0) {
+        formattedLine = `[${markers.join(',')}] ${formattedLine}`
       }
 
       this.output.push(formattedLine)
@@ -63,9 +78,9 @@ export class MockPrinter implements EpsonPrinterCommands {
 
   addCut(): void {
     this.output.push('')
-    this.output.push('─'.repeat(this.lineWidth))
-    this.output.push('✂ CUT HERE ✂'.padStart(this.lineWidth / 2 + 7))
-    this.output.push('─'.repeat(this.lineWidth))
+    this.output.push('\u2500'.repeat(this.lineWidth))
+    this.output.push('\u2702 CUT HERE \u2702'.padStart(this.lineWidth / 2 + 7))
+    this.output.push('\u2500'.repeat(this.lineWidth))
   }
 
   getOutput(): string {
@@ -76,6 +91,7 @@ export class MockPrinter implements EpsonPrinterCommands {
     this.output = []
     this.currentAlign = 'left'
     this.currentSize = { width: 1, height: 1 }
+    this.currentBold = false
   }
 }
 

@@ -1000,6 +1000,7 @@ const ORDERS_QUERY = gql`
         id
         streetName
         houseNumber
+        boxNumber
         municipalityName
         postcode
         distance
@@ -1207,6 +1208,7 @@ const { data: orderCreated } = useGqlSubscription<{
           id
           streetName
           houseNumber
+          boxNumber
           municipalityName
           postcode
           distance
