@@ -99,6 +99,7 @@
       "failed": "Échoué"
     },
     "statusShort": {
+      "new": "Nouvelles",
       "pending": "Attente",
       "confirmed": "Confirmé",
       "preparing": "Prépa.",
