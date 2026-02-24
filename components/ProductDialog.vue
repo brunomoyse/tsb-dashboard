@@ -125,7 +125,7 @@
         </div>
 
         <!-- Row 3: Toggles -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <USwitch
             v-model="editedProduct.isVisible"
             :label="t('common.visible')"
@@ -149,6 +149,11 @@
           <USwitch
             v-model="editedProduct.isVegan"
             :label="t('products.vegan')"
+            size="sm"
+          />
+          <USwitch
+            v-model="editedProduct.isSpicy"
+            :label="t('products.spicy')"
             size="sm"
           />
         </div>
@@ -310,6 +315,7 @@ const createDefaultProduct = (): CreateProductInput => ({
     isAvailable: false,
     isDiscountable: true,
     isHalal: false,
+    isSpicy: false,
     isVegan: false,
     isVisible: false,
     pieceCount: null,
