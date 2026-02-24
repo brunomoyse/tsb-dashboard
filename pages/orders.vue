@@ -212,6 +212,7 @@
         <div
           v-for="column in kanbanColumns"
           :key="column.key"
+          :data-column-key="column.key"
           class="kanban-column flex-shrink-0 w-60 xl:w-72 flex flex-col transition-all duration-200"
           :class="[
             column.accentClass,
@@ -286,10 +287,14 @@
               v-for="order in column.orders"
               :key="order.id"
               :draggable="column.dropStatus !== null ? 'true' : 'false'"
-              class="cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all"
-              :class="draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''"
+              :class="[
+                'cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all',
+                column.dropStatus !== null ? 'kanban-touch-draggable' : '',
+                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''
+              ]"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
               @dragend="onDragEnd"
+              @touchstart="(e: TouchEvent) => onCardTouchStart(e, order, column)"
               @click="openOrderDetails(order)"
             >
               <div class="space-y-2">
@@ -662,6 +667,28 @@ const shiftCompletedDate = (days: number) => {
 const draggedOrder = ref<Order | null>(null)
 const dragOverColumnKey = ref<string | null>(null)
 
+const performDrop = async (order: Order, column: KanbanColumnDef) => {
+  if (!column.dropStatus || column.statuses.includes(order.status)) return
+
+  const previousStatus = order.status
+  const targetStatus = column.dropStatus
+
+  // Optimistic update
+  ordersStore.updateOrder({ id: order.id, status: targetStatus })
+
+  try {
+    await mutationUpdateOrder({
+      id: order.id,
+      input: { status: targetStatus }
+    })
+  } catch {
+    // Revert on failure
+    ordersStore.updateOrder({ id: order.id, status: previousStatus })
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  }
+}
+
+// HTML5 Drag & Drop handlers (desktop)
 const onDragStart = (e: DragEvent, order: Order) => {
   draggedOrder.value = order
   e.dataTransfer?.setData('text/plain', order.id)
@@ -690,23 +717,72 @@ const onColumnDrop = async (e: DragEvent, column: KanbanColumnDef) => {
   if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
 
   const order = draggedOrder.value
-  const previousStatus = order.status
-  const targetStatus = column.dropStatus
   draggedOrder.value = null
+  performDrop(order, column)
+}
 
-  // Optimistic update
-  ordersStore.updateOrder({ id: order.id, status: targetStatus })
+// Touch drag handlers (tablet/touch devices)
+// Uses a drag handle with touch-action:none so the browser doesn't intercept for scrolling
+const touchDragJustEnded = ref(false)
 
-  try {
-    await mutationUpdateOrder({
-      id: order.id,
-      input: { status: targetStatus }
-    })
-  } catch {
-    // Revert on failure
-    ordersStore.updateOrder({ id: order.id, status: previousStatus })
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+const onDocTouchMove = (e: TouchEvent) => {
+  e.preventDefault()
+  const touch = e.touches[0]
+
+  // Find which column the finger is over
+  const el = document.elementFromPoint(touch.clientX, touch.clientY)
+  const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
+  if (columnEl) {
+    const key = columnEl.dataset.columnKey!
+    const column = kanbanColumnDefs.find(c => c.key === key)
+    if (column && column.dropStatus && draggedOrder.value && !column.statuses.includes(draggedOrder.value.status)) {
+      dragOverColumnKey.value = key
+    } else {
+      dragOverColumnKey.value = null
+    }
+  } else {
+    dragOverColumnKey.value = null
   }
+}
+
+const onDocTouchEnd = (e: TouchEvent) => {
+  document.removeEventListener('touchmove', onDocTouchMove)
+  document.removeEventListener('touchend', onDocTouchEnd)
+  document.removeEventListener('touchcancel', onDocTouchEnd)
+
+  if (!draggedOrder.value) return
+
+  // Find drop target
+  const touch = e.changedTouches[0]
+  const el = document.elementFromPoint(touch.clientX, touch.clientY)
+  const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
+
+  if (columnEl) {
+    const key = columnEl.dataset.columnKey!
+    const column = kanbanColumnDefs.find(c => c.key === key)
+    if (column && column.dropStatus && !column.statuses.includes(draggedOrder.value.status)) {
+      performDrop(draggedOrder.value, column)
+    }
+  }
+
+  // Clean up
+  draggedOrder.value = null
+  dragOverColumnKey.value = null
+
+  // Prevent the subsequent click event from opening order details
+  touchDragJustEnded.value = true
+  setTimeout(() => { touchDragJustEnded.value = false }, 50)
+}
+
+const onCardTouchStart = (_e: TouchEvent, order: Order, column: KanbanColumnDef) => {
+  if (!column.dropStatus) return
+  draggedOrder.value = order
+  navigator.vibrate?.(30)
+
+  // Register document-level listeners (non-passive so we can preventDefault)
+  document.addEventListener('touchmove', onDocTouchMove, { passive: false })
+  document.addEventListener('touchend', onDocTouchEnd)
+  document.addEventListener('touchcancel', onDocTouchEnd)
 }
 
 // Order details state
@@ -731,6 +807,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (nowInterval) clearInterval(nowInterval)
+  // Clean up any in-progress touch drag listeners
+  document.removeEventListener('touchmove', onDocTouchMove)
+  document.removeEventListener('touchend', onDocTouchEnd)
+  document.removeEventListener('touchcancel', onDocTouchEnd)
 })
 
 const isActiveStatus = (status: OrderStatus): boolean => {
@@ -1162,6 +1242,8 @@ watch(orderCreated, (val) => {
 
 // Component methods
 const openOrderDetails = (order: Order) => {
+  // Skip if a touch drag just ended (prevent accidental opening)
+  if (touchDragJustEnded.value) return
   ordersStore.acknowledgeOrder(order.id)
   selectedOrder.value = order
   stagedStatus.value = undefined
