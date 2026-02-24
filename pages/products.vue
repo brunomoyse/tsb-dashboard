@@ -133,6 +133,9 @@
             <UBadge v-if="row.original.isVegan" color="success" variant="subtle" size="xs">
               {{ t('products.vegan') }}
             </UBadge>
+            <UBadge v-if="row.original.isSpicy" color="success" variant="subtle" size="xs">
+              {{ t('products.spicy') }}
+            </UBadge>
           </div>
         </template>
 
@@ -301,6 +304,7 @@ const PRODUCTS_QUERY = gql`
       isVisible
       isAvailable
       isHalal
+      isSpicy
       isVegan
       name
       description
@@ -354,6 +358,7 @@ const CREATE_PRODUCT_MUTATION = gql`
       isVisible
       isAvailable
       isHalal
+      isSpicy
       isVegan
       name
       description
@@ -392,6 +397,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
       isVisible
       isAvailable
       isHalal
+      isSpicy
       isVegan
       name
       description
@@ -440,6 +446,7 @@ const SUB_PRODUCT_UPDATED = gql`
       code
       pieceCount
       isHalal
+      isSpicy
       isVegan
       isDiscountable
       name
