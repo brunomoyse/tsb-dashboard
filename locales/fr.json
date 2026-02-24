@@ -135,6 +135,7 @@
     },
     "errors": {
       "updateFailed": "Échec de la mise à jour de la commande",
+      "invalidTransition": "Cette transition de statut n'est pas autorisée pour cette commande",
       "printFailed": "Échec de l'impression",
       "paymentUpdateFailed": "Échec de la mise à jour du paiement"
     }

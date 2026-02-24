@@ -641,7 +641,7 @@ const kanbanColumnDefs: KanbanColumnDef[] = [
   { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-amber-800/15 text-amber-900 dark:text-amber-500', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
   { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' },
   { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
-  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: null, icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
+  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
 ]
 
 // Completed column date filter (defaults to today)
@@ -671,23 +671,34 @@ const dragOverColumnKey = ref<string | null>(null)
 const performDrop = async (order: Order, column: KanbanColumnDef) => {
   if (!column.dropStatus || column.statuses.includes(order.status)) return
 
-  const targetStatus = column.dropStatus
+  // For the COMPLETED column, resolve the correct terminal status based on order type
+  let targetStatus = column.dropStatus
+  if (column.key === 'COMPLETED') {
+    targetStatus = order.type === 'PICKUP' ? 'PICKED_UP' : 'DELIVERED'
+  }
+
   const allowed = getAllowedStatuses(order.status, order.type)
-  if (!allowed.includes(targetStatus)) return
+  if (!allowed.includes(targetStatus)) {
+    toast.add({ title: t('orders.errors.invalidTransition'), color: 'warning' })
+    return
+  }
 
   const previousStatus = order.status
+  const previousUpdatedAt = order.updatedAt
 
-  // Optimistic update
-  ordersStore.updateOrder({ id: order.id, status: targetStatus })
+  // Optimistic update (include updatedAt for COMPLETED column date filter)
+  ordersStore.updateOrder({ id: order.id, status: targetStatus, updatedAt: new Date().toISOString() })
 
   try {
-    await mutationUpdateOrder({
+    const res = await mutationUpdateOrder({
       id: order.id,
       input: { status: targetStatus }
     })
+    // Apply server response (authoritative updatedAt)
+    ordersStore.updateOrder(res.updateOrder)
   } catch {
     // Revert on failure
-    ordersStore.updateOrder({ id: order.id, status: previousStatus })
+    ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
     toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
 }
@@ -1029,6 +1040,7 @@ const UPDATE_ORDER_MUTATION = gql`
     updateOrder(id: $id, input: $input) {
       id
       status
+      updatedAt
       estimatedReadyTime
     }
   }
@@ -1150,6 +1162,7 @@ const { data: orderUpdated } = useGqlSubscription<{
       orderUpdated {
         id
         status
+        updatedAt
         estimatedReadyTime
         payment {
           status
