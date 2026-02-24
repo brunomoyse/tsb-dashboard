@@ -134,6 +134,7 @@
     },
     "errors": {
       "updateFailed": "Failed to update order",
+      "invalidTransition": "This status transition is not allowed for this order",
       "printFailed": "Print failed",
       "paymentUpdateFailed": "Failed to update payment status"
     }
