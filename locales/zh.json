@@ -99,6 +99,7 @@
       "failed": "失败"
     },
     "statusShort": {
+      "new": "新订单",
       "pending": "待处理",
       "confirmed": "已确认",
       "preparing": "准备中",

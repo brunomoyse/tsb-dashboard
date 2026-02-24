@@ -98,6 +98,7 @@
       "failed": "Failed"
     },
     "statusShort": {
+      "new": "New",
       "pending": "Pending",
       "confirmed": "Confirmed",
       "preparing": "Prep.",

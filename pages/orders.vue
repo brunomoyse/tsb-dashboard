@@ -172,8 +172,8 @@
     <!-- ========== TABLET+ VIEW: Kanban board (md:) ========== -->
     <div class="hidden md:block">
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="flex gap-3 overflow-x-auto pb-4">
-        <div v-for="i in 4" :key="i" class="kanban-column flex-shrink-0 w-60 xl:w-72">
+      <div v-if="pending" class="flex gap-3 pb-4">
+        <div v-for="i in 5" :key="i" class="kanban-column flex-1 min-w-0">
           <div class="kanban-column-header">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
@@ -208,12 +208,12 @@
       </div>
 
       <!-- Kanban Board -->
-      <div v-else class="flex gap-3 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+      <div v-else class="flex gap-3 pb-4 min-h-[calc(100vh-200px)]">
         <div
           v-for="column in kanbanColumns"
           :key="column.key"
           :data-column-key="column.key"
-          class="kanban-column flex-shrink-0 w-60 xl:w-72 flex flex-col transition-all duration-200"
+          class="kanban-column flex-1 min-w-0 flex flex-col transition-all duration-200"
           :class="[
             column.accentClass,
             dragOverColumnKey === column.key ? 'kanban-drop-target' : '',
@@ -286,11 +286,13 @@
             <UCard
               v-for="order in column.orders"
               :key="order.id"
-              :draggable="column.dropStatus !== null ? 'true' : 'false'"
+              :draggable="column.key !== 'COMPLETED' ? 'true' : 'false'"
               :class="[
                 'cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all',
-                column.dropStatus !== null ? 'kanban-touch-draggable' : '',
-                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''
+                column.key !== 'COMPLETED' ? 'kanban-touch-draggable' : '',
+                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : '',
+                order.status === 'PENDING' ? 'border-l-3 border-l-amber-500' : '',
+                order.status === 'CONFIRMED' ? 'border-l-3 border-l-sky-500' : ''
               ]"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
               @dragend="onDragEnd"
@@ -635,8 +637,7 @@ interface KanbanColumnDef {
 }
 
 const kanbanColumnDefs: KanbanColumnDef[] = [
-  { key: 'PENDING', statuses: ['PENDING'], dropStatus: 'PENDING', icon: 'i-lucide-clock', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
-  { key: 'CONFIRMED', statuses: ['CONFIRMED'], dropStatus: 'CONFIRMED', icon: 'i-lucide-circle-check', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
+  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
   { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-amber-800/15 text-amber-900 dark:text-amber-500', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
   { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' },
   { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
@@ -670,8 +671,11 @@ const dragOverColumnKey = ref<string | null>(null)
 const performDrop = async (order: Order, column: KanbanColumnDef) => {
   if (!column.dropStatus || column.statuses.includes(order.status)) return
 
-  const previousStatus = order.status
   const targetStatus = column.dropStatus
+  const allowed = getAllowedStatuses(order.status, order.type)
+  if (!allowed.includes(targetStatus)) return
+
+  const previousStatus = order.status
 
   // Optimistic update
   ordersStore.updateOrder({ id: order.id, status: targetStatus })
@@ -1067,7 +1071,9 @@ const kanbanColumns = computed(() =>
       ...def,
       label: def.key === 'COMPLETED'
         ? t('orders.statusShort.completed')
-        : t(`orders.status.${def.key.toLowerCase()}`),
+        : def.key === 'NEW'
+          ? t('orders.statusShort.new')
+          : t(`orders.status.${def.key.toLowerCase()}`),
       orders: filtered
     }
   })
@@ -1076,39 +1082,33 @@ const kanbanColumns = computed(() =>
 // Mobile filter chips
 const mobileChips = computed(() => [
   {
-    label: t('orders.statusShort.pending'),
-    icon: 'i-lucide-clock',
+    label: t('orders.statusShort.new'),
+    icon: 'i-lucide-inbox',
     value: 0,
-    count: orders.value.filter(o => o.status === 'PENDING').length
-  },
-  {
-    label: t('orders.statusShort.confirmed'),
-    icon: 'i-lucide-circle-check',
-    value: 1,
-    count: orders.value.filter(o => o.status === 'CONFIRMED').length
+    count: orders.value.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).length
   },
   {
     label: t('orders.statusShort.preparing'),
     icon: 'i-lucide-chef-hat',
-    value: 2,
+    value: 1,
     count: orders.value.filter(o => o.status === 'PREPARING').length
   },
   {
     label: t('orders.statusShort.awaiting_pick_up'),
     icon: 'i-lucide-hourglass',
-    value: 3,
+    value: 2,
     count: orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length
   },
   {
     label: t('orders.statusShort.out_for_delivery'),
     icon: 'i-lucide-bike',
-    value: 4,
+    value: 3,
     count: orders.value.filter(o => o.status === 'OUT_FOR_DELIVERY').length
   },
   {
     label: t('orders.statusShort.completed'),
     icon: 'i-lucide-circle-check-big',
-    value: 5,
+    value: 4,
     count: orders.value.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status)).length
   }
 ])
@@ -1116,23 +1116,21 @@ const mobileChips = computed(() => [
 const filteredOrders = computed(() => {
   const ordersList = orders.value
   if (selectedTab.value === null) {
-    return ordersList.filter(o => o.status === 'PENDING')
+    return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
   }
   switch (selectedTab.value) {
     case 0:
-      return ordersList.filter(o => o.status === 'PENDING')
+      return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
     case 1:
-      return ordersList.filter(o => o.status === 'CONFIRMED')
-    case 2:
       return ordersList.filter(o => o.status === 'PREPARING')
-    case 3:
+    case 2:
       return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
-    case 4:
+    case 3:
       return ordersList.filter(o => o.status === 'OUT_FOR_DELIVERY')
-    case 5:
+    case 4:
       return ordersList.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status))
     default:
-      return ordersList.filter(o => o.status === 'PENDING')
+      return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
   }
 })
 
