@@ -116,9 +116,3 @@
   }
 }
 
-/* Dashboard page area background for depth */
-.dashboard-page-area {
-  background: var(--ui-bg-accented);
-  min-height: 100vh;
-  min-height: 100dvh;
-}

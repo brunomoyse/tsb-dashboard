@@ -4,15 +4,14 @@
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-highlighted">{{ t('coupons.title') }}</h1>
+        <p class="text-sm text-muted mt-0.5">{{ filteredCoupons.length }} {{ t('coupons.title').toLowerCase() }}</p>
       </div>
-      <div class="flex gap-2">
-        <UButton
-          icon="i-lucide-plus"
-          @click="openCreateDialog"
-        >
-          {{ t('coupons.add') }}
-        </UButton>
-      </div>
+      <UButton
+        icon="i-lucide-plus"
+        @click="openCreateDialog"
+      >
+        {{ t('coupons.add') }}
+      </UButton>
     </div>
 
     <!-- Search Bar -->
@@ -22,76 +21,116 @@
         icon="i-lucide-search"
         :placeholder="t('coupons.search')"
         size="lg"
+        class="flex-1"
       />
     </div>
 
-    <!-- Coupons Table -->
-    <UTable
-      v-if="filteredCoupons.length > 0"
-      :columns="columns"
-      :data="paginatedCoupons"
-    >
-      <template #code-cell="{ cell }">
-        <span class="font-mono font-medium">{{ cell.row.original.code }}</span>
-      </template>
+    <!-- Data Table -->
+    <div class="rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+      <UTable
+        v-if="!pending && filteredCoupons.length > 0"
+        :columns="columns"
+        :data="paginatedCoupons"
+        :ui="{
+          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          td: 'py-3 px-4'
+        }"
+        @select="(_e: Event, row: any) => openEditDialog(row.original)"
+      >
+        <template #code-cell="{ row }">
+          <span class="font-mono font-medium">{{ row.original.code }}</span>
+        </template>
 
-      <template #discountType-cell="{ cell }">
-        {{ cell.row.original.discountType === 'PERCENTAGE' ? t('coupons.percentage') : t('coupons.fixed') }}
-      </template>
+        <template #discountType-cell="{ row }">
+          <span class="text-sm">{{ row.original.discountType === 'PERCENTAGE' ? t('coupons.percentage') : t('coupons.fixed') }}</span>
+        </template>
 
-      <template #discountValue-cell="{ cell }">
-        {{ cell.row.original.discountType === 'PERCENTAGE'
-          ? `${cell.row.original.discountValue}%`
-          : belPriceFormat.format(Number(cell.row.original.discountValue))
-        }}
-      </template>
+        <template #discountValue-cell="{ row }">
+          <span class="text-sm font-semibold tabular-nums">
+            {{ row.original.discountType === 'PERCENTAGE'
+              ? `${row.original.discountValue}%`
+              : belPriceFormat.format(Number(row.original.discountValue))
+            }}
+          </span>
+        </template>
 
-      <template #minOrderAmount-cell="{ cell }">
-        {{ cell.row.original.minOrderAmount
-          ? belPriceFormat.format(Number(cell.row.original.minOrderAmount))
-          : '-'
-        }}
-      </template>
+        <template #minOrderAmount-cell="{ row }">
+          <span class="text-sm tabular-nums text-muted">
+            {{ row.original.minOrderAmount
+              ? belPriceFormat.format(Number(row.original.minOrderAmount))
+              : '-'
+            }}
+          </span>
+        </template>
 
-      <template #maxUses-cell="{ cell }">
-        {{ cell.row.original.maxUses ?? t('coupons.unlimited') }}
-      </template>
+        <template #maxUses-cell="{ row }">
+          <span class="text-sm tabular-nums text-muted">{{ row.original.maxUses ?? t('coupons.unlimited') }}</span>
+        </template>
 
-      <template #usedCount-cell="{ cell }">
-        {{ cell.row.original.usedCount }}
-      </template>
+        <template #usedCount-cell="{ row }">
+          <span class="text-sm tabular-nums text-muted">{{ row.original.usedCount }}</span>
+        </template>
 
-      <template #isActive-cell="{ cell }">
-        <UBadge
-          :color="cell.row.original.isActive ? 'success' : 'error'"
-          variant="soft"
-          size="sm"
-        >
-          {{ cell.row.original.isActive ? t('common.available') : t('common.unavailable') }}
-        </UBadge>
-      </template>
+        <template #isActive-cell="{ row }">
+          <button
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
+            :class="row.original.isActive
+              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
+              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
+            "
+            :disabled="togglingId === row.original.id"
+            @click.stop="toggleActive(row.original)"
+          >
+            <UIcon
+              :name="row.original.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              class="size-3.5"
+              :class="{ 'animate-spin': togglingId === row.original.id }"
+            />
+            {{ row.original.isActive ? t('common.available') : t('common.unavailable') }}
+          </button>
+        </template>
 
-      <template #validPeriod-cell="{ cell }">
-        <span class="text-sm">
-          {{ formatDateRange(cell.row.original.validFrom, cell.row.original.validUntil) }}
-        </span>
-      </template>
+        <template #validPeriod-cell="{ row }">
+          <span class="text-sm text-muted">
+            {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
+          </span>
+        </template>
 
-      <template #actions-cell="{ cell }">
-        <div class="flex justify-end">
-          <UButton
-            icon="i-lucide-pencil"
-            size="md"
-            color="neutral"
-            variant="ghost"
-            @click="openEditDialog(cell.row.original)"
-          />
+        <template #actions-cell="{ row }">
+          <div class="flex justify-end">
+            <UButton
+              icon="i-lucide-pencil"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              @click.stop="openEditDialog(row.original)"
+            />
+          </div>
+        </template>
+      </UTable>
+
+      <!-- Skeleton Loading -->
+      <div v-if="pending" class="divide-y divide-(--ui-border)">
+        <div v-for="i in 8" :key="i" class="flex items-center gap-4 px-4 py-3">
+          <div class="flex-1 space-y-1.5">
+            <USkeleton class="h-3.5 w-24" />
+          </div>
+          <USkeleton class="h-3.5 w-16 hidden sm:block" />
+          <USkeleton class="h-3.5 w-16 hidden sm:block" />
+          <USkeleton class="h-6 w-20 rounded-full hidden md:block" />
+          <USkeleton class="h-3.5 w-24 hidden lg:block" />
         </div>
-      </template>
-    </UTable>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!pending && filteredCoupons.length === 0" class="flex flex-col items-center justify-center py-16">
+        <UIcon name="i-lucide-ticket" class="size-12 mb-3 text-muted" />
+        <p class="text-muted text-sm">{{ t('coupons.noResults') }}</p>
+      </div>
+    </div>
 
     <!-- Pagination -->
-    <div v-if="filteredCoupons.length > pageSize" class="flex justify-center mt-6">
+    <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center mt-6">
       <UPagination
         v-model:page="page"
         :total="filteredCoupons.length"
@@ -99,12 +138,6 @@
         show-edges
       />
     </div>
-
-    <!-- Empty State -->
-    <UCard v-else-if="filteredCoupons.length === 0" class="text-center py-12">
-      <UIcon name="i-lucide-ticket" class="size-16 mx-auto mb-4 text-muted" />
-      <p class="text-lg text-muted">{{ t('coupons.noResults') }}</p>
-    </UCard>
   </div>
 
   <!-- Modals -->
@@ -197,6 +230,7 @@ import gql from 'graphql-tag'
 import { print } from 'graphql'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
   minimumFractionDigits: 2,
@@ -205,21 +239,22 @@ const belPriceFormat = new Intl.NumberFormat('fr-BE', {
   currency: 'EUR'
 })
 
-const columns = [
-  { id: 'code', key: 'code', label: t('coupons.code') },
-  { id: 'discountType', key: 'discountType', label: t('coupons.type') },
-  { id: 'discountValue', key: 'discountValue', label: t('coupons.value') },
-  { id: 'minOrderAmount', key: 'minOrderAmount', label: t('coupons.minOrder') },
-  { id: 'maxUses', key: 'maxUses', label: t('coupons.maxUses') },
-  { id: 'usedCount', key: 'usedCount', label: t('coupons.used') },
-  { id: 'isActive', key: 'isActive', label: t('coupons.active') },
-  { id: 'validPeriod', key: 'validPeriod', label: t('coupons.validUntil'), sortable: false },
-  { id: 'actions', key: 'actions', label: t('common.actions'), sortable: false }
-]
-
 const searchQuery = ref('')
 const page = ref(1)
 const pageSize = ref(10)
+
+// Table columns (same pattern as products page)
+const columns = computed(() => [
+  { accessorKey: 'code', header: t('coupons.code') },
+  { accessorKey: 'discountType', header: t('coupons.type'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
+  { accessorKey: 'discountValue', header: t('coupons.value') },
+  { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'maxUses', header: t('coupons.maxUses'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'usedCount', header: t('coupons.used'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'isActive', header: t('coupons.active'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
+  { accessorKey: 'validPeriod', header: t('coupons.validUntil'), enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
+  { accessorKey: 'actions', header: '', enableSorting: false }
+])
 
 const COUPONS_QUERY = gql`
   query {
@@ -275,6 +310,15 @@ const UPDATE_COUPON_MUTATION = gql`
   }
 `
 
+const TOGGLE_COUPON_MUTATION = gql`
+  mutation ($id: ID!, $input: UpdateCouponInput!) {
+    updateCoupon(id: $id, input: $input) {
+      id
+      isActive
+    }
+  }
+`
+
 const SUB_COUPON_UPDATED = gql`
   subscription CouponUpdated {
     couponUpdated {
@@ -293,7 +337,7 @@ const SUB_COUPON_UPDATED = gql`
   }
 `
 
-const { data: dataCoupons } = await useGqlQuery<{ coupons: Coupon[] }>(
+const { data: dataCoupons, pending } = await useGqlQuery<{ coupons: Coupon[] }>(
   print(COUPONS_QUERY),
   {},
   { immediate: true, cache: true }
@@ -313,6 +357,28 @@ const paginatedCoupons = computed(() => {
 })
 
 watch(searchQuery, () => { page.value = 1 })
+
+// Inline toggle state
+const togglingId = ref<string | null>(null)
+
+const toggleActive = async (coupon: Coupon) => {
+  togglingId.value = coupon.id
+  try {
+    const { mutate } = useGqlMutation<{ updateCoupon: Coupon }>(TOGGLE_COUPON_MUTATION)
+    const res = await mutate({ id: coupon.id, input: { isActive: !coupon.isActive } })
+
+    if (dataCoupons.value?.coupons) {
+      const idx = dataCoupons.value.coupons.findIndex(c => c.id === coupon.id)
+      if (idx !== -1) {
+        dataCoupons.value.coupons.splice(idx, 1, { ...dataCoupons.value.coupons[idx], ...res.updateCoupon })
+      }
+    }
+  } catch {
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  } finally {
+    togglingId.value = null
+  }
+}
 
 // Dialog state
 const showDialog = ref(false)

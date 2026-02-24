@@ -84,7 +84,7 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel>
+    <UDashboardPanel :ui="{ body: 'bg-(--ui-bg-accented)' }">
       <template #header>
         <UDashboardNavbar class="md:hidden">
           <!-- Mobile header: logo + menu -->
@@ -118,7 +118,7 @@
       </template>
 
       <template #body>
-        <div class="dashboard-page-area pb-20 md:pb-0">
+        <div class="pb-20 md:pb-0">
           <slot />
         </div>
       </template>
