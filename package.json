@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.93",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@nuxt/test-utils": "^4.0.0",
     "@nuxtjs/i18n": "^10.2.3",
+    "oxlint": "^1.50.0",
     "tailwindcss": "^4.2.1",
     "vitest": "^4.0.18"
   },
