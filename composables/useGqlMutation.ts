@@ -1,6 +1,7 @@
-// composables/useGqlMutation.ts
+// Composables/useGqlMutation.ts
+import { type DocumentNode, print } from 'graphql'
 import { ref } from 'vue'
-import { print } from 'graphql'
+
 import { useNuxtApp } from '#imports'
 
 type Vars = Record<string, unknown>
@@ -10,14 +11,14 @@ type Vars = Record<string, unknown>
  * plus reactive data/loading/error for your UI.
  */
 export function useGqlMutation<T = unknown>(
-    rawMutation: string | import('graphql').DocumentNode,
+    rawMutation: string | DocumentNode,
 ) {
   const { $gqlFetch } = useNuxtApp()
   const data    = ref<T>()
   const loading = ref(false)
   const error   = ref<any>()
 
-  /** call this and await the result */
+  /** Call this and await the result */
   async function mutate(variables: Vars = {}): Promise<T> {
     loading.value = true
     error.value   = undefined

@@ -5,14 +5,14 @@ const apiOrigin = new URL(process.env.API_BASE_URL || 'http://localhost:8080/api
 const wsOrigin = apiOrigin.replace(/^http/, 'ws')
 const s3Url = process.env.S3_BUCKET_URL
 
-const csp = [
+const csp = `${[
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data:${s3Url ? ' ' + s3Url : ''}`,
+    `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
     "font-src 'self'",
     `connect-src 'self' ${apiOrigin} ${wsOrigin}`,
-].join('; ') + ';'
+].join('; ')};`
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
@@ -40,7 +40,7 @@ export default defineNuxtConfig({
     public: {
       s3bucketUrl: process.env.S3_BUCKET_URL,
       api: process.env.API_BASE_URL,
-      graphqlHttp: process.env.API_BASE_URL + '/graphql',
+      graphqlHttp: `${process.env.API_BASE_URL}/graphql`,
       graphqlWs: process.env.GRAPHQL_WS_URL,
       printer: {
         enabled: process.env.PRINTER_ENABLED === 'true',
@@ -99,7 +99,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
-      redirectOn: 'all' // changed from 'root' to maintain v9 behavior (redirect on all pages)
+      redirectOn: 'all' // Changed from 'root' to maintain v9 behavior (redirect on all pages)
     },
     baseUrl: process.env.DASHBOARD_BASE_URL,
     vueI18n: "../i18n.config.ts",

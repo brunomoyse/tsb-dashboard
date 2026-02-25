@@ -1,9 +1,9 @@
-// composables/useGqlQuery.ts
-import { watch } from 'vue'
-import { hash } from 'ohash'
-import { print } from 'graphql'
+// Composables/useGqlQuery.ts
+import { type DocumentNode, print } from 'graphql'
 import { useAsyncData, useNuxtApp } from '#imports'
 import type { AsyncData } from 'nuxt/app'
+import { hash } from 'ohash'
+import { watch } from 'vue'
 
 type Vars = Record<string, unknown> | (() => Record<string, unknown>)
 interface Options {
@@ -11,16 +11,16 @@ interface Options {
     cache?: boolean
 }
 
-export async function useGqlQuery<T>(
-    rawQuery: string | import('graphql').DocumentNode,
+export const useGqlQuery = async <T>(
+    rawQuery: string | DocumentNode,
     variables: Vars = {},
     opts: Options = { immediate: true, cache: false },   // ⬅ default cache:false
-): Promise<AsyncData<T, never> & { refetch: () => Promise<void> }> {
+): Promise<AsyncData<T, never> & { refetch: () => Promise<void> }> => {
     const { $gqlFetch } = useNuxtApp()
     const getVars = () => (typeof variables === 'function' ? variables() : variables)
     const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
 
-    // choose overload: with key (cache) or without key (no cache)
+    // Choose overload: with key (cache) or without key (no cache)
     const asyncData = opts.cache
         ? await useAsyncData<T, T>(`gql:${hash(printIfAst(rawQuery))}`, handler, {
             immediate: opts.immediate,
@@ -38,6 +38,5 @@ export async function useGqlQuery<T>(
     return Object.assign(asyncData, { refetch: asyncData.refresh })
 }
 
-function printIfAst(q: string | import('graphql').DocumentNode): string {
-    return typeof q === 'string' ? q : print(q)
-}
+const printIfAst = (q: string | DocumentNode): string =>
+    typeof q === 'string' ? q : print(q)

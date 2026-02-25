@@ -1,5 +1,4 @@
-// plugins/api.ts
-import { defineNuxtPlugin, useRequestEvent, navigateTo, useCookie, useRuntimeConfig, useLocalePath } from '#imports'
+import { defineNuxtPlugin, navigateTo, useCookie, useLocalePath, useRequestEvent, useRuntimeConfig } from '#imports'
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
@@ -17,19 +16,19 @@ export default defineNuxtPlugin(() => {
             'Accept': 'application/json',
             'Accept-Language': userLocale
         },
-        async onRequest({ options }) {
+        onRequest({ options }) {
             // Server-side cookie forwarding
             if (import.meta.server) {
                 const event = useRequestEvent()
                 const cookies = event?.node.req.headers.cookie
-                const userLocale = useCookie('i18n_redirected').value ?? 'fr'
+                const serverLocale = useCookie('i18n_redirected').value ?? 'fr'
 
                 if (cookies) {
                     options.headers = {
                         ...options.headers,
-                        // @ts-ignore
+                        // @ts-expect-error spreading HeadersInit may cause type issues with modifying headers
                         cookie: cookies,
-                        'Accept-Language': userLocale
+                        'Accept-Language': serverLocale
                     }
                 }
             }
@@ -45,16 +44,16 @@ export default defineNuxtPlugin(() => {
                             method: 'POST',
                             credentials: 'include'
                         })
-                        // @ts-ignore
+                        // @ts-expect-error request and options have incompatible types
                         return $fetch(request, options)
                     }
-                } catch (error) {
+                } catch {
                     try {
                         await $fetch(`${apiUrl}/logout`, {
                             method: 'POST',
                             credentials: 'include'
                         })
-                    } catch { /* ignore logout errors */ }
+                    } catch { /* Ignore logout errors */ }
                     navigateTo(localePath('login'))
                 }
             }

@@ -1,4 +1,4 @@
-// types/types.d.ts
+// Types/types.d.ts
 import type { $Fetch } from 'ofetch'
 
 declare module '#app' {

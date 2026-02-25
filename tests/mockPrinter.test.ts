@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
 import { MockPrinter, generateReceiptPreview } from '~/utils/mockPrinter'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('MockPrinter', () => {
   let printer: MockPrinter
@@ -32,7 +32,7 @@ describe('MockPrinter', () => {
       printer.addText('HELLO\n')
       const line = printer.getOutput()
       // 48 chars wide, "HELLO" is 5 chars, padding = floor((48 - 5) / 2) = 21
-      expect(line).toBe(' '.repeat(21) + 'HELLO')
+      expect(line).toBe(`${' '.repeat(21)}HELLO`)
     })
 
     it('right-aligns text', () => {
@@ -40,7 +40,7 @@ describe('MockPrinter', () => {
       printer.addText('END\n')
       const line = printer.getOutput()
       // 48 - 3 = 45 spaces padding
-      expect(line).toBe(' '.repeat(45) + 'END')
+      expect(line).toBe(`${' '.repeat(45)}END`)
     })
 
     it('left-aligns text with no padding', () => {
@@ -68,9 +68,9 @@ describe('MockPrinter', () => {
       printer.addTextAlign('center')
       printer.addTextSize(2, 1)
       printer.addText('HI\n')
-      // effective width = floor(48 / 2) = 24, "HI" is 2 chars, padding = floor((24 - 2) / 2) = 11
+      // Effective width = floor(48 / 2) = 24, "HI" is 2 chars, padding = floor((24 - 2) / 2) = 11
       const line = printer.getOutput()
-      expect(line).toBe('[2x1] ' + ' '.repeat(11) + 'HI')
+      expect(line).toBe(`[2x1] ${' '.repeat(11)}HI`)
     })
   })
 

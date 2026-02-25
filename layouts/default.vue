@@ -278,11 +278,11 @@ const handleLogout = async () => {
     if (response.ok) {
       await navigateTo(localePath('/login'), { external: true })
     } else {
-      console.error('Logout failed with status:', response.status)
+      if (import.meta.dev) console.error('Logout failed with status:', response.status)
       await navigateTo(localePath('/login'), { external: true })
     }
   } catch (error) {
-    console.error('Logout error:', error)
+    if (import.meta.dev) console.error('Logout error:', error)
     await navigateTo(localePath('/login'), { external: true })
   }
 }

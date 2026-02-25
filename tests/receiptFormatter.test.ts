@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest'
-import { MockPrinter } from '~/utils/mockPrinter'
+import type { Order, OrderProduct } from '~/types'
 import {
+  buildKitchenTicket,
+  buildOrderReceipt,
+  createTestOrder,
   formatReceiptDate,
   formatReceiptTime,
-  buildOrderReceipt,
-  buildKitchenTicket,
-  createTestOrder
 } from '~/utils/receiptFormatter'
-import type { Order, OrderProduct } from '~/types'
+import { describe, expect, it } from 'vitest'
+import { MockPrinter } from '~/utils/mockPrinter'
 
 // --- Helper to build a minimal valid order ---
 const makeOrder = (overrides: Partial<Order> = {}): Order => ({

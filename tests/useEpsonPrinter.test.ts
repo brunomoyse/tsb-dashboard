@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Tests for the send() logic in useEpsonPrinter.
@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  */
 
 // Replicate the send function from the composable to test in isolation
-const send = async (printer: any, timeout: number = 30000): Promise<void> => {
-  return new Promise((resolve, reject) => {
+const send = (printer: any, timeout = 30000): Promise<void> =>
+  new Promise((resolve, reject) => {
     let settled = false
 
     const timer = setTimeout(() => {
@@ -40,7 +40,6 @@ const send = async (printer: any, timeout: number = 30000): Promise<void> => {
 
     printer.send()
   })
-}
 
 describe('send()', () => {
   let mockPrinter: {
@@ -83,7 +82,7 @@ describe('send()', () => {
   })
 
   it('rejects with timeout when printer does not respond', async () => {
-    // send() does nothing — no callback fires
+    // Send() does nothing — no callback fires
     mockPrinter.send.mockImplementation(() => {})
 
     const promise = send(mockPrinter, 5000)

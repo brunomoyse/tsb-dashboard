@@ -222,12 +222,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useGqlQuery, useGqlMutation, useGqlSubscription } from '#imports'
-import { useI18n } from 'vue-i18n'
 import type { Coupon, CreateCouponInput, UpdateCouponInput } from '~/types'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useGqlMutation, useGqlQuery, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -516,7 +516,7 @@ const handleSubmit = async () => {
 
     showDialog.value = false
   } catch (err) {
-    console.error('Coupon save failed:', err)
+    if (import.meta.dev) console.error('Coupon save failed:', err)
   } finally {
     isSaving.value = false
   }
@@ -530,10 +530,10 @@ onMounted(() => {
   watch(liveCoupon, (val) => {
     if (!val?.couponUpdated?.id || !dataCoupons.value?.coupons) return
     const idx = dataCoupons.value.coupons.findIndex(c => c.id === val.couponUpdated.id)
-    if (idx !== -1) {
-      dataCoupons.value.coupons.splice(idx, 1, val.couponUpdated)
-    } else {
+    if (idx === -1) {
       dataCoupons.value.coupons.unshift(val.couponUpdated)
+    } else {
+      dataCoupons.value.coupons.splice(idx, 1, val.couponUpdated)
     }
   })
 })

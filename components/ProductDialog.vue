@@ -260,10 +260,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
 import type {
-    CreateProductInput,
     ChoiceTranslation,
+    CreateProductInput,
     Product,
     ProductChoice,
     Translation,
@@ -271,23 +270,28 @@ import type {
     UpdateProductInput,
     UpdateProductRequest
 } from '~/types'
-// Local UI type: keep categoryId for form binding, map to categoryID for API
-type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryId?: string }
+import { computed, onMounted, ref, watch } from 'vue'
+import gql from 'graphql-tag'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
-import gql from 'graphql-tag'
+
+// Local UI type: keep categoryId for form binding, map to categoryID for API
+type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryId?: string }
 
 // Props and emits definition.
-const props = defineProps<{
+const {
+    product,
+    mode = 'create'
+} = defineProps<{
     product?: Product
     mode?: 'create' | 'edit'
 }>()
 
 const emit = defineEmits<{
-    (e: 'update', updatedProduct: UpdateProductRequest): void
-    (e: 'create', newProduct: CreateProductInput): void
-    (e: 'choicesChanged'): void
-    (e: 'close'): void
+    update: [updatedProduct: UpdateProductRequest]
+    create: [newProduct: CreateProductInput]
+    choicesChanged: []
+    close: []
 }>()
 
 const { t, locale } = useI18n()
@@ -297,15 +301,15 @@ const toast = useToast()
 const languages = ['fr', 'en', 'zh']
 
 // Create a copy of an existing product with exactly the languages we need.
-const createProductCopy = (product: Product): UIUpdateProductInput => {
-    const categoryId = product.category?.id || ''
+const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
+    const categoryId = sourceProduct.category?.id || ''
     const translations: TranslationInput[] = languages.map(lang => {
-        const existing = product.translations.find(t => t.language === lang)
+        const existing = sourceProduct.translations.find(tr => tr.language === lang)
         return existing
             ? { language: lang, name: existing.name, description: existing.description }
             : { language: lang, name: '', description: '' }
     })
-    return { ...product, translations, categoryId }
+    return { ...sourceProduct, translations, categoryId }
 }
 
 // Create a default product for create mode.
@@ -325,14 +329,14 @@ const createDefaultProduct = (): CreateProductInput => ({
 
 // Initialize the edited product based on mode.
 const editedProduct = ref<CreateProductInput | UIUpdateProductInput>(
-    props.mode === 'create' || !props.product
+    mode === 'create' || !product
         ? createDefaultProduct()
-        : createProductCopy(props.product)
+        : createProductCopy(product)
 )
 
 // In edit mode, update the copy if the prop changes.
-if (props.mode !== 'create') {
-    watch(() => props.product, (newVal) => {
+if (mode !== 'create') {
+    watch(() => product, (newVal) => {
         if (newVal) {
             editedProduct.value = createProductCopy(newVal)
         }
@@ -353,24 +357,24 @@ interface EditableChoice {
 }
 
 const editedChoices = ref<EditableChoice[]>(
-    props.product?.choices?.map(c => ({
+    product?.choices?.map(c => ({
         id: c.id,
         priceModifier: c.priceModifier,
         sortOrder: c.sortOrder,
         translations: languages.map(lang => {
-            const existing = c.translations?.find(t => t.locale === lang)
+            const existing = c.translations?.find(tr => tr.locale === lang)
             return { locale: lang, name: existing?.name || '' }
         })
     })) ?? []
 )
 
 const getChoiceTranslation = (choice: EditableChoice, lang: string) => {
-    let t = choice.translations.find(tr => tr.locale === lang)
-    if (!t) {
-        t = { locale: lang, name: '' }
-        choice.translations.push(t)
+    let translation = choice.translations.find(tr => tr.locale === lang)
+    if (!translation) {
+        translation = { locale: lang, name: '' }
+        choice.translations.push(translation)
     }
-    return t
+    return translation
 }
 
 const addNewChoice = () => {
@@ -395,7 +399,7 @@ const removeChoice = async (idx: number) => {
             const { mutate } = useGqlMutation<{ deleteProductChoice: boolean }>(DELETE_CHOICE)
             await mutate({ id: choice.id })
         } catch (err) {
-            console.error('Failed to delete choice:', err)
+            if (import.meta.dev) console.error('Failed to delete choice:', err)
             return
         }
     }
@@ -439,7 +443,7 @@ const saveChoices = async () => {
                     productId: props.product.id,
                     priceModifier: choice.priceModifier,
                     sortOrder: choice.sortOrder,
-                    translations: choice.translations.filter(t => t.name.trim() !== '')
+                    translations: choice.translations.filter(tr => tr.name.trim() !== '')
                 }
             })
         } else if (choice.id) {
@@ -449,7 +453,7 @@ const saveChoices = async () => {
                 input: {
                     priceModifier: choice.priceModifier,
                     sortOrder: choice.sortOrder,
-                    translations: choice.translations.filter(t => t.name.trim() !== '')
+                    translations: choice.translations.filter(tr => tr.name.trim() !== '')
                 }
             })
         }
@@ -469,10 +473,10 @@ const categoryStore = useCategoriesStore()
 const categories = computed(() => categoryStore.getCategories(locale.value))
 
 // Localized categories with the correct language name
-const localizedCategories = computed(() => {
-    return categories.value.map(cat => {
+const localizedCategories = computed(() =>
+    categories.value.map(cat => {
         // Find translation for current locale
-        const translation = cat.translations?.find(t => t.language === locale.value)
+        const translation = cat.translations?.find(tr => tr.language === locale.value)
         // Use translated name if available, otherwise fallback to default
         const localizedName = translation?.name || cat.name
         return {
@@ -482,7 +486,7 @@ const localizedCategories = computed(() => {
             translations: cat.translations
         }
     })
-})
+)
 
 const closeDialog = () => {
     dialog.value = false
@@ -503,7 +507,7 @@ const saveChanges = async () => {
 
     // French name required
     const frTranslations = editedProduct.value.translations ?? []
-    const frTranslation = frTranslations.find(t => t.language === 'fr')
+    const frTranslation = frTranslations.find(tr => tr.language === 'fr')
     if (!frTranslation?.name || frTranslation.name.trim() === '') {
         validationErrors.value.push(t('validation.frenchNameRequired'))
     }
@@ -543,7 +547,7 @@ const saveChanges = async () => {
     }
 
     // Piece count: positive integer (optional field)
-    if (editedProduct.value.pieceCount != null) {
+    if (editedProduct.value.pieceCount !== null) {
         const pc = Number(editedProduct.value.pieceCount)
         if (!Number.isInteger(pc) || pc <= 0) {
             validationErrors.value.push(t('validation.pieceCountPositive'))
@@ -570,7 +574,7 @@ const saveChanges = async () => {
     }
 
     if (props.mode === 'create') {
-        let createProductInput: CreateProductInput = editedProduct.value as CreateProductInput
+        const createProductInput: CreateProductInput = editedProduct.value as CreateProductInput
 
         if (selectedImage.value) {
             createProductInput.image = selectedImage.value
@@ -582,7 +586,7 @@ const saveChanges = async () => {
         // Save choices first
         await saveChoices()
 
-        let updateProductInput: UpdateProductInput = editedProduct.value as UpdateProductInput
+        const updateProductInput: UpdateProductInput = editedProduct.value as UpdateProductInput
 
         if (selectedImage.value) {
             updateProductInput.image = selectedImage.value
@@ -590,7 +594,7 @@ const saveChanges = async () => {
 
         const { categoryId, ...rest } = (updateProductInput as any)
         const inputForApi = categoryId ? { ...rest, categoryID: categoryId } : rest
-        let updateProductRequest: UpdateProductRequest = {
+        const updateProductRequest: UpdateProductRequest = {
             id: props.product?.id,
             input: inputForApi as UpdateProductInput
         }

@@ -5,8 +5,12 @@
  * Uses automatic printer discovery - no manual IP configuration needed.
  */
 
+import {
+  buildKitchenTicket,
+  buildOrderReceipt,
+  createTestOrder,
+} from '~/utils/receiptFormatter'
 import type { Order } from '~/types'
-import { buildOrderReceipt, buildKitchenTicket, createTestOrder } from '~/utils/receiptFormatter'
 import { generateReceiptPreview } from '~/utils/mockPrinter'
 
 export default defineNuxtPlugin(() => {
@@ -47,7 +51,7 @@ export default defineNuxtPlugin(() => {
     }
 
     // Use first discovered printer
-    const printer = printers[0]
+    const [printer] = printers
     if (import.meta.dev) console.log('Using printer:', printer.ip)
 
     // Cache for subsequent prints
@@ -66,7 +70,7 @@ export default defineNuxtPlugin(() => {
   const printReceipt = async (orderJson: string): Promise<void> => {
     // Check if printing is enabled
     if (!config.public.printer.enabled) {
-      console.warn('⚠️ Printer is disabled in configuration')
+      if (import.meta.dev) console.warn('⚠️ Printer is disabled in configuration')
       return
     }
 
@@ -79,8 +83,8 @@ export default defineNuxtPlugin(() => {
       try {
         // Attempt to print with current config
         await print(printerConfig, buildOrderReceipt(order))
-      } catch (printError) {
-        console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
+      } catch {
+        if (import.meta.dev) console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
 
         // Clear cache and retry with fresh discovery
         cachedPrinter = null
@@ -90,7 +94,7 @@ export default defineNuxtPlugin(() => {
         await print(printerConfig, buildOrderReceipt(order))
       }
     } catch (error) {
-      console.error('❌ Failed to print receipt:', error)
+      if (import.meta.dev) console.error('❌ Failed to print receipt:', error)
       throw error
     }
   }
@@ -101,7 +105,7 @@ export default defineNuxtPlugin(() => {
   const printKitchenTicket = async (orderJson: string): Promise<void> => {
     // Check if printing is enabled
     if (!config.public.printer.enabled) {
-      console.warn('⚠️ Printer is disabled in configuration')
+      if (import.meta.dev) console.warn('⚠️ Printer is disabled in configuration')
       return
     }
 
@@ -114,8 +118,8 @@ export default defineNuxtPlugin(() => {
       try {
         // Attempt to print with current config
         await print(printerConfig, buildKitchenTicket(order))
-      } catch (printError) {
-        console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
+      } catch {
+        if (import.meta.dev) console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
 
         // Clear cache and retry with fresh discovery
         cachedPrinter = null
@@ -125,7 +129,7 @@ export default defineNuxtPlugin(() => {
         await print(printerConfig, buildKitchenTicket(order))
       }
     } catch (error) {
-      console.error('❌ Failed to print kitchen ticket:', error)
+      if (import.meta.dev) console.error('❌ Failed to print kitchen ticket:', error)
       throw error
     }
   }
@@ -136,6 +140,7 @@ export default defineNuxtPlugin(() => {
   const printBoth = async (orderJson: string): Promise<void> => {
     await printKitchenTicket(orderJson)
     // Small delay between prints
+    // eslint-disable-next-line no-promise-executor-return
     await new Promise(resolve => setTimeout(resolve, 500))
     await printReceipt(orderJson)
   }

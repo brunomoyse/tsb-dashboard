@@ -23,14 +23,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useNuxtApp, useLocalePath, navigateTo } from '#imports'
-import { useI18n } from 'vue-i18n'
-import type { LoginResponse, User } from "~/types"
-import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { useAuthStore } from '@/stores/auth'
+import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { LoginResponse, User } from '~/types'
+import { navigateTo, useLocalePath, useNuxtApp } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 definePageMeta({
     public: true,
