@@ -21,14 +21,12 @@ const parsePrice = (str: string): number => {
 }
 
 /** Format a number as Belgian price (e.g. "12,50") */
-const formatPrice = (num: number): string => {
-  return num.toFixed(2).replace('.', ',')
-}
+const formatPrice = (num: number): string =>
+  num.toFixed(2).replace('.', ',')
 
 /** Format price with euro symbol */
-const formatPriceEuro = (num: number): string => {
-  return `${formatPrice(num)} \u20AC`
-}
+const formatPriceEuro = (num: number): string =>
+  `${formatPrice(num)} \u20AC`
 
 /** Format date for receipt (French locale) */
 export const formatReceiptDate = (dateString: string): string => {
@@ -55,6 +53,7 @@ export const formatReceiptTime = (dateString: string): string => {
  * Format a row with columns: Code | Name | Qty | Price
  * Layout: code(6) name(24) qty(4) price(10) = 44 + 4 spaces = 48
  */
+// eslint-disable-next-line max-params
 const formatRow = (code: string, name: string, qty: number, price: number): string => {
   const codeCol = (code || '').padEnd(7)
   const priceStr = formatPrice(price)
@@ -82,8 +81,8 @@ const formatCategoryHeader = (name: string): string => {
 }
 
 /** Sort items by code: prefix letter first, then number */
-const sortByCode = (items: OrderProduct[]): OrderProduct[] => {
-  return [...items].sort((a, b) => {
+const sortByCode = (items: OrderProduct[]): OrderProduct[] =>
+  [...items].sort((a, b) => {
     const codeA = a.product.code || ''
     const codeB = b.product.code || ''
     // Extract letter prefix and numeric part
@@ -94,9 +93,8 @@ const sortByCode = (items: OrderProduct[]): OrderProduct[] => {
     const prefixCmp = (matchA[1] || '').localeCompare(matchB[1] || '')
     if (prefixCmp !== 0) return prefixCmp
     // Then numeric part
-    return (parseInt(matchA[2]) || 0) - (parseInt(matchB[2]) || 0)
+    return (parseInt(matchA[2], 10) || 0) - (parseInt(matchB[2], 10) || 0)
   })
-}
 
 /** Group items by category name */
 const groupByCategory = (items: OrderProduct[]): Map<string, OrderProduct[]> => {
@@ -120,7 +118,7 @@ const mapExtraLabel = (name: string | null, options: string[] | null): string[] 
 
   if (lowerName === 'chopsticks' || lowerName === 'baguettes') {
     for (const opt of options) {
-      const qty = parseInt(opt)
+      const qty = parseInt(opt, 10)
       if (!isNaN(qty) && qty > 0) {
         labels.push(`Baguettes: ${qty}`)
       }
@@ -337,16 +335,14 @@ const addClientFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
 /**
  * Build complete receipt for an order (CLIENT COPY)
  */
-export const buildOrderReceipt = (order: Order) => {
-  return (cmd: EpsonPrinterCommands) => {
-    addClientHeader(cmd)
-    addClientOrderInfo(cmd, order)
-    addClientItems(cmd, order)
-    addClientExtras(cmd, order)
-    addClientTotals(cmd, order)
-    addClientFooter(cmd, order)
-    cmd.addCut()
-  }
+export const buildOrderReceipt = (order: Order) => (cmd: EpsonPrinterCommands) => {
+  addClientHeader(cmd)
+  addClientOrderInfo(cmd, order)
+  addClientItems(cmd, order)
+  addClientExtras(cmd, order)
+  addClientTotals(cmd, order)
+  addClientFooter(cmd, order)
+  cmd.addCut()
 }
 
 // --- Kitchen Ticket ---
@@ -471,15 +467,13 @@ const addKitchenFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
 /**
  * Build kitchen ticket for an order (KITCHEN COPY)
  */
-export const buildKitchenTicket = (order: Order) => {
-  return (cmd: EpsonPrinterCommands) => {
-    addKitchenHeader(cmd, order)
-    addKitchenOrderInfo(cmd, order)
-    addKitchenItems(cmd, order)
-    addKitchenExtras(cmd, order)
-    addKitchenFooter(cmd, order)
-    cmd.addCut()
-  }
+export const buildKitchenTicket = (order: Order) => (cmd: EpsonPrinterCommands) => {
+  addKitchenHeader(cmd, order)
+  addKitchenOrderInfo(cmd, order)
+  addKitchenItems(cmd, order)
+  addKitchenExtras(cmd, order)
+  addKitchenFooter(cmd, order)
+  cmd.addCut()
 }
 
 // --- Test Order ---
@@ -487,6 +481,7 @@ export const buildKitchenTicket = (order: Order) => {
 /**
  * Create a test order for printer testing
  */
+// eslint-disable-next-line arrow-body-style
 export const createTestOrder = (): Order => {
   return {
     id: 'test-12345',

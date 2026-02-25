@@ -1,24 +1,24 @@
-// composables/useGqlSubscription.ts
-import { ref, onScopeDispose } from 'vue'
-import { print, type DocumentNode } from 'graphql'
-import { useRuntimeConfig, useCookie } from '#imports'
+// Composables/useGqlSubscription.ts
+import { type DocumentNode, print } from 'graphql'
+import { onScopeDispose, ref } from 'vue'
+import { useCookie, useRuntimeConfig } from '#imports'
 import type { Client } from 'graphql-ws'
 
 let wsClient: Client | null = null
 let wsClientPromise: Promise<Client> | null = null
 
-async function getWsClient(): Promise<Client> {
-    if (wsClient) return wsClient
+const getWsClient = (): Promise<Client> => {
+    if (wsClient) return Promise.resolve(wsClient)
     if (!wsClientPromise) {
         wsClientPromise = import('graphql-ws').then(({ createClient }) => {
             const cfg = useRuntimeConfig()
             const client = createClient({
-                url:              cfg.public.graphqlWs as string,
+                url: cfg.public.graphqlWs as string,
                 connectionParams: () => {
                     const token = useCookie('access_token').value
                     return token ? { Authorization: `Bearer ${token}` } : {}
                 },
-                retryAttempts:    Infinity,
+                retryAttempts: Infinity,
             })
             wsClient = client
             return client
@@ -36,58 +36,58 @@ export function useGqlSubscription<T = any>(
     let stop: () => void = () => {}
 
     // --------------------------------------------------
-    // track if we’ve genuinely gone offline
+    // Track if we've genuinely gone offline
     let wentOffline = false
 
-    function handleOffline() {
+    const handleOffline = () => {
         wentOffline = true
-        error.value  = new Error('Lost internet connection')
+        error.value = new Error('Lost internet connection')
         stop()
     }
 
-    function handleOnline() {
+    const handleOnline = () => {
         if (!wentOffline) return
-        // only reload if we truly were offline
+        // Only reload if we truly were offline
         window.location.reload()
     }
     // --------------------------------------------------
 
     if (import.meta.client) {
-        // initial subscription
+        // Initial subscription
         getWsClient()
-            .then(client => {
+            .then((client) => {
                 stop = client.subscribe(
                     {
-                        query:     typeof rawSub === 'string' ? rawSub : print(rawSub),
+                        query: typeof rawSub === 'string' ? rawSub : print(rawSub),
                         variables,
                     },
                     {
-                        next:    msg => {
+                        next: (msg) => {
                             if (msg.data !== undefined) data.value = msg.data as T
                         },
-                        error:   e => {
+                        error: (e) => {
                             error.value = e instanceof Error ? e : new Error(String(e))
                         },
                         complete: () => {},
                     }
                 )
             })
-            .catch(e => {
+            .catch((e) => {
                 error.value = e instanceof Error ? e : new Error(String(e))
             })
 
-        // listen for real offline/online transitions
+        // Listen for real offline/online transitions
         window.addEventListener('offline', handleOffline)
-        window.addEventListener('online',  handleOnline)
+        window.addEventListener('online', handleOnline)
     }
 
     onScopeDispose(() => {
         stop()
         window.removeEventListener('offline', handleOffline)
-        window.removeEventListener('online',  handleOnline)
+        window.removeEventListener('online', handleOnline)
     })
 
-    function closeAll() {
+    const closeAll = () => {
         wsClient?.dispose()
         wsClient = null
         wsClientPromise = null

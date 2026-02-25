@@ -223,13 +223,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useCategoriesStore, useGqlQuery, useGqlMutation, useGqlSubscription, useNuxtApp } from '#imports'
-import { useI18n } from 'vue-i18n'
 import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useCategoriesStore, useGqlMutation, useGqlQuery, useGqlSubscription, useNuxtApp } from '#imports'
 import ProductDialog from '~/components/ProductDialog.vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { useI18n } from 'vue-i18n'
 
 const { $api } = useNuxtApp()
 const config = useRuntimeConfig()
@@ -241,7 +241,7 @@ const toast = useToast()
 
 // Helper: Check if a translation is complete.
 const hasTranslation = (product: Product, lang: string) => {
-  const translation = product.translations.find(t => t.language === lang)
+  const translation = product.translations.find(tr => tr.language === lang)
   return translation && translation.name && translation.name.trim() !== ''
 }
 
@@ -574,7 +574,7 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
       }
     }
   } catch (err) {
-    console.error(`Toggle ${field} failed:`, err)
+    if (import.meta.dev) console.error(`Toggle ${field} failed:`, err)
     toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   } finally {
     togglingField.value = null
@@ -626,7 +626,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
       })
 
       if (res.errors?.length) {
-        console.error('GraphQL errors:', res.errors)
+        if (import.meta.dev) console.error('GraphQL errors:', res.errors)
         return
       }
 
@@ -647,7 +647,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
 
     createDialog.value = false
   } catch (err) {
-    console.error('handleCreate failed:', err)
+    if (import.meta.dev) console.error('handleCreate failed:', err)
   }
 }
 
@@ -687,7 +687,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
       })
 
       if (res.errors?.length) {
-        console.error('GraphQL errors:', res.errors)
+        if (import.meta.dev) console.error('GraphQL errors:', res.errors)
         return
       }
 
@@ -713,7 +713,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
     selectedProduct.value = null
   } catch (err) {
-    console.error('handleUpdate failed:', err)
+    if (import.meta.dev) console.error('handleUpdate failed:', err)
   }
 }
 

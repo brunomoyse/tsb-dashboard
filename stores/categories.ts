@@ -1,5 +1,5 @@
-import {defineStore} from "pinia";
-import type {ProductCategory} from "@/types";
+import type { ProductCategory } from '@/types'
+import { defineStore } from 'pinia'
 
 export const useCategoriesStore = defineStore("categories", {
     state: () => ({
@@ -10,7 +10,7 @@ export const useCategoriesStore = defineStore("categories", {
             const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base' });
             this.categories.sort((a, b) => {
                 if (locale === 'zh') {
-                    return collator.compare(a.translations?.find(t => t.language === locale)?.name || '', b.translations?.find(t => t.language === locale)?.name || '');
+                    return collator.compare(a.translations?.find(tr => tr.language === locale)?.name || '', b.translations?.find(tr => tr.language === locale)?.name || '');
                 }
                 // Otherwise, do a regular string comparison
                 return a.name.localeCompare(b.name);

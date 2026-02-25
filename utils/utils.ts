@@ -27,7 +27,7 @@ export function getStreetAndDistance(address: Address | null): string {
     return `${streetName} ${houseNumber} (${formattedKm} km)`;
 }
 
-export const formatDate = (dateString: string, locale: string = 'fr-BE') =>
+export const formatDate = (dateString: string, locale = 'fr-BE') =>
     new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
         year: "numeric",
         month: "short",
@@ -36,14 +36,14 @@ export const formatDate = (dateString: string, locale: string = 'fr-BE') =>
         minute: "2-digit"
     }).format(new Date(dateString));
 
-export const formatTimeOnly = (dateString: string, locale: string = 'fr-BE') => {
+export const formatTimeOnly = (dateString: string, locale = 'fr-BE') => {
     try {
         const date = new Date(dateString);
 
         // Validate date before formatting
         if (isNaN(date.getTime())) {
-            console.error('Invalid date string:', dateString);
-            return '--:--';
+            if (import.meta.dev) console.error('Invalid date string:', dateString)
+            return '--:--'
         }
 
         return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
@@ -51,8 +51,8 @@ export const formatTimeOnly = (dateString: string, locale: string = 'fr-BE') => 
             minute: "2-digit"
         }).format(date);
     } catch (e) {
-        console.error('Date formatting error:', e);
-        return '--:--';
+        if (import.meta.dev) console.error('Date formatting error:', e)
+        return '--:--'
     }
 };
 
@@ -63,16 +63,14 @@ export const belPriceFormat = new Intl.NumberFormat('fr-BE', {
     currency: "EUR",
 })
 
-export const formatPrice = (price: number | string): string => {
-    return belPriceFormat.format(Number(price));
-}
+export const formatPrice = (price: number | string): string =>
+    belPriceFormat.format(Number(price));
 
 /**
  * Pads a number to 2 digits.
  */
-function pad2(n: number): string {
-    return n.toString().padStart(2, '0');
-}
+const pad2 = (n: number): string =>
+    n.toString().padStart(2, '0');
 
 /**
  * Formats a Date as an RFC3339 string with local timezone offset.
@@ -80,7 +78,7 @@ function pad2(n: number): string {
  * @param date - the Date to format
  * @returns yyyy-MM-ddTHH:mm:ss±HH:MM
  */
-function formatRFC3339Local(date: Date): string {
+const formatRFC3339Local = (date: Date): string => {
     const year   = date.getFullYear();
     const month  = pad2(date.getMonth() + 1);
     const day    = pad2(date.getDate());
@@ -88,7 +86,7 @@ function formatRFC3339Local(date: Date): string {
     const minute = pad2(date.getMinutes());
     const second = pad2(date.getSeconds());
 
-    // timezone offset in minutes: positive if behind UTC
+    // Timezone offset in minutes: positive if behind UTC
     const tzOffsetMin = -date.getTimezoneOffset();
     const sign = tzOffsetMin >= 0 ? '+' : '-';
     const absOffset = Math.abs(tzOffsetMin);
@@ -105,7 +103,7 @@ function formatRFC3339Local(date: Date): string {
  * @param timeStr - time in "HH:mm" format
  * @returns RFC3339 timestamp string
  */
-export function timeToRFC3339(timeStr: string): string {
+export const timeToRFC3339 = (timeStr: string): string => {
     const [h, m] = timeStr.split(':').map(Number);
     const now = new Date();
     now.setHours(h, m, 0, 0);

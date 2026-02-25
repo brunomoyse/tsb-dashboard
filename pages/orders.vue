@@ -611,12 +611,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { formatDate, formatTimeOnly, timeToRFC3339, formatPrice } from '~/utils/utils'
 import type { Order, OrderStatus, OrderType } from '~/types'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { formatDate, formatPrice, formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -649,7 +649,7 @@ const completedFilterDate = ref<string>(new Date().toISOString().slice(0, 10))
 
 const completedFilterLabel = computed(() => {
   const today = new Date().toISOString().slice(0, 10)
-  const date = new Date(completedFilterDate.value + 'T12:00:00')
+  const date = new Date(`${completedFilterDate.value}T12:00:00`)
   if (completedFilterDate.value === today) {
     return new Intl.DateTimeFormat(locale.value, { weekday: 'short' }).format(date)
   }
@@ -659,7 +659,7 @@ const completedFilterLabel = computed(() => {
 const isCompletedFilterToday = computed(() => completedFilterDate.value === new Date().toISOString().slice(0, 10))
 
 const shiftCompletedDate = (days: number) => {
-  const d = new Date(completedFilterDate.value + 'T12:00:00')
+  const d = new Date(`${completedFilterDate.value}T12:00:00`)
   d.setDate(d.getDate() + days)
   completedFilterDate.value = d.toISOString().slice(0, 10)
 }
@@ -726,7 +726,7 @@ const onColumnDragLeave = () => {
   dragOverColumnKey.value = null
 }
 
-const onColumnDrop = async (e: DragEvent, column: KanbanColumnDef) => {
+const onColumnDrop = (e: DragEvent, column: KanbanColumnDef) => {
   e.preventDefault()
   dragOverColumnKey.value = null
   if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
@@ -742,7 +742,7 @@ const touchDragJustEnded = ref(false)
 
 const onDocTouchMove = (e: TouchEvent) => {
   e.preventDefault()
-  const touch = e.touches[0]
+  const [touch] = e.touches
 
   // Find which column the finger is over
   const el = document.elementFromPoint(touch.clientX, touch.clientY)
@@ -768,7 +768,7 @@ const onDocTouchEnd = (e: TouchEvent) => {
   if (!draggedOrder.value) return
 
   // Find drop target
-  const touch = e.changedTouches[0]
+  const [touch] = e.changedTouches
   const el = document.elementFromPoint(touch.clientX, touch.clientY)
   const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
 
@@ -828,9 +828,8 @@ onUnmounted(() => {
   document.removeEventListener('touchcancel', onDocTouchEnd)
 })
 
-const isActiveStatus = (status: OrderStatus): boolean => {
-  return ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
-}
+const isActiveStatus = (status: OrderStatus): boolean =>
+  ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
 
 const getTimeSince = (createdAt: string): { text: string; color: string } => {
   const created = new Date(createdAt)
@@ -972,9 +971,9 @@ const newEstimatedTime = computed(() => {
   return formatTimeOnly(newTime.toISOString(), locale.value)
 })
 
-const canSave = computed(() => {
-  return stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value
-})
+const canSave = computed(() =>
+  stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value
+)
 
 // GraphQL Queries and Mutations
 const ORDERS_QUERY = gql`
@@ -1287,7 +1286,7 @@ const openOrderDetails = (order: Order) => {
       initialSliderValue.value = 0
     }
   } catch (e) {
-    console.error('Error initializing time:', e)
+    if (import.meta.dev) console.error('Error initializing time:', e)
     baseEstimatedTime.value = new Date()
     sliderDeltaMinutes.value = 0
     initialSliderValue.value = 0
@@ -1312,7 +1311,7 @@ const updateOrder = async (newStatus?: OrderStatus) => {
     return
   }
 
-  let status = newStatus
+  const status = newStatus
   let estimatedReadyTime: string | undefined
 
   if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
@@ -1333,14 +1332,13 @@ const updateOrder = async (newStatus?: OrderStatus) => {
     ordersStore.updateOrder(res.updateOrder)
     showOrderDetails.value = false
   } catch (error) {
-    console.error('Update failed:', error)
+    if (import.meta.dev) console.error('Update failed:', error)
     toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
 }
 
-const formatOrderSummary = (order: Order) => {
-  return order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
-}
+const formatOrderSummary = (order: Order) =>
+  order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
 
 const printReceipt = async () => {
   if (!selectedOrder.value) return
@@ -1351,7 +1349,7 @@ const printReceipt = async () => {
   try {
     await $printer.print(encodedOrder)
   } catch (error) {
-    console.error('Print failed:', error)
+    if (import.meta.dev) console.error('Print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
@@ -1365,7 +1363,7 @@ const printKitchen = async () => {
   try {
     await $printer.printKitchen(encodedOrder)
   } catch (error) {
-    console.error('Kitchen print failed:', error)
+    if (import.meta.dev) console.error('Kitchen print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
@@ -1379,7 +1377,7 @@ const printBoth = async () => {
   try {
     await $printer.printBoth(encodedOrder)
   } catch (error) {
-    console.error('Print both failed:', error)
+    if (import.meta.dev) console.error('Print both failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
@@ -1387,7 +1385,7 @@ const printBoth = async () => {
 const notificationSound = () => {
   if (typeof window !== 'undefined' && 'SoundHandler' in window) {
     (window as any).SoundHandler.playNotificationSound()
-  } else {
+  } else if (import.meta.dev) {
     console.error('SoundHandler not available')
   }
 }
@@ -1443,7 +1441,7 @@ const markAsPaid = async () => {
       }
     })
   } catch (error) {
-    console.error('Failed to update payment status:', error)
+    if (import.meta.dev) console.error('Failed to update payment status:', error)
     toast.add({ title: t('orders.errors.paymentUpdateFailed'), color: 'error' })
   } finally {
     isUpdatingPayment.value = false

@@ -1,5 +1,5 @@
-// middleware/auth.global.ts
-import { defineNuxtRouteMiddleware, useRequestEvent, navigateTo, useRuntimeConfig, useCookie} from 'nuxt/app'
+// Middleware/auth.global.ts
+import { defineNuxtRouteMiddleware, navigateTo, useCookie, useRequestEvent, useRuntimeConfig } from 'nuxt/app'
 import { useAuthStore } from '@/stores/auth'
 import { useLocalePath } from "#imports";
 
@@ -82,8 +82,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 })
 
-// utils/jwt.ts
-function checkTokenExpiration(token: string): boolean {
+// Utils/jwt.ts
+const checkTokenExpiration = (token: string): boolean => {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]!))
         return payload.exp * 1000 > Date.now()
@@ -93,8 +93,8 @@ function checkTokenExpiration(token: string): boolean {
 }
 
 
-// Simplified cookie helper functions
-function parseCookies(cookieHeader: string): Record<string, string> {
+// Simplified Cookie helper functions
+const parseCookies = (cookieHeader: string): Record<string, string> => {
     if (!cookieHeader) return {}
     return cookieHeader.split(';').reduce((cookies, item) => {
         const idx = item.indexOf('=')

@@ -89,11 +89,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useNuxtApp, useGqlSubscription } from '#imports'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useGqlSubscription, useNuxtApp } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { $gqlFetch } = useNuxtApp()

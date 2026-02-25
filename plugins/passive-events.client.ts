@@ -1,6 +1,7 @@
 export default defineNuxtPlugin(() => {
     const originalAddEventListener = EventTarget.prototype.addEventListener
 
+    // eslint-disable-next-line func-names, no-extend-native
     EventTarget.prototype.addEventListener = function (
         type: string,
         listener: EventListenerOrEventListenerObject,

@@ -26,8 +26,8 @@ export const useEpsonPrinter = () => {
   /**
    * Wait for Epson SDK to be loaded from CDN
    */
-  const waitForSdk = (): Promise<void> => {
-    return new Promise((resolve) => {
+  const waitForSdk = (): Promise<void> =>
+    new Promise((resolve) => {
       if (typeof window !== 'undefined' && window.epson) {
         resolve()
         return
@@ -43,18 +43,16 @@ export const useEpsonPrinter = () => {
       // Timeout after 10 seconds
       setTimeout(() => {
         clearInterval(checkInterval)
-        console.warn('Epson SDK not loaded after 10 seconds')
+        if (import.meta.dev) console.warn('Epson SDK not loaded after 10 seconds')
         resolve()
       }, 10000)
     })
-  }
 
   /**
    * Check if SDK is available
    */
-  const isSdkAvailable = (): boolean => {
-    return typeof window !== 'undefined' && !!window.epson
-  }
+  const isSdkAvailable = (): boolean =>
+    typeof window !== 'undefined' && Boolean(window.epson)
 
   /**
    * Connect to Epson printer
@@ -66,6 +64,7 @@ export const useEpsonPrinter = () => {
       throw new Error('Epson SDK not available')
     }
 
+    // eslint-disable-next-line new-cap
     const ePosDev = new window.epson!.ePOSDevice()
     const port = config.port || 8008
 
@@ -83,8 +82,8 @@ export const useEpsonPrinter = () => {
   /**
    * Create printer device object
    */
-  const createPrinter = async (ePosDev: any, deviceId: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
+  const createPrinter = (ePosDev: any, deviceId: string): Promise<any> =>
+    new Promise((resolve, reject) => {
       ePosDev.createDevice(
         deviceId,
         ePosDev.DEVICE_TYPE_PRINTER,
@@ -98,13 +97,12 @@ export const useEpsonPrinter = () => {
         }
       )
     })
-  }
 
   /**
    * Send print job to printer
    */
-  const send = async (printer: any, timeout: number = 30000): Promise<void> => {
-    return new Promise((resolve, reject) => {
+  const send = (printer: any, timeout = 30000): Promise<void> =>
+    new Promise((resolve, reject) => {
       let settled = false
 
       const timer = setTimeout(() => {
@@ -134,7 +132,6 @@ export const useEpsonPrinter = () => {
 
       printer.send()
     })
-  }
 
   /**
    * Disconnect from printer
@@ -150,25 +147,26 @@ export const useEpsonPrinter = () => {
    * @param timeout - Discovery timeout in milliseconds (default: 5000)
    * @returns Array of discovered printers with their IP addresses
    */
-  const discoverPrinters = async (timeout: number = 5000): Promise<Array<{
+  const discoverPrinters = async (timeout = 5000): Promise<{
     ip: string
     deviceId: string
     macAddress: string
     port: number
-  }>> => {
+  }[]> => {
     await waitForSdk()
 
     if (!isSdkAvailable()) {
       throw new Error('Epson SDK not available')
     }
 
+    // eslint-disable-next-line new-cap
     const ePosDev = new window.epson!.ePOSDevice()
-    const discoveredPrinters: Array<{
+    const discoveredPrinters: {
       ip: string
       deviceId: string
       macAddress: string
       port: number
-    }> = []
+    }[] = []
 
     return new Promise((resolve, reject) => {
       // Set up discovery callbacks
@@ -189,7 +187,7 @@ export const useEpsonPrinter = () => {
       }
 
       ePosDev.ondiscoveryerror = (error: string) => {
-        console.error('Discovery error:', error)
+        if (import.meta.dev) console.error('Discovery error:', error)
         ePosDev.stopDiscovery()
         reject(new Error(`Discovery failed: ${error}`))
       }
@@ -267,7 +265,7 @@ export const useEpsonPrinter = () => {
 
       if (import.meta.dev) console.log('Print job completed successfully')
     } catch (error) {
-      console.error('Print error:', error)
+      if (import.meta.dev) console.error('Print error:', error)
       throw error
     } finally {
       // Always disconnect

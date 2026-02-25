@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
 import type { Order } from '@/types'
+import { defineStore } from 'pinia'
 
 export const useOrdersStore = defineStore('orders', {
     state: () => ({
