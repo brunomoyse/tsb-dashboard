@@ -26,6 +26,7 @@
   "devDependencies": {
     "@nuxt/test-utils": "^4.0.0",
     "@nuxtjs/i18n": "^10.2.3",
+    "@types/node": "^24.10.14",
     "oxlint": "^1.50.0",
     "tailwindcss": "^4.2.1",
     "vitest": "^4.0.18"
