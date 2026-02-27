@@ -1,4 +1,5 @@
 <template>
+  <div>
   <div class="p-4 sm:p-6">
     <!-- Page Header -->
     <div class="mb-6 flex items-center justify-between">
@@ -18,6 +19,7 @@
     <div class="mb-4 flex flex-col sm:flex-row gap-3">
       <UInput
         v-model="searchQuery"
+        name="search-products"
         icon="i-lucide-search"
         :placeholder="t('products.search')"
         size="lg"
@@ -25,6 +27,7 @@
       />
       <USelectMenu
         v-model="selectedCategoryId"
+        name="category-filter"
         :items="categoryFilterItems"
         value-key="id"
         label-key="name"
@@ -44,7 +47,7 @@
           th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
           td: 'py-3 px-4'
         }"
-        @select="(_e: Event, row: any) => openEditDialog(row.original)"
+        @select="onRowSelect"
       >
         <!-- Product name + image -->
         <template #name-cell="{ row }">
@@ -76,7 +79,7 @@
 
         <!-- Price -->
         <template #price-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums">{{ belPriceFormat.format(Number(row.original.price)) }}</span>
+          <span class="text-sm font-semibold tabular-nums" data-allow-mismatch="text">{{ belPriceFormat.format(Number(row.original.price)) }}</span>
         </template>
 
         <!-- Pieces -->
@@ -202,24 +205,23 @@
     </div>
   </div>
 
-  <!-- Modals -->
-  <Teleport to="body">
-    <ProductDialog
-      v-if="createDialog"
-      mode="create"
-      @create="handleCreate"
-      @close="createDialog = false"
-    />
+  <!-- Modals (UModal handles its own teleport) -->
+  <ProductDialog
+    v-if="createDialog"
+    mode="create"
+    @create="handleCreate"
+    @close="createDialog = false"
+  />
 
-    <ProductDialog
-      v-if="selectedProduct"
-      :product="selectedProduct"
-      mode="edit"
-      @update="handleUpdate"
-      @choices-changed="handleChoicesChanged"
-      @close="selectedProduct = null"
-    />
-  </Teleport>
+  <ProductDialog
+    v-if="selectedProduct"
+    :product="selectedProduct"
+    mode="edit"
+    @update="handleUpdate"
+    @choices-changed="handleChoicesChanged"
+    @close="selectedProduct = null"
+  />
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -387,7 +389,7 @@ const CREATE_PRODUCT_MUTATION = gql`
 `
 
 const UPDATE_PRODUCT_MUTATION = gql`
-  mutation ($id: ID!, $input: CreateProductInput!) {
+  mutation ($id: ID!, $input: UpdateProductInput!) {
     updateProduct(id: $id, input: $input) {
       id
       price
@@ -581,6 +583,11 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
   }
 }
 
+// Row select handler for UTable
+const onRowSelect = (_e: Event, row: any) => {
+  openEditDialog(row.original)
+}
+
 // Open the edit dialog
 const openEditDialog = (product: Product) => {
   selectedProduct.value = product
@@ -627,6 +634,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
 
       if (res.errors?.length) {
         if (import.meta.dev) console.error('GraphQL errors:', res.errors)
+        toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
         return
       }
 
@@ -648,6 +656,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
     createDialog.value = false
   } catch (err) {
     if (import.meta.dev) console.error('handleCreate failed:', err)
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
 }
 
@@ -688,6 +697,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
       if (res.errors?.length) {
         if (import.meta.dev) console.error('GraphQL errors:', res.errors)
+        toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
         return
       }
 
@@ -714,6 +724,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
     selectedProduct.value = null
   } catch (err) {
     if (import.meta.dev) console.error('handleUpdate failed:', err)
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
 }
 

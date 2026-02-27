@@ -200,6 +200,14 @@
   },
 
   "login": {
+    "title": "欢迎回来",
+    "subtitle": "登录以管理您的餐厅",
+    "email": "电子邮件地址",
+    "emailPlaceholder": "you{'@'}example.com",
+    "password": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "submit": "登录",
+    "invalidCredentials": "邮箱或密码无效",
     "accessDenied": "访问被拒绝。只有管理员可以访问仪表板。"
   },
 

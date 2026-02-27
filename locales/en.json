@@ -199,6 +199,14 @@
   },
 
   "login": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to manage your restaurant",
+    "email": "Email address",
+    "emailPlaceholder": "you{'@'}example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "submit": "Sign in",
+    "invalidCredentials": "Invalid email or password",
     "accessDenied": "Access denied. Only administrators can access the dashboard."
   },
 

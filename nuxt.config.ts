@@ -8,9 +8,9 @@ const s3Url = process.env.S3_BUCKET_URL
 const csp = `${[
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     `connect-src 'self' ${apiOrigin} ${wsOrigin}`,
 ].join('; ')};`
 
