@@ -14,8 +14,8 @@
           <!-- Decorative vertical line -->
           <div class="login-accent-line" />
 
-          <!-- Japanese decorative text (vertical) -->
-          <p class="login-jp-text">東京寿司</p>
+          <!-- Decorative text (vertical) -->
+          <p class="login-jp-text">Tokyo Sushi</p>
 
           <!-- Main branding -->
           <div class="login-brand-content">
