@@ -200,6 +200,14 @@
   },
 
   "login": {
+    "title": "Bienvenue",
+    "subtitle": "Connectez-vous pour gérer votre restaurant",
+    "email": "Adresse e-mail",
+    "emailPlaceholder": "vous{'@'}exemple.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "submit": "Se connecter",
+    "invalidCredentials": "E-mail ou mot de passe invalide",
     "accessDenied": "Accès refusé. Seuls les administrateurs peuvent accéder au tableau de bord."
   },
 

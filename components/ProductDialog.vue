@@ -159,7 +159,7 @@
         </div>
 
         <!-- Row 4: Product Choices (edit mode only) -->
-        <div v-if="props.mode === 'edit' && props.product" class="space-y-3">
+        <div v-if="mode === 'edit' && product" class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-medium">{{ t('products.choices.title') }}</h3>
             <UButton
@@ -309,7 +309,19 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
             ? { language: lang, name: existing.name, description: existing.description }
             : { language: lang, name: '', description: '' }
     })
-    return { ...sourceProduct, translations, categoryId }
+    return {
+        categoryId,
+        code: sourceProduct.code ?? null,
+        isAvailable: sourceProduct.isAvailable,
+        isDiscountable: sourceProduct.isDiscountable,
+        isHalal: sourceProduct.isHalal,
+        isSpicy: sourceProduct.isSpicy,
+        isVegan: sourceProduct.isVegan,
+        isVisible: sourceProduct.isVisible,
+        pieceCount: sourceProduct.pieceCount ?? null,
+        price: sourceProduct.price,
+        translations
+    }
 }
 
 // Create a default product for create mode.
@@ -408,7 +420,7 @@ const removeChoice = async (idx: number) => {
 }
 
 const saveChoices = async () => {
-    if (!props.product?.id) return
+    if (!product?.id) return
 
     const CREATE_CHOICE = gql`
       mutation ($input: CreateProductChoiceInput!) {
@@ -440,7 +452,7 @@ const saveChoices = async () => {
             const { mutate } = useGqlMutation<{ createProductChoice: ProductChoice }>(CREATE_CHOICE)
             await mutate({
                 input: {
-                    productId: props.product.id,
+                    productId: product!.id,
                     priceModifier: choice.priceModifier,
                     sortOrder: choice.sortOrder,
                     translations: choice.translations.filter(tr => tr.name.trim() !== '')
@@ -555,7 +567,7 @@ const saveChanges = async () => {
     }
 
     // Choice validation (edit mode only)
-    if (props.mode === 'edit') {
+    if (mode === 'edit') {
         for (let i = 0; i < editedChoices.value.length; i++) {
             const choice = editedChoices.value[i]
             const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
@@ -573,7 +585,7 @@ const saveChanges = async () => {
         return
     }
 
-    if (props.mode === 'create') {
+    if (mode === 'create') {
         const createProductInput: CreateProductInput = editedProduct.value as CreateProductInput
 
         if (selectedImage.value) {
@@ -581,7 +593,7 @@ const saveChanges = async () => {
         }
         emit('create', createProductInput)
     } else {
-        if (!props.product?.id) return
+        if (!product?.id) return
 
         // Save choices first
         await saveChoices()
@@ -595,28 +607,27 @@ const saveChanges = async () => {
         const { categoryId, ...rest } = (updateProductInput as any)
         const inputForApi = categoryId ? { ...rest, categoryID: categoryId } : rest
         const updateProductRequest: UpdateProductRequest = {
-            id: props.product?.id,
+            id: product!.id,
             input: inputForApi as UpdateProductInput
         }
 
         emit('update', updateProductRequest)
     }
-    closeDialog()
 }
 
 const dialogTitle = computed(() =>
-    props.mode === 'create' ? t('products.add') : t('products.edit')
+    mode === 'create' ? t('products.add') : t('products.edit')
 )
 const saveLabel = computed(() =>
-    props.mode === 'create' ? t('common.create') : t('common.save')
+    mode === 'create' ? t('common.create') : t('common.save')
 )
 
 // ----- Image Preview / Upload Section -----
 const config = useRuntimeConfig()
 // Compute the image URL based on the product slug.
 const imageUrl = computed(() =>
-    props.product?.slug
-        ? `${config.public.s3bucketUrl}/images/thumbnails/${props.product.slug}.png`
+    product?.slug
+        ? `${config.public.s3bucketUrl}/images/thumbnails/${product.slug}.png`
         : ''
 )
 
