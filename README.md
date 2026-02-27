@@ -51,6 +51,14 @@ npm run dev
 npm run build
 ```
 
+## Linting
+
+```bash
+npm run lint
+```
+
+Uses oxlint with typescript and vue plugins.
+
 ## Docker
 
 ```bash
@@ -59,3 +67,18 @@ docker run --name tsb-dashboard --env-file .env -p 3000:3000 tsb-dashboard
 ```
 
 Multi-stage Dockerfile with health check. Supports multi-arch builds (AMD64/ARM64).
+
+## Deployment
+
+### Release
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+Triggers a GitHub Actions workflow that builds a `:production` + `:v1.0.0` AMD64 image with production URLs baked in, and deploys to the production server via SSH.
+
+### Rollback
+Go to the Actions tab → "Run workflow" → enter the version to rollback to (e.g. `v1.0.0`).
+
+### Test
+Push to `main` automatically builds a `:latest` multi-arch image and deploys to the home server.
