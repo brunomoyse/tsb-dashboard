@@ -169,6 +169,8 @@ export interface Customer {
 
 export interface LoginResponse {
     user: User;
+    accessToken?: string;
+    refreshToken?: string;
 }
 
 export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
