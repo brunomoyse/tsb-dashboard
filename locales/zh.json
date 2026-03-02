@@ -151,6 +151,7 @@
     "value": "值",
     "minOrder": "最低订单",
     "maxUses": "最大使用次数",
+    "maxUsesPerUser": "每用户最大使用次数",
     "used": "已使用",
     "active": "激活",
     "validFrom": "有效期从",

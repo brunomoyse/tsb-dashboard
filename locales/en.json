@@ -150,6 +150,7 @@
     "value": "Value",
     "minOrder": "Min Order",
     "maxUses": "Max Uses",
+    "maxUsesPerUser": "Max Uses / User",
     "used": "Used",
     "active": "Active",
     "validFrom": "Valid From",
