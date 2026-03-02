@@ -151,6 +151,7 @@
     "value": "Valeur",
     "minOrder": "Commande min.",
     "maxUses": "Utilisations max.",
+    "maxUsesPerUser": "Utilisations max. / utilisateur",
     "used": "Utilisé",
     "active": "Actif",
     "validFrom": "Valide à partir de",

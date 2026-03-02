@@ -67,6 +67,10 @@
           <span class="text-sm tabular-nums text-muted">{{ row.original.maxUses ?? t('coupons.unlimited') }}</span>
         </template>
 
+        <template #maxUsesPerUser-cell="{ row }">
+          <span class="text-sm tabular-nums text-muted">{{ row.original.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
+        </template>
+
         <template #usedCount-cell="{ row }">
           <span class="text-sm tabular-nums text-muted">{{ row.original.usedCount }}</span>
         </template>
@@ -184,6 +188,12 @@
               <UInput v-model="form.maxUses" type="number" min="0" :placeholder="t('coupons.unlimited')" />
             </div>
 
+            <!-- Max Uses Per User -->
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ t('coupons.maxUsesPerUser') }}</label>
+              <UInput v-model="form.maxUsesPerUser" type="number" min="0" :placeholder="t('coupons.unlimited')" />
+            </div>
+
             <!-- Active -->
             <div class="flex items-center gap-2">
               <UCheckbox v-model="form.isActive" />
@@ -250,6 +260,7 @@ const columns = computed(() => [
   { accessorKey: 'discountValue', header: t('coupons.value') },
   { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'maxUses', header: t('coupons.maxUses'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'maxUsesPerUser', header: t('coupons.maxUsesPerUser'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'usedCount', header: t('coupons.used'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'isActive', header: t('coupons.active'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'validPeriod', header: t('coupons.validUntil'), enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
@@ -265,6 +276,7 @@ const COUPONS_QUERY = gql`
       discountValue
       minOrderAmount
       maxUses
+      maxUsesPerUser
       usedCount
       isActive
       validFrom
@@ -283,6 +295,7 @@ const CREATE_COUPON_MUTATION = gql`
       discountValue
       minOrderAmount
       maxUses
+      maxUsesPerUser
       usedCount
       isActive
       validFrom
@@ -301,6 +314,7 @@ const UPDATE_COUPON_MUTATION = gql`
       discountValue
       minOrderAmount
       maxUses
+      maxUsesPerUser
       usedCount
       isActive
       validFrom
@@ -328,6 +342,7 @@ const SUB_COUPON_UPDATED = gql`
       discountValue
       minOrderAmount
       maxUses
+      maxUsesPerUser
       usedCount
       isActive
       validFrom
@@ -398,6 +413,7 @@ const defaultForm = () => ({
   discountValue: '',
   minOrderAmount: '',
   maxUses: '' as string | number,
+  maxUsesPerUser: '' as string | number,
   isActive: true,
   validFrom: '',
   validUntil: ''
@@ -437,6 +453,7 @@ const openEditDialog = (coupon: Coupon) => {
     discountValue: coupon.discountValue,
     minOrderAmount: coupon.minOrderAmount ?? '',
     maxUses: coupon.maxUses ?? '',
+    maxUsesPerUser: coupon.maxUsesPerUser ?? '',
     isActive: coupon.isActive,
     validFrom: toLocalDatetime(coupon.validFrom),
     validUntil: toLocalDatetime(coupon.validUntil)
@@ -477,6 +494,7 @@ const handleSubmit = async () => {
         discountValue: form.value.discountValue,
         minOrderAmount: form.value.minOrderAmount ? String(form.value.minOrderAmount) : null,
         maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
+        maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
         validFrom: form.value.validFrom ? new Date(form.value.validFrom).toISOString() : null,
         validUntil: form.value.validUntil ? new Date(form.value.validUntil).toISOString() : null
@@ -500,6 +518,7 @@ const handleSubmit = async () => {
         discountValue: form.value.discountValue,
         minOrderAmount: form.value.minOrderAmount ? String(form.value.minOrderAmount) : null,
         maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
+        maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
         validFrom: form.value.validFrom ? new Date(form.value.validFrom).toISOString() : null,
         validUntil: form.value.validUntil ? new Date(form.value.validUntil).toISOString() : null

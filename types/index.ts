@@ -120,6 +120,7 @@ export interface Coupon {
     discountValue: string;
     minOrderAmount: string | null;
     maxUses: number | null;
+    maxUsesPerUser: number | null;
     usedCount: number;
     isActive: boolean;
     validFrom: string | null;
@@ -133,6 +134,7 @@ export interface CreateCouponInput {
     discountValue: string;
     minOrderAmount?: string | null;
     maxUses?: number | null;
+    maxUsesPerUser?: number | null;
     isActive: boolean;
     validFrom?: string | null;
     validUntil?: string | null;
@@ -144,6 +146,7 @@ export interface UpdateCouponInput {
     discountValue?: string;
     minOrderAmount?: string | null;
     maxUses?: number | null;
+    maxUsesPerUser?: number | null;
     isActive?: boolean;
     validFrom?: string | null;
     validUntil?: string | null;
