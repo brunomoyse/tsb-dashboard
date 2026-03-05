@@ -27,7 +27,7 @@
     "@nuxt/test-utils": "^4.0.0",
     "@nuxtjs/i18n": "^10.2.3",
     "@types/node": "^24.11.0",
-    "oxlint": "^1.50.0",
+    "oxlint": "^1.51.0",
     "tailwindcss": "^4.2.1",
     "vitest": "^4.0.18"
   },
