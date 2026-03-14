@@ -390,15 +390,24 @@
               <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
               <span class="underline underline-offset-2">{{ selectedOrder.customer.phoneNumber }}</span>
             </a>
-            <a
-              v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress"
-              :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrder.displayAddress)}`"
-              target="_blank"
-              class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
-            >
-              <UIcon name="i-lucide-map-pin" class="size-4 shrink-0" />
-              <span class="underline underline-offset-2">{{ selectedOrder.displayAddress }}</span>
-            </a>
+            <div v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress" class="flex items-center gap-2">
+              <a
+                :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrder.displayAddress)}`"
+                target="_blank"
+                class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
+              >
+                <UIcon name="i-lucide-map-pin" class="size-4 shrink-0" />
+                <span class="underline underline-offset-2">{{ selectedOrder.displayAddress }}</span>
+              </a>
+              <UBadge
+                v-if="selectedOrder.isManualAddress && selectedOrder.status === 'PENDING'"
+                color="warning"
+                variant="soft"
+                size="xs"
+              >
+                {{ t('orders.manualAddress') }}
+              </UBadge>
+            </div>
             <div class="flex items-center gap-2 text-muted">
               <UIcon
                 :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
@@ -833,9 +842,9 @@ const printMenuItems = computed(() => [[
     click: () => printBoth()
   },
   {
-    label: t('orders.print.client'),
-    icon: 'i-lucide-receipt',
-    click: () => printReceipt()
+    label: t('orders.print.delivery'),
+    icon: 'i-lucide-truck',
+    click: () => printDelivery()
   },
   {
     label: t('orders.print.kitchen'),
@@ -956,6 +965,7 @@ const ORDERS_QUERY = gql`
       addressExtra
       orderNote
       orderExtra
+      isManualAddress
       displayCustomerName
       displayAddress
       address {
@@ -1164,6 +1174,7 @@ const { data: orderCreated } = useGqlSubscription<{
         addressExtra
         orderNote
         orderExtra
+        isManualAddress
         displayCustomerName
         displayAddress
         address {
@@ -1303,14 +1314,14 @@ const updateOrder = async (newStatus?: OrderStatus) => {
 const formatOrderSummary = (order: Order) =>
   order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
 
-const printReceipt = async () => {
+const printDelivery = async () => {
   if (!selectedOrder.value) return
 
   const { $printer } = useNuxtApp()
   const encodedOrder: string = JSON.stringify(selectedOrder.value)
 
   try {
-    await $printer.print(encodedOrder)
+    await $printer.printDelivery(encodedOrder)
   } catch (error) {
     if (import.meta.dev) console.error('Print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })

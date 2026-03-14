@@ -125,6 +125,7 @@
         "notPaid": "Not Paid"
       }
     },
+    "manualAddress": "Manual address",
     "paymentMethod": {
       "online": "Online Payment",
       "cash": "Cash"

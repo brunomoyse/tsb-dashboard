@@ -200,6 +200,8 @@ export interface Order {
     updatedAt: string;
     userId: string;
 
+    isManualAddress: boolean;
+
     // Computed helper fields
     displayCustomerName: string;
     displayAddress: string;
