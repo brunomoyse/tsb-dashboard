@@ -72,7 +72,7 @@
     "print": {
       "label": "打印",
       "both": "打印两者",
-      "client": "打印客户小票",
+      "delivery": "打印配送小票",
       "kitchen": "打印厨房小票"
     },
     "confirmCancelTitle": "确认取消",

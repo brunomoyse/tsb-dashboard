@@ -72,7 +72,7 @@
     "print": {
       "label": "Imprimer",
       "both": "Imprimer les deux",
-      "client": "Imprimer ticket client",
+      "delivery": "Imprimer ticket livraison",
       "kitchen": "Imprimer ticket cuisine"
     },
     "confirmCancelTitle": "Confirmer l'annulation",

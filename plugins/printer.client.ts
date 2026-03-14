@@ -6,8 +6,8 @@
  */
 
 import {
+  buildDeliveryTicket,
   buildKitchenTicket,
-  buildOrderReceipt,
   createTestOrder,
 } from '~/utils/receiptFormatter'
 import type { Order } from '~/types'
@@ -65,9 +65,9 @@ export default defineNuxtPlugin(() => {
   }
 
   /**
-   * Print a complete receipt for an order (CLIENT COPY)
+   * Print a delivery ticket for an order (DELIVERY COPY)
    */
-  const printReceipt = async (orderJson: string): Promise<void> => {
+  const printDeliveryTicket = async (orderJson: string): Promise<void> => {
     // Check if printing is enabled
     if (!config.public.printer.enabled) {
       if (import.meta.dev) console.warn('⚠️ Printer is disabled in configuration')
@@ -82,7 +82,7 @@ export default defineNuxtPlugin(() => {
 
       try {
         // Attempt to print with current config
-        await print(printerConfig, buildOrderReceipt(order))
+        await print(printerConfig, buildDeliveryTicket(order))
       } catch {
         if (import.meta.dev) console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
 
@@ -91,10 +91,10 @@ export default defineNuxtPlugin(() => {
         printerConfig = await getPrinterConfig()
 
         // Retry print
-        await print(printerConfig, buildOrderReceipt(order))
+        await print(printerConfig, buildDeliveryTicket(order))
       }
     } catch (error) {
-      if (import.meta.dev) console.error('❌ Failed to print receipt:', error)
+      if (import.meta.dev) console.error('❌ Failed to print delivery ticket:', error)
       throw error
     }
   }
@@ -135,14 +135,14 @@ export default defineNuxtPlugin(() => {
   }
 
   /**
-   * Print both client receipt and kitchen ticket
+   * Print both kitchen ticket and delivery ticket
    */
   const printBoth = async (orderJson: string): Promise<void> => {
     await printKitchenTicket(orderJson)
     // Small delay between prints
     // eslint-disable-next-line no-promise-executor-return
     await new Promise(resolve => setTimeout(resolve, 500))
-    await printReceipt(orderJson)
+    await printDeliveryTicket(orderJson)
   }
 
   /**
@@ -150,15 +150,15 @@ export default defineNuxtPlugin(() => {
    */
   const testPrint = async (): Promise<void> => {
     const testOrder = createTestOrder()
-    await printReceipt(JSON.stringify(testOrder))
+    await printDeliveryTicket(JSON.stringify(testOrder))
   }
 
   /**
-   * Generate preview of client receipt (without printing)
+   * Generate preview of delivery ticket (without printing)
    */
-  const previewReceipt = (orderJson: string): string => {
+  const previewDelivery = (orderJson: string): string => {
     const order: Order = JSON.parse(orderJson)
-    return generateReceiptPreview(buildOrderReceipt(order))
+    return generateReceiptPreview(buildDeliveryTicket(order))
   }
 
   /**
@@ -172,12 +172,12 @@ export default defineNuxtPlugin(() => {
   return {
     provide: {
       printer: {
-        print: printReceipt,
+        printDelivery: printDeliveryTicket,
         printKitchen: printKitchenTicket,
         printBoth: printBoth,
         testPrint: testPrint,
         discoverPrinters: discoverPrinters,
-        previewReceipt: previewReceipt,
+        previewDelivery: previewDelivery,
         previewKitchen: previewKitchen
       }
     }
