@@ -83,8 +83,10 @@ export function useGqlSubscription<T = any>(
 
     onScopeDispose(() => {
         stop()
-        window.removeEventListener('offline', handleOffline)
-        window.removeEventListener('online', handleOnline)
+        if (import.meta.client) {
+            window.removeEventListener('offline', handleOffline)
+            window.removeEventListener('online', handleOnline)
+        }
     })
 
     const closeAll = () => {
