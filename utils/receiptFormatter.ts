@@ -49,30 +49,6 @@ export const formatReceiptTime = (dateString: string): string => {
   })
 }
 
-/**
- * Format a row with columns: Code | Name | Qty | Price
- * Layout: code(6) name(24) qty(4) price(10) = 44 + 4 spaces = 48
- */
-// eslint-disable-next-line max-params
-const formatRow = (code: string, name: string, qty: number, price: number): string => {
-  const codeCol = (code || '').padEnd(7)
-  const priceStr = formatPrice(price)
-  const priceCol = priceStr.padStart(9)
-  const qtyStr = `x${qty}`
-  const qtyCol = qtyStr.padStart(4)
-  // Remaining space for name
-  const nameMaxLen = LINE_WIDTH - 7 - 4 - 9
-  const nameCol = name.length > nameMaxLen ? name.substring(0, nameMaxLen) : name.padEnd(nameMaxLen)
-  return `${codeCol}${nameCol}${qtyCol}${priceCol}`
-}
-
-/** Format a label-value pair with right-aligned value */
-const formatLabelValue = (label: string, value: string): string => {
-  const padding = LINE_WIDTH - label.length - value.length
-  if (padding < 1) return `${label} ${value}`
-  return `${label}${' '.repeat(padding)}${value}`
-}
-
 /** Format a category header like *** Category *** */
 const formatCategoryHeader = (name: string): string => {
   const header = `*** ${name.toUpperCase()} ***`
@@ -150,121 +126,141 @@ const getItemDisplayName = (item: OrderProduct): string => {
   return name
 }
 
-// --- Client Receipt ---
+// --- Delivery Ticket ---
 
-const addClientHeader = (cmd: EpsonPrinterCommands): void => {
+const addDeliveryHeader = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addTextAlign('center')
-  cmd.addTextStyle({ bold: true })
-  cmd.addTextSize(2, 2)
-  cmd.addText('TOKYO SUSHI BAR\n')
+  cmd.addTextSize(3, 3)
+  const orderType = order.type === 'DELIVERY' ? 'LIVRAISON' : 'A EMPORTER'
+  cmd.addText(`${orderType}\n`)
   cmd.addTextSize(1, 1)
-  cmd.addTextStyle({ bold: false })
+  cmd.addText(`${DOUBLE_SEPARATOR}\n`)
+
+  // Order number
+  cmd.addTextSize(2, 2)
+  cmd.addText(`#${order.id.substring(0, 8)}\n`)
+  cmd.addTextSize(1, 1)
   cmd.addText(`${SEPARATOR}\n`)
 }
 
-const addClientOrderInfo = (cmd: EpsonPrinterCommands, order: Order): void => {
-  cmd.addTextAlign('center')
+const addDeliveryAddress = (cmd: EpsonPrinterCommands, order: Order): void => {
+  if (order.type !== 'DELIVERY' || !order.address) return
 
-  // Order type
+  cmd.addTextAlign('left')
   cmd.addTextStyle({ bold: true })
   cmd.addTextSize(2, 1)
-  const orderTypeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'A EMPORTER'
-  cmd.addText(`${orderTypeLabel}\n`)
+  let addressLine = `${order.address.streetName} ${order.address.houseNumber}`
+  if (order.address.boxNumber) {
+    addressLine += ` bte ${order.address.boxNumber}`
+  }
+  cmd.addText(`${addressLine}\n`)
+  cmd.addText(`${order.address.postcode} ${order.address.municipalityName}\n`)
   cmd.addTextSize(1, 1)
   cmd.addTextStyle({ bold: false })
 
-  // Payment status
-  if (order.payment?.status) {
-    const statusLabel = order.isOnlinePayment
-      ? (order.payment.status === 'paid' ? 'Paiement en ligne (paye)' : `Paiement en ligne (${order.payment.status})`)
-      : 'Paiement en especes'
-    cmd.addText(`${statusLabel}\n`)
-  }
-
-  cmd.addText(`${SEPARATOR}\n`)
-
-  // Date & times
-  cmd.addTextAlign('left')
-  cmd.addText(`Date: ${formatReceiptDate(order.createdAt)}\n`)
-
-  if (order.preferredReadyTime) {
-    cmd.addText(`Heure souhaitee: ${formatReceiptTime(order.preferredReadyTime)}\n`)
-  } else {
-    cmd.addText('Heure souhaitee: Des que possible\n')
-  }
-
-  if (order.estimatedReadyTime) {
-    cmd.addText(`Heure estimee: ${formatReceiptTime(order.estimatedReadyTime)}\n`)
-  }
-
-  cmd.addText(`${SEPARATOR}\n`)
-
-  // Customer info
-  if (order.customer) {
-    cmd.addText(`Client: ${order.customer.firstName} ${order.customer.lastName}\n`)
-    if (order.customer.phoneNumber) {
-      cmd.addText(`Tel: ${order.customer.phoneNumber}\n`)
-    }
-  }
-
-  // Delivery address
-  if (order.type === 'DELIVERY' && order.address) {
-    let addressLine = `${order.address.streetName} ${order.address.houseNumber}`
-    if (order.address.boxNumber) {
-      addressLine += ` bte ${order.address.boxNumber}`
-    }
-    cmd.addText(`Adresse: ${addressLine}\n`)
-    cmd.addText(`${order.address.postcode} ${order.address.municipalityName}\n`)
-    if (order.addressExtra) {
-      cmd.addText(`Info: ${order.addressExtra}\n`)
-    }
+  if (order.addressExtra) {
+    cmd.addFeedLine(1)
+    cmd.addTextStyle({ bold: true })
+    cmd.addTextSize(2, 1)
+    cmd.addText(`>> ${order.addressExtra}\n`)
+    cmd.addTextSize(1, 1)
+    cmd.addTextStyle({ bold: false })
   }
 
   cmd.addText(`${SEPARATOR}\n`)
 }
 
-const addClientItems = (cmd: EpsonPrinterCommands, order: Order): void => {
+const addDeliveryCustomer = (cmd: EpsonPrinterCommands, order: Order): void => {
+  if (!order.customer) return
+
+  cmd.addTextAlign('left')
+  cmd.addText(`Client: ${order.customer.firstName} ${order.customer.lastName}\n`)
+
+  if (order.customer.phoneNumber) {
+    cmd.addTextStyle({ bold: true })
+    cmd.addTextSize(2, 1)
+    cmd.addText(`Tel: ${order.customer.phoneNumber}\n`)
+    cmd.addTextSize(1, 1)
+    cmd.addTextStyle({ bold: false })
+  }
+
+  cmd.addText(`${SEPARATOR}\n`)
+}
+
+const addDeliveryTiming = (cmd: EpsonPrinterCommands, order: Order): void => {
+  cmd.addTextAlign('left')
+
+  cmd.addTextStyle({ bold: true })
+  cmd.addTextSize(2, 1)
+  if (order.preferredReadyTime) {
+    cmd.addText(`Souhaitee: ${formatReceiptTime(order.preferredReadyTime)}\n`)
+  } else {
+    cmd.addText('Des que possible\n')
+  }
+  cmd.addTextSize(1, 1)
+  cmd.addTextStyle({ bold: false })
+
+  if (order.estimatedReadyTime) {
+    cmd.addText(`Pret: ${formatReceiptTime(order.estimatedReadyTime)}\n`)
+  }
+
+  cmd.addText(`${SEPARATOR}\n`)
+}
+
+const addDeliveryPayment = (cmd: EpsonPrinterCommands, order: Order): void => {
+  cmd.addTextAlign('left')
+
+  const total = parsePrice(order.totalPrice)
+
+  if (order.isOnlinePayment) {
+    // Online payment — already paid
+    cmd.addTextAlign('center')
+    cmd.addTextSize(2, 1)
+    cmd.addText('Paye en ligne\n')
+    cmd.addTextSize(1, 1)
+    cmd.addText(`Total: ${formatPriceEuro(total)}\n`)
+  } else {
+    // Cash payment — driver needs to collect money
+    cmd.addTextAlign('center')
+    cmd.addTextStyle({ bold: true })
+    cmd.addTextSize(2, 2)
+    cmd.addText('A ENCAISSER\n')
+    cmd.addTextSize(2, 1)
+    cmd.addText(`${formatPriceEuro(total)}\n`)
+    cmd.addTextSize(1, 1)
+    cmd.addTextStyle({ bold: false })
+  }
+
+  cmd.addText(`${SEPARATOR}\n`)
+}
+
+const addDeliveryItems = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addTextAlign('left')
   cmd.addTextFont('A')
 
-  // Column header
-  cmd.addTextStyle({ bold: true })
-  const headerCode = 'Code'.padEnd(7)
-  const headerName = 'Nom'.padEnd(LINE_WIDTH - 7 - 4 - 9)
-  const headerQty = ' Qte'
-  const headerPrice = 'Prix'.padStart(9)
-  cmd.addText(`${headerCode}${headerName}${headerQty}${headerPrice}\n`)
-  cmd.addTextStyle({ bold: false })
-  cmd.addText(`${SEPARATOR}\n`)
-
-  // Group items by category
   const groups = groupByCategory(order.items)
 
   for (const [categoryName, items] of groups) {
-    // Category header
     cmd.addTextStyle({ bold: true })
     cmd.addText(`${formatCategoryHeader(categoryName)}\n`)
     cmd.addTextStyle({ bold: false })
 
-    // Sort items by code within category
     const sorted = sortByCode(items)
 
     for (const item of sorted) {
       const name = getItemDisplayName(item)
-      const code = item.product.code || ''
-      const totalPrice = parsePrice(item.totalPrice)
-      cmd.addText(`${formatRow(code, name, item.quantity, totalPrice)}\n`)
+      const code = item.product.code ? `${item.product.code} ` : ''
+      cmd.addText(`  ${item.quantity}x ${code}${name}\n`)
     }
 
     cmd.addFeedLine(1)
   }
 }
 
-const addClientExtras = (cmd: EpsonPrinterCommands, order: Order): void => {
+const addDeliveryExtras = (cmd: EpsonPrinterCommands, order: Order): void => {
   if (!order.orderExtra || order.orderExtra.length === 0) return
 
   cmd.addTextAlign('left')
-  cmd.addText(`${SEPARATOR}\n`)
   cmd.addTextStyle({ bold: true })
   cmd.addText('Extras:\n')
   cmd.addTextStyle({ bold: false })
@@ -275,73 +271,38 @@ const addClientExtras = (cmd: EpsonPrinterCommands, order: Order): void => {
       cmd.addText(`  ${label}\n`)
     }
   }
+
+  cmd.addText(`${SEPARATOR}\n`)
 }
 
-const addClientTotals = (cmd: EpsonPrinterCommands, order: Order): void => {
-  cmd.addTextAlign('left')
-  cmd.addText(`${SEPARATOR}\n`)
-
-  // Compute subtotal from items
-  let subtotal = 0
-  for (const item of order.items) {
-    subtotal += parsePrice(item.totalPrice)
-  }
-  cmd.addText(`${formatLabelValue('Sous-total', formatPriceEuro(subtotal))}\n`)
-
-  // Delivery fee
-  const deliveryFee = order.deliveryFee ? parsePrice(order.deliveryFee) : 0
-  if (deliveryFee > 0) {
-    cmd.addText(`${formatLabelValue('Frais de livraison', formatPriceEuro(deliveryFee))}\n`)
-  }
-
-  // Discount
-  const discount = order.discountAmount ? parsePrice(order.discountAmount) : 0
-  if (discount > 0) {
-    cmd.addText(`${formatLabelValue('Reduction', `-${formatPriceEuro(discount)}`)}\n`)
-  }
-
-  // Grand total
-  cmd.addText(`${SEPARATOR}\n`)
-  cmd.addTextStyle({ bold: true })
-  cmd.addTextSize(2, 1)
-  const total = parsePrice(order.totalPrice)
-  cmd.addTextAlign('right')
-  cmd.addText(`TOTAL: ${formatPriceEuro(total)}\n`)
-  cmd.addTextSize(1, 1)
-  cmd.addTextStyle({ bold: false })
-}
-
-const addClientFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
-  cmd.addTextAlign('left')
-
-  // Order notes
+const addDeliveryFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
   if (order.orderNote) {
-    cmd.addText(`${SEPARATOR}\n`)
     cmd.addTextAlign('center')
     cmd.addTextStyle({ bold: true })
     cmd.addText('NOTE:\n')
     cmd.addTextStyle({ bold: false })
     cmd.addTextAlign('left')
     cmd.addText(`${order.orderNote}\n`)
+    cmd.addText(`${SEPARATOR}\n`)
   }
 
-  cmd.addText(`${SEPARATOR}\n`)
-  cmd.addTextAlign('center')
-  cmd.addFeedLine(1)
-  cmd.addText('Merci de votre commande!\n')
-  cmd.addFeedLine(3)
+  cmd.addFeedLine(2)
 }
 
 /**
- * Build complete receipt for an order (CLIENT COPY)
+ * Build delivery ticket for an order (DELIVERY COPY)
+ * Address-focused layout for the delivery driver.
+ * For pickup orders, serves as a compact order summary.
  */
-export const buildOrderReceipt = (order: Order) => (cmd: EpsonPrinterCommands) => {
-  addClientHeader(cmd)
-  addClientOrderInfo(cmd, order)
-  addClientItems(cmd, order)
-  addClientExtras(cmd, order)
-  addClientTotals(cmd, order)
-  addClientFooter(cmd, order)
+export const buildDeliveryTicket = (order: Order) => (cmd: EpsonPrinterCommands) => {
+  addDeliveryHeader(cmd, order)
+  addDeliveryAddress(cmd, order)
+  addDeliveryCustomer(cmd, order)
+  addDeliveryTiming(cmd, order)
+  addDeliveryPayment(cmd, order)
+  addDeliveryItems(cmd, order)
+  addDeliveryExtras(cmd, order)
+  addDeliveryFooter(cmd, order)
   cmd.addCut()
 }
 

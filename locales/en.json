@@ -71,7 +71,7 @@
     "print": {
       "label": "Print",
       "both": "Print Both",
-      "client": "Print Client Receipt",
+      "delivery": "Print Delivery Ticket",
       "kitchen": "Print Kitchen Ticket"
     },
     "confirmCancelTitle": "Confirm Cancellation",

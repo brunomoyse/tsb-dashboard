@@ -1,7 +1,7 @@
 import type { Order, OrderProduct } from '~/types'
 import {
+  buildDeliveryTicket,
   buildKitchenTicket,
-  buildOrderReceipt,
   createTestOrder,
   formatReceiptDate,
   formatReceiptTime,
@@ -65,9 +65,9 @@ const makeItem = (overrides: Partial<OrderProduct> & { code?: string; name?: str
   }
 }
 
-const renderReceipt = (order: Order): string => {
+const renderDelivery = (order: Order): string => {
   const mock = new MockPrinter()
-  buildOrderReceipt(order)(mock)
+  buildDeliveryTicket(order)(mock)
   return mock.getOutput()
 }
 
@@ -97,16 +97,11 @@ describe('formatReceiptTime', () => {
   })
 })
 
-// --- Client Receipt ---
+// --- Delivery Ticket ---
 
-describe('buildOrderReceipt', () => {
-  it('prints restaurant name header', () => {
-    const output = renderReceipt(makeOrder({ items: [makeItem()] }))
-    expect(output).toContain('TOKYO SUSHI BAR')
-  })
-
+describe('buildDeliveryTicket', () => {
   it('prints A EMPORTER for pickup orders', () => {
-    const output = renderReceipt(makeOrder({ type: 'PICKUP', items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ type: 'PICKUP', items: [makeItem()] }))
     expect(output).toContain('A EMPORTER')
   })
 
@@ -117,12 +112,17 @@ describe('buildOrderReceipt', () => {
       deliveryFee: '3.00',
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('LIVRAISON')
   })
 
+  it('shows truncated order ID', () => {
+    const output = renderDelivery(makeOrder({ id: 'abcd1234-long-uuid', items: [makeItem()] }))
+    expect(output).toContain('#abcd1234')
+  })
+
   it('includes customer name and phone', () => {
-    const output = renderReceipt(makeOrder({
+    const output = renderDelivery(makeOrder({
       customer: { id: 'c1', firstName: 'Alice', lastName: 'Dupont', phoneNumber: '+32 470 11 22 33' },
       items: [makeItem()]
     }))
@@ -136,52 +136,67 @@ describe('buildOrderReceipt', () => {
       address: { id: 'a1', streetName: 'Rue Haute', houseNumber: '10', boxNumber: '3B', municipalityName: 'Brussels', postcode: '1000', distance: 1 },
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Rue Haute 10 bte 3B')
     expect(output).toContain('1000 Brussels')
   })
 
-  it('includes addressExtra for delivery', () => {
+  it('includes addressExtra prominently for delivery', () => {
     const order = makeOrder({
       type: 'DELIVERY',
       addressExtra: 'Code porte: 1234',
       address: { id: 'a1', streetName: 'Rue Haute', houseNumber: '10', boxNumber: null, municipalityName: 'Brussels', postcode: '1000', distance: 1 },
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
-    expect(output).toContain('Info: Code porte: 1234')
+    const output = renderDelivery(order)
+    expect(output).toContain('>> Code porte: 1234')
+  })
+
+  it('does not show address for pickup orders', () => {
+    const output = renderDelivery(makeOrder({ type: 'PICKUP', items: [makeItem()] }))
+    expect(output).not.toContain('Rue')
   })
 
   it('shows "Des que possible" when no preferred time', () => {
-    const output = renderReceipt(makeOrder({ preferredReadyTime: null, items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ preferredReadyTime: null, items: [makeItem()] }))
     expect(output).toContain('Des que possible')
   })
 
   it('shows preferred ready time when set', () => {
-    const output = renderReceipt(makeOrder({
+    const output = renderDelivery(makeOrder({
       preferredReadyTime: '2026-02-24T18:00:00.000Z',
       items: [makeItem()]
     }))
-    expect(output).toContain('Heure souhaitee:')
+    expect(output).toContain('Souhaitee:')
     expect(output).not.toContain('Des que possible')
   })
 
-  it('shows online payment status as paid', () => {
-    const output = renderReceipt(makeOrder({
-      isOnlinePayment: true,
-      payment: { id: 'p1', createdAt: '', orderId: '', paidAt: '', status: 'paid', links: {} },
+  it('shows estimated ready time when set', () => {
+    const output = renderDelivery(makeOrder({
+      estimatedReadyTime: '2026-02-24T18:30:00.000Z',
       items: [makeItem()]
     }))
-    expect(output).toContain('Paiement en ligne (paye)')
+    expect(output).toContain('Pret:')
   })
 
-  it('shows cash payment label', () => {
-    const output = renderReceipt(makeOrder({
+  it('shows A ENCAISSER for cash payment', () => {
+    const output = renderDelivery(makeOrder({
       isOnlinePayment: false,
-      payment: { id: 'p1', createdAt: '', orderId: '', paidAt: null, status: 'open', links: {} },
+      totalPrice: '25.00',
       items: [makeItem()]
     }))
-    expect(output).toContain('Paiement en especes')
+    expect(output).toContain('A ENCAISSER')
+    expect(output).toContain('25,00')
+  })
+
+  it('shows Paye en ligne for online payment', () => {
+    const output = renderDelivery(makeOrder({
+      isOnlinePayment: true,
+      totalPrice: '25.00',
+      items: [makeItem()]
+    }))
+    expect(output).toContain('Paye en ligne')
+    expect(output).toContain('25,00')
   })
 
   it('groups items by category with headers', () => {
@@ -191,7 +206,7 @@ describe('buildOrderReceipt', () => {
         makeItem({ code: 'A1', categoryName: 'Entrees' })
       ]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('*** MAKIS ***')
     expect(output).toContain('*** ENTREES ***')
   })
@@ -203,7 +218,7 @@ describe('buildOrderReceipt', () => {
         makeItem({ code: 'E3', name: 'First', categoryName: 'Makis' })
       ]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     const e3Pos = output.indexOf('E3')
     const e16Pos = output.indexOf('E16')
     expect(e3Pos).toBeLessThan(e16Pos)
@@ -213,65 +228,17 @@ describe('buildOrderReceipt', () => {
     const order = makeOrder({
       items: [makeItem({ name: 'Gyoza', choiceName: 'Poulet' })]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Gyoza (Poulet)')
   })
 
-  it('formats item rows with code, quantity, and price', () => {
+  it('shows item quantity and code', () => {
     const order = makeOrder({
-      items: [makeItem({ code: 'E10', quantity: 2, totalPrice: '20.00' })]
+      items: [makeItem({ code: 'E10', quantity: 2 })]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
+    expect(output).toContain('2x')
     expect(output).toContain('E10')
-    expect(output).toContain('x2')
-    expect(output).toContain('20,00')
-  })
-
-  it('shows subtotal computed from items', () => {
-    const order = makeOrder({
-      totalPrice: '35.00',
-      items: [
-        makeItem({ totalPrice: '20.00' }),
-        makeItem({ totalPrice: '15.00', code: 'E2' })
-      ]
-    })
-    const output = renderReceipt(order)
-    expect(output).toContain('Sous-total')
-    expect(output).toContain('35,00')
-  })
-
-  it('shows delivery fee when present', () => {
-    const order = makeOrder({
-      type: 'DELIVERY',
-      deliveryFee: '3.50',
-      address: { id: 'a1', streetName: 'Rue', houseNumber: '1', boxNumber: null, municipalityName: 'City', postcode: '1000', distance: 1 },
-      items: [makeItem()]
-    })
-    const output = renderReceipt(order)
-    expect(output).toContain('Frais de livraison')
-    expect(output).toContain('3,50')
-  })
-
-  it('hides delivery fee when zero', () => {
-    const output = renderReceipt(makeOrder({ deliveryFee: '0.00', items: [makeItem()] }))
-    expect(output).not.toContain('Frais de livraison')
-  })
-
-  it('shows discount when present', () => {
-    const output = renderReceipt(makeOrder({ discountAmount: '5.00', items: [makeItem()] }))
-    expect(output).toContain('Reduction')
-    expect(output).toContain('-5,00')
-  })
-
-  it('hides discount when zero', () => {
-    const output = renderReceipt(makeOrder({ discountAmount: '0.00', items: [makeItem()] }))
-    expect(output).not.toContain('Reduction')
-  })
-
-  it('shows grand total', () => {
-    const output = renderReceipt(makeOrder({ totalPrice: '42.50', items: [makeItem()] }))
-    expect(output).toContain('TOTAL:')
-    expect(output).toContain('42,50')
   })
 
   it('shows order extras with French labels', () => {
@@ -282,7 +249,7 @@ describe('buildOrderReceipt', () => {
       ],
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Extras:')
     expect(output).toContain('Baguettes: 4')
     expect(output).toContain('Sauce sucr\u00e9e')
@@ -290,53 +257,30 @@ describe('buildOrderReceipt', () => {
   })
 
   it('does not show extras section when empty', () => {
-    const output = renderReceipt(makeOrder({ orderExtra: null, items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ orderExtra: null, items: [makeItem()] }))
     expect(output).not.toContain('Extras:')
   })
 
   it('shows order note', () => {
-    const output = renderReceipt(makeOrder({ orderNote: 'Pas de wasabi', items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ orderNote: 'Pas de wasabi', items: [makeItem()] }))
     expect(output).toContain('NOTE:')
     expect(output).toContain('Pas de wasabi')
   })
 
   it('does not show note section when null', () => {
-    const output = renderReceipt(makeOrder({ orderNote: null, items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ orderNote: null, items: [makeItem()] }))
     expect(output).not.toContain('NOTE:')
   })
 
-  it('ends with thank you message and cut', () => {
-    const output = renderReceipt(makeOrder({ items: [makeItem()] }))
-    expect(output).toContain('Merci de votre commande!')
+  it('ends with a cut', () => {
+    const output = renderDelivery(makeOrder({ items: [makeItem()] }))
     expect(output).toContain('CUT HERE')
   })
 
-  it('does not show address for pickup orders', () => {
-    const output = renderReceipt(makeOrder({ type: 'PICKUP', items: [makeItem()] }))
-    expect(output).not.toContain('Adresse:')
-  })
-
   it('handles order with no customer gracefully', () => {
-    const output = renderReceipt(makeOrder({ customer: null, items: [makeItem()] }))
+    const output = renderDelivery(makeOrder({ customer: null, items: [makeItem()] }))
     expect(output).not.toContain('Client:')
     expect(output).not.toContain('Tel:')
-  })
-
-  it('all item row lines are at most 48 chars', () => {
-    const order = makeOrder({
-      items: [
-        makeItem({ code: 'E10', name: 'Very Long Product Name That Might Overflow', quantity: 99, totalPrice: '999.99' })
-      ]
-    })
-    const output = renderReceipt(order)
-    const lines = output.split('\n')
-    // Find lines that look like item rows (contain a code and x-quantity)
-    const itemLines = lines.filter(l => /E10/.test(l) && /x99/.test(l))
-    for (const line of itemLines) {
-      // Strip mock printer markers like [B] or [2x1]
-      const clean = line.replace(/^\[[\w,]+\]\s*/, '')
-      expect(clean.length).toBeLessThanOrEqual(48)
-    }
   })
 })
 
@@ -454,7 +398,7 @@ describe('order extras mapping (via receipt output)', () => {
       orderExtra: [{ name: 'napkins', options: ['extra'] }],
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('napkins: extra')
   })
 
@@ -463,7 +407,7 @@ describe('order extras mapping (via receipt output)', () => {
       orderExtra: [{ name: 'sauces', options: ['sweet', 'salty'] }],
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Sauce sucr\u00e9e')
     expect(output).toContain('Sauce sal\u00e9e')
   })
@@ -473,7 +417,7 @@ describe('order extras mapping (via receipt output)', () => {
       orderExtra: [{ name: 'sauces', options: ['sucr\u00e9e', 'sal\u00e9e'] }],
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Sauce sucr\u00e9e')
     expect(output).toContain('Sauce sal\u00e9e')
   })
@@ -483,7 +427,7 @@ describe('order extras mapping (via receipt output)', () => {
       orderExtra: [{ name: 'sauces', options: ['teriyaki'] }],
       items: [makeItem()]
     })
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     expect(output).toContain('Sauce: teriyaki')
   })
 
@@ -493,7 +437,7 @@ describe('order extras mapping (via receipt output)', () => {
       items: [makeItem()]
     })
     // Should not crash, extras section should not appear since no labels produced
-    const output = renderReceipt(order)
+    const output = renderDelivery(order)
     // The Extras: header is still printed but with no content lines following
     expect(output).toContain('Extras:')
   })
@@ -540,7 +484,7 @@ describe('createTestOrder', () => {
 
   it('renders without errors through both receipt builders', () => {
     const order = createTestOrder()
-    expect(() => renderReceipt(order)).not.toThrow()
+    expect(() => renderDelivery(order)).not.toThrow()
     expect(() => renderKitchen(order)).not.toThrow()
   })
 })
