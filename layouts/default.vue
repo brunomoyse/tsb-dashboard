@@ -268,23 +268,21 @@ const onLanguageChange = (newLocale: 'fr' | 'en' | 'zh') => {
 
 const handleLogout = async () => {
   const config = useRuntimeConfig()
+  const authStore = useAuthStore()
 
   try {
-    const response = await fetch(`${config.public.api}/logout`, {
+    await fetch(`${config.public.api}/logout`, {
       method: 'POST',
       credentials: 'include'
     })
-
-    if (response.ok) {
-      await navigateTo(localePath('/login'), { external: true })
-    } else {
-      if (import.meta.dev) console.error('Logout failed with status:', response.status)
-      await navigateTo(localePath('/login'), { external: true })
-    }
   } catch (error) {
     if (import.meta.dev) console.error('Logout error:', error)
-    await navigateTo(localePath('/login'), { external: true })
   }
+
+  // Clear persisted state before redirect
+  authStore.clearUser()
+  localStorage.removeItem('token_expires')
+  await navigateTo(localePath('/login'), { external: true })
 }
 
 const toggleTheme = () => {

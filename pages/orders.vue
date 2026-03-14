@@ -1,15 +1,15 @@
 <template>
-  <div class="p-4 sm:p-6">
+  <div class="p-3 sm:p-4 md:p-6">
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-highlighted">{{ t('navigation.orders') }}</h1>
-      <p class="text-muted">{{ t('orders.subtitle') }}</p>
+    <div class="mb-3 sm:mb-6">
+      <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('navigation.orders') }}</h1>
+      <p class="hidden sm:block text-muted">{{ t('orders.subtitle') }}</p>
     </div>
 
     <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
     <div class="md:hidden">
       <!-- Filter Chips (horizontally scrollable) -->
-      <div class="flex gap-2 overflow-x-auto pb-3 mb-4 -mx-4 px-4 scrollbar-hide">
+      <div class="flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 scrollbar-hide">
         <button
           v-for="chip in mobileChips"
           :key="chip.value"
@@ -41,125 +41,63 @@
       </div>
 
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UCard v-for="i in 4" :key="i">
-          <template #header>
-            <div class="flex items-center justify-between">
-              <div class="space-y-2 flex-1">
-                <USkeleton class="h-5 w-32" />
-                <USkeleton class="h-3 w-24" />
-              </div>
-              <USkeleton class="h-6 w-20 rounded-full" />
+      <div v-if="pending" class="space-y-2">
+        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+          <USkeleton class="size-5 rounded shrink-0" />
+          <div class="flex-1 space-y-1.5">
+            <div class="flex justify-between">
+              <USkeleton class="h-4 w-28" />
+              <USkeleton class="h-4 w-14" />
             </div>
-          </template>
-          <div class="space-y-3">
-            <div class="flex gap-2">
-              <USkeleton class="h-5 w-24 rounded-full" />
-              <USkeleton class="h-5 w-20 rounded-full" />
-            </div>
-            <USkeleton class="h-4 w-40" />
-            <div class="border-t pt-3 space-y-1">
-              <USkeleton class="h-3 w-full" />
-              <USkeleton class="h-3 w-3/4" />
-            </div>
-            <div class="border-t pt-3 flex justify-between">
-              <USkeleton class="h-4 w-12" />
-              <USkeleton class="h-4 w-16" />
+            <div class="flex justify-between">
+              <USkeleton class="h-3 w-20" />
+              <USkeleton class="h-5 w-16 rounded-full" />
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
-      <!-- Orders Grid -->
-      <div v-else-if="filteredOrders.length" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UCard
+      <!-- Orders List -->
+      <div v-else-if="filteredOrders.length" class="space-y-2">
+        <div
           v-for="order in filteredOrders"
           :key="order.id"
-          :class="[
-            'cursor-pointer hover:shadow-lg transition-shadow',
-            order.status === 'PENDING' ? 'border-l-4 border-l-warning bg-warning/5' : ''
-          ]"
+          class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border) cursor-pointer active:scale-[0.98] transition-all"
+          :class="order.status === 'PENDING' ? 'border-l-3 border-l-amber-500' : ''"
           @click="openOrderDetails(order)"
         >
-          <template #header>
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <h3 class="text-lg font-bold">{{ order.displayCustomerName }}</h3>
-                </div>
-                <p class="text-sm text-muted">{{ formatDate(order.createdAt, locale) }}</p>
-                <p
+          <!-- Type icon -->
+          <UIcon
+            :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+            class="size-5 shrink-0 text-muted"
+          />
+
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-sm text-highlighted truncate">{{ order.displayCustomerName }}</span>
+              <span class="font-bold text-sm text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 mt-0.5">
+              <div class="flex items-center gap-1.5 text-xs text-muted">
+                <span>{{ order.items.length }} {{ t('orders.items') }}</span>
+                <UIcon
+                  :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
+                  class="size-3.5"
+                />
+                <span
                   v-if="isActiveStatus(order.status)"
-                  :class="['text-xs font-medium', getTimeSince(order.createdAt).color]"
+                  :class="['font-bold', getTimeSince(order.createdAt).color]"
                 >
                   {{ getTimeSince(order.createdAt).text }}
-                </p>
+                </span>
               </div>
-              <UBadge :color="getStatusColor(order.status)" variant="soft">
+              <UBadge :color="getStatusColor(order.status)" variant="soft" size="xs">
                 {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
               </UBadge>
             </div>
-          </template>
-
-          <div class="space-y-4">
-            <div class="flex flex-wrap gap-2">
-              <UBadge color="neutral" variant="subtle" size="sm">
-                <UIcon
-                  :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                  class="mr-1"
-                />
-                {{ order.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}
-              </UBadge>
-              <UBadge color="neutral" variant="subtle" size="sm">
-                <UIcon
-                  :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                  class="mr-1"
-                />
-                {{ t(`orders.deliveryOption.${order.type?.toLowerCase()}`) }}
-              </UBadge>
-              <UBadge
-                :color="getPaymentStatusColor(order.payment?.status)"
-                variant="soft"
-                size="sm"
-              >
-                {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
-              </UBadge>
-            </div>
-
-            <div>
-              <p class="text-sm text-muted flex items-center gap-1">
-                <UIcon name="i-lucide-phone" class="size-4" />
-                {{ order.customer?.phoneNumber }}
-              </p>
-              <p v-if="order.type === 'DELIVERY'" class="text-sm text-muted flex items-center gap-1">
-                <UIcon name="i-lucide-map-pin" class="size-4" />
-                {{ order.displayAddress }}
-              </p>
-              <p v-else class="text-sm text-muted">{{ t('orders.pickup') }}</p>
-            </div>
-
-            <div class="border-t pt-3 space-y-1">
-              <p class="text-sm font-medium">{{ t('orders.items') }}:</p>
-              <div v-for="(item, idx) in order.items" :key="`${item.product.id}-${item.choice?.id ?? idx}`" class="flex justify-between text-sm">
-                <span>
-                  {{ item.quantity }}x {{ item.product.code || item.product.name }}
-                  <span v-if="item.choice" class="text-xs text-muted">({{ item.choice.name }})</span>
-                </span>
-                <span>{{ formatPrice(item.totalPrice) }}</span>
-              </div>
-            </div>
-
-            <div class="border-t pt-3 flex justify-between font-bold">
-              <span>Total</span>
-              <span>{{ formatPrice(order.totalPrice) }}</span>
-            </div>
-
-            <div v-if="order.estimatedReadyTime" class="text-sm flex items-center gap-1 text-muted">
-              <UIcon name="i-lucide-clock" class="size-4" />
-              {{ t('orders.estimatedTime') }}: {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
-            </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- Empty State -->
@@ -372,7 +310,8 @@
       v-model:open="showOrderDetails"
       :title="t('orders.orderDetails')"
       :description="t('orders.orderDetailsDescription')"
-      :ui="{ content: 'min-h-full' }"
+      :side="slideoverSide"
+      :ui="slideoverUi"
     >
       <template v-if="selectedOrder" #body>
         <div class="space-y-5">
@@ -398,13 +337,14 @@
             <div class="flex shrink-0">
               <UButton
                 icon="i-lucide-printer"
-                :label="t('orders.print.label')"
+                :label="isMobile ? undefined : t('orders.print.label')"
                 color="primary"
                 size="sm"
-                class="rounded-r-none"
+                :class="isMobile ? '' : 'rounded-r-none'"
+                :square="isMobile"
                 @click="printBoth"
               />
-              <UDropdownMenu :items="printMenuItems">
+              <UDropdownMenu v-if="!isMobile" :items="printMenuItems">
                 <UButton
                   icon="i-lucide-chevron-down"
                   color="primary"
@@ -442,14 +382,23 @@
 
           <!-- 3. Customer & Delivery Info -->
           <div class="space-y-1.5 text-sm">
-            <div class="flex items-center gap-2 text-muted">
+            <a
+              v-if="selectedOrder.customer?.phoneNumber"
+              :href="`tel:${selectedOrder.customer.phoneNumber}`"
+              class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
+            >
               <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
-              <span>{{ selectedOrder.customer?.phoneNumber }}</span>
-            </div>
-            <div v-if="selectedOrder.type === 'DELIVERY'" class="flex items-center gap-2 text-muted">
+              <span class="underline underline-offset-2">{{ selectedOrder.customer.phoneNumber }}</span>
+            </a>
+            <a
+              v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress"
+              :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrder.displayAddress)}`"
+              target="_blank"
+              class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
+            >
               <UIcon name="i-lucide-map-pin" class="size-4 shrink-0" />
-              <span>{{ selectedOrder.displayAddress }}</span>
-            </div>
+              <span class="underline underline-offset-2">{{ selectedOrder.displayAddress }}</span>
+            </a>
             <div class="flex items-center gap-2 text-muted">
               <UIcon
                 :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
@@ -485,7 +434,7 @@
 
           <!-- 5. Time Management -->
           <div class="border border-default rounded-lg p-3 space-y-3">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span class="text-sm text-muted">
                 {{ t('orders.preferredTime') }}:
                 <span class="font-medium text-highlighted">
@@ -546,7 +495,7 @@
       </template>
 
       <template #footer>
-        <div class="flex gap-2">
+        <div class="flex gap-2 pb-[env(safe-area-inset-bottom)]">
           <UButton
             color="neutral"
             variant="outline"
@@ -624,6 +573,15 @@ const ordersStore = useOrdersStore()
 
 // Tab state - start as null for SSR, set on client
 const selectedTab = ref<number | null>(null)
+
+// Mobile detection for slideover direction (bottom sheet on phones)
+const isMobile = ref(false)
+const slideoverSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
+const slideoverUi = computed(() =>
+  isMobile.value
+    ? { content: 'max-h-[85dvh] rounded-t-2xl' }
+    : { content: 'min-h-full' }
+)
 
 // Kanban column definitions
 interface KanbanColumnDef {
@@ -818,6 +776,11 @@ onMounted(() => {
   nowInterval = setInterval(() => {
     now.value = new Date()
   }, 30000)
+
+  // Detect phone-sized screens for bottom sheet slideover
+  const mql = window.matchMedia('(max-width: 767px)')
+  isMobile.value = mql.matches
+  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
 })
 
 onUnmounted(() => {
