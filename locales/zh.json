@@ -126,6 +126,7 @@
         "notPaid": "未付款"
       }
     },
+    "manualAddress": "手动输入地址",
     "paymentMethod": {
       "online": "在线支付",
       "cash": "现金"

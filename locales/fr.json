@@ -126,6 +126,7 @@
         "notPaid": "Non payé"
       }
     },
+    "manualAddress": "Adresse manuelle",
     "paymentMethod": {
       "online": "En ligne",
       "cash": "Cash"
