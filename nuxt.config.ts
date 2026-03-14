@@ -64,10 +64,15 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }
+      ],
       script: [
         {
           src: 'https://cdn.jsdelivr.net/npm/epson-epos-sdk@2.27.0/epos-2.27.0.js',
           defer: true,
+          integrity: 'sha384-4zc8PGExX6xDWIBp1xftdh4behPpGI7U/d2eYyBPeTJk+u0rXHg7rMq36DIirbgg',
+          crossorigin: 'anonymous',
         }
       ]
     }
@@ -109,7 +114,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/**': {
       headers: {
-        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
