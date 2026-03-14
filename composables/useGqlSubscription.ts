@@ -35,25 +35,10 @@ export function useGqlSubscription<T = any>(
     const error     = ref<Error | null>(null)
     let stop: () => void = () => {}
 
-    // --------------------------------------------------
     // Track if we've genuinely gone offline
     let wentOffline = false
 
-    const handleOffline = () => {
-        wentOffline = true
-        error.value = new Error('Lost internet connection')
-        stop()
-    }
-
-    const handleOnline = () => {
-        if (!wentOffline) return
-        // Only reload if we truly were offline
-        window.location.reload()
-    }
-    // --------------------------------------------------
-
-    if (import.meta.client) {
-        // Initial subscription
+    const startSubscription = () => {
         getWsClient()
             .then((client) => {
                 stop = client.subscribe(
@@ -75,8 +60,25 @@ export function useGqlSubscription<T = any>(
             .catch((e) => {
                 error.value = e instanceof Error ? e : new Error(String(e))
             })
+    }
 
-        // Listen for real offline/online transitions
+    const handleOffline = () => {
+        wentOffline = true
+        error.value = new Error('Lost internet connection')
+    }
+
+    const handleOnline = () => {
+        if (!wentOffline) return
+        wentOffline = false
+        error.value = null
+        // Re-establish subscription (graphql-ws auto-reconnects the WebSocket)
+        stop()
+        startSubscription()
+    }
+
+    if (import.meta.client) {
+        startSubscription()
+
         window.addEventListener('offline', handleOffline)
         window.addEventListener('online', handleOnline)
     }
