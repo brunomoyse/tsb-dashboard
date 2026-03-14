@@ -9,8 +9,6 @@ export default defineNuxtPlugin(() => {
     const api = $fetch.create({
         baseURL: apiUrl,
         credentials: 'include',
-        retry: 1,
-        retryStatusCodes: [401],
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
