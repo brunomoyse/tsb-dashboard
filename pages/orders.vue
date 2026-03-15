@@ -339,16 +339,16 @@
                 icon="i-lucide-printer"
                 :label="isMobile ? undefined : t('orders.print.label')"
                 color="primary"
-                size="sm"
-                :class="isMobile ? '' : 'rounded-r-none'"
+                size="lg"
+                class="rounded-r-none"
                 :square="isMobile"
                 @click="printBoth"
               />
-              <UDropdownMenu v-if="!isMobile" :items="printMenuItems">
+              <UDropdownMenu :items="printMenuItems">
                 <UButton
                   icon="i-lucide-chevron-down"
                   color="primary"
-                  size="sm"
+                  size="lg"
                   class="rounded-l-none border-l border-primary-400/30"
                   square
                 />

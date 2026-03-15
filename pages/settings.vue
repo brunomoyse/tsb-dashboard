@@ -1,17 +1,19 @@
 <template>
-  <div class="p-6 max-w-4xl mx-auto space-y-8">
+  <div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-6 sm:space-y-8">
     <h1 class="text-2xl font-bold">{{ t('settings.title') }}</h1>
 
     <!-- Ordering Toggle -->
     <UPageCard>
-      <div class="flex items-center justify-between">
-        <div>
+      <div class="flex items-center justify-between gap-4">
+        <div class="min-w-0">
           <h2 class="text-lg font-semibold">{{ t('settings.ordering.title') }}</h2>
           <p class="text-sm text-muted">{{ t('settings.ordering.description') }}</p>
         </div>
         <USwitch
           v-model="orderingEnabled"
           :loading="updatingOrdering"
+          checked-icon="i-lucide-check"
+          unchecked-icon="i-lucide-x"
           @update:model-value="toggleOrdering"
         />
       </div>
@@ -20,8 +22,8 @@
     <!-- Opening Hours -->
     <UPageCard>
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0">
             <h2 class="text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
             <p class="text-sm text-muted">{{ t('settings.hours.description') }}</p>
           </div>
@@ -33,54 +35,82 @@
           />
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-1">
           <div
             v-for="day in days"
             :key="day.key"
-            class="flex items-center gap-4 py-2 border-b border-default last:border-0"
+            class="py-3 border-b border-default last:border-0"
           >
-            <!-- Day name -->
-            <div class="w-28 font-medium">{{ t(`settings.hours.${day.key}`) }}</div>
+            <!-- Row 1: Day name + toggle (+ closed label on mobile) -->
+            <div class="flex items-center gap-3">
+              <div class="w-24 sm:w-28 font-medium shrink-0">{{ t(`settings.hours.${day.key}`) }}</div>
+              <USwitch
+                :model-value="!!localHours[day.key]"
+                checked-icon="i-lucide-check"
+                unchecked-icon="i-lucide-x"
+                @update:model-value="(val: boolean) => toggleDay(day.key, val)"
+              />
+              <span v-if="!localHours[day.key]" class="text-sm text-muted italic">{{ t('settings.hours.closed') }}</span>
 
-            <!-- Open/closed toggle -->
-            <USwitch
-              :model-value="!!localHours[day.key]"
-              @update:model-value="(val: boolean) => toggleDay(day.key, val)"
-            />
+              <!-- Time inputs inline on desktop -->
+              <template v-if="localHours[day.key]">
+                <div class="hidden sm:flex items-center gap-2 ml-auto">
+                  <input
+                    type="time"
+                    v-model="localHours[day.key]!.open"
+                    class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  />
+                  <span class="text-muted">–</span>
+                  <input
+                    type="time"
+                    v-model="localHours[day.key]!.close"
+                    class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  />
+                  <span class="text-muted mx-1">|</span>
+                  <input
+                    type="time"
+                    v-model="localHours[day.key]!.dinnerOpen"
+                    class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  />
+                  <span class="text-muted">–</span>
+                  <input
+                    type="time"
+                    v-model="localHours[day.key]!.dinnerClose"
+                    class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  />
+                </div>
+              </template>
+            </div>
 
-            <!-- Time inputs (lunch) -->
-            <template v-if="localHours[day.key]">
+            <!-- Row 2: Time inputs stacked on mobile -->
+            <div v-if="localHours[day.key]" class="sm:hidden mt-2 ml-10 space-y-2">
               <div class="flex items-center gap-2">
                 <input
                   type="time"
                   v-model="localHours[day.key]!.open"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
                 />
-                <span class="text-muted">-</span>
+                <span class="text-muted">–</span>
                 <input
                   type="time"
                   v-model="localHours[day.key]!.close"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
                 />
               </div>
-
-              <!-- Dinner period -->
               <div class="flex items-center gap-2">
                 <input
                   type="time"
                   v-model="localHours[day.key]!.dinnerOpen"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
                 />
-                <span class="text-muted">-</span>
+                <span class="text-muted">–</span>
                 <input
                   type="time"
                   v-model="localHours[day.key]!.dinnerClose"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default"
+                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
                 />
               </div>
-            </template>
-
-            <span v-else class="text-sm text-muted italic">{{ t('settings.hours.closed') }}</span>
+            </div>
           </div>
         </div>
       </div>
