@@ -28,54 +28,54 @@
         </div>
       </template>
 
-      <template #default="{ collapsed }">
+      <template #default="{ collapsed: isCollapsed }">
         <UNavigationMenu
-          :collapsed="collapsed"
+          :collapsed="isCollapsed && !isMobile"
           :items="navigationItems"
           orientation="vertical"
           size="lg"
           class="flex-1"
           :ui="{
-            link: collapsed ? 'py-8 px-0 text-base justify-center' : 'py-8 px-4 text-base w-full'
+            link: (isCollapsed && !isMobile) ? 'py-8 px-0 text-base justify-center' : 'py-8 px-4 text-base w-full'
           }"
         />
       </template>
 
-      <template #footer="{ collapsed }">
+      <template #footer="{ collapsed: isCollapsed }">
         <!-- Language Switcher -->
         <UDropdownMenu :items="languageItems">
           <UButton
-            :label="collapsed ? undefined : currentLocaleLabel"
+            :label="(isCollapsed && !isMobile) ? undefined : currentLocaleLabel"
             :icon="currentLocaleIcon"
             color="neutral"
             variant="ghost"
             size="lg"
             block
-            :square="collapsed"
+            :square="isCollapsed && !isMobile"
           />
         </UDropdownMenu>
 
         <!-- Theme Toggle -->
         <UButton
-          :label="collapsed ? undefined : (colorMode === 'dark' ? t('theme.dark') : t('theme.light'))"
+          :label="(isCollapsed && !isMobile) ? undefined : (colorMode === 'dark' ? t('theme.dark') : t('theme.light'))"
           :icon="colorMode === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
           color="neutral"
           variant="ghost"
           size="lg"
           block
-          :square="collapsed"
+          :square="isCollapsed && !isMobile"
           @click="toggleTheme"
         />
 
         <!-- Logout Button -->
         <UButton
-          :label="collapsed ? undefined : t('navigation.logout')"
+          :label="(isCollapsed && !isMobile) ? undefined : t('navigation.logout')"
           icon="i-lucide-log-out"
           color="neutral"
           variant="ghost"
           size="lg"
           block
-          :square="collapsed"
+          :square="isCollapsed && !isMobile"
           @click="handleLogout"
         />
 
@@ -159,6 +159,13 @@ const localePath = useLocalePath()
 const route = useRoute()
 const colorMode = useColorMode()
 const ordersStore = useOrdersStore()
+
+const isMobile = ref(false)
+onMounted(() => {
+  const mql = window.matchMedia('(max-width: 767px)')
+  isMobile.value = mql.matches
+  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
+})
 
 const languages = [
   { value: 'fr', label: 'Français', icon: 'i-lucide-flag' },
