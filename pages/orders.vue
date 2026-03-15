@@ -96,6 +96,10 @@
                 {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
               </UBadge>
             </div>
+            <p v-if="order.type === 'DELIVERY' && order.address" class="text-xs text-muted truncate mt-0.5">
+              <UIcon name="i-lucide-map-pin" class="size-3 inline-block align-text-bottom" />
+              {{ order.address.streetName }} {{ order.address.houseNumber }}
+            </p>
           </div>
         </div>
       </div>
