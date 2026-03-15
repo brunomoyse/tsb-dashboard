@@ -573,7 +573,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Order, OrderStatus, OrderType } from '~/types'
+import type { Order, OrderStatus, OrderType, TicketTemplates } from '~/types'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatDate, formatPrice, formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
 import gql from 'graphql-tag'
@@ -583,6 +583,7 @@ import { useI18n } from 'vue-i18n'
 const { t, locale } = useI18n()
 const toast = useToast()
 const ordersStore = useOrdersStore()
+const ticketTemplates = ref<TicketTemplates | undefined>()
 
 // Tab state - start as null for SSR, set on client
 const selectedTab = ref<number | null>(null)
@@ -784,7 +785,7 @@ const isUpdatingPayment = ref(false)
 const now = ref(new Date())
 let nowInterval: ReturnType<typeof setInterval> | undefined
 
-onMounted(() => {
+onMounted(async () => {
   selectedTab.value = 0
   nowInterval = setInterval(() => {
     now.value = new Date()
@@ -794,6 +795,19 @@ onMounted(() => {
   const mql = window.matchMedia('(max-width: 767px)')
   isMobile.value = mql.matches
   mql.addEventListener('change', (e) => { isMobile.value = e.matches })
+
+  // Fetch ticket templates for printing
+  try {
+    const { $gqlFetch } = useNuxtApp()
+    const data = await $gqlFetch<{ restaurantConfig: { ticketTemplates: TicketTemplates } }>(
+      print(gql`query { restaurantConfig { ticketTemplates } }`)
+    )
+    if (data?.restaurantConfig?.ticketTemplates) {
+      ticketTemplates.value = data.restaurantConfig.ticketTemplates
+    }
+  } catch {
+    // Non-critical: printing will use defaults
+  }
 })
 
 onUnmounted(() => {
@@ -1325,7 +1339,7 @@ const printDelivery = async () => {
   const encodedOrder: string = JSON.stringify(selectedOrder.value)
 
   try {
-    await $printer.printDelivery(encodedOrder)
+    await $printer.printDelivery(encodedOrder, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1339,7 +1353,7 @@ const printKitchen = async () => {
   const encodedOrder: string = JSON.stringify(selectedOrder.value)
 
   try {
-    await $printer.printKitchen(encodedOrder)
+    await $printer.printKitchen(encodedOrder, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Kitchen print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1353,7 +1367,7 @@ const printBoth = async () => {
   const encodedOrder: string = JSON.stringify(selectedOrder.value)
 
   try {
-    await $printer.printBoth(encodedOrder)
+    await $printer.printBoth(encodedOrder, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print both failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })

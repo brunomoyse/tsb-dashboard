@@ -170,9 +170,37 @@
     "products": "Products",
     "orders": "Orders",
     "coupons": "Coupons",
+    "tickets": "Tickets",
     "booking": "Booking",
     "settings": "Settings",
     "logout": "Logout"
+  },
+
+  "tickets": {
+    "title": "Ticket Templates",
+    "description": "Configure receipt and kitchen ticket layouts",
+    "delivery": "Delivery Ticket",
+    "kitchen": "Kitchen Ticket",
+    "preview": "Preview",
+    "saved": "Ticket templates saved",
+    "saveFailed": "Failed to save ticket templates",
+    "resetDefaults": "Reset to Defaults",
+    "resetConfirm": "Reset ticket templates to defaults?",
+    "sections": {
+      "header": "Header",
+      "address": "Address",
+      "customer": "Customer",
+      "timing": "Timing",
+      "payment": "Payment",
+      "items": "Items",
+      "extras": "Extras",
+      "notes": "Notes",
+      "orderInfo": "Order Info"
+    },
+    "fields": {
+      "restaurantName": "Restaurant Name",
+      "headerTitle": "Header Title"
+    }
   },
 
   "settings": {

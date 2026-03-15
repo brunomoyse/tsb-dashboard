@@ -171,9 +171,37 @@
     "products": "Produits",
     "orders": "Commandes",
     "coupons": "Coupons",
+    "tickets": "Tickets",
     "booking": "Réservation",
     "settings": "Paramètres",
     "logout": "Déconnexion"
+  },
+
+  "tickets": {
+    "title": "Modèles de tickets",
+    "description": "Configurer la mise en page des tickets de livraison et cuisine",
+    "delivery": "Ticket livraison",
+    "kitchen": "Ticket cuisine",
+    "preview": "Aperçu",
+    "saved": "Modèles de tickets enregistrés",
+    "saveFailed": "Échec de l'enregistrement des modèles",
+    "resetDefaults": "Réinitialiser",
+    "resetConfirm": "Réinitialiser les modèles de tickets par défaut ?",
+    "sections": {
+      "header": "En-tête",
+      "address": "Adresse",
+      "customer": "Client",
+      "timing": "Horaires",
+      "payment": "Paiement",
+      "items": "Articles",
+      "extras": "Extras",
+      "notes": "Notes",
+      "orderInfo": "Infos commande"
+    },
+    "fields": {
+      "restaurantName": "Nom du restaurant",
+      "headerTitle": "Titre de l'en-tête"
+    }
   },
 
   "settings": {
