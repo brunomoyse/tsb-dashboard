@@ -3,14 +3,46 @@
  *
  * Formats receipts and kitchen tickets aligned with the Android PrintHandler.kt layout.
  * 48-char width for 80mm paper with Font A.
+ *
+ * Supports optional TicketTemplates config for section toggling, reordering,
+ * and custom text. When no templates are provided, uses hardcoded defaults
+ * (identical to the original behavior).
  */
 
-import type { Order, OrderProduct } from '~/types'
+import type { DeliverySectionKey, KitchenSectionKey, Order, OrderProduct, TicketSectionConfig, TicketTemplates } from '~/types'
 import type { EpsonPrinterCommands } from '~/composables/useEpsonPrinter'
 
 const LINE_WIDTH = 48
 const SEPARATOR = '-'.repeat(LINE_WIDTH)
 const DOUBLE_SEPARATOR = '='.repeat(LINE_WIDTH)
+
+// --- Default Templates ---
+
+export const DEFAULT_TEMPLATES: TicketTemplates = {
+  delivery: {
+    sectionOrder: ['header', 'address', 'customer', 'timing', 'payment', 'items', 'extras', 'notes'],
+    sections: {
+      header:   { enabled: true, restaurantName: 'Tokyo Sushi Bar' },
+      address:  { enabled: true },
+      customer: { enabled: true },
+      timing:   { enabled: true },
+      payment:  { enabled: true },
+      items:    { enabled: true },
+      extras:   { enabled: true },
+      notes:    { enabled: true },
+    }
+  },
+  kitchen: {
+    sectionOrder: ['header', 'orderInfo', 'items', 'extras', 'notes'],
+    sections: {
+      header:    { enabled: true, title: '*** CUISINE ***' },
+      orderInfo: { enabled: true },
+      items:     { enabled: true },
+      extras:    { enabled: true },
+      notes:     { enabled: true },
+    }
+  }
+}
 
 // --- Helpers ---
 
@@ -126,7 +158,7 @@ const getItemDisplayName = (item: OrderProduct): string => {
   return name
 }
 
-// --- Delivery Ticket ---
+// --- Delivery Ticket Section Builders ---
 
 const addDeliveryHeader = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addTextAlign('center')
@@ -275,7 +307,7 @@ const addDeliveryExtras = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addText(`${SEPARATOR}\n`)
 }
 
-const addDeliveryFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
+const addDeliveryNotes = (cmd: EpsonPrinterCommands, order: Order): void => {
   if (order.orderNote) {
     cmd.addTextAlign('center')
     cmd.addTextStyle({ bold: true })
@@ -289,29 +321,41 @@ const addDeliveryFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addFeedLine(2)
 }
 
+// --- Delivery Section Builder Map ---
+
+const deliverySectionBuilders: Record<DeliverySectionKey, (cmd: EpsonPrinterCommands, order: Order, cfg: TicketSectionConfig) => void> = {
+  header:   (cmd, order) => addDeliveryHeader(cmd, order),
+  address:  (cmd, order) => addDeliveryAddress(cmd, order),
+  customer: (cmd, order) => addDeliveryCustomer(cmd, order),
+  timing:   (cmd, order) => addDeliveryTiming(cmd, order),
+  payment:  (cmd, order) => addDeliveryPayment(cmd, order),
+  items:    (cmd, order) => addDeliveryItems(cmd, order),
+  extras:   (cmd, order) => addDeliveryExtras(cmd, order),
+  notes:    (cmd, order) => addDeliveryNotes(cmd, order),
+}
+
 /**
  * Build delivery ticket for an order (DELIVERY COPY)
  * Address-focused layout for the delivery driver.
  * For pickup orders, serves as a compact order summary.
  */
-export const buildDeliveryTicket = (order: Order) => (cmd: EpsonPrinterCommands) => {
-  addDeliveryHeader(cmd, order)
-  addDeliveryAddress(cmd, order)
-  addDeliveryCustomer(cmd, order)
-  addDeliveryTiming(cmd, order)
-  addDeliveryPayment(cmd, order)
-  addDeliveryItems(cmd, order)
-  addDeliveryExtras(cmd, order)
-  addDeliveryFooter(cmd, order)
+export const buildDeliveryTicket = (order: Order, templates?: TicketTemplates) => (cmd: EpsonPrinterCommands) => {
+  const tmpl = templates?.delivery ?? DEFAULT_TEMPLATES.delivery
+  for (const key of tmpl.sectionOrder) {
+    const sectionCfg = tmpl.sections[key]
+    if (!sectionCfg?.enabled) continue
+    deliverySectionBuilders[key](cmd, order, sectionCfg)
+  }
   cmd.addCut()
 }
 
-// --- Kitchen Ticket ---
+// --- Kitchen Ticket Section Builders ---
 
-const addKitchenHeader = (cmd: EpsonPrinterCommands, order: Order): void => {
+const addKitchenHeader = (cmd: EpsonPrinterCommands, order: Order, cfg: TicketSectionConfig): void => {
+  const title = cfg.title || '*** CUISINE ***'
   cmd.addTextAlign('center')
   cmd.addTextSize(3, 3)
-  cmd.addText('*** CUISINE ***\n')
+  cmd.addText(`${title}\n`)
   cmd.addTextSize(1, 1)
   cmd.addText(`${DOUBLE_SEPARATOR}\n`)
 
@@ -408,7 +452,7 @@ const addKitchenExtras = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addText(`${SEPARATOR}\n`)
 }
 
-const addKitchenFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
+const addKitchenNotes = (cmd: EpsonPrinterCommands, order: Order): void => {
   // Order notes - very important for kitchen
   if (order.orderNote) {
     cmd.addTextAlign('center')
@@ -425,15 +469,26 @@ const addKitchenFooter = (cmd: EpsonPrinterCommands, order: Order): void => {
   cmd.addFeedLine(2)
 }
 
+// --- Kitchen Section Builder Map ---
+
+const kitchenSectionBuilders: Record<KitchenSectionKey, (cmd: EpsonPrinterCommands, order: Order, cfg: TicketSectionConfig) => void> = {
+  header:    (cmd, order, cfg) => addKitchenHeader(cmd, order, cfg),
+  orderInfo: (cmd, order) => addKitchenOrderInfo(cmd, order),
+  items:     (cmd, order) => addKitchenItems(cmd, order),
+  extras:    (cmd, order) => addKitchenExtras(cmd, order),
+  notes:     (cmd, order) => addKitchenNotes(cmd, order),
+}
+
 /**
  * Build kitchen ticket for an order (KITCHEN COPY)
  */
-export const buildKitchenTicket = (order: Order) => (cmd: EpsonPrinterCommands) => {
-  addKitchenHeader(cmd, order)
-  addKitchenOrderInfo(cmd, order)
-  addKitchenItems(cmd, order)
-  addKitchenExtras(cmd, order)
-  addKitchenFooter(cmd, order)
+export const buildKitchenTicket = (order: Order, templates?: TicketTemplates) => (cmd: EpsonPrinterCommands) => {
+  const tmpl = templates?.kitchen ?? DEFAULT_TEMPLATES.kitchen
+  for (const key of tmpl.sectionOrder) {
+    const sectionCfg = tmpl.sections[key]
+    if (!sectionCfg?.enabled) continue
+    kitchenSectionBuilders[key](cmd, order, sectionCfg)
+  }
   cmd.addCut()
 }
 

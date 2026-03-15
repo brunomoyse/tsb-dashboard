@@ -5,12 +5,12 @@
  * Uses automatic printer discovery - no manual IP configuration needed.
  */
 
+import type { Order, TicketTemplates } from '~/types'
 import {
   buildDeliveryTicket,
   buildKitchenTicket,
   createTestOrder,
 } from '~/utils/receiptFormatter'
-import type { Order } from '~/types'
 import { generateReceiptPreview } from '~/utils/mockPrinter'
 
 export default defineNuxtPlugin(() => {
@@ -67,7 +67,7 @@ export default defineNuxtPlugin(() => {
   /**
    * Print a delivery ticket for an order (DELIVERY COPY)
    */
-  const printDeliveryTicket = async (orderJson: string): Promise<void> => {
+  const printDeliveryTicket = async (orderJson: string, templates?: TicketTemplates): Promise<void> => {
     // Check if printing is enabled
     if (!config.public.printer.enabled) {
       if (import.meta.dev) console.warn('⚠️ Printer is disabled in configuration')
@@ -82,7 +82,7 @@ export default defineNuxtPlugin(() => {
 
       try {
         // Attempt to print with current config
-        await print(printerConfig, buildDeliveryTicket(order))
+        await print(printerConfig, buildDeliveryTicket(order, templates))
       } catch {
         if (import.meta.dev) console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
 
@@ -91,7 +91,7 @@ export default defineNuxtPlugin(() => {
         printerConfig = await getPrinterConfig()
 
         // Retry print
-        await print(printerConfig, buildDeliveryTicket(order))
+        await print(printerConfig, buildDeliveryTicket(order, templates))
       }
     } catch (error) {
       if (import.meta.dev) console.error('❌ Failed to print delivery ticket:', error)
@@ -102,7 +102,7 @@ export default defineNuxtPlugin(() => {
   /**
    * Print a kitchen ticket for an order (KITCHEN COPY)
    */
-  const printKitchenTicket = async (orderJson: string): Promise<void> => {
+  const printKitchenTicket = async (orderJson: string, templates?: TicketTemplates): Promise<void> => {
     // Check if printing is enabled
     if (!config.public.printer.enabled) {
       if (import.meta.dev) console.warn('⚠️ Printer is disabled in configuration')
@@ -117,7 +117,7 @@ export default defineNuxtPlugin(() => {
 
       try {
         // Attempt to print with current config
-        await print(printerConfig, buildKitchenTicket(order))
+        await print(printerConfig, buildKitchenTicket(order, templates))
       } catch {
         if (import.meta.dev) console.warn('⚠️ Print failed, clearing cache and retrying discovery...')
 
@@ -126,7 +126,7 @@ export default defineNuxtPlugin(() => {
         printerConfig = await getPrinterConfig()
 
         // Retry print
-        await print(printerConfig, buildKitchenTicket(order))
+        await print(printerConfig, buildKitchenTicket(order, templates))
       }
     } catch (error) {
       if (import.meta.dev) console.error('❌ Failed to print kitchen ticket:', error)
@@ -137,36 +137,36 @@ export default defineNuxtPlugin(() => {
   /**
    * Print both kitchen ticket and delivery ticket
    */
-  const printBoth = async (orderJson: string): Promise<void> => {
-    await printKitchenTicket(orderJson)
+  const printBoth = async (orderJson: string, templates?: TicketTemplates): Promise<void> => {
+    await printKitchenTicket(orderJson, templates)
     // Small delay between prints
     // eslint-disable-next-line no-promise-executor-return
     await new Promise(resolve => setTimeout(resolve, 500))
-    await printDeliveryTicket(orderJson)
+    await printDeliveryTicket(orderJson, templates)
   }
 
   /**
    * Test print with dummy order
    */
-  const testPrint = async (): Promise<void> => {
+  const testPrint = async (templates?: TicketTemplates): Promise<void> => {
     const testOrder = createTestOrder()
-    await printDeliveryTicket(JSON.stringify(testOrder))
+    await printDeliveryTicket(JSON.stringify(testOrder), templates)
   }
 
   /**
    * Generate preview of delivery ticket (without printing)
    */
-  const previewDelivery = (orderJson: string): string => {
+  const previewDelivery = (orderJson: string, templates?: TicketTemplates): string => {
     const order: Order = JSON.parse(orderJson)
-    return generateReceiptPreview(buildDeliveryTicket(order))
+    return generateReceiptPreview(buildDeliveryTicket(order, templates))
   }
 
   /**
    * Generate preview of kitchen ticket (without printing)
    */
-  const previewKitchen = (orderJson: string): string => {
+  const previewKitchen = (orderJson: string, templates?: TicketTemplates): string => {
     const order: Order = JSON.parse(orderJson)
-    return generateReceiptPreview(buildKitchenTicket(order))
+    return generateReceiptPreview(buildKitchenTicket(order, templates))
   }
 
   return {
