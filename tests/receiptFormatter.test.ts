@@ -431,6 +431,24 @@ describe('order extras mapping (via receipt output)', () => {
     expect(output).toContain('Sauce: teriyaki')
   })
 
+  it('maps wasabi extra', () => {
+    const order = makeOrder({
+      orderExtra: [{ name: 'wasabi', options: null }],
+      items: [makeItem()]
+    })
+    const output = renderDelivery(order)
+    expect(output).toContain('Wasabi: Oui')
+  })
+
+  it('maps ginger extra', () => {
+    const order = makeOrder({
+      orderExtra: [{ name: 'ginger', options: null }],
+      items: [makeItem()]
+    })
+    const output = renderDelivery(order)
+    expect(output).toContain('Gingembre: Oui')
+  })
+
   it('ignores extras with null name or options', () => {
     const order = makeOrder({
       orderExtra: [{ name: null, options: null }],
