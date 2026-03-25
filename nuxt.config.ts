@@ -4,6 +4,7 @@
 const apiOrigin = new URL(process.env.API_BASE_URL || 'http://localhost:8080/api/v1').origin
 const wsOrigin = apiOrigin.replace(/^http/, 'ws')
 const s3Url = process.env.S3_BUCKET_URL
+const zitadelOrigin = process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be'
 
 const csp = `${[
     "default-src 'self'",
@@ -11,7 +12,7 @@ const csp = `${[
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
     "font-src 'self' https://fonts.gstatic.com",
-    `connect-src 'self' ${apiOrigin} ${wsOrigin}`,
+    `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin}`,
 ].join('; ')};`
 
 export default defineNuxtConfig({
@@ -38,6 +39,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      dashboardBaseUrl: process.env.DASHBOARD_BASE_URL,
       s3bucketUrl: process.env.S3_BUCKET_URL,
       api: process.env.API_BASE_URL,
       graphqlHttp: `${process.env.API_BASE_URL}/graphql`,
@@ -45,20 +47,9 @@ export default defineNuxtConfig({
       printer: {
         enabled: process.env.PRINTER_ENABLED === 'true',
       },
-      cookie: {
-        accessToken: {
-          name: 'access_token',
-          httpOnly: true,
-          sameSite: 'lax',
-          maxAge: 3600, // 1 hour
-        },
-        refreshToken: {
-          name: 'refresh_token',
-          httpOnly: true,
-          sameSite: 'lax',
-          maxAge: 2592000, // 30 days
-        },
-      }
+      // Zitadel OIDC
+      zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
+      zitadelClientId: process.env.ZITADEL_CLIENT_ID || '',
     },
   },
 

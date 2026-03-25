@@ -170,12 +170,6 @@ export interface Customer {
     phoneNumber: string | null;
 }
 
-export interface LoginResponse {
-    user: User;
-    accessToken?: string;
-    refreshToken?: string;
-}
-
 export type OrderStatus = OrderDeliveryStatus | OrderPickUpStatus;
 
 export type OrderDeliveryStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'AWAITING_PICK_UP' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED'
