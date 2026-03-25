@@ -269,6 +269,8 @@ const bottomNavItems = computed(() => [
 const mobileMenuItems = computed(() => [
   languages.map(lang => ({
     label: lang.label,
+    icon: lang.value === locale.value ? 'i-lucide-check' : 'i-lucide-languages',
+    disabled: lang.value === locale.value,
     onClick: () => onLanguageChange(lang.value)
   })),
   [
@@ -293,22 +295,8 @@ const onLanguageChange = (newLocale: 'fr' | 'en' | 'zh') => {
 }
 
 const handleLogout = async () => {
-  const config = useRuntimeConfig()
   const authStore = useAuthStore()
-
-  try {
-    await fetch(`${config.public.api}/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    })
-  } catch (error) {
-    if (import.meta.dev) console.error('Logout error:', error)
-  }
-
-  // Clear persisted state before redirect
-  authStore.clearUser()
-  localStorage.removeItem('token_expires')
-  await navigateTo(localePath('/login'), { external: true })
+  await authStore.logout()
 }
 
 const toggleTheme = () => {

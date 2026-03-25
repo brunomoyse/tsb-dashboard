@@ -264,7 +264,11 @@
     "passwordPlaceholder": "Entrez votre mot de passe",
     "submit": "Se connecter",
     "invalidCredentials": "E-mail ou mot de passe invalide",
-    "accessDenied": "Accès refusé. Seuls les administrateurs peuvent accéder au tableau de bord."
+    "accessDenied": "Accès refusé. Seuls les administrateurs peuvent accéder au tableau de bord.",
+    "authenticating": "Authentification en cours...",
+    "callbackError": "Erreur lors de l'authentification",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "tooManyRequests": "Trop de tentatives. Veuillez réessayer plus tard."
   },
 
   "validation": {

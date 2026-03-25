@@ -263,7 +263,11 @@
     "passwordPlaceholder": "Enter your password",
     "submit": "Sign in",
     "invalidCredentials": "Invalid email or password",
-    "accessDenied": "Access denied. Only administrators can access the dashboard."
+    "accessDenied": "Access denied. Only administrators can access the dashboard.",
+    "authenticating": "Authenticating...",
+    "callbackError": "Authentication error",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "tooManyRequests": "Too many attempts. Please try again later."
   },
 
   "validation": {

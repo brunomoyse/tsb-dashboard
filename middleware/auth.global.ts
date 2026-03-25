@@ -1,107 +1,33 @@
-// Middleware/auth.global.ts
-import { defineNuxtRouteMiddleware, navigateTo, useCookie, useRequestEvent, useRuntimeConfig } from 'nuxt/app'
-import { useAuthStore } from '@/stores/auth'
-import { useLocalePath } from "#imports";
+// Middleware: auth.global.ts — OIDC session management via Zitadel
+import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
+import { useLocalePath } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
+    // Public pages skip auth check
     if (to.meta.public === true) return
-    const config = useRuntimeConfig()
+
     const localePath = useLocalePath()
-    const apiUrl: string = config.public.api as string
 
-    // Server-side handling
-    if (import.meta.server) {
-        const event = useRequestEvent()
+    // Server-side: cannot check OIDC session (managed client-side by oidc-client-ts).
+    // Let SSR pass through — client-side will handle auth check on hydration.
+    if (import.meta.server) return
 
-        const cookies = parseCookies(event?.node.req.headers.cookie || '')
+    // Client-side: check OIDC session
+    const { useOidc } = await import('~/composables/useOidc')
+    const { isAuthenticated, silentRenew, signIn } = useOidc()
 
-        // 1. Check for refresh token existence
-        if (!cookies.refresh_token) {
-            return navigateTo(localePath('login'));
-        }
+    // 1. Check if user has a valid OIDC session
+    if (await isAuthenticated()) return
 
-        // 2. Validate access token expiration if present
-        if (cookies.access_token) {
-            const isValid = checkTokenExpiration(cookies.access_token)
-            if (isValid) return
-        }
+    // 2. Attempt silent renewal
+    const renewed = await silentRenew()
+    if (renewed) return
 
-        // 3. Attempt refresh if no valid access token
-        try {
-            const refreshResponse = await $fetch.raw(`${apiUrl}/tokens/refresh`, {
-                method: 'POST',
-                headers: { cookie: event?.node.req.headers.cookie || '' }
-            })
-            // Update client cookies
-            const setCookies = refreshResponse.headers.get('set-cookie')
-            if (setCookies && event) {
-                event.node.res.setHeader('set-cookie', setCookies)
-                // Also update the in-memory cookie used for immediate SSR API calls
-                event.node.req.headers.cookie = setCookies
-            }
-        } catch {
-            return navigateTo(localePath('login'));
-        }
-    }
-    // Client-side handling
-    else {
-        const authStore = useAuthStore()
-
-        // 0. Reject non-admin users
-        if (authStore.user && authStore.user.isAdmin === false) {
-            await authStore.logout()
-            return navigateTo(localePath('login'))
-        }
-
-        // 1. Check memory store first
-        if (authStore.accessValid) return
-
-        // 2. Check localStorage for expiration timestamp
-        const expiresAt = localStorage.getItem('token_expires')
-        if (expiresAt && Date.now() < Number(expiresAt)) return
-
-        // 3. Check refresh token existence
-        const refreshToken = useCookie('refresh_token')
-        if (!refreshToken.value) {
-            return navigateTo(localePath('login'));
-        }
-
-        try {
-            // 4. Silent refresh attempt
-            await $fetch(`${apiUrl}/tokens/refresh`, {
-                method: 'POST',
-                credentials: 'include'
-            })
-
-            // Update client-side validation state
-            authStore.setAccessValid(true)
-        } catch {
-            await authStore.logout()
-            return navigateTo(localePath('login'));
-        }
+    // 3. No valid session — redirect to Zitadel login via OIDC authorize
+    try {
+        await signIn({ ui_locales: to.path.split('/')[1] || 'fr' })
+    } catch {
+        // Fallback: navigate to login page directly
+        return navigateTo(localePath('auth-login'))
     }
 })
-
-// Utils/jwt.ts
-const checkTokenExpiration = (token: string): boolean => {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]!))
-        return payload.exp * 1000 > Date.now()
-    } catch {
-        return false
-    }
-}
-
-
-// Simplified Cookie helper functions
-const parseCookies = (cookieHeader: string): Record<string, string> => {
-    if (!cookieHeader) return {}
-    return cookieHeader.split(';').reduce((cookies, item) => {
-        const idx = item.indexOf('=')
-        if (idx === -1) return cookies
-        const name = item.substring(0, idx).trim()
-        const value = item.substring(idx + 1).trim()
-        try { cookies[name] = decodeURIComponent(value) } catch { cookies[name] = value }
-        return cookies
-    }, {} as Record<string, string>)
-}
