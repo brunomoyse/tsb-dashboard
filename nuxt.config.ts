@@ -13,6 +13,7 @@ const csp = `${[
     `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
     "font-src 'self' https://fonts.gstatic.com",
     `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin}`,
+    `frame-src 'self' ${zitadelOrigin}`,
 ].join('; ')};`
 
 export default defineNuxtConfig({
@@ -105,7 +106,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/**': {
       headers: {
-        'X-Frame-Options': 'DENY',
+        'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
