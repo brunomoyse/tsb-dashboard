@@ -167,9 +167,35 @@
     "updated": "Coupon mis à jour avec succès"
   },
 
+  "customers": {
+    "title": "Statistiques clients",
+    "subtitle": "Aperçu de l'activité de commande des clients",
+    "search": "Rechercher des clients...",
+    "noResults": "Aucun client trouvé",
+    "name": "Client",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "totalOrders": "Commandes",
+    "totalAmount": "Total dépensé",
+    "averageOrder": "Moy. commande",
+    "lastOrder": "Dernière commande",
+    "firstOrder": "Première commande",
+    "registeredAt": "Inscription",
+    "preferredType": "Préférence",
+    "delivery": "Livraison",
+    "pickup": "Retrait",
+    "summary": {
+      "totalCustomers": "Clients",
+      "totalRevenue": "Revenu total",
+      "averageOrder": "Commande moyenne",
+      "totalOrders": "Total commandes"
+    }
+  },
+
   "navigation": {
     "products": "Produits",
     "orders": "Commandes",
+    "customers": "Clients",
     "coupons": "Coupons",
     "tickets": "Tickets",
     "booking": "Réservation",

@@ -167,9 +167,35 @@
     "updated": "优惠券更新成功"
   },
 
+  "customers": {
+    "title": "客户统计",
+    "subtitle": "客户订单活动概览",
+    "search": "搜索客户...",
+    "noResults": "未找到客户",
+    "name": "客户",
+    "email": "邮箱",
+    "phone": "电话",
+    "totalOrders": "订单数",
+    "totalAmount": "总消费",
+    "averageOrder": "平均订单",
+    "lastOrder": "最近订单",
+    "firstOrder": "首次订单",
+    "registeredAt": "注册日期",
+    "preferredType": "偏好",
+    "delivery": "配送",
+    "pickup": "自取",
+    "summary": {
+      "totalCustomers": "客户数",
+      "totalRevenue": "总收入",
+      "averageOrder": "平均订单",
+      "totalOrders": "总订单数"
+    }
+  },
+
   "navigation": {
     "products": "产品",
     "orders": "订单",
+    "customers": "客户",
     "coupons": "优惠券",
     "tickets": "小票",
     "booking": "预订",
