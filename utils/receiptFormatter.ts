@@ -120,9 +120,19 @@ const groupByCategory = (items: OrderProduct[]): Map<string, OrderProduct[]> => 
 /** Map order extra name to French label */
 const mapExtraLabel = (name: string | null, options: string[] | null): string[] => {
   const labels: string[] = []
-  if (!name || !options) return labels
+  if (!name) return labels
 
   const lowerName = (name || '').toLowerCase()
+
+  if (lowerName === 'wasabi') {
+    labels.push('Wasabi: Oui')
+    return labels
+  } else if (lowerName === 'ginger' || lowerName === 'gingembre') {
+    labels.push('Gingembre: Oui')
+    return labels
+  }
+
+  if (!options) return labels
 
   if (lowerName === 'chopsticks' || lowerName === 'baguettes') {
     for (const opt of options) {
