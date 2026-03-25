@@ -166,9 +166,35 @@
     "updated": "Coupon updated successfully"
   },
 
+  "customers": {
+    "title": "Customer Statistics",
+    "subtitle": "Overview of customer ordering activity",
+    "search": "Search customers...",
+    "noResults": "No customers found",
+    "name": "Customer",
+    "email": "Email",
+    "phone": "Phone",
+    "totalOrders": "Orders",
+    "totalAmount": "Total Spent",
+    "averageOrder": "Avg. Order",
+    "lastOrder": "Last Order",
+    "firstOrder": "First Order",
+    "registeredAt": "Registered",
+    "preferredType": "Preferred",
+    "delivery": "Delivery",
+    "pickup": "Pickup",
+    "summary": {
+      "totalCustomers": "Customers",
+      "totalRevenue": "Total Revenue",
+      "averageOrder": "Average Order",
+      "totalOrders": "Total Orders"
+    }
+  },
+
   "navigation": {
     "products": "Products",
     "orders": "Orders",
+    "customers": "Customers",
     "coupons": "Coupons",
     "tickets": "Tickets",
     "booking": "Booking",

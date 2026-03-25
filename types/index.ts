@@ -240,6 +240,37 @@ export interface Address {
     distance: number;
 }
 
+// --- Customer Statistics Types ---
+
+export interface CustomerStats {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string | null;
+    registeredAt: string;
+    totalOrders: number;
+    totalAmount: string;
+    averageOrderAmount: string;
+    firstOrderDate: string;
+    lastOrderDate: string;
+    preferredOrderType: OrderType;
+    deliveryCount: number;
+    pickupCount: number;
+}
+
+export interface CustomerStatsSummary {
+    totalCustomers: number;
+    totalRevenue: string;
+    averageOrderValue: string;
+    totalOrders: number;
+}
+
+export interface CustomerStatsResponse {
+    summary: CustomerStatsSummary;
+    customers: CustomerStats[];
+}
+
 // --- Ticket Template Types ---
 
 export type DeliverySectionKey = 'header' | 'address' | 'customer' | 'timing' | 'payment' | 'items' | 'extras' | 'notes'
