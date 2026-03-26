@@ -21,14 +21,17 @@ export const useAuthStore = defineStore("auth", {
             this.user = null
         },
         async logout() {
+            // Clear state BEFORE the redirect (signOut triggers window.location change)
+            this.user = null
+            if (import.meta.client) {
+                localStorage.removeItem('auth')
+            }
             try {
                 const { useOidc } = await import('~/composables/useOidc')
                 const { signOut } = useOidc()
                 await signOut()
             } catch (error) {
                 if (import.meta.dev) console.error('Logout error:', error)
-            } finally {
-                this.user = null
             }
         }
     },
