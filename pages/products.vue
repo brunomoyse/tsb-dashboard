@@ -256,6 +256,8 @@ const getFlagEmoji = (lang: string) => {
       return '🇬🇧'
     case 'zh':
       return '🇨🇳'
+    case 'nl':
+      return '🇳🇱'
     default:
       return ''
   }

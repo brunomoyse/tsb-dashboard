@@ -298,7 +298,7 @@ const { t, locale } = useI18n()
 const toast = useToast()
 
 // Languages used for translations.
-const languages = ['fr', 'en', 'zh']
+const languages = ['fr', 'en', 'zh', 'nl']
 
 // Create a copy of an existing product with exactly the languages we need.
 const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
@@ -504,7 +504,7 @@ const closeDialog = () => {
     dialog.value = false
 }
 
-const LANG_LABELS: Record<string, string> = { fr: 'FR', en: 'EN', zh: 'ZH' }
+const LANG_LABELS: Record<string, string> = { fr: 'FR', en: 'EN', zh: 'ZH', nl: 'NL' }
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5 MB
 const CODE_REGEX = /^[A-Z]+\d+$/

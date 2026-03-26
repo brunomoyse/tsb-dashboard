@@ -91,6 +91,10 @@ export default defineNuxtConfig({
       {
         code: 'zh',
         language: 'zh-CN'
+      },
+      {
+        code: 'nl',
+        language: 'nl-BE'
       }
     ],
     detectBrowserLanguage: {

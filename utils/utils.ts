@@ -28,7 +28,7 @@ export function getStreetAndDistance(address: Address | null): string {
 }
 
 export const formatDate = (dateString: string, locale = 'fr-BE') =>
-    new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
+    new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale === 'nl' ? 'nl-BE' : locale, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -46,7 +46,7 @@ export const formatTimeOnly = (dateString: string, locale = 'fr-BE') => {
             return '--:--'
         }
 
-        return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
+        return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale === 'nl' ? 'nl-BE' : locale, {
             hour: "2-digit",
             minute: "2-digit"
         }).format(date);
