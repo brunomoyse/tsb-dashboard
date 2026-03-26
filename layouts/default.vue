@@ -170,6 +170,7 @@ onMounted(() => {
 const languages = [
   { value: 'fr', label: 'Français', icon: 'i-lucide-flag' },
   { value: 'en', label: 'English', icon: 'i-lucide-flag' },
+  { value: 'nl', label: 'Nederlands', icon: 'i-lucide-flag' },
   { value: 'zh', label: '中文', icon: 'i-lucide-flag' }
 ]
 
@@ -287,7 +288,7 @@ const mobileMenuItems = computed(() => [
   ]
 ])
 
-const onLanguageChange = (newLocale: 'fr' | 'en' | 'zh') => {
+const onLanguageChange = (newLocale: 'fr' | 'en' | 'nl' | 'zh') => {
   const newPath = switchLocalePath(newLocale)
   if (newPath) {
     navigateTo(newPath)

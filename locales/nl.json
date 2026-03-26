@@ -1,0 +1,294 @@
+{
+  "common": {
+    "actions": "Acties",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "create": "Aanmaken",
+    "print": "Afdrukken",
+    "itemsPerPage": "Items per pagina",
+    "name": "Naam",
+    "description": "Beschrijving",
+    "code": "Code",
+    "price": "Prijs",
+    "visible": "Zichtbaar",
+    "invisible": "Onzichtbaar",
+    "visibility": "Zichtbaarheid",
+    "available": "Beschikbaar",
+    "unavailable": "Niet beschikbaar",
+    "availability": "Beschikbaarheid"
+  },
+
+  "products": {
+    "search": "Producten zoeken",
+    "add": "Product toevoegen",
+    "edit": "Product bewerken",
+    "noProducts": "Geen producten gevonden",
+    "visibility": {
+      "visible": "Zichtbaar",
+      "invisible": "Onzichtbaar"
+    },
+    "category": "Categorie",
+    "code": "Productcode",
+    "priceEuro": "Prijs (€)",
+    "pieceCount": "Aantal stuks",
+    "halal": "Halal",
+    "spicy": "Pittig",
+    "vegan": "Veganistisch",
+    "discountable": "Kortingsbaar",
+    "translations": "Vertalingen",
+    "image": "Afbeelding wijzigen",
+    "removeImage": "Afbeelding verwijderen",
+    "choices": {
+      "title": "Productopties",
+      "add": "Optie toevoegen",
+      "none": "Geen opties gedefinieerd",
+      "new": "Nieuwe optie",
+      "priceModifier": "Prijswijziging (€)",
+      "sortOrder": "Volgorde"
+    }
+  },
+
+  "orders": {
+    "subtitle": "Beheer uw bestellingen in realtime",
+    "all": "Alle",
+    "new": "Nieuwe",
+    "active": "Actieve",
+    "completed": "Afgeronde",
+    "issues": "Problemen",
+    "pending": "In afwachting",
+    "preparing": "In bereiding",
+    "ready": "Klaar",
+    "items": "Artikelen",
+    "timeManagement": "Tijdbeheer",
+    "currentEstimate": "Huidige schatting",
+    "newEstimate": "Nieuwe schatting",
+    "minutes": "minuten",
+    "createdAt": "Aangemaakt op",
+    "preferredTime": "Gewenste tijd",
+    "estimatedTime": "Geschatte tijd",
+    "updateTime": "Tijd bijwerken",
+    "asap": "Zo snel mogelijk",
+    "orderManagement": "Bestelbeheer",
+    "print": {
+      "label": "Afdrukken",
+      "both": "Beide afdrukken",
+      "delivery": "Bezorgticket afdrukken",
+      "kitchen": "Keukenticket afdrukken"
+    },
+    "confirmCancelTitle": "Annulering bevestigen",
+    "confirmCancelMessage": "Weet u zeker dat u deze bestelling wilt annuleren?",
+    "refundNotice": "Een terugbetaling wordt verwerkt voor online betalingen",
+    "back": "Terug",
+    "confirm": "Bevestigen",
+    "delivery": "Bezorging",
+    "pickup": "Afhalen",
+    "search": "Bestellingen zoeken...",
+    "noOrders": "Geen bestellingen gevonden",
+    "updateStatus": "Bestelstatus bijwerken",
+    "waitMessage": "Wacht {seconds} seconden voordat u de annulering bevestigt.",
+    "orderDetails": "Bestelgegevens",
+    "orderDetailsDescription": "Bekijk en beheer de bestelgegevens",
+    "status": {
+      "pending": "In afwachting",
+      "confirmed": "Bevestigd",
+      "preparing": "In bereiding",
+      "awaiting_pick_up": "Klaar voor afhaling",
+      "picked_up": "Afgehaald",
+      "out_for_delivery": "Onderweg",
+      "delivered": "Bezorgd",
+      "cancelled": "Geannuleerd",
+      "failed": "Mislukt"
+    },
+    "statusShort": {
+      "new": "Nieuwe",
+      "pending": "Wacht",
+      "confirmed": "Bevestigd",
+      "preparing": "Bereid.",
+      "awaiting_pick_up": "Afhaling",
+      "out_for_delivery": "Bezorging",
+      "completed": "Afgerond"
+    },
+    "deliveryOption": {
+      "pickup": "Afhalen",
+      "delivery": "Bezorging"
+    },
+    "payment": {
+      "title": "Betalingsstatus",
+      "markAsPaid": "Markeren als betaald",
+      "paidLabel": "Betaald",
+      "status": {
+        "open": "Open",
+        "cancelled": "Geannuleerd",
+        "pending": "In afwachting",
+        "expired": "Verlopen",
+        "failed": "Mislukt",
+        "paid": "Betaald",
+        "notPaid": "Niet betaald"
+      }
+    },
+    "manualAddress": "Handmatig adres",
+    "paymentMethod": {
+      "online": "Online betaling",
+      "cash": "Contant"
+    },
+    "timeSince": {
+      "minutes": "{count} min geleden",
+      "hours": "{count}u geleden"
+    },
+    "errors": {
+      "updateFailed": "Bestelling bijwerken mislukt",
+      "invalidTransition": "Deze statusovergang is niet toegestaan voor deze bestelling",
+      "printFailed": "Afdrukken mislukt",
+      "paymentUpdateFailed": "Betalingsstatus bijwerken mislukt"
+    }
+  },
+
+  "coupons": {
+    "title": "Kortingscodes",
+    "add": "Kortingscode toevoegen",
+    "search": "Kortingscodes zoeken...",
+    "code": "Code",
+    "type": "Type",
+    "value": "Waarde",
+    "minOrder": "Min. bestelling",
+    "maxUses": "Max. gebruik",
+    "maxUsesPerUser": "Max. gebruik / gebruiker",
+    "used": "Gebruikt",
+    "active": "Actief",
+    "validFrom": "Geldig vanaf",
+    "validUntil": "Geldig tot",
+    "percentage": "Percentage",
+    "fixed": "Vast bedrag",
+    "unlimited": "Onbeperkt",
+    "editTitle": "Kortingscode bewerken",
+    "createTitle": "Nieuwe kortingscode",
+    "noResults": "Geen kortingscodes gevonden",
+    "created": "Kortingscode succesvol aangemaakt",
+    "updated": "Kortingscode succesvol bijgewerkt"
+  },
+
+  "customers": {
+    "title": "Klantenstatistieken",
+    "subtitle": "Overzicht van de bestelactiviteit van klanten",
+    "search": "Klanten zoeken...",
+    "noResults": "Geen klanten gevonden",
+    "name": "Klant",
+    "email": "E-mail",
+    "phone": "Telefoon",
+    "totalOrders": "Bestellingen",
+    "totalAmount": "Totaal besteed",
+    "averageOrder": "Gem. bestelling",
+    "lastOrder": "Laatste bestelling",
+    "firstOrder": "Eerste bestelling",
+    "registeredAt": "Geregistreerd",
+    "preferredType": "Voorkeur",
+    "delivery": "Bezorging",
+    "pickup": "Afhalen",
+    "summary": {
+      "totalCustomers": "Klanten",
+      "totalRevenue": "Totale omzet",
+      "averageOrder": "Gemiddelde bestelling",
+      "totalOrders": "Totaal bestellingen"
+    }
+  },
+
+  "navigation": {
+    "products": "Producten",
+    "orders": "Bestellingen",
+    "customers": "Klanten",
+    "coupons": "Kortingscodes",
+    "tickets": "Tickets",
+    "booking": "Reservering",
+    "settings": "Instellingen",
+    "logout": "Uitloggen"
+  },
+
+  "tickets": {
+    "title": "Ticketsjablonen",
+    "description": "Layout van bezorg- en keukentickets configureren",
+    "delivery": "Bezorgticket",
+    "kitchen": "Keukenticket",
+    "preview": "Voorbeeld",
+    "saved": "Ticketsjablonen opgeslagen",
+    "saveFailed": "Opslaan van ticketsjablonen mislukt",
+    "resetDefaults": "Standaardwaarden",
+    "resetConfirm": "Ticketsjablonen terugzetten naar standaardwaarden?",
+    "sections": {
+      "header": "Koptekst",
+      "address": "Adres",
+      "customer": "Klant",
+      "timing": "Tijden",
+      "payment": "Betaling",
+      "items": "Artikelen",
+      "extras": "Extra's",
+      "notes": "Opmerkingen",
+      "orderInfo": "Bestelinfo"
+    },
+    "fields": {
+      "restaurantName": "Restaurantnaam",
+      "headerTitle": "Titel koptekst"
+    }
+  },
+
+  "settings": {
+    "title": "Restaurantinstellingen",
+    "ordering": {
+      "title": "Online bestellen",
+      "description": "Online bestellen in- of uitschakelen"
+    },
+    "hours": {
+      "title": "Openingsuren",
+      "description": "Openingsuren instellen voor elke dag van de week",
+      "closed": "Gesloten",
+      "monday": "Maandag",
+      "tuesday": "Dinsdag",
+      "wednesday": "Woensdag",
+      "thursday": "Donderdag",
+      "friday": "Vrijdag",
+      "saturday": "Zaterdag",
+      "sunday": "Zondag"
+    }
+  },
+
+  "theme": {
+    "light": "Lichte modus",
+    "dark": "Donkere modus"
+  },
+
+  "login": {
+    "title": "Welkom",
+    "subtitle": "Log in om uw restaurant te beheren",
+    "email": "E-mailadres",
+    "emailPlaceholder": "u{'@'}voorbeeld.com",
+    "password": "Wachtwoord",
+    "passwordPlaceholder": "Voer uw wachtwoord in",
+    "submit": "Inloggen",
+    "invalidCredentials": "Ongeldig e-mailadres of wachtwoord",
+    "accessDenied": "Toegang geweigerd. Alleen beheerders hebben toegang tot het dashboard.",
+    "authenticating": "Authenticatie bezig...",
+    "callbackError": "Fout bij authenticatie",
+    "sessionExpired": "Uw sessie is verlopen. Log opnieuw in.",
+    "tooManyRequests": "Te veel pogingen. Probeer het later opnieuw."
+  },
+
+  "validation": {
+    "categoryRequired": "Categorie is vereist",
+    "frenchNameRequired": "De Franse naam is vereist",
+    "priceRequired": "Prijs is vereist",
+    "invalidPrice": "Ongeldig prijsformaat",
+    "pricePositive": "De prijs moet groter zijn dan 0",
+    "descriptionTooLong": "De beschrijving ({lang}) mag niet langer zijn dan 500 tekens",
+    "imageTooLarge": "De afbeelding mag niet groter zijn dan 5 MB",
+    "imageInvalidType": "De afbeelding moet in PNG-, JPEG- of WebP-formaat zijn",
+    "codeFormat": "De productcode moet bestaan uit hoofdletters gevolgd door cijfers (bijv. A10)",
+    "pieceCountPositive": "Het aantal stuks moet een positief geheel getal zijn",
+    "choiceNameRequired": "Optie #{index} moet minstens één naam hebben",
+    "choicePriceRequired": "Optie #{index} moet een geldige prijswijziging hebben"
+  },
+
+  "notifications": {
+    "productCreated": "Product succesvol aangemaakt",
+    "productUpdated": "Product succesvol bijgewerkt",
+    "orderUpdated": "Bestelstatus bijgewerkt"
+  }
+}
