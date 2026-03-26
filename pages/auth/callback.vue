@@ -76,10 +76,15 @@ onMounted(async () => {
 
         // Redirect to dashboard home (orders page)
         navigateTo(localePath('orders'))
-    } catch (e) {
+    } catch (e: any) {
         if (import.meta.dev) console.error('OIDC callback error:', e)
         error.value = true
-        errorMessage.value = t('login.callbackError')
+        const status = e?.response?.status || e?.statusCode
+        if (status === 429) {
+            errorMessage.value = t('login.tooManyRequests')
+        } else {
+            errorMessage.value = t('login.callbackError')
+        }
     }
 })
 </script>
