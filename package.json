@@ -10,9 +10,14 @@
     "postinstall": "nuxt prepare",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "build:android": "nuxt generate && npx cap sync android",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "@iconify-json/lucide": "^1.2.98",
     "@nuxt/icon": "^2.2.1",
     "@nuxt/ui": "^4.5.1",
@@ -25,6 +30,7 @@
     "pinia-plugin-persistedstate": "^4.7.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
     "@nuxt/test-utils": "^4.0.0",
     "@nuxtjs/i18n": "^10.2.3",
     "@types/node": "^24.12.0",

@@ -1332,14 +1332,12 @@ const updateOrder = async (newStatus?: OrderStatus) => {
 const formatOrderSummary = (order: Order) =>
   order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
 
+const { printDelivery: sunmiPrintDelivery, printKitchen: sunmiPrintKitchen, printBoth: sunmiPrintBoth } = useSunmiPrinter()
+
 const printDelivery = async () => {
   if (!selectedOrder.value) return
-
-  const { $printer } = useNuxtApp()
-  const encodedOrder: string = JSON.stringify(selectedOrder.value)
-
   try {
-    await $printer.printDelivery(encodedOrder, ticketTemplates.value)
+    await sunmiPrintDelivery(selectedOrder.value, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1348,12 +1346,8 @@ const printDelivery = async () => {
 
 const printKitchen = async () => {
   if (!selectedOrder.value) return
-
-  const { $printer } = useNuxtApp()
-  const encodedOrder: string = JSON.stringify(selectedOrder.value)
-
   try {
-    await $printer.printKitchen(encodedOrder, ticketTemplates.value)
+    await sunmiPrintKitchen(selectedOrder.value, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Kitchen print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1362,12 +1356,8 @@ const printKitchen = async () => {
 
 const printBoth = async () => {
   if (!selectedOrder.value) return
-
-  const { $printer } = useNuxtApp()
-  const encodedOrder: string = JSON.stringify(selectedOrder.value)
-
   try {
-    await $printer.printBoth(encodedOrder, ticketTemplates.value)
+    await sunmiPrintBoth(selectedOrder.value, ticketTemplates.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print both failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
