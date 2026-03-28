@@ -8,7 +8,7 @@ const zitadelOrigin = process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushib
 
 const csp = `${[
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
     "font-src 'self' https://fonts.gstatic.com",
@@ -21,7 +21,9 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-  ssr: true,
+  // SPA mode required for Capacitor (Android WebView loads static files)
+  ssr: false,
+  ignore: ['plugins/capacitor-sunmi-printer/**'],
   devtools: { enabled: true },
   modules: [
     "@nuxt/ui",
@@ -45,9 +47,6 @@ export default defineNuxtConfig({
       api: process.env.API_BASE_URL,
       graphqlHttp: `${process.env.API_BASE_URL}/graphql`,
       graphqlWs: process.env.GRAPHQL_WS_URL,
-      printer: {
-        enabled: process.env.PRINTER_ENABLED === 'true',
-      },
       // Zitadel OIDC
       zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
       zitadelClientId: process.env.ZITADEL_CLIENT_ID || '',
@@ -58,14 +57,6 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }
-      ],
-      script: [
-        {
-          src: 'https://cdn.jsdelivr.net/npm/epson-epos-sdk@2.27.0/epos-2.27.0.js',
-          defer: true,
-          integrity: 'sha384-4zc8PGExX6xDWIBp1xftdh4behPpGI7U/d2eYyBPeTJk+u0rXHg7rMq36DIirbgg',
-          crossorigin: 'anonymous',
-        }
       ]
     }
   },
@@ -73,7 +64,6 @@ export default defineNuxtConfig({
   plugins: [
     '~/plugins/api',
     '~/plugins/gqlFetch',
-    '~/plugins/printer.client',
   ],
 
   i18n: {

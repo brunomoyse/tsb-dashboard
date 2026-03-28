@@ -1,0 +1,15 @@
+{
+  "name": "capacitor-sunmi-printer",
+  "version": "1.0.0",
+  "description": "Custom Capacitor plugin for the Sunmi built-in thermal printer",
+  "private": true,
+  "keywords": ["capacitor", "plugin", "sunmi", "printer"],
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=6.0.0"
+  }
+}

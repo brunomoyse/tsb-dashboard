@@ -137,10 +137,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { DEFAULT_TEMPLATES, buildDeliveryTicket, buildKitchenTicket, createTestOrder } from '~/utils/receiptFormatter'
 import type { DeliverySectionKey, KitchenSectionKey, TicketTemplates } from '~/types'
-import { generateReceiptPreview } from '~/utils/mockPrinter'
+import { DEFAULT_TEMPLATES, createTestOrder, generateDeliveryPreview, generateKitchenPreview } from '~/utils/ticketTemplates'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { print } from 'graphql'
 import { useGqlSubscription, useNuxtApp } from '#imports'
 import { useI18n } from 'vue-i18n'
@@ -167,10 +166,9 @@ const localTemplates: TicketTemplates = reactive(cloneTemplates(DEFAULT_TEMPLATE
 
 const previewText = computed(() => {
   const testOrder = createTestOrder()
-  const builder = activeTab.value === 0
-    ? buildDeliveryTicket(testOrder, localTemplates)
-    : buildKitchenTicket(testOrder, localTemplates)
-  return generateReceiptPreview(builder)
+  return activeTab.value === 0
+    ? generateDeliveryPreview(testOrder, localTemplates)
+    : generateKitchenPreview(testOrder, localTemplates)
 })
 
 // --- Section operations ---
