@@ -1,7 +1,7 @@
 // Composables/useGqlSubscription.ts
 import { type DocumentNode, print } from 'graphql'
 import { onScopeDispose, ref } from 'vue'
-import { useCookie, useRuntimeConfig } from '#imports'
+import { useRuntimeConfig } from '#imports'
 import type { Client } from 'graphql-ws'
 
 let wsClient: Client | null = null
@@ -10,12 +10,17 @@ let wsClientPromise: Promise<Client> | null = null
 const getWsClient = (): Promise<Client> => {
     if (wsClient) return Promise.resolve(wsClient)
     if (!wsClientPromise) {
-        wsClientPromise = import('graphql-ws').then(({ createClient }) => {
+        wsClientPromise = Promise.all([
+            import('graphql-ws'),
+            import('~/composables/useOidc'),
+        ]).then(([{ createClient }, { useOidc }]) => {
             const cfg = useRuntimeConfig()
+            const { getAccessToken } = useOidc()
+
             const client = createClient({
                 url: cfg.public.graphqlWs as string,
-                connectionParams: () => {
-                    const token = useCookie('access_token').value
+                connectionParams: async () => {
+                    const token = await getAccessToken()
                     return token ? { Authorization: `Bearer ${token}` } : {}
                 },
                 retryAttempts: Infinity,
@@ -27,7 +32,7 @@ const getWsClient = (): Promise<Client> => {
     return wsClientPromise
 }
 
-export function useGqlSubscription<T = any>(
+export function useGqlSubscription<T = unknown>(
     rawSub: string | DocumentNode,
     variables: Record<string, unknown> = {}
 ) {
