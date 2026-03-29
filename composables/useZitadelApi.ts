@@ -5,45 +5,33 @@ interface SessionResponse {
     sessionToken: string
 }
 
+interface FinalizeResponse {
+    callbackUrl: string
+}
+
 /**
- * Wraps Zitadel's Session API for custom login pages.
- * These calls go directly to the Zitadel instance (not through tsb-service).
+ * Calls tsb-service auth proxy endpoints which forward to Zitadel's Session API.
+ * The proxy adds the service account PAT — the frontend never touches Zitadel directly.
  * Dashboard-specific: only includes login-related methods (no registration, password reset, etc.)
  */
 export function useZitadelApi() {
     const config = useRuntimeConfig()
-    const authority = config.public.zitadelAuthority as string
+    const apiUrl = config.public.api as string
 
-    /** Create a session with email + password (login). */
-    async function createSession(loginName: string, password: string): Promise<SessionResponse> {
-        const res = await $fetch<{
-            sessionId: string
-            sessionToken: string
-        }>(`${authority}/v2/sessions`, {
+    /** Create a session with email + password (login via proxy). */
+    function createSession(loginName: string, password: string): Promise<SessionResponse> {
+        return $fetch<SessionResponse>(`${apiUrl}/auth/session`, {
             method: 'POST',
-            body: {
-                checks: {
-                    user: { loginName },
-                    password: { password },
-                },
-            },
+            body: { loginName, password },
         })
-        return { sessionId: res.sessionId, sessionToken: res.sessionToken }
     }
 
-    /** Finalize the OIDC auth request after successful session creation. */
-    async function finalizeOidcAuth(authRequestId: string, sessionId: string, sessionToken: string): Promise<{ callbackUrl: string }> {
-        const res = await $fetch<{ callbackUrl: string }>(`${authority}/v2/oidc/authorize`, {
+    /** Finalize the OIDC auth request after successful session creation (via proxy). */
+    function finalizeOidcAuth(authRequestId: string, sessionId: string, sessionToken: string): Promise<FinalizeResponse> {
+        return $fetch<FinalizeResponse>(`${apiUrl}/auth/finalize`, {
             method: 'POST',
-            body: {
-                authRequestId,
-                session: {
-                    sessionId,
-                    sessionToken,
-                },
-            },
+            body: { authRequestId, sessionId, sessionToken },
         })
-        return res
     }
 
     return {
