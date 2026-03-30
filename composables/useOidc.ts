@@ -15,7 +15,7 @@ export function useOidc() {
     function getUserManager(): UserManager {
         if (userManager) return userManager
 
-        const baseUrl = config.public.dashboardBaseUrl as string
+        const baseUrl = (config.public.dashboardBaseUrl as string).replace(/\/+$/, '')
         // Detect current locale from URL path (e.g., /fr/auth/callback)
         const locale = typeof window === 'undefined'
             ? 'fr'
