@@ -246,6 +246,11 @@
       "friday": "Friday",
       "saturday": "Saturday",
       "sunday": "Sunday"
+    },
+    "orderingHours": {
+      "title": "Ordering Hours",
+      "description": "Set when online orders are accepted (if different from opening hours)",
+      "fallbackNotice": "No schedule set — orders follow opening hours."
     }
   },
 

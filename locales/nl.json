@@ -247,6 +247,11 @@
       "friday": "Vrijdag",
       "saturday": "Zaterdag",
       "sunday": "Zondag"
+    },
+    "orderingHours": {
+      "title": "Besteltijden",
+      "description": "Instellen wanneer online bestellingen worden geaccepteerd (indien anders dan openingsuren)",
+      "fallbackNotice": "Geen schema ingesteld — bestellingen volgen de openingsuren."
     }
   },
 
