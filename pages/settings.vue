@@ -35,92 +35,39 @@
           />
         </div>
 
-        <div class="space-y-1">
-          <div
-            v-for="day in days"
-            :key="day.key"
-            class="py-3 border-b border-default last:border-0"
-          >
-            <!-- Row 1: Day name + toggle (+ closed label on mobile) -->
-            <div class="flex items-center gap-3">
-              <div class="w-24 sm:w-28 font-medium shrink-0">{{ t(`settings.hours.${day.key}`) }}</div>
-              <USwitch
-                :model-value="!!localHours[day.key]"
-                checked-icon="i-lucide-check"
-                unchecked-icon="i-lucide-x"
-                @update:model-value="(val: boolean) => toggleDay(day.key, val)"
-              />
-              <span v-if="!localHours[day.key]" class="text-sm text-muted italic">{{ t('settings.hours.closed') }}</span>
+        <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
+      </div>
+    </UPageCard>
 
-              <!-- Time inputs inline on desktop -->
-              <template v-if="localHours[day.key]">
-                <div class="hidden sm:flex items-center gap-2 ml-auto">
-                  <input
-                    type="time"
-                    v-model="localHours[day.key]!.open"
-                    class="border border-default rounded px-2 py-1 text-sm bg-default"
-                  />
-                  <span class="text-muted">–</span>
-                  <input
-                    type="time"
-                    v-model="localHours[day.key]!.close"
-                    class="border border-default rounded px-2 py-1 text-sm bg-default"
-                  />
-                  <span class="text-muted mx-1">|</span>
-                  <input
-                    type="time"
-                    v-model="localHours[day.key]!.dinnerOpen"
-                    class="border border-default rounded px-2 py-1 text-sm bg-default"
-                  />
-                  <span class="text-muted">–</span>
-                  <input
-                    type="time"
-                    v-model="localHours[day.key]!.dinnerClose"
-                    class="border border-default rounded px-2 py-1 text-sm bg-default"
-                  />
-                </div>
-              </template>
-            </div>
-
-            <!-- Row 2: Time inputs stacked on mobile -->
-            <div v-if="localHours[day.key]" class="sm:hidden mt-2 ml-10 space-y-2">
-              <div class="flex items-center gap-2">
-                <input
-                  type="time"
-                  v-model="localHours[day.key]!.open"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
-                />
-                <span class="text-muted">–</span>
-                <input
-                  type="time"
-                  v-model="localHours[day.key]!.close"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
-                />
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  type="time"
-                  v-model="localHours[day.key]!.dinnerOpen"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
-                />
-                <span class="text-muted">–</span>
-                <input
-                  type="time"
-                  v-model="localHours[day.key]!.dinnerClose"
-                  class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
-                />
-              </div>
-            </div>
+    <!-- Ordering Hours -->
+    <UPageCard>
+      <div class="space-y-4">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
+            <p class="text-sm text-muted">{{ t('settings.orderingHours.description') }}</p>
           </div>
+          <UButton
+            :label="t('common.save')"
+            icon="i-lucide-save"
+            :loading="updatingOrderingHours"
+            @click="saveOrderingHours"
+          />
         </div>
+
+        <p v-if="!hasOrderingHours" class="text-sm text-muted italic">
+          {{ t('settings.orderingHours.fallbackNotice') }}
+        </p>
+        <ScheduleEditor :hours="localOrderingHours" :days="days" @toggle-day="toggleOrderingDay" />
       </div>
     </UPageCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useGqlSubscription, useNuxtApp } from '#imports'
+import ScheduleEditor from '~/components/ScheduleEditor.vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -150,21 +97,26 @@ const days = [
 const orderingEnabled = ref(true)
 const updatingOrdering = ref(false)
 const updatingHours = ref(false)
+const updatingOrderingHours = ref(false)
 const localHours: OpeningHoursMap = reactive({
-  monday: null,
-  tuesday: null,
-  wednesday: null,
-  thursday: null,
-  friday: null,
-  saturday: null,
-  sunday: null,
+  monday: null, tuesday: null, wednesday: null, thursday: null,
+  friday: null, saturday: null, sunday: null,
 })
+const localOrderingHours: OpeningHoursMap = reactive({
+  monday: null, tuesday: null, wednesday: null, thursday: null,
+  friday: null, saturday: null, sunday: null,
+})
+
+const hasOrderingHours = computed(() =>
+  days.some(d => localOrderingHours[d.key] !== null)
+)
 
 const GET_CONFIG = gql`
   query {
     restaurantConfig {
       orderingEnabled
       openingHours
+      orderingHours
     }
   }
 `
@@ -185,22 +137,34 @@ const UPDATE_HOURS = gql`
   }
 `
 
+const UPDATE_ORDERING_HOURS = gql`
+  mutation UpdateOrderingHours($hours: OpeningHoursInput!) {
+    updateOrderingHours(hours: $hours) {
+      orderingHours
+    }
+  }
+`
+
+const parseSchedule = (schedule: DaySchedule | null): DaySchedule | null => {
+  if (!schedule) return null
+  return {
+    open: schedule.open || '11:00',
+    close: schedule.close || '14:00',
+    dinnerOpen: schedule.dinnerOpen || '17:00',
+    dinnerClose: schedule.dinnerClose || '22:00',
+  }
+}
+
 const loadConfig = async () => {
-  const data = await $gqlFetch<{ restaurantConfig: { orderingEnabled: boolean; openingHours: OpeningHoursMap } }>(
+  const data = await $gqlFetch<{ restaurantConfig: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null } }>(
     print(GET_CONFIG)
   )
   if (data) {
     orderingEnabled.value = data.restaurantConfig.orderingEnabled
-    const hours = data.restaurantConfig.openingHours
     for (const day of days) {
-      const schedule = hours[day.key]
-      localHours[day.key] = schedule
-        ? {
-            open: schedule.open || '11:00',
-            close: schedule.close || '14:00',
-            dinnerOpen: schedule.dinnerOpen || '17:00',
-            dinnerClose: schedule.dinnerClose || '22:00',
-          }
+      localHours[day.key] = parseSchedule(data.restaurantConfig.openingHours[day.key])
+      localOrderingHours[day.key] = data.restaurantConfig.orderingHours
+        ? parseSchedule(data.restaurantConfig.orderingHours[day.key])
         : null
     }
   }
@@ -216,34 +180,49 @@ const toggleOrdering = async (enabled: boolean) => {
   }
 }
 
+const defaultSchedule = (): DaySchedule => ({ open: '11:00', close: '14:00', dinnerOpen: '17:00', dinnerClose: '22:00' })
+
 const toggleDay = (dayKey: string, open: boolean) => {
-  if (open) {
-    localHours[dayKey] = { open: '11:00', close: '14:00', dinnerOpen: '17:00', dinnerClose: '22:00' }
-  } else {
-    localHours[dayKey] = null
+  localHours[dayKey] = open ? defaultSchedule() : null
+}
+
+const toggleOrderingDay = (dayKey: string, open: boolean) => {
+  localOrderingHours[dayKey] = open ? defaultSchedule() : null
+}
+
+const buildHoursInput = (hours: OpeningHoursMap) => {
+  const input: Record<string, { open: string; close: string; dinnerOpen?: string; dinnerClose?: string } | null> = {}
+  for (const day of days) {
+    const schedule = hours[day.key]
+    if (schedule) {
+      input[day.key] = {
+        open: schedule.open,
+        close: schedule.close,
+        ...(schedule.dinnerOpen ? { dinnerOpen: schedule.dinnerOpen } : {}),
+        ...(schedule.dinnerClose ? { dinnerClose: schedule.dinnerClose } : {}),
+      }
+    } else {
+      input[day.key] = null
+    }
   }
+  return input
 }
 
 const saveOpeningHours = async () => {
   updatingHours.value = true
   try {
-    const hoursInput: Record<string, { open: string; close: string; dinnerOpen?: string; dinnerClose?: string } | null> = {}
-    for (const day of days) {
-      const schedule = localHours[day.key]
-      if (schedule) {
-        hoursInput[day.key] = {
-          open: schedule.open,
-          close: schedule.close,
-          ...(schedule.dinnerOpen ? { dinnerOpen: schedule.dinnerOpen } : {}),
-          ...(schedule.dinnerClose ? { dinnerClose: schedule.dinnerClose } : {}),
-        }
-      } else {
-        hoursInput[day.key] = null
-      }
-    }
-    await $gqlFetch(print(UPDATE_HOURS), { variables: { hours: hoursInput } })
+    await $gqlFetch(print(UPDATE_HOURS), { variables: { hours: buildHoursInput(localHours) } })
   } finally {
     updatingHours.value = false
+  }
+}
+
+const saveOrderingHours = async () => {
+  updatingOrderingHours.value = true
+  try {
+    await $gqlFetch(print(UPDATE_ORDERING_HOURS), { variables: { hours: buildHoursInput(localOrderingHours) } })
+  } finally {
+    updatingOrderingHours.value = false
   }
 }
 
@@ -252,6 +231,7 @@ const SUB_CONFIG_UPDATED = gql`
     restaurantConfigUpdated {
       orderingEnabled
       openingHours
+      orderingHours
     }
   }
 `
@@ -259,7 +239,7 @@ const SUB_CONFIG_UPDATED = gql`
 onMounted(() => {
   loadConfig()
 
-  const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap } }>(
+  const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null } }>(
     print(SUB_CONFIG_UPDATED)
   )
   watch(liveConfig, (val) => {
@@ -268,11 +248,13 @@ onMounted(() => {
     orderingEnabled.value = cfg.orderingEnabled
     if (cfg.openingHours) {
       for (const day of days) {
-        const schedule = cfg.openingHours[day.key]
-        localHours[day.key] = schedule
-          ? { open: schedule.open || '11:00', close: schedule.close || '14:00', dinnerOpen: schedule.dinnerOpen || '17:00', dinnerClose: schedule.dinnerClose || '22:00' }
-          : null
+        localHours[day.key] = parseSchedule(cfg.openingHours[day.key])
       }
+    }
+    for (const day of days) {
+      localOrderingHours[day.key] = cfg.orderingHours
+        ? parseSchedule(cfg.orderingHours[day.key])
+        : null
     }
   })
 })

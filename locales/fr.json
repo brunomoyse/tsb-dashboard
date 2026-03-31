@@ -247,6 +247,11 @@
       "friday": "Vendredi",
       "saturday": "Samedi",
       "sunday": "Dimanche"
+    },
+    "orderingHours": {
+      "title": "Horaires de commande",
+      "description": "Définir quand les commandes en ligne sont acceptées (si différent des horaires d'ouverture)",
+      "fallbackNotice": "Aucun horaire défini — les commandes suivent les horaires d'ouverture."
     }
   },
 
