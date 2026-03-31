@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     // Client-side: check OIDC session
     const { useOidc } = await import('~/composables/useOidc')
-    const { isAuthenticated, silentRenew, signIn } = useOidc()
+    const { isAuthenticated, silentRenew } = useOidc()
 
     // 1. Check if user has a valid OIDC session
     if (await isAuthenticated()) return
@@ -23,11 +23,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const renewed = await silentRenew()
     if (renewed) return
 
-    // 3. No valid session — redirect to Zitadel login via OIDC authorize
-    try {
-        await signIn({ ui_locales: to.path.split('/')[1] || 'fr' })
-    } catch {
-        // Fallback: navigate to login page directly
-        return navigateTo(localePath('auth-login'))
-    }
+    // 3. No valid session — redirect to dashboard's own login page.
+    //    (Don't call signIn() which would redirect to Zitadel's custom login URI on the core app domain.)
+    return navigateTo(localePath('auth-login'))
 })

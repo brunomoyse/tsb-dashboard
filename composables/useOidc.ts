@@ -52,6 +52,29 @@ export function useOidc() {
         })
     }
 
+    /**
+     * Get authRequestID from Zitadel without a browser redirect.
+     * Creates the OIDC authorize URL, sends it to the backend proxy which follows
+     * the redirect server-side and extracts the authRequestID.
+     */
+    async function getAuthRequestId(): Promise<string> {
+        const mgr = getUserManager()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = (mgr as any)._client
+        const signinRequest = await client.createSigninRequest({})
+
+        const apiUrl = config.public.api as string
+        const response = await $fetch<{ authRequestId: string }>(
+            `${apiUrl}/auth/authorize-proxy`,
+            { method: 'POST', body: { authorizeUrl: signinRequest.url } },
+        )
+
+        if (!response.authRequestId) {
+            throw new Error('Failed to obtain authRequestID from Zitadel')
+        }
+        return response.authRequestId
+    }
+
     /** Complete the OIDC callback (exchange code for tokens). */
     async function handleCallback(): Promise<OidcUser> {
         const mgr = getUserManager()
@@ -102,6 +125,7 @@ export function useOidc() {
     return {
         oidcUser,
         signIn,
+        getAuthRequestId,
         handleCallback,
         getAccessToken,
         silentRenew,

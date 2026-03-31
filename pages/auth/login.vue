@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { definePageMeta, ref, useRoute } from '#imports'
+import { computed, definePageMeta, onMounted, ref, useRoute } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { useZitadelApi } from '~/composables/useZitadelApi'
 
@@ -147,14 +147,36 @@ const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
 const loading = ref(false)
+const initializing = ref(false)
 
-// Zitadel passes authRequestID when redirecting to custom login
-const authRequestId = (route.query.authRequestID as string) || ''
+// Zitadel passes authRequestID when redirecting to custom login (URL query param)
+const authRequestIdFromUrl = (route.query.authRequestID as string) || ''
+// Fetched via authorize-proxy when no URL param (so we stay on dashboard domain)
+const fetchedAuthRequestId = ref('')
+
+const effectiveAuthRequestId = computed(() => authRequestIdFromUrl || fetchedAuthRequestId.value)
 
 // Show session expired message if redirected from auth middleware
 if (route.query.session === 'expired') {
   errorMessage.value = t('login.sessionExpired')
 }
+
+// Fetch authRequestId via authorize-proxy when navigated directly (no authRequestID in URL),
+// So the user never leaves the dashboard domain
+onMounted(async () => {
+  if (!authRequestIdFromUrl && !route.query.session) {
+    initializing.value = true
+    try {
+      const { useOidc } = await import('~/composables/useOidc')
+      const { getAuthRequestId } = useOidc()
+      fetchedAuthRequestId.value = await getAuthRequestId()
+    } catch (error: any) {
+      if (import.meta.dev) console.error('Failed to fetch authRequestId:', error)
+    } finally {
+      initializing.value = false
+    }
+  }
+})
 
 const onSubmit = async () => {
   if (loading.value) return
@@ -165,14 +187,13 @@ const onSubmit = async () => {
     // 1. Create session via Zitadel Session API
     const session = await createSession(email.value, password.value)
 
-    // 2. If we have an authRequestID, finalize the OIDC flow
-    if (authRequestId) {
-      const result = await finalizeOidcAuth(authRequestId, session.sessionId, session.sessionToken)
+    // 2. Finalize the OIDC flow
+    if (effectiveAuthRequestId.value) {
+      const result = await finalizeOidcAuth(effectiveAuthRequestId.value, session.sessionId, session.sessionToken)
       // Zitadel returns a callback URL — redirect to it to complete OIDC code exchange
       window.location.href = result.callbackUrl
     } else {
-      // Direct login without OIDC flow (e.g., navigated directly to /auth/login)
-      // Start a fresh OIDC flow with login hint
+      // Fallback: start a fresh OIDC flow with login hint
       const { useOidc } = await import('~/composables/useOidc')
       const { signIn } = useOidc()
       await signIn({ login_hint: email.value })
