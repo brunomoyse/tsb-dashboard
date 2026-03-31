@@ -33,8 +33,8 @@ export default defineNuxtConfig({
   ],
 
   icon: {
-    serverBundle: {
-      collections: ['lucide']
+    clientBundle: {
+      scan: true
     }
   },
 
