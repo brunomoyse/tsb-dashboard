@@ -573,7 +573,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Order, OrderStatus, OrderType, TicketTemplates } from '~/types'
+import type { Order, OrderStatus, OrderType } from '~/types'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatDate, formatPrice, formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
 import gql from 'graphql-tag'
@@ -583,8 +583,6 @@ import { useI18n } from 'vue-i18n'
 const { t, locale } = useI18n()
 const toast = useToast()
 const ordersStore = useOrdersStore()
-const ticketTemplates = ref<TicketTemplates | undefined>()
-
 // Tab state - start as null for SSR, set on client
 const selectedTab = ref<number | null>(null)
 
@@ -785,7 +783,7 @@ const isUpdatingPayment = ref(false)
 const now = ref(new Date())
 let nowInterval: ReturnType<typeof setInterval> | undefined
 
-onMounted(async () => {
+onMounted(() => {
   selectedTab.value = 0
   nowInterval = setInterval(() => {
     now.value = new Date()
@@ -796,18 +794,6 @@ onMounted(async () => {
   isMobile.value = mql.matches
   mql.addEventListener('change', (e) => { isMobile.value = e.matches })
 
-  // Fetch ticket templates for printing
-  try {
-    const { $gqlFetch } = useNuxtApp()
-    const data = await $gqlFetch<{ restaurantConfig: { ticketTemplates: TicketTemplates } }>(
-      print(gql`query { restaurantConfig { ticketTemplates } }`)
-    )
-    if (data?.restaurantConfig?.ticketTemplates) {
-      ticketTemplates.value = data.restaurantConfig.ticketTemplates
-    }
-  } catch {
-    // Non-critical: printing will use defaults
-  }
 })
 
 onUnmounted(() => {
@@ -1337,7 +1323,7 @@ const { printDelivery: sunmiPrintDelivery, printKitchen: sunmiPrintKitchen, prin
 const printDelivery = async () => {
   if (!selectedOrder.value) return
   try {
-    await sunmiPrintDelivery(selectedOrder.value, ticketTemplates.value)
+    await sunmiPrintDelivery(selectedOrder.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1347,7 +1333,7 @@ const printDelivery = async () => {
 const printKitchen = async () => {
   if (!selectedOrder.value) return
   try {
-    await sunmiPrintKitchen(selectedOrder.value, ticketTemplates.value)
+    await sunmiPrintKitchen(selectedOrder.value)
   } catch (error) {
     if (import.meta.dev) console.error('Kitchen print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
@@ -1357,7 +1343,7 @@ const printKitchen = async () => {
 const printBoth = async () => {
   if (!selectedOrder.value) return
   try {
-    await sunmiPrintBoth(selectedOrder.value, ticketTemplates.value)
+    await sunmiPrintBoth(selectedOrder.value)
   } catch (error) {
     if (import.meta.dev) console.error('Print both failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })

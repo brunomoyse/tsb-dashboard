@@ -15,11 +15,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { User } from '@/types'
-import { useAuthStore } from '@/stores/auth'
 import { definePageMeta, navigateTo, onMounted, ref, useLocalePath, useNuxtApp } from '#imports'
+import type { User } from '@/types'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import { useOidc } from '~/composables/useOidc'
 

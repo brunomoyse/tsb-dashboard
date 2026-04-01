@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock @capacitor/core so WebPlugin can be instantiated in Node/Vitest
+const WebPlugin = function WebPlugin() {} as unknown as { new (): object }
 vi.mock('@capacitor/core', () => ({
-  WebPlugin: class WebPlugin {},
+  WebPlugin,
   registerPlugin: vi.fn(),
 }))
 

@@ -216,12 +216,6 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
     active: route.path.includes('/coupons')
   },
   {
-    label: t('navigation.tickets'),
-    icon: 'i-lucide-printer',
-    to: `/${locale.value}/tickets`,
-    active: route.path.includes('/tickets')
-  },
-  {
     label: t('navigation.settings'),
     icon: 'i-lucide-settings',
     to: `/${locale.value}/settings`,
@@ -249,13 +243,6 @@ const bottomNavItems = computed(() => [
     icon: 'i-lucide-ticket',
     to: `/${locale.value}/coupons`,
     active: route.path.includes('/coupons'),
-    badge: 0
-  },
-  {
-    label: t('navigation.tickets'),
-    icon: 'i-lucide-printer',
-    to: `/${locale.value}/tickets`,
-    active: route.path.includes('/tickets'),
     badge: 0
   },
   {
