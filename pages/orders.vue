@@ -1351,10 +1351,26 @@ const printBoth = async () => {
 }
 
 const notificationSound = () => {
-  if (typeof window !== 'undefined' && 'SoundHandler' in window) {
-    (window as any).SoundHandler.playNotificationSound()
-  } else if (import.meta.dev) {
-    console.error('SoundHandler not available')
+  try {
+    const audioCtx = new AudioContext()
+    const t0 = audioCtx.currentTime
+
+    // Two-tone chime: C5 → E5
+    const frequencies = [523.25, 659.25]
+    for (let i = 0; i < frequencies.length; i++) {
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = frequencies[i]
+      gain.gain.setValueAtTime(0.3, t0 + i * 0.15)
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.15 + 0.4)
+      osc.connect(gain)
+      gain.connect(audioCtx.destination)
+      osc.start(t0 + i * 0.15)
+      osc.stop(t0 + i * 0.15 + 0.4)
+    }
+  } catch {
+    // Audio playback not available
   }
 }
 
