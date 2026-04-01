@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
     // Use https scheme on Android so cookies and fetch work correctly
     androidScheme: 'https',
   },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#FFFFFF',
+    },
+  },
   android: {
     minWebViewVersion: 60,
   },

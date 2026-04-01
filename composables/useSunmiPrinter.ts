@@ -1,5 +1,6 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { Order } from '~/types'
+import { usePlatform } from '~/composables/usePlatform'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
 
@@ -29,10 +30,10 @@ export const useSunmiPrinter = () => {
   const status = ref<number | null>(null)
   const statusText = ref<string>('')
 
+  const { isCapacitor } = usePlatform()
+
   /** True only when running inside Capacitor on an Android device. */
-  const isNative = (): boolean =>
-    typeof window !== 'undefined' &&
-    Boolean((window as any).Capacitor?.isNativePlatform?.())
+  const isNative = (): boolean => isCapacitor
 
   /** Lazily import the plugin — avoids loading @capacitor/core on the server. */
   const getPlugin = async () => {
