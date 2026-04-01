@@ -189,6 +189,15 @@
       "totalRevenue": "Totale omzet",
       "averageOrder": "Gemiddelde bestelling",
       "totalOrders": "Totaal bestellingen"
+    },
+    "filters": {
+      "allTime": "Alles",
+      "today": "Vandaag",
+      "thisWeek": "Deze week",
+      "thisMonth": "Deze maand",
+      "thisYear": "Dit jaar",
+      "allTypes": "Alle",
+      "minOrders": "Min. bestellingen"
     }
   },
 
@@ -197,37 +206,9 @@
     "orders": "Bestellingen",
     "customers": "Klanten",
     "coupons": "Kortingscodes",
-    "tickets": "Tickets",
     "booking": "Reservering",
     "settings": "Instellingen",
     "logout": "Uitloggen"
-  },
-
-  "tickets": {
-    "title": "Ticketsjablonen",
-    "description": "Layout van bezorg- en keukentickets configureren",
-    "delivery": "Bezorgticket",
-    "kitchen": "Keukenticket",
-    "preview": "Voorbeeld",
-    "saved": "Ticketsjablonen opgeslagen",
-    "saveFailed": "Opslaan van ticketsjablonen mislukt",
-    "resetDefaults": "Standaardwaarden",
-    "resetConfirm": "Ticketsjablonen terugzetten naar standaardwaarden?",
-    "sections": {
-      "header": "Koptekst",
-      "address": "Adres",
-      "customer": "Klant",
-      "timing": "Tijden",
-      "payment": "Betaling",
-      "items": "Artikelen",
-      "extras": "Extra's",
-      "notes": "Opmerkingen",
-      "orderInfo": "Bestelinfo"
-    },
-    "fields": {
-      "restaurantName": "Restaurantnaam",
-      "headerTitle": "Titel koptekst"
-    }
   },
 
   "settings": {

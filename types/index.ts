@@ -265,25 +265,9 @@ export interface CustomerStatsResponse {
     customers: CustomerStats[];
 }
 
-// --- Ticket Template Types ---
-
-export type DeliverySectionKey = 'header' | 'address' | 'customer' | 'timing' | 'payment' | 'items' | 'extras' | 'notes'
-export type KitchenSectionKey = 'header' | 'orderInfo' | 'items' | 'extras' | 'notes'
-
-export interface TicketSectionConfig {
-    enabled: boolean
-    // Delivery header
-    restaurantName?: string
-    // Kitchen header
-    title?: string
-}
-
-export interface TicketTypeTemplate<T extends string = string> {
-    sectionOrder: T[]
-    sections: Record<T, TicketSectionConfig>
-}
-
-export interface TicketTemplates {
-    delivery: TicketTypeTemplate<DeliverySectionKey>
-    kitchen: TicketTypeTemplate<KitchenSectionKey>
+export interface CustomerStatsInput {
+    startDate?: string;
+    endDate?: string;
+    orderType?: OrderType;
+    minOrders?: number;
 }

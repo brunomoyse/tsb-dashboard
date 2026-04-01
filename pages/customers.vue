@@ -30,6 +30,53 @@
       </div>
     </div>
 
+    <!-- Filters Bar -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <!-- Period Presets -->
+      <div class="flex items-center gap-1 rounded-lg bg-(--ui-bg-accented) p-1">
+        <button
+          v-for="preset in periodPresets"
+          :key="preset.key"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :class="selectedPeriod === preset.key
+            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
+            : 'text-muted hover:text-highlighted'
+          "
+          @click="selectPeriod(preset.key)"
+        >
+          {{ preset.label }}
+        </button>
+      </div>
+
+      <!-- Order Type Filter -->
+      <div class="flex items-center gap-1 rounded-lg bg-(--ui-bg-accented) p-1">
+        <button
+          v-for="opt in orderTypeOptions"
+          :key="opt.value"
+          class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :class="selectedOrderType === opt.value
+            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
+            : 'text-muted hover:text-highlighted'
+          "
+          @click="selectedOrderType = opt.value"
+        >
+          <UIcon v-if="opt.icon" :name="opt.icon" class="size-3.5" />
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <!-- Min Orders -->
+      <UInput
+        v-model.number="minOrders"
+        type="number"
+        :placeholder="t('customers.filters.minOrders')"
+        :min="1"
+        size="sm"
+        class="w-32"
+        icon="i-lucide-hash"
+      />
+    </div>
+
     <!-- Search Bar -->
     <div class="mb-4">
       <UInput
@@ -135,12 +182,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { CustomerStatsResponse } from '~/types'
 import { computed, ref, watch } from 'vue'
+import type { CustomerStatsResponse } from '~/types'
+import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useGqlQuery } from '#imports'
 import { useI18n } from 'vue-i18n'
-import gql from 'graphql-tag'
 
 const { t } = useI18n()
 
@@ -155,9 +202,72 @@ const searchQuery = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 
+// --- Filter state ---
+type PeriodKey = 'all' | 'today' | 'week' | 'month' | 'year'
+const selectedPeriod = ref<PeriodKey>('all')
+const selectedOrderType = ref<string>('')
+const minOrders = ref<number | undefined>(undefined)
+
+const periodPresets = computed(() => [
+  { key: 'all' as PeriodKey, label: t('customers.filters.allTime') },
+  { key: 'today' as PeriodKey, label: t('customers.filters.today') },
+  { key: 'week' as PeriodKey, label: t('customers.filters.thisWeek') },
+  { key: 'month' as PeriodKey, label: t('customers.filters.thisMonth') },
+  { key: 'year' as PeriodKey, label: t('customers.filters.thisYear') }
+])
+
+const orderTypeOptions = computed(() => [
+  { value: '', label: t('customers.filters.allTypes'), icon: '' },
+  { value: 'DELIVERY', label: t('customers.delivery'), icon: 'i-lucide-bike' },
+  { value: 'PICKUP', label: t('customers.pickup'), icon: 'i-lucide-shopping-bag' }
+])
+
+function getDateRange(period: PeriodKey): { startDate?: string; endDate?: string } {
+  if (period === 'all') return {}
+  const now = new Date()
+  let start: Date
+  switch (period) {
+    case 'today':
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      break
+    case 'week': {
+      start = new Date(now)
+      const day = start.getDay()
+      // Monday as start of week
+      start.setDate(start.getDate() - ((day + 6) % 7))
+      start.setHours(0, 0, 0, 0)
+      break
+    }
+    case 'month':
+      start = new Date(now.getFullYear(), now.getMonth(), 1)
+      break
+    case 'year':
+      start = new Date(now.getFullYear(), 0, 1)
+      break
+  }
+  return {
+    startDate: start.toISOString(),
+    endDate: now.toISOString()
+  }
+}
+
+function selectPeriod(key: PeriodKey) {
+  selectedPeriod.value = key
+}
+
+const queryVariables = computed(() => {
+  const { startDate, endDate } = getDateRange(selectedPeriod.value)
+  const input: Record<string, unknown> = {}
+  if (startDate) input.startDate = startDate
+  if (endDate) input.endDate = endDate
+  if (selectedOrderType.value) input.orderType = selectedOrderType.value
+  if (minOrders.value && minOrders.value > 1) input.minOrders = minOrders.value
+  return Object.keys(input).length > 0 ? { input } : {}
+})
+
 const CUSTOMER_STATS_QUERY = gql`
-  query {
-    customerStats {
+  query CustomerStats($input: CustomerStatsInput) {
+    customerStats(input: $input) {
       summary {
         totalCustomers
         totalRevenue
@@ -184,11 +294,17 @@ const CUSTOMER_STATS_QUERY = gql`
   }
 `
 
-const { data, pending } = await useGqlQuery<{ customerStats: CustomerStatsResponse }>(
+const { data, pending, refetch } = await useGqlQuery<{ customerStats: CustomerStatsResponse }>(
   print(CUSTOMER_STATS_QUERY),
-  {},
-  { immediate: true, cache: true }
+  () => queryVariables.value,
+  { immediate: true, cache: false }
 )
+
+// Refetch when filters change
+watch([selectedPeriod, selectedOrderType, minOrders], () => {
+  page.value = 1
+  refetch()
+})
 
 const stats = computed(() => data.value?.customerStats)
 const customers = computed(() => stats.value?.customers ?? [])
