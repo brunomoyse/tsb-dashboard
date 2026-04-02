@@ -1169,7 +1169,6 @@ const { data: orderCreated } = useGqlSubscription<{
         updatedAt
         status
         type
-        source
         isOnlinePayment
         discountAmount
         deliveryFee

@@ -24,6 +24,13 @@ const getWsClient = (): Promise<Client> => {
                     return token ? { Authorization: `Bearer ${token}` } : {}
                 },
                 retryAttempts: Infinity,
+                retryWait: async (retries) => {
+                    const delay = Math.min(1000 * 2 ** retries, 30_000)
+                    await new Promise<void>(resolve => { setTimeout(resolve, delay) })
+                    // If no valid token after refresh attempt, stop retrying
+                    const token = await getAccessToken()
+                    if (!token) throw new Error('No valid auth token')
+                },
             })
             wsClient = client
             return client
