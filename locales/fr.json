@@ -84,6 +84,7 @@
     "pickup": "À emporter",
     "search": "Rechercher des commandes...",
     "noOrders": "Aucune commande trouvée",
+    "total": "Total",
     "updateStatus": "Mettre à jour le statut",
     "waitMessage": "Veuillez patienter {seconds} secondes avant de confirmer l'annulation.",
     "orderDetails": "Détails de la commande",
@@ -119,6 +120,7 @@
       "status": {
         "open": "Ouvert",
         "cancelled": "Annulé",
+        "canceled": "Annulé",
         "pending": "En attente",
         "expired": "Expiré",
         "failed": "Échoué",

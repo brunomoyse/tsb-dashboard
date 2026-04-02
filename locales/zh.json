@@ -84,6 +84,7 @@
     "pickup": "自取",
     "search": "搜索订单...",
     "noOrders": "未找到订单",
+    "total": "总计",
     "updateStatus": "更新订单状态",
     "waitMessage": "请等待 {seconds} 秒后再确认取消。",
     "orderDetails": "订单详情",
@@ -119,6 +120,7 @@
       "status": {
         "open": "未付款",
         "cancelled": "已取消",
+        "canceled": "已取消",
         "pending": "待处理",
         "expired": "已过期",
         "failed": "失败",

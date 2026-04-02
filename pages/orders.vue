@@ -379,7 +379,7 @@
               </div>
             </div>
             <div class="flex items-center justify-between px-3 py-2.5 bg-(--ui-bg-accented) border-t border-default">
-              <span class="text-sm font-bold text-highlighted">Total</span>
+              <span class="text-sm font-bold text-highlighted">{{ t('orders.total') }}</span>
               <span class="text-base font-bold text-highlighted">{{ formatPrice(selectedOrder.totalPrice) }}</span>
             </div>
           </div>
@@ -932,6 +932,7 @@ const getPaymentStatusColor = (status: string | undefined) => {
   const colors: Record<string, string> = {
     open: 'warning',
     cancelled: 'neutral',
+    canceled: 'neutral',
     pending: 'neutral',
     expired: 'neutral',
     failed: 'error',
