@@ -84,6 +84,7 @@
     "pickup": "Afhalen",
     "search": "Bestellingen zoeken...",
     "noOrders": "Geen bestellingen gevonden",
+    "total": "Totaal",
     "updateStatus": "Bestelstatus bijwerken",
     "waitMessage": "Wacht {seconds} seconden voordat u de annulering bevestigt.",
     "orderDetails": "Bestelgegevens",
@@ -119,6 +120,7 @@
       "status": {
         "open": "Open",
         "cancelled": "Geannuleerd",
+        "canceled": "Geannuleerd",
         "pending": "In afwachting",
         "expired": "Verlopen",
         "failed": "Mislukt",

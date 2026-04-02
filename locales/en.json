@@ -83,6 +83,7 @@
     "pickup": "Pick up",
     "search": "Search orders...",
     "noOrders": "No orders found",
+    "total": "Total",
     "updateStatus": "Update Order Status",
     "waitMessage": "Please wait {seconds} seconds before confirming cancellation.",
     "orderDetails": "Order Details",
@@ -118,6 +119,7 @@
       "status": {
         "open": "Open",
         "cancelled": "Cancelled",
+        "canceled": "Cancelled",
         "pending": "Pending",
         "expired": "Expired",
         "failed": "Failed",
