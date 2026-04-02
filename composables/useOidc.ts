@@ -27,7 +27,7 @@ export function useOidc() {
             redirect_uri: `${baseUrl}/${locale}/auth/callback`,
             post_logout_redirect_uri: `${baseUrl}/${locale}`,
             response_type: 'code',
-            scope: 'openid profile email urn:zitadel:iam:org:project:roles',
+            scope: 'openid profile email offline_access urn:zitadel:iam:org:project:roles',
             automaticSilentRenew: true,
             userStore: new WebStorageStateStore({ store: sessionStorage }),
         })
@@ -39,6 +39,23 @@ export function useOidc() {
 
         userManager.events.addUserUnloaded(() => {
             oidcUser.value = null
+        })
+
+        userManager.events.addAccessTokenExpired(async () => {
+            // Token expired — attempt silent renew before clearing UI
+            try {
+                await userManager!.signinSilent()
+            } catch {
+                // Renew failed — clear Pinia so UI reflects reality
+                const { useAuthStore } = await import('~/stores/auth')
+                useAuthStore().clearUser()
+            }
+        })
+
+        userManager.events.addSilentRenewError(async () => {
+            // Silent renew failed — clear Pinia so UI reflects reality
+            const { useAuthStore } = await import('~/stores/auth')
+            useAuthStore().clearUser()
         })
 
         return userManager
@@ -87,8 +104,19 @@ export function useOidc() {
     async function getAccessToken(): Promise<string | null> {
         const mgr = getUserManager()
         const user = await mgr.getUser()
-        if (!user || user.expired) return null
-        return user.access_token
+        if (user && !user.expired) return user.access_token
+
+        // Token expired or missing — attempt silent renew before returning null
+        try {
+            const renewed = await mgr.signinSilent()
+            if (renewed) {
+                oidcUser.value = renewed
+                return renewed.access_token
+            }
+        } catch {
+            // Silent renew failed
+        }
+        return null
     }
 
     /** Attempt silent token renewal. */

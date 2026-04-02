@@ -1,11 +1,8 @@
 // Types/types.d.ts
-import type { $Fetch } from 'ofetch'
-
 declare module '#app' {
   interface NuxtApp {
     $apiBaseUrl: () => string
-    $api: $Fetch
-    $refreshToken: () => Promise<RefreshTokenResponse | null>
+    $api: <T = any>(request: string, options?: Record<string, any>) => Promise<T>
   }
 }
 
@@ -13,6 +10,6 @@ declare module '#app' {
 declare module 'nitropack' {
   interface NitroApp {
     $apiBaseUrl?: () => string
-    $api?: $Fetch
+    $api?: <T = any>(request: string, options?: Record<string, any>) => Promise<T>
   }
 }
