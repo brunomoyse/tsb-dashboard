@@ -137,6 +137,14 @@
       "minutes": "{count}分钟前",
       "hours": "{count}小时前"
     },
+    "otherActions": "其他操作",
+    "subtotal": "小计",
+    "discount": "折扣",
+    "deliveryFeeLabel": "配送费",
+    "newEstimatedTime": "新估计",
+    "staleAlert": "{count} 个订单等待超过2小时",
+    "staleDetailAlert": "此订单已等待 {hours} 小时。建议联系客户或取消。",
+    "statusAdvanced": "状态已更新",
     "errors": {
       "updateFailed": "更新订单失败",
       "invalidTransition": "此订单不允许该状态转换",

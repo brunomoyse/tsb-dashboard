@@ -185,6 +185,7 @@ const sampleOrder: Order = {
   addressId: null,
   addressExtra: null,
   deliveryFee: null,
+  couponCode: null,
   discountAmount: '0',
   preferredReadyTime: null,
   estimatedReadyTime: null,

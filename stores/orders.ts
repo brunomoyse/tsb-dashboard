@@ -22,7 +22,7 @@ export const useOrdersStore = defineStore('orders', {
         updateOrder(order: Partial<Order>) {
             const index = this.orders.findIndex(o => o.id === order.id)
             if (index !== -1) {
-                this.orders[index] = { ...this.orders[index], ...order }
+                this.orders[index] = { ...this.orders[index]!, ...order } as Order
             }
         },
         addOrder(order: Order) {

@@ -41,7 +41,7 @@ export default defineNuxtPlugin(() => {
             'Accept': 'application/json',
             'Accept-Language': userLocale
         },
-        async onRequest({ options }) {
+        async onRequest({ options }: { options: { headers?: Record<string, string> } }) {
             if (import.meta.server) {
                 // SSR: forward cookies for Accept-Language if available
                 const event = useRequestEvent()
@@ -51,7 +51,6 @@ export default defineNuxtPlugin(() => {
                 if (cookies) {
                     options.headers = {
                         ...options.headers,
-                        // @ts-expect-error cookie is not in the HeadersInit type but needed for SSR forwarding
                         cookie: cookies,
                         'Accept-Language': serverLocale
                     }

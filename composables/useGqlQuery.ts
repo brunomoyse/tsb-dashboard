@@ -1,9 +1,8 @@
 // Composables/useGqlQuery.ts
 import { type DocumentNode, print } from 'graphql'
+import { type Ref, watch } from 'vue'
 import { useAsyncData, useNuxtApp } from '#imports'
-import type { AsyncData } from 'nuxt/app'
 import { hash } from 'ohash'
-import { watch } from 'vue'
 
 type Vars = Record<string, unknown> | (() => Record<string, unknown>)
 interface Options {
@@ -11,18 +10,26 @@ interface Options {
     cache?: boolean
 }
 
+interface GqlQueryResult<T> {
+    data: Ref<T | undefined>
+    pending: Ref<boolean>
+    error: Ref<unknown>
+    refresh: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
+    refetch: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
+}
+
 export const useGqlQuery = async <T>(
     rawQuery: string | DocumentNode,
     variables: Vars = {},
     opts: Options = { immediate: true, cache: false },   // ⬅ default cache:false
-): Promise<AsyncData<T, never> & { refetch: () => Promise<void> }> => {
+): Promise<GqlQueryResult<T>> => {
     const { $gqlFetch } = useNuxtApp()
     const getVars = () => (typeof variables === 'function' ? variables() : variables)
     const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
 
     // Choose overload: with key (cache) or without key (no cache)
     const asyncData = opts.cache
-        ? await useAsyncData<T, T>(`gql:${hash(printIfAst(rawQuery))}`, handler, {
+        ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, {
             immediate: opts.immediate,
         })
         : await useAsyncData<T>(handler, { immediate: opts.immediate })
@@ -30,12 +37,14 @@ export const useGqlQuery = async <T>(
     if (typeof variables === 'function') {
         watch(
             () => variables(),
-            () => asyncData.refresh({ dedupe: false }),
+            () => asyncData.refresh({ dedupe: 'cancel' }),
             { deep: true },
         )
     }
 
-    return Object.assign(asyncData, { refetch: asyncData.refresh })
+    const result = asyncData as unknown as GqlQueryResult<T>
+    result.refetch = asyncData.refresh
+    return result
 }
 
 const printIfAst = (q: string | DocumentNode): string =>

@@ -6,36 +6,40 @@
       <p class="hidden sm:block text-muted">{{ t('orders.subtitle') }}</p>
     </div>
 
+    <!-- Stale order alert banner (Phase 8) -->
+    <div
+      v-if="staleOrderCount > 0"
+      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm sm:text-base text-warning"
+    >
+      <UIcon name="i-lucide-alert-triangle" class="size-4 sm:size-5 shrink-0" />
+      <span>{{ t('orders.staleAlert', { count: staleOrderCount }) }}</span>
+    </div>
+
     <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
     <div class="md:hidden">
-      <!-- Filter Chips (horizontally scrollable) -->
-      <div class="flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 scrollbar-hide">
+      <!-- Filter Icons (fixed row, no scrolling) -->
+      <div class="flex justify-between mb-3">
         <button
           v-for="chip in mobileChips"
           :key="chip.value"
-          class="relative flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-sm font-medium transition-all border"
+          class="relative flex flex-col items-center gap-1 min-w-12 sm:min-w-16 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all"
           :class="selectedTab === chip.value
-            ? 'bg-(--ui-primary) text-white border-transparent shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border) active:scale-95'
+            ? 'bg-(--ui-primary) text-white shadow-sm'
+            : 'text-(--ui-text-muted) active:scale-95'
           "
           @click="selectedTab = chip.value"
         >
-          <UIcon :name="chip.icon" class="size-4" />
-          <span>{{ chip.label }}</span>
+          <UIcon :name="chip.icon" class="size-5 sm:size-6" />
           <span
-            v-if="chip.count > 0"
-            class="ml-0.5 min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold px-1"
-            :class="selectedTab === chip.value
-              ? 'bg-white/25 text-white'
-              : 'bg-(--ui-bg-accented) text-(--ui-text)'
-            "
+            class="text-xs sm:text-sm font-bold tabular-nums"
+            :class="selectedTab === chip.value ? 'text-white/80' : ''"
           >
             {{ chip.count }}
           </span>
           <!-- Unacknowledged pulse dot -->
           <span
             v-if="chip.value === 0 && ordersStore.unacknowledgedPendingCount > 0"
-            class="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-red-500 animate-pulse"
+            class="absolute -top-0.5 -right-0.5 size-2.5 sm:size-3 rounded-full bg-red-500 animate-pulse"
           />
         </button>
       </div>
@@ -62,28 +66,28 @@
         <div
           v-for="order in filteredOrders"
           :key="order.id"
-          class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border) cursor-pointer active:scale-[0.98] transition-all"
-          :class="order.status === 'PENDING' ? 'border-l-3 border-l-amber-500' : ''"
+          class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-(--ui-bg) border border-(--ui-border) cursor-pointer active:scale-[0.98] transition-all"
+          :class="isActiveStatus(order.status) ? getTimeSince(order.createdAt).cardClass : ''"
           @click="openOrderDetails(order)"
         >
           <!-- Type icon -->
           <UIcon
             :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-            class="size-5 shrink-0 text-muted"
+            class="size-5 sm:size-6 shrink-0 text-muted"
           />
 
           <!-- Content -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <span class="font-bold text-sm text-highlighted truncate">{{ order.displayCustomerName }}</span>
-              <span class="font-bold text-sm text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
+              <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
+              <span class="font-bold text-sm sm:text-base text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
             </div>
-            <div class="flex items-center justify-between gap-2 mt-0.5">
-              <div class="flex items-center gap-1.5 text-xs text-muted">
+            <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
+              <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted">
                 <span>{{ order.items.length }} {{ t('orders.items') }}</span>
                 <UIcon
                   :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                  class="size-3.5"
+                  :class="['size-3.5 sm:size-4', getPaymentIconClass(order)]"
                 />
                 <span
                   v-if="isActiveStatus(order.status)"
@@ -91,16 +95,29 @@
                 >
                   {{ getTimeSince(order.createdAt).text }}
                 </span>
+                <UBadge v-if="isActiveStatus(order.status) && getTimeSince(order.createdAt).isStale" color="error" variant="soft" size="xs">!</UBadge>
               </div>
               <UBadge :color="getStatusColor(order.status)" variant="soft" size="xs">
                 {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
               </UBadge>
             </div>
-            <p v-if="order.type === 'DELIVERY' && order.address" class="text-xs text-muted truncate mt-0.5">
-              <UIcon name="i-lucide-map-pin" class="size-3 inline-block align-text-bottom" />
+            <p v-if="order.type === 'DELIVERY' && order.address" class="text-xs sm:text-sm text-muted truncate mt-0.5">
+              <UIcon name="i-lucide-map-pin" class="size-3 sm:size-3.5 inline-block align-text-bottom" />
               {{ order.address.streetName }} {{ order.address.houseNumber }}
             </p>
           </div>
+
+          <!-- Quick action button (Phase 7) -->
+          <UButton
+            v-if="isActiveStatus(order.status)"
+            icon="i-lucide-arrow-right-circle"
+            size="md"
+            variant="ghost"
+            color="primary"
+            square
+            class="shrink-0"
+            @click.stop="quickAdvanceStatus(order)"
+          />
         </div>
       </div>
 
@@ -233,8 +250,7 @@
                 'cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all',
                 column.key !== 'COMPLETED' ? 'kanban-touch-draggable' : '',
                 draggedOrder?.id === order.id ? 'opacity-40 scale-95' : '',
-                order.status === 'PENDING' ? 'border-l-3 border-l-amber-500' : '',
-                order.status === 'CONFIRMED' ? 'border-l-3 border-l-sky-500' : ''
+                isActiveStatus(order.status) ? getTimeSince(order.createdAt).cardClass : ''
               ]"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
               @dragend="onDragEnd"
@@ -263,15 +279,15 @@
                     <span>{{ order.items.length }} {{ t('orders.items') }}</span>
                     <UIcon
                       :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                      class="size-3.5"
+                      :class="['size-3.5', getPaymentIconClass(order)]"
                     />
                   </div>
-                  <span
-                    v-if="isActiveStatus(order.status)"
-                    :class="['font-bold', getTimeSince(order.createdAt).color]"
-                  >
-                    {{ getTimeSince(order.createdAt).text }}
-                  </span>
+                  <div v-if="isActiveStatus(order.status)" class="flex items-center gap-1">
+                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="soft" size="xs">!</UBadge>
+                    <span :class="['font-bold', getTimeSince(order.createdAt).color]">
+                      {{ getTimeSince(order.createdAt).text }}
+                    </span>
+                  </div>
                   <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="soft" size="xs">
                     {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                   </UBadge>
@@ -341,11 +357,10 @@
             <div class="flex shrink-0">
               <UButton
                 icon="i-lucide-printer"
-                :label="isMobile ? undefined : t('orders.print.label')"
+                :label="t('orders.print.label')"
                 color="primary"
                 size="lg"
                 class="rounded-r-none"
-                :square="isMobile"
                 @click="printBoth"
               />
               <UDropdownMenu :items="printMenuItems">
@@ -360,7 +375,32 @@
             </div>
           </div>
 
-          <!-- 2. Order Items -->
+          <!-- 2. Stale order alert (Phase 8) -->
+          <div
+            v-if="isActiveStatus(selectedOrder.status) && getTimeSince(selectedOrder.createdAt).isStale"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-error"
+          >
+            <UIcon name="i-lucide-alert-triangle" class="size-4 shrink-0" />
+            <span>{{ t('orders.staleDetailAlert', { hours: Math.floor((now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000) }) }}</span>
+          </div>
+
+          <!-- 3. Primary Quick Actions -->
+          <div v-if="primaryStatuses.length" class="grid gap-2" :class="primaryStatuses.length > 1 ? 'grid-cols-2' : ''">
+            <UButton
+              v-for="status in primaryStatuses"
+              :key="status"
+              size="xl"
+              block
+              :color="getStatusColor(status)"
+              :loading="quickActionLoading"
+              @click="quickStatusAdvance(status)"
+            >
+              <UIcon :name="getStatusIcon(status)" class="mr-2" />
+              {{ t(`orders.status.${status.toLowerCase()}`) }}
+            </UButton>
+          </div>
+
+          <!-- 4. Order Items with discount breakdown -->
           <div class="border border-default rounded-lg overflow-hidden">
             <div class="divide-y divide-default">
               <div
@@ -378,13 +418,28 @@
                 <span class="text-sm font-medium text-highlighted shrink-0 ml-2">{{ formatPrice(item.totalPrice) }}</span>
               </div>
             </div>
+            <!-- Subtotal / Discount / Delivery fee breakdown -->
+            <template v-if="hasBreakdown">
+              <div class="flex items-center justify-between px-3 py-1.5 border-t border-default text-sm text-muted">
+                <span>{{ t('orders.subtotal') }}</span>
+                <span>{{ formatPrice(itemsSubtotal) }}</span>
+              </div>
+              <div v-if="parseFloat(selectedOrder.discountAmount) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-success">
+                <span>{{ t('orders.discount') }}{{ selectedOrder.couponCode ? ` (${selectedOrder.couponCode})` : '' }}</span>
+                <span>-{{ formatPrice(selectedOrder.discountAmount) }}</span>
+              </div>
+              <div v-if="selectedOrder.deliveryFee && parseFloat(selectedOrder.deliveryFee) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-muted">
+                <span>{{ t('orders.deliveryFeeLabel') }}</span>
+                <span>{{ formatPrice(selectedOrder.deliveryFee) }}</span>
+              </div>
+            </template>
             <div class="flex items-center justify-between px-3 py-2.5 bg-(--ui-bg-accented) border-t border-default">
               <span class="text-sm font-bold text-highlighted">{{ t('orders.total') }}</span>
               <span class="text-base font-bold text-highlighted">{{ formatPrice(selectedOrder.totalPrice) }}</span>
             </div>
           </div>
 
-          <!-- 3. Customer & Delivery Info -->
+          <!-- 5. Customer & Delivery Info + Payment -->
           <div class="space-y-1.5 text-sm">
             <a
               v-if="selectedOrder.customer?.phoneNumber"
@@ -430,22 +485,21 @@
               <UIcon name="i-lucide-message-square" class="size-4 shrink-0 mt-0.5" />
               <span class="italic">{{ selectedOrder.orderNote }}</span>
             </div>
+            <!-- Inline payment action -->
+            <UButton
+              v-if="selectedOrder.payment?.status?.toLowerCase() !== 'paid'"
+              color="success"
+              size="sm"
+              :loading="isUpdatingPayment"
+              class="mt-1"
+              @click="markAsPaid"
+            >
+              <UIcon name="i-lucide-check-circle" class="mr-1" />
+              {{ t('orders.payment.markAsPaid') }}
+            </UButton>
           </div>
 
-          <!-- 4. Payment action (only if not paid) -->
-          <UButton
-            v-if="selectedOrder.payment?.status?.toLowerCase() !== 'paid'"
-            color="success"
-            block
-            size="lg"
-            :loading="isUpdatingPayment"
-            @click="markAsPaid"
-          >
-            <UIcon name="i-lucide-check-circle" class="mr-2" />
-            {{ t('orders.payment.markAsPaid') }}
-          </UButton>
-
-          <!-- 5. Time Management -->
+          <!-- 6. Time Management (simplified: buttons only, no slider) -->
           <div class="border border-default rounded-lg p-3 space-y-3">
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span class="text-sm text-muted">
@@ -467,31 +521,27 @@
                 size="sm"
                 :variant="sliderDeltaMinutes === minutes ? 'solid' : 'outline'"
                 :color="sliderDeltaMinutes === minutes ? 'primary' : 'neutral'"
-                @click="sliderDeltaMinutes = minutes"
+                @click="sliderDeltaMinutes = sliderDeltaMinutes === minutes ? 0 : minutes"
               >
                 +{{ minutes }}m
               </UButton>
             </div>
 
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted">+{{ sliderDeltaMinutes }}{{ t('orders.minutes') }}</span>
-              <span class="font-bold text-primary">{{ newEstimatedTime || formatTimeOnly(selectedOrder.estimatedReadyTime, locale.value) }}</span>
+            <div v-if="newEstimatedTime" class="text-sm text-center">
+              <span class="text-muted">{{ t('orders.newEstimatedTime') }}: </span>
+              <span class="font-bold text-primary text-base">{{ newEstimatedTime }}</span>
             </div>
-
-            <USlider
-              v-model="sliderDeltaMinutes"
-              :min="0"
-              :max="90"
-              :step="5"
-            />
           </div>
 
-          <!-- 6. Status Update -->
-          <div class="space-y-2">
-            <h3 class="text-sm font-medium">{{ t('orders.updateStatus') }}</h3>
-            <div class="grid grid-cols-2 gap-2">
+          <!-- 7. Other Actions (collapsible) -->
+          <details v-if="secondaryStatuses.length" class="group">
+            <summary class="text-sm font-medium text-muted cursor-pointer select-none flex items-center gap-1 hover:text-highlighted transition-colors">
+              <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-open:rotate-90" />
+              {{ t('orders.otherActions') }}
+            </summary>
+            <div class="grid grid-cols-2 gap-2 mt-2">
               <UButton
-                v-for="status in availableStatuses"
+                v-for="status in secondaryStatuses"
                 :key="status"
                 size="md"
                 :variant="stagedStatus === status ? 'solid' : 'outline'"
@@ -503,7 +553,7 @@
                 {{ t(`orders.status.${status.toLowerCase()}`) }}
               </UButton>
             </div>
-          </div>
+          </details>
         </div>
       </template>
 
@@ -519,7 +569,7 @@
             {{ t('common.cancel') }}
           </UButton>
           <UButton
-            :disabled="!canSave"
+            v-if="canSave"
             block
             size="lg"
             @click="updateOrder(stagedStatus)"
@@ -591,7 +641,7 @@ const isMobile = ref(false)
 const slideoverSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
 const slideoverUi = computed(() =>
   isMobile.value
-    ? { content: 'max-h-[85dvh] rounded-t-2xl' }
+    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
     : { content: 'min-h-full' }
 )
 
@@ -603,7 +653,7 @@ interface KanbanColumnDef {
   icon: string
   iconBgClass: string
   accentClass: string
-  badgeColor: string
+  badgeColor: UiColor
 }
 
 const kanbanColumnDefs: KanbanColumnDef[] = [
@@ -712,7 +762,8 @@ const touchDragJustEnded = ref(false)
 
 const onDocTouchMove = (e: TouchEvent) => {
   e.preventDefault()
-  const [touch] = e.touches
+  const touch = e.touches[0]
+  if (!touch) return
 
   // Find which column the finger is over
   const el = document.elementFromPoint(touch.clientX, touch.clientY)
@@ -738,7 +789,8 @@ const onDocTouchEnd = (e: TouchEvent) => {
   if (!draggedOrder.value) return
 
   // Find drop target
-  const [touch] = e.changedTouches
+  const touch = e.changedTouches[0]
+  if (!touch) return
   const el = document.elementFromPoint(touch.clientX, touch.clientY)
   const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
 
@@ -807,7 +859,7 @@ onUnmounted(() => {
 const isActiveStatus = (status: OrderStatus): boolean =>
   ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
 
-const getTimeSince = (createdAt: string): { text: string; color: string } => {
+const getTimeSince = (createdAt: string): { text: string; color: string; cardClass: string; isStale: boolean } => {
   const created = new Date(createdAt)
   const diffMs = now.value.getTime() - created.getTime()
   const diffMin = Math.max(0, Math.floor(diffMs / 60000))
@@ -821,15 +873,23 @@ const getTimeSince = (createdAt: string): { text: string; color: string } => {
   }
 
   let color: string
+  let cardClass = ''
+  const isStale = diffMin >= 1440 // 24h
+
   if (diffMin < 5) {
     color = 'text-success'
   } else if (diffMin < 15) {
     color = 'text-warning'
+    cardClass = 'border-l-3 border-l-amber-500'
+  } else if (diffMin < 60) {
+    color = 'text-error'
+    cardClass = 'border-l-3 border-l-red-500'
   } else {
     color = 'text-error'
+    cardClass = 'border-l-3 border-l-red-500 bg-red-500/5'
   }
 
-  return { text, color }
+  return { text, color, cardClass, isStale }
 }
 
 // Cancellation dialog state
@@ -895,6 +955,107 @@ const availableStatuses = computed(() => {
   return getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
 })
 
+// Primary statuses = the 1-2 most logical next actions (NOT cancel)
+const primaryStatuses = computed<OrderStatus[]>(() => {
+  if (!selectedOrder.value) return []
+  const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
+  return allowed.filter(s => s !== 'CANCELLED' && s !== 'FAILED')
+})
+
+// Secondary statuses = everything else (cancel, failed, edge cases)
+const secondaryStatuses = computed<OrderStatus[]>(() => {
+  if (!selectedOrder.value) return []
+  const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
+  return allowed.filter(s => s === 'CANCELLED' || s === 'FAILED')
+})
+
+// Quick action loading state
+const quickActionLoading = ref(false)
+
+// Quick status advance from slideover primary buttons (immediate save)
+const quickStatusAdvance = async (newStatus: OrderStatus) => {
+  if (!selectedOrder.value || quickActionLoading.value) return
+
+  if (newStatus === 'CANCELLED') {
+    openCancelDialog()
+    return
+  }
+
+  quickActionLoading.value = true
+
+  // Also send time estimation if changed
+  let estimatedReadyTime: string | undefined
+  if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
+    const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
+    const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
+    estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString(), locale.value))
+  }
+
+  try {
+    const res = await mutationUpdateOrder({
+      id: selectedOrder.value.id,
+      input: { status: newStatus, estimatedReadyTime }
+    })
+    ordersStore.updateOrder(res.updateOrder)
+    showOrderDetails.value = false
+    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
+  } catch {
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  } finally {
+    quickActionLoading.value = false
+  }
+}
+
+// Quick advance from card list (one-tap, picks best next status)
+const quickAdvanceStatus = async (order: Order) => {
+  const allowed = getAllowedStatuses(order.status, order.type)
+  const target = allowed.find(s => s !== 'CANCELLED' && s !== 'FAILED')
+  if (!target) return
+
+  const previousStatus = order.status
+  const previousUpdatedAt = order.updatedAt
+
+  // Optimistic update
+  ordersStore.updateOrder({ id: order.id, status: target, updatedAt: new Date().toISOString() })
+
+  try {
+    const res = await mutationUpdateOrder({ id: order.id, input: { status: target } })
+    ordersStore.updateOrder(res.updateOrder)
+    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
+  } catch {
+    ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  }
+}
+
+// Payment icon class based on status
+const getPaymentIconClass = (order: Order): string => {
+  if (order.payment?.status?.toLowerCase() === 'failed') return 'text-red-500'
+  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-amber-500'
+  return ''
+}
+
+// Discount breakdown helpers
+const itemsSubtotal = computed(() => {
+  if (!selectedOrder.value) return '0'
+  const sum = selectedOrder.value.items.reduce((acc, item) => acc + parseFloat(item.totalPrice), 0)
+  return sum.toFixed(2)
+})
+
+const hasBreakdown = computed(() => {
+  if (!selectedOrder.value) return false
+  return parseFloat(selectedOrder.value.discountAmount) > 0
+    || (selectedOrder.value.deliveryFee && parseFloat(selectedOrder.value.deliveryFee) > 0)
+})
+
+// Stale orders count (for banner)
+const staleOrderCount = computed(() =>
+  orders.value.filter(o =>
+    isActiveStatus(o.status)
+    && (now.value.getTime() - new Date(o.createdAt).getTime()) > 7200000 // 2h
+  ).length
+)
+
 // Status icon mapping
 const getStatusIcon = (status: OrderStatus): string => {
   const statusIcons: Record<string, string> = {
@@ -912,8 +1073,10 @@ const getStatusIcon = (status: OrderStatus): string => {
 }
 
 // Status color mapping
-const getStatusColor = (status: OrderStatus): string => {
-  const colors: Record<string, string> = {
+type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
+
+const getStatusColor = (status: OrderStatus): UiColor => {
+  const colors: Record<string, UiColor> = {
     PENDING: 'warning',
     CONFIRMED: 'info',
     PREPARING: 'primary',
@@ -927,9 +1090,9 @@ const getStatusColor = (status: OrderStatus): string => {
   return colors[status] || 'neutral'
 }
 
-const getPaymentStatusColor = (status: string | undefined) => {
+const getPaymentStatusColor = (status: string | undefined): UiColor => {
   if (!status) return 'error'
-  const colors: Record<string, string> = {
+  const colors: Record<string, UiColor> = {
     open: 'warning',
     cancelled: 'neutral',
     canceled: 'neutral',
@@ -962,6 +1125,7 @@ const ORDERS_QUERY = gql`
       status
       type
       isOnlinePayment
+      couponCode
       discountAmount
       deliveryFee
       totalPrice
@@ -1170,6 +1334,7 @@ const { data: orderCreated } = useGqlSubscription<{
         status
         type
         isOnlinePayment
+        couponCode
         discountAmount
         deliveryFee
         totalPrice
@@ -1361,7 +1526,7 @@ const notificationSound = () => {
       const osc = audioCtx.createOscillator()
       const gain = audioCtx.createGain()
       osc.type = 'sine'
-      osc.frequency.value = frequencies[i]
+      osc.frequency.value = frequencies[i]!
       gain.gain.setValueAtTime(0.3, t0 + i * 0.15)
       gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.15 + 0.4)
       osc.connect(gain)
@@ -1419,10 +1584,9 @@ const markAsPaid = async () => {
 
     ordersStore.updateOrder({
       id: selectedOrder.value.id,
-      payment: {
-        ...selectedOrder.value.payment,
-        status: res.updatePaymentStatus.status
-      }
+      payment: selectedOrder.value.payment
+        ? { ...selectedOrder.value.payment, status: res.updatePaymentStatus.status }
+        : null
     })
   } catch (error) {
     if (import.meta.dev) console.error('Failed to update payment status:', error)

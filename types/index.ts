@@ -70,14 +70,14 @@ export interface ProductCategory {
 
 export interface CreateProductInput {
     categoryId: string
-    code: string | null
+    code?: string
     isAvailable: boolean
     isDiscountable: boolean
     isHalal: boolean
     isSpicy: boolean
     isVegan: boolean
     isVisible: boolean
-    pieceCount: number | null
+    pieceCount?: number
     price: string
 
     translations: TranslationInput[]
@@ -87,14 +87,14 @@ export interface CreateProductInput {
 
 export interface UpdateProductInput {
     categoryID?: string
-    code?: string | null
+    code?: string
     isAvailable?: boolean
     isDiscountable?: boolean
     isHalal?: boolean
     isSpicy?: boolean
     isVegan?: boolean
     isVisible?: boolean
-    pieceCount?: number | null
+    pieceCount?: number
     price?: string
 
     translations?: TranslationInput[]
@@ -108,7 +108,7 @@ export interface UpdateProductRequest {
 }
 
 export interface TranslationInput {
-    description: string | null
+    description?: string
     language: string
     name: string
 }
@@ -180,6 +180,7 @@ export interface Order {
     addressId: string | null;
     createdAt: string;
     deliveryFee: string | null;
+    couponCode: string | null;
     discountAmount: string;
     preferredReadyTime: string | null;
     estimatedReadyTime: string | null;
