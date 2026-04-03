@@ -29,6 +29,7 @@ export function useOidc() {
             response_type: 'code',
             scope: 'openid profile email offline_access urn:zitadel:iam:org:project:roles',
             automaticSilentRenew: true,
+            silentRequestTimeoutInSeconds: 5,
             userStore: new WebStorageStateStore({ store: sessionStorage }),
         })
 
@@ -46,16 +47,18 @@ export function useOidc() {
             try {
                 await userManager!.signinSilent()
             } catch {
-                // Renew failed — clear Pinia so UI reflects reality
+                // Renew failed — redirect to dashboard login
                 const { useAuthStore } = await import('~/stores/auth')
                 useAuthStore().clearUser()
+                window.location.href = `/${locale}/login`
             }
         })
 
         userManager.events.addSilentRenewError(async () => {
-            // Silent renew failed — clear Pinia so UI reflects reality
+            // Silent renew failed — redirect to dashboard login
             const { useAuthStore } = await import('~/stores/auth')
             useAuthStore().clearUser()
+            window.location.href = `/${locale}/login`
         })
 
         return userManager
