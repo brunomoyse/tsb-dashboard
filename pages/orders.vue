@@ -109,7 +109,7 @@
 
           <!-- Quick action button (Phase 7) -->
           <UButton
-            v-if="isActiveStatus(order.status)"
+            v-if="hasNextStatus(order)"
             icon="i-lucide-arrow-right-circle"
             size="md"
             variant="ghost"
@@ -859,6 +859,10 @@ onUnmounted(() => {
 const isActiveStatus = (status: OrderStatus): boolean =>
   ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
 
+// Whether an order has a non-cancel/non-fail next status (for quick-action button)
+const hasNextStatus = (order: Order): boolean =>
+  getAllowedStatuses(order.status, order.type).some(s => s !== 'CANCELLED' && s !== 'FAILED')
+
 const getTimeSince = (createdAt: string): { text: string; color: string; cardClass: string; isStale: boolean } => {
   const created = new Date(createdAt)
   const diffMs = now.value.getTime() - created.getTime()
@@ -1554,8 +1558,19 @@ const openCancelDialog = () => {
 }
 
 const confirmCancellation = async () => {
-  await updateOrder('CANCELLED')
-  showCancelDialog.value = false
+  if (!selectedOrder.value) return
+  try {
+    const res = await mutationUpdateOrder({
+      id: selectedOrder.value.id,
+      input: { status: 'CANCELLED' as OrderStatus }
+    })
+    ordersStore.updateOrder(res.updateOrder)
+    showCancelDialog.value = false
+    showOrderDetails.value = false
+    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
+  } catch {
+    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+  }
 }
 
 const cancelCancellation = () => {

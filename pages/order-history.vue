@@ -1,28 +1,26 @@
 <template>
-  <div class="p-4 sm:p-6">
+  <div class="p-3 sm:p-6">
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-highlighted">{{ t('orderHistory.title') }}</h1>
-      <p class="text-sm text-muted mt-0.5">{{ t('orderHistory.subtitle') }}</p>
+    <div class="mb-4 sm:mb-6">
+      <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('orderHistory.title') }}</h1>
+      <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('orderHistory.subtitle') }}</p>
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-4"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
       >
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented)">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+          <div class="hidden sm:flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented)">
             <UIcon :name="card.icon" class="size-5 text-muted" />
           </div>
           <div>
             <p class="text-xs text-muted">{{ card.label }}</p>
-            <p class="text-lg font-bold text-highlighted tabular-nums">
-              <template v-if="loading">
-                <USkeleton class="h-5 w-16 mt-1" />
-              </template>
+            <p class="text-base sm:text-lg font-bold text-highlighted tabular-nums">
+              <USkeleton v-if="initialLoading" class="h-5 w-16 mt-1" />
               <template v-else>{{ card.value }}</template>
             </p>
           </div>
@@ -31,45 +29,50 @@
     </div>
 
     <!-- Filters Bar -->
-    <div class="flex flex-wrap items-center gap-3 mb-4">
+    <div class="space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3 mb-4">
       <!-- Date Range -->
-      <UInput
-        v-model="startDate"
-        type="date"
-        size="sm"
-        class="w-40"
-      />
-      <span class="text-muted text-sm">-</span>
-      <UInput
-        v-model="endDate"
-        type="date"
-        size="sm"
-        class="w-40"
-      />
+      <div class="flex items-center gap-2">
+        <UInput
+          v-model="startDate"
+          type="date"
+          size="md"
+          class="flex-1 sm:w-40 sm:flex-none"
+        />
+        <span class="text-muted text-sm">-</span>
+        <UInput
+          v-model="endDate"
+          type="date"
+          size="md"
+          class="flex-1 sm:w-40 sm:flex-none"
+        />
+      </div>
 
-      <!-- Status Filter -->
-      <USelectMenu
-        v-model="selectedStatus"
-        :items="statusOptions"
-        size="sm"
-        class="w-44"
-      />
+      <!-- Status + Type + Search row -->
+      <div class="flex items-center gap-2">
+        <!-- Status Filter -->
+        <USelectMenu
+          v-model="selectedStatus"
+          :items="statusOptions"
+          size="md"
+          class="flex-1 sm:w-44 sm:flex-none"
+        />
 
-      <!-- Type Filter -->
-      <div class="flex items-center gap-1 rounded-lg bg-(--ui-bg-accented) p-1">
-        <button
-          v-for="opt in typeOptions"
-          :key="opt.value"
-          class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
-          :class="selectedType === opt.value
-            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-            : 'text-muted hover:text-highlighted'
-          "
-          @click="selectedType = opt.value"
-        >
-          <UIcon v-if="opt.icon" :name="opt.icon" class="size-3.5" />
-          {{ opt.label }}
-        </button>
+        <!-- Type Filter -->
+        <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
+          <button
+            v-for="opt in typeOptions"
+            :key="opt.value"
+            class="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer"
+            :class="selectedType === opt.value
+              ? 'bg-(--ui-bg) text-highlighted shadow-sm'
+              : 'text-muted hover:text-highlighted'
+            "
+            @click="selectedType = opt.value"
+          >
+            <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
+            <span class="hidden sm:inline">{{ opt.label }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Search -->
@@ -77,15 +80,15 @@
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('orderHistory.search')"
-        size="sm"
-        class="w-48"
+        size="md"
+        class="sm:w-48"
       />
     </div>
 
-    <!-- Data Table -->
-    <div class="rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <!-- Desktop: Table view (>= md) -->
+    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
       <UTable
-        v-if="!loading && historyOrders.length > 0"
+        v-if="historyOrders.length > 0"
         :columns="columns"
         :data="historyOrders"
         :ui="{
@@ -103,7 +106,7 @@
 
         <template #status-cell="{ row }">
           <UBadge :color="getStatusColor(row.original.status)" variant="soft" size="xs">
-            {{ row.original.status }}
+            {{ t(`orders.status.${row.original.status.toLowerCase()}`) }}
           </UBadge>
         </template>
 
@@ -125,42 +128,86 @@
           <span class="text-sm text-muted tabular-nums">{{ row.original.items.length }}</span>
         </template>
       </UTable>
+    </div>
 
-      <!-- Skeleton Loading -->
-      <div v-if="loading" class="divide-y divide-(--ui-border)">
-        <div v-for="i in 10" :key="i" class="flex items-center gap-4 px-4 py-3">
-          <div class="flex-1 space-y-1.5">
-            <USkeleton class="h-3.5 w-32" />
-            <USkeleton class="h-3 w-24" />
+    <!-- Mobile: Card list (< md) -->
+    <div class="md:hidden space-y-2">
+      <div
+        v-for="order in historyOrders"
+        :key="order.id"
+        class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+      >
+        <UIcon
+          :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+          class="size-5 sm:size-6 shrink-0 text-muted"
+        />
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
+            <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(order.totalPrice)) }}</span>
           </div>
-          <USkeleton class="h-3.5 w-20" />
-          <USkeleton class="h-5 w-16 rounded-full" />
-          <USkeleton class="h-3.5 w-16" />
-          <USkeleton class="h-3.5 w-14" />
+          <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
+            <span class="text-xs sm:text-sm text-muted">{{ formatOrderDate(order.createdAt) }}</span>
+            <UBadge :color="getStatusColor(order.status)" variant="soft" size="xs">
+              {{ t(`orders.status.${order.status.toLowerCase()}`) }}
+            </UBadge>
+          </div>
         </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="!loading && historyOrders.length === 0" class="flex flex-col items-center justify-center py-16">
-        <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
-        <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="!loading && summary && summary.totalOrders > pageSize" class="flex justify-center mt-6">
-      <UPagination
-        v-model:page="currentPage"
-        :total="summary.totalOrders"
-        :items-per-page="pageSize"
-        show-edges
+    <!-- Loading skeleton -->
+    <div v-if="initialLoading" class="space-y-2 md:hidden">
+      <div v-for="i in 8" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+        <USkeleton class="size-5 rounded shrink-0" />
+        <div class="flex-1 space-y-1.5">
+          <div class="flex justify-between">
+            <USkeleton class="h-4 w-28" />
+            <USkeleton class="h-4 w-14" />
+          </div>
+          <div class="flex justify-between">
+            <USkeleton class="h-3 w-24" />
+            <USkeleton class="h-5 w-16 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="initialLoading" class="hidden md:block divide-y divide-(--ui-border) rounded-xl border border-(--ui-border) bg-(--ui-bg)">
+      <div v-for="i in 10" :key="i" class="flex items-center gap-4 px-4 py-3">
+        <USkeleton class="h-3.5 w-32" />
+        <USkeleton class="h-3.5 w-20" />
+        <USkeleton class="h-5 w-16 rounded-full" />
+        <USkeleton class="h-3.5 w-16" />
+        <USkeleton class="h-3.5 w-14" />
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-if="!initialLoading && historyOrders.length === 0" class="flex flex-col items-center justify-center py-16 rounded-xl border border-(--ui-border) bg-(--ui-bg)">
+      <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
+      <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
+    </div>
+
+    <!-- Infinite scroll: load more trigger -->
+    <div
+      v-if="hasMore && !initialLoading"
+      ref="loadMoreTrigger"
+      class="flex justify-center py-6"
+    >
+      <UButton
+        v-if="loadingMore"
+        loading
+        variant="ghost"
+        color="neutral"
+        size="lg"
       />
+      <span v-else class="text-sm text-muted">{{ t('orderHistory.scrollForMore') }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -202,7 +249,36 @@ interface HistorySummary {
 
 const historyOrders = ref<HistoryOrder[]>([])
 const summary = ref<HistorySummary | null>(null)
-const loading = ref(true)
+const initialLoading = ref(true)
+const loadingMore = ref(false)
+const hasMore = ref(true)
+
+// --- Infinite scroll ---
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting && hasMore.value && !loadingMore.value && !initialLoading.value) {
+        loadNextPage()
+      }
+    },
+    { rootMargin: '200px' }
+  )
+  watchTriggerElement()
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+})
+
+const watchTriggerElement = () => {
+  watch(loadMoreTrigger, (el) => {
+    observer?.disconnect()
+    if (el) observer?.observe(el)
+  }, { immediate: true })
+}
 
 // --- Filter options ---
 const statusOptions = computed(() => [
@@ -248,50 +324,71 @@ const ORDER_HISTORY_QUERY = print(gql`
   }
 `)
 
-const fetchOrders = async () => {
-  loading.value = true
+const buildInput = (page: number): Record<string, unknown> => {
   const input: Record<string, unknown> = {
     first: pageSize,
-    page: currentPage.value
+    page
   }
-
-  if (startDate.value) {
-    input.startDate = new Date(`${startDate.value}T00:00:00`).toISOString()
-  }
-  if (endDate.value) {
-    input.endDate = new Date(`${endDate.value}T23:59:59`).toISOString()
-  }
+  if (startDate.value) input.startDate = new Date(`${startDate.value}T00:00:00`).toISOString()
+  if (endDate.value) input.endDate = new Date(`${endDate.value}T23:59:59`).toISOString()
   if (selectedStatus.value) input.status = selectedStatus.value
   if (selectedType.value) input.orderType = selectedType.value
   if (searchQuery.value) input.search = searchQuery.value
+  return input
+}
+
+const fetchOrders = async () => {
+  initialLoading.value = true
+  currentPage.value = 1
+  hasMore.value = true
 
   try {
     const res = await $gqlFetch<{ orderHistory: { orders: HistoryOrder[]; summary: HistorySummary } }>(
       ORDER_HISTORY_QUERY,
-      { variables: { input } }
+      { variables: { input: buildInput(1) } }
     )
     historyOrders.value = res.orderHistory.orders
     summary.value = res.orderHistory.summary
+    hasMore.value = res.orderHistory.orders.length >= pageSize
   } catch {
     historyOrders.value = []
     summary.value = null
+    hasMore.value = false
   } finally {
-    loading.value = false
+    initialLoading.value = false
+  }
+}
+
+const loadNextPage = async () => {
+  if (loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  currentPage.value++
+
+  try {
+    const res = await $gqlFetch<{ orderHistory: { orders: HistoryOrder[]; summary: HistorySummary } }>(
+      ORDER_HISTORY_QUERY,
+      { variables: { input: buildInput(currentPage.value) } }
+    )
+    historyOrders.value.push(...res.orderHistory.orders)
+    hasMore.value = res.orderHistory.orders.length >= pageSize
+  } catch {
+    hasMore.value = false
+  } finally {
+    loadingMore.value = false
   }
 }
 
 // Initial fetch
 await fetchOrders()
 
-// Refetch on filter/page changes
+// Refetch on filter changes (reset to page 1)
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
-watch([currentPage, selectedStatus, selectedType, startDate, endDate], () => {
+watch([selectedStatus, selectedType, startDate, endDate], () => {
   fetchOrders()
 })
 watch(searchQuery, () => {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    currentPage.value = 1
     fetchOrders()
   }, 400)
 })
@@ -315,14 +412,14 @@ const summaryCards = computed(() => [
   }
 ])
 
-// --- Table ---
+// --- Table (desktop only) ---
 const columns = computed(() => [
   { accessorKey: 'customer', header: t('orderHistory.customer') },
   { accessorKey: 'date', header: t('orderHistory.date') },
   { accessorKey: 'status', header: t('orderHistory.status') },
-  { accessorKey: 'type', header: t('orderHistory.type'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
+  { accessorKey: 'type', header: t('orderHistory.type') },
   { accessorKey: 'total', header: t('orderHistory.total') },
-  { accessorKey: 'items', header: t('orderHistory.items'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } }
+  { accessorKey: 'items', header: t('orderHistory.items') }
 ])
 
 type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'

@@ -5,11 +5,12 @@
       :key="day.key"
       class="py-3 border-b border-default last:border-0"
     >
-      <!-- Row 1: Day name + toggle (+ closed label on mobile) -->
+      <!-- Row 1: Day name + toggle (+ closed label) -->
       <div class="flex items-center gap-3">
-        <div class="w-24 sm:w-28 font-medium shrink-0">{{ t(`settings.hours.${day.key}`) }}</div>
+        <div class="w-20 sm:w-28 font-medium shrink-0 text-sm sm:text-base">{{ t(`settings.hours.${day.key}`) }}</div>
         <USwitch
           :model-value="!!hours[day.key]"
+          size="lg"
           checked-icon="i-lucide-check"
           unchecked-icon="i-lucide-x"
           @update:model-value="(val: boolean) => emit('toggle-day', day.key, val)"
@@ -46,32 +47,31 @@
         </template>
       </div>
 
-      <!-- Row 2: Time inputs stacked on mobile -->
-      <div v-if="hours[day.key]" class="sm:hidden mt-2 ml-10 space-y-2">
-        <div class="flex items-center gap-2">
+      <!-- Row 2: Time inputs on mobile — both ranges on one row -->
+      <div v-if="hours[day.key]" class="sm:hidden mt-2 ml-8">
+        <div class="flex items-center gap-1.5">
           <input
             type="time"
             v-model="hours[day.key]!.open"
-            class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
+            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
           />
-          <span class="text-muted">–</span>
+          <span class="text-muted text-xs">–</span>
           <input
             type="time"
             v-model="hours[day.key]!.close"
-            class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
+            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
           />
-        </div>
-        <div class="flex items-center gap-2">
+          <span class="text-muted text-xs mx-0.5">|</span>
           <input
             type="time"
             v-model="hours[day.key]!.dinnerOpen"
-            class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
+            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
           />
-          <span class="text-muted">–</span>
+          <span class="text-muted text-xs">–</span>
           <input
             type="time"
             v-model="hours[day.key]!.dinnerClose"
-            class="border border-default rounded px-2 py-1 text-sm bg-default flex-1"
+            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
           />
         </div>
       </div>
