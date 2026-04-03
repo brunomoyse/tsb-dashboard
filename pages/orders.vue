@@ -18,20 +18,20 @@
     <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
     <div class="md:hidden">
       <!-- Filter Icons (fixed row, no scrolling) -->
-      <div class="flex justify-between mb-3">
+      <div class="flex gap-2 mb-3">
         <button
           v-for="chip in mobileChips"
           :key="chip.value"
-          class="relative flex flex-col items-center gap-1 min-w-12 sm:min-w-16 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all"
+          class="relative flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl transition-all"
           :class="selectedTab === chip.value
             ? 'bg-(--ui-primary) text-white shadow-sm'
-            : 'text-(--ui-text-muted) active:scale-95'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border border-(--ui-border) active:scale-95'
           "
           @click="selectedTab = chip.value"
         >
-          <UIcon :name="chip.icon" class="size-5 sm:size-6" />
+          <UIcon :name="chip.icon" class="size-6 sm:size-7" />
           <span
-            class="text-xs sm:text-sm font-bold tabular-nums"
+            class="text-sm sm:text-base font-bold tabular-nums"
             :class="selectedTab === chip.value ? 'text-white/80' : ''"
           >
             {{ chip.count }}
@@ -39,7 +39,7 @@
           <!-- Unacknowledged pulse dot -->
           <span
             v-if="chip.value === 0 && ordersStore.unacknowledgedPendingCount > 0"
-            class="absolute -top-0.5 -right-0.5 size-2.5 sm:size-3 rounded-full bg-red-500 animate-pulse"
+            class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-500 animate-pulse"
           />
         </button>
       </div>

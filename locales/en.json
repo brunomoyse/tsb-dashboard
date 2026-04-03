@@ -153,6 +153,24 @@
     }
   },
 
+  "orderHistory": {
+    "title": "Order History",
+    "subtitle": "View all past orders",
+    "search": "Search by name...",
+    "noResults": "No orders found",
+    "allStatuses": "All statuses",
+    "allTypes": "All",
+    "totalOrders": "Orders",
+    "totalRevenue": "Revenue",
+    "averageOrder": "Avg. order",
+    "customer": "Customer",
+    "date": "Date",
+    "status": "Status",
+    "type": "Type",
+    "total": "Total",
+    "items": "Items"
+  },
+
   "coupons": {
     "title": "Coupons",
     "add": "Add Coupon",
@@ -218,6 +236,7 @@
   "navigation": {
     "products": "Products",
     "orders": "Orders",
+    "orderHistory": "History",
     "customers": "Customers",
     "coupons": "Coupons",
     "booking": "Booking",

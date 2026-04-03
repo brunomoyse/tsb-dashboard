@@ -154,6 +154,24 @@
     }
   },
 
+  "orderHistory": {
+    "title": "Bestelgeschiedenis",
+    "subtitle": "Bekijk alle eerdere bestellingen",
+    "search": "Zoeken op naam...",
+    "noResults": "Geen bestellingen gevonden",
+    "allStatuses": "Alle statussen",
+    "allTypes": "Alle",
+    "totalOrders": "Bestellingen",
+    "totalRevenue": "Omzet",
+    "averageOrder": "Gem. bestelling",
+    "customer": "Klant",
+    "date": "Datum",
+    "status": "Status",
+    "type": "Type",
+    "total": "Totaal",
+    "items": "Artikelen"
+  },
+
   "coupons": {
     "title": "Kortingscodes",
     "add": "Kortingscode toevoegen",
@@ -219,6 +237,7 @@
   "navigation": {
     "products": "Producten",
     "orders": "Bestellingen",
+    "orderHistory": "Geschiedenis",
     "customers": "Klanten",
     "coupons": "Kortingscodes",
     "booking": "Reservering",
