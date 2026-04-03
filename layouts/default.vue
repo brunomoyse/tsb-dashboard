@@ -199,6 +199,12 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
       : undefined
   },
   {
+    label: t('navigation.orderHistory'),
+    icon: 'i-lucide-history',
+    to: `/${locale.value}/order-history`,
+    active: route.path.includes('/order-history')
+  },
+  {
     label: t('navigation.products'),
     icon: 'i-lucide-package',
     to: `/${locale.value}/products`,

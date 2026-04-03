@@ -154,6 +154,24 @@
     }
   },
 
+  "orderHistory": {
+    "title": "订单历史",
+    "subtitle": "查看所有历史订单",
+    "search": "按姓名搜索...",
+    "noResults": "未找到订单",
+    "allStatuses": "所有状态",
+    "allTypes": "全部",
+    "totalOrders": "订单数",
+    "totalRevenue": "营业额",
+    "averageOrder": "平均订单",
+    "customer": "客户",
+    "date": "日期",
+    "status": "状态",
+    "type": "类型",
+    "total": "总计",
+    "items": "商品"
+  },
+
   "coupons": {
     "title": "优惠券",
     "add": "添加优惠券",
@@ -219,6 +237,7 @@
   "navigation": {
     "products": "产品",
     "orders": "订单",
+    "orderHistory": "历史",
     "customers": "客户",
     "coupons": "优惠券",
     "booking": "预订",

@@ -154,6 +154,24 @@
     }
   },
 
+  "orderHistory": {
+    "title": "Historique des commandes",
+    "subtitle": "Consultez toutes les commandes passées",
+    "search": "Rechercher par nom...",
+    "noResults": "Aucune commande trouvée",
+    "allStatuses": "Tous les statuts",
+    "allTypes": "Tous",
+    "totalOrders": "Commandes",
+    "totalRevenue": "Chiffre d'affaires",
+    "averageOrder": "Panier moyen",
+    "customer": "Client",
+    "date": "Date",
+    "status": "Statut",
+    "type": "Type",
+    "total": "Total",
+    "items": "Articles"
+  },
+
   "coupons": {
     "title": "Coupons",
     "add": "Ajouter un coupon",
@@ -219,6 +237,7 @@
   "navigation": {
     "products": "Produits",
     "orders": "Commandes",
+    "orderHistory": "Historique",
     "customers": "Clients",
     "coupons": "Coupons",
     "booking": "Réservation",
