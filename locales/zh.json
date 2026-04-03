@@ -169,7 +169,8 @@
     "status": "状态",
     "type": "类型",
     "total": "总计",
-    "items": "商品"
+    "items": "商品",
+    "scrollForMore": "滚动加载更多"
   },
 
   "coupons": {

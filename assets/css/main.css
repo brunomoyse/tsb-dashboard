@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* Native app feel — eliminate web browser artifacts */
+html, body {
+  overscroll-behavior: none; /* No pull-to-refresh or elastic overscroll */
+  -webkit-tap-highlight-color: transparent; /* No gray flash on tap */
+}
+
+/* Prevent long-press context menu and text selection on interactive elements */
+button, a, [role="button"], [tabindex], .select-none {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+
 /* Light Theme - Warm sushi restaurant identity */
 :root {
   --ui-bg: theme('colors.white');

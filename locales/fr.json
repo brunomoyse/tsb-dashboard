@@ -169,7 +169,8 @@
     "status": "Statut",
     "type": "Type",
     "total": "Total",
-    "items": "Articles"
+    "items": "Articles",
+    "scrollForMore": "Faites defiler pour charger plus"
   },
 
   "coupons": {

@@ -1,16 +1,17 @@
 <template>
-  <div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-6 sm:space-y-8">
-    <h1 class="text-2xl font-bold">{{ t('settings.title') }}</h1>
+  <div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-4 sm:space-y-8">
+    <h1 class="text-xl sm:text-2xl font-bold">{{ t('settings.title') }}</h1>
 
     <!-- Ordering Toggle -->
     <UPageCard>
       <div class="flex items-center justify-between gap-4">
         <div class="min-w-0">
-          <h2 class="text-lg font-semibold">{{ t('settings.ordering.title') }}</h2>
+          <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.ordering.title') }}</h2>
           <p class="text-sm text-muted">{{ t('settings.ordering.description') }}</p>
         </div>
         <USwitch
           v-model="orderingEnabled"
+          size="lg"
           :loading="updatingOrdering"
           checked-icon="i-lucide-check"
           unchecked-icon="i-lucide-x"
@@ -19,47 +20,59 @@
       </div>
     </UPageCard>
 
-    <!-- Opening Hours -->
+    <!-- Opening Hours (collapsible on mobile) -->
     <UPageCard>
-      <div class="space-y-4">
-        <div class="flex items-center justify-between gap-4">
-          <div class="min-w-0">
-            <h2 class="text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
-            <p class="text-sm text-muted">{{ t('settings.hours.description') }}</p>
+      <details open class="group">
+        <summary class="flex items-center justify-between gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+          <div class="flex items-center gap-2 min-w-0">
+            <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
+            <div>
+              <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
+              <p class="text-sm text-muted hidden sm:block">{{ t('settings.hours.description') }}</p>
+            </div>
           </div>
           <UButton
             :label="t('common.save')"
             icon="i-lucide-save"
+            size="sm"
             :loading="updatingHours"
-            @click="saveOpeningHours"
+            @click.prevent="saveOpeningHours"
           />
-        </div>
+        </summary>
 
-        <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
-      </div>
+        <div class="mt-4">
+          <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
+        </div>
+      </details>
     </UPageCard>
 
-    <!-- Ordering Hours -->
+    <!-- Ordering Hours (collapsible on mobile) -->
     <UPageCard>
-      <div class="space-y-4">
-        <div class="flex items-center justify-between gap-4">
-          <div class="min-w-0">
-            <h2 class="text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
-            <p class="text-sm text-muted">{{ t('settings.orderingHours.description') }}</p>
+      <details class="group">
+        <summary class="flex items-center justify-between gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+          <div class="flex items-center gap-2 min-w-0">
+            <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
+            <div>
+              <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
+              <p class="text-sm text-muted hidden sm:block">{{ t('settings.orderingHours.description') }}</p>
+            </div>
           </div>
           <UButton
             :label="t('common.save')"
             icon="i-lucide-save"
+            size="sm"
             :loading="updatingOrderingHours"
-            @click="saveOrderingHours"
+            @click.prevent="saveOrderingHours"
           />
-        </div>
+        </summary>
 
-        <p v-if="!hasOrderingHours" class="text-sm text-muted italic">
-          {{ t('settings.orderingHours.fallbackNotice') }}
-        </p>
-        <ScheduleEditor :hours="localOrderingHours" :days="days" @toggle-day="toggleOrderingDay" />
-      </div>
+        <div class="mt-4">
+          <p v-if="!hasOrderingHours" class="text-sm text-muted italic mb-3">
+            {{ t('settings.orderingHours.fallbackNotice') }}
+          </p>
+          <ScheduleEditor :hours="localOrderingHours" :days="days" @toggle-day="toggleOrderingDay" />
+        </div>
+      </details>
     </UPageCard>
   </div>
 </template>

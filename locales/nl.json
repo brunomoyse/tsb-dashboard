@@ -169,7 +169,8 @@
     "status": "Status",
     "type": "Type",
     "total": "Totaal",
-    "items": "Artikelen"
+    "items": "Artikelen",
+    "scrollForMore": "Scroll om meer te laden"
   },
 
   "coupons": {
