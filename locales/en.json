@@ -14,7 +14,8 @@
     "visibility": "Visibility",
     "available": "Available",
     "unavailable": "Unavailable",
-    "availability": "Availability"
+    "availability": "Availability",
+    "loadMore": "Load more"
   },
 
   "products": {
@@ -197,7 +198,8 @@
       "totalCustomers": "Customers",
       "totalRevenue": "Total Revenue",
       "averageOrder": "Average Order",
-      "totalOrders": "Total Orders"
+      "totalOrders": "Total Orders",
+      "avgOrdersPerCustomer": "Avg. orders/customer"
     },
     "filters": {
       "allTime": "All Time",
@@ -207,7 +209,10 @@
       "thisYear": "This Year",
       "allTypes": "All",
       "minOrders": "Min. orders"
-    }
+    },
+    "orderHistory": "Order History",
+    "noOrdersFound": "No orders found",
+    "memberSince": "Member since"
   },
 
   "navigation": {

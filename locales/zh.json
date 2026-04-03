@@ -15,7 +15,8 @@
     "visibility": "可见性",
     "available": "可用",
     "unavailable": "不可用",
-    "availability": "可用性"
+    "availability": "可用性",
+    "loadMore": "加载更多"
   },
 
   "products": {
@@ -198,7 +199,8 @@
       "totalCustomers": "客户数",
       "totalRevenue": "总收入",
       "averageOrder": "平均订单",
-      "totalOrders": "总订单数"
+      "totalOrders": "总订单数",
+      "avgOrdersPerCustomer": "人均订单数"
     },
     "filters": {
       "allTime": "全部",
@@ -208,7 +210,10 @@
       "thisYear": "今年",
       "allTypes": "全部",
       "minOrders": "最少订单数"
-    }
+    },
+    "orderHistory": "订单历史",
+    "noOrdersFound": "未找到订单",
+    "memberSince": "注册日期"
   },
 
   "navigation": {
