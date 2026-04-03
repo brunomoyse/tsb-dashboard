@@ -12,7 +12,7 @@ const csp = `${[
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `img-src 'self' data:${s3Url ? ` ${s3Url}` : ''}`,
     "font-src 'self' https://fonts.gstatic.com",
-    `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin}`,
+    `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin} https://api.iconify.design`,
     `frame-src 'self' ${zitadelOrigin}`,
 ].join('; ')};`
 
