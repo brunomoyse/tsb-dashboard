@@ -412,8 +412,8 @@ const defaultForm = () => ({
   discountType: 'PERCENTAGE' as string,
   discountValue: '',
   minOrderAmount: '',
-  maxUses: '' as string | number,
-  maxUsesPerUser: '' as string | number,
+  maxUses: '',
+  maxUsesPerUser: '',
   isActive: true,
   validFrom: '',
   validUntil: ''
@@ -452,8 +452,8 @@ const openEditDialog = (coupon: Coupon) => {
     discountType: coupon.discountType,
     discountValue: coupon.discountValue,
     minOrderAmount: coupon.minOrderAmount ?? '',
-    maxUses: coupon.maxUses ?? '',
-    maxUsesPerUser: coupon.maxUsesPerUser ?? '',
+    maxUses: coupon.maxUses !== null && coupon.maxUses !== undefined ? String(coupon.maxUses) : '',
+    maxUsesPerUser: coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined ? String(coupon.maxUsesPerUser) : '',
     isActive: coupon.isActive,
     validFrom: toLocalDatetime(coupon.validFrom),
     validUntil: toLocalDatetime(coupon.validUntil)

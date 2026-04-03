@@ -104,9 +104,9 @@ const formatRFC3339Local = (date: Date): string => {
  * @returns RFC3339 timestamp string
  */
 export const timeToRFC3339 = (timeStr: string): string => {
-    const [h, m] = timeStr.split(':').map(Number);
+    const parts = timeStr.split(':').map(Number);
     const now = new Date();
-    now.setHours(h, m, 0, 0);
+    now.setHours(parts[0] ?? 0, parts[1] ?? 0, 0, 0);
     return formatRFC3339Local(now);
 }
 

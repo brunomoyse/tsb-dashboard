@@ -137,6 +137,14 @@
       "minutes": "il y a {count} min",
       "hours": "il y a {count}h"
     },
+    "otherActions": "Autres actions",
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "deliveryFeeLabel": "Frais de livraison",
+    "newEstimatedTime": "Nouvelle estimation",
+    "staleAlert": "{count} commande(s) en attente depuis plus de 2h",
+    "staleDetailAlert": "Cette commande est en attente depuis {hours}h. Envisagez de contacter le client ou d'annuler.",
+    "statusAdvanced": "Statut mis à jour",
     "errors": {
       "updateFailed": "Échec de la mise à jour de la commande",
       "invalidTransition": "Cette transition de statut n'est pas autorisée pour cette commande",

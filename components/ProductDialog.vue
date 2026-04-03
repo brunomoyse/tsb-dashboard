@@ -306,19 +306,19 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
     const translations: TranslationInput[] = languages.map(lang => {
         const existing = sourceProduct.translations.find(tr => tr.language === lang)
         return existing
-            ? { language: lang, name: existing.name, description: existing.description }
+            ? { language: lang, name: existing.name, description: existing.description ?? '' }
             : { language: lang, name: '', description: '' }
     })
     return {
         categoryId,
-        code: sourceProduct.code ?? null,
+        code: sourceProduct.code ?? undefined,
         isAvailable: sourceProduct.isAvailable,
         isDiscountable: sourceProduct.isDiscountable,
         isHalal: sourceProduct.isHalal,
         isSpicy: sourceProduct.isSpicy,
         isVegan: sourceProduct.isVegan,
         isVisible: sourceProduct.isVisible,
-        pieceCount: sourceProduct.pieceCount ?? null,
+        pieceCount: sourceProduct.pieceCount ?? undefined,
         price: sourceProduct.price,
         translations
     }
@@ -327,16 +327,16 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
 // Create a default product for create mode.
 const createDefaultProduct = (): CreateProductInput => ({
     categoryId: '',
-    code: null,
+    code: undefined,
     isAvailable: false,
     isDiscountable: true,
     isHalal: false,
     isSpicy: false,
     isVegan: false,
     isVisible: false,
-    pieceCount: null,
+    pieceCount: undefined,
     price: '',
-    translations: languages.map(language => ({ language, name: '', description: null }))
+    translations: languages.map(language => ({ language, name: '', description: '' }))
 })
 
 // Initialize the edited product based on mode.
@@ -399,7 +399,7 @@ const addNewChoice = () => {
 }
 
 const removeChoice = async (idx: number) => {
-    const choice = editedChoices.value[idx]
+    const choice = editedChoices.value[idx]!
     if (choice.id) {
         // Delete existing choice via GraphQL
         try {
@@ -569,7 +569,7 @@ const saveChanges = async () => {
     // Choice validation (edit mode only)
     if (mode === 'edit') {
         for (let i = 0; i < editedChoices.value.length; i++) {
-            const choice = editedChoices.value[i]
+            const choice = editedChoices.value[i]!
             const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
             if (!hasAnyName) {
                 validationErrors.value.push(t('validation.choiceNameRequired', { index: i + 1 }))

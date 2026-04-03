@@ -13,8 +13,6 @@ export const useAuthStore = defineStore("auth", {
         updateUser(user: Partial<User>) {
             if (this.user) {
                 Object.assign(this.user, user)
-            } else {
-                this.user = user
             }
         },
         clearUser() {

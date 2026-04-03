@@ -145,7 +145,7 @@ const UPDATE_ORDERING_HOURS = gql`
   }
 `
 
-const parseSchedule = (schedule: DaySchedule | null): DaySchedule | null => {
+const parseSchedule = (schedule: DaySchedule | null | undefined): DaySchedule | null => {
   if (!schedule) return null
   return {
     open: schedule.open || '11:00',

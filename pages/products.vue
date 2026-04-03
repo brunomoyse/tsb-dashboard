@@ -57,7 +57,7 @@
             >
               <img
                 v-if="getProductImageUrl(row.original)"
-                :src="getProductImageUrl(row.original)"
+                :src="getProductImageUrl(row.original) ?? undefined"
                 :alt="row.original.name"
                 class="size-full object-cover"
               />
@@ -572,9 +572,9 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
       const idx = dataProducts.value.products.findIndex(p => p.id === product.id)
       if (idx !== -1) {
         dataProducts.value.products[idx] = {
-          ...dataProducts.value.products[idx],
+          ...dataProducts.value.products[idx]!,
           [field]: value
-        }
+        } as Product
       }
     }
   } catch (err) {
@@ -629,7 +629,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
         form.append('0', image, image.name)
       }
 
-      const res = await $api(graphqlUrl, {
+      const res = await $api<{ data: { createProduct: Product }; errors?: { message: string }[] }>(graphqlUrl, {
         method: 'POST',
         body: form
       })
@@ -692,7 +692,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
       form.append('0', image, image.name)
 
-      const res = await $api(graphqlUrl, {
+      const res = await $api<{ data: { updateProduct: Product }; errors?: { message: string }[] }>(graphqlUrl, {
         method: 'POST',
         body: form
       })
@@ -745,9 +745,9 @@ onMounted(() => {
     const idx = dataProducts.value.products.findIndex(p => p.id === val.productUpdated.id)
     if (idx !== -1) {
       dataProducts.value.products.splice(idx, 1, {
-        ...dataProducts.value.products[idx],
+        ...dataProducts.value.products[idx]!,
         ...val.productUpdated,
-      })
+      } as Product)
     }
   })
 })

@@ -136,6 +136,14 @@
       "minutes": "{count} min ago",
       "hours": "{count}h ago"
     },
+    "otherActions": "Other actions",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "deliveryFeeLabel": "Delivery fee",
+    "newEstimatedTime": "New estimate",
+    "staleAlert": "{count} order(s) waiting for over 2h",
+    "staleDetailAlert": "This order has been waiting for {hours}h. Consider contacting the customer or cancelling.",
+    "statusAdvanced": "Status updated",
     "errors": {
       "updateFailed": "Failed to update order",
       "invalidTransition": "This status transition is not allowed for this order",

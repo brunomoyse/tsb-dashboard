@@ -57,8 +57,8 @@
 
         <!-- Theme Toggle -->
         <UButton
-          :label="(isCollapsed && !isMobile) ? undefined : (colorMode === 'dark' ? t('theme.dark') : t('theme.light'))"
-          :icon="colorMode === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
+          :label="(isCollapsed && !isMobile) ? undefined : (colorMode.value === 'dark' ? t('theme.dark') : t('theme.light'))"
+          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
           color="neutral"
           variant="ghost"
           size="lg"
@@ -167,7 +167,8 @@ onMounted(() => {
   mql.addEventListener('change', (e) => { isMobile.value = e.matches })
 })
 
-const languages = [
+type AppLocale = 'fr' | 'en' | 'nl' | 'zh'
+const languages: { value: AppLocale; label: string; icon: string }[] = [
   { value: 'fr', label: 'Français', icon: 'i-lucide-flag' },
   { value: 'en', label: 'English', icon: 'i-lucide-flag' },
   { value: 'nl', label: 'Nederlands', icon: 'i-lucide-flag' },
