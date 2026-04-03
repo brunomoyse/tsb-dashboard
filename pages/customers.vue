@@ -7,7 +7,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -96,8 +96,10 @@
         :data="paginatedCustomers"
         :ui="{
           th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
-          td: 'py-3 px-4'
+          td: 'py-3 px-4',
+          tr: 'cursor-pointer hover:bg-(--ui-bg-elevated) transition-colors'
         }"
+        @select="(_e: Event, row: any) => openCustomerOrders(row.original)"
       >
         <template #name-cell="{ row }">
           <div>
@@ -178,12 +180,109 @@
         show-edges
       />
     </div>
+    <!-- Customer Order History Slideover -->
+    <USlideover
+      v-model:open="showOrderHistory"
+      :title="t('customers.orderHistory')"
+      side="right"
+    >
+      <template v-if="selectedCustomer" #body>
+        <div class="space-y-5">
+          <!-- Customer Header -->
+          <div>
+            <h2 class="text-lg font-bold text-highlighted">
+              {{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}
+            </h2>
+            <div class="space-y-1 mt-1 text-sm text-muted">
+              <p>{{ selectedCustomer.email }}</p>
+              <p v-if="selectedCustomer.phoneNumber">{{ selectedCustomer.phoneNumber }}</p>
+              <p>{{ t('customers.memberSince') }}: {{ formatDate(selectedCustomer.registeredAt) }}</p>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-3">
+            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
+              <p class="text-lg font-bold text-highlighted tabular-nums">{{ selectedCustomer.totalOrders }}</p>
+              <p class="text-xs text-muted">{{ t('customers.totalOrders') }}</p>
+            </div>
+            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
+              <p class="text-lg font-bold text-highlighted tabular-nums">{{ belPriceFormat.format(Number(selectedCustomer.totalAmount)) }}</p>
+              <p class="text-xs text-muted">{{ t('customers.totalAmount') }}</p>
+            </div>
+            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
+              <p class="text-lg font-bold text-highlighted tabular-nums">{{ belPriceFormat.format(Number(selectedCustomer.averageOrderAmount)) }}</p>
+              <p class="text-xs text-muted">{{ t('customers.averageOrder') }}</p>
+            </div>
+          </div>
+
+          <!-- Orders List -->
+          <div class="space-y-2">
+            <h3 class="text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
+
+            <div v-if="loadingOrders" class="space-y-2">
+              <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-lg bg-(--ui-bg) border border-(--ui-border)">
+                <USkeleton class="size-5 rounded shrink-0" />
+                <div class="flex-1 space-y-1">
+                  <USkeleton class="h-3.5 w-24" />
+                  <USkeleton class="h-3 w-16" />
+                </div>
+                <USkeleton class="h-4 w-14" />
+              </div>
+            </div>
+
+            <template v-else-if="customerOrders.length">
+              <div
+                v-for="order in customerOrders"
+                :key="order.id"
+                class="flex items-center gap-3 p-3 rounded-lg bg-(--ui-bg) border border-(--ui-border)"
+              >
+                <UIcon
+                  :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                  class="size-5 shrink-0 text-muted"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium text-highlighted">{{ formatOrderDate(order.createdAt) }}</span>
+                    <span class="text-sm font-bold text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(order.totalPrice)) }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <UBadge :color="getOrderStatusColor(order.status)" variant="soft" size="xs">
+                      {{ order.status }}
+                    </UBadge>
+                    <span class="text-xs text-muted">{{ order.items.length }} {{ t('orders.items') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Load More -->
+              <UButton
+                v-if="customerOrders.length >= ordersPageSize"
+                variant="ghost"
+                color="neutral"
+                block
+                size="sm"
+                :loading="loadingMoreOrders"
+                @click="loadMoreOrders"
+              >
+                {{ t('common.loadMore') }}
+              </UButton>
+            </template>
+
+            <div v-else class="text-center py-8">
+              <UIcon name="i-lucide-package-x" class="size-10 mx-auto mb-2 text-muted" />
+              <p class="text-sm text-muted">{{ t('customers.noOrdersFound') }}</p>
+            </div>
+          </div>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
 
 <script lang="ts" setup>
+import type { CustomerStats, CustomerStatsResponse } from '~/types'
 import { computed, ref, watch } from 'vue'
-import type { CustomerStatsResponse } from '~/types'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useGqlQuery } from '#imports'
@@ -347,6 +446,13 @@ const summaryCards = computed(() => [
     label: t('customers.summary.totalOrders'),
     value: summary.value?.totalOrders ?? 0,
     icon: 'i-lucide-shopping-bag'
+  },
+  {
+    label: t('customers.summary.avgOrdersPerCustomer'),
+    value: summary.value?.totalCustomers
+      ? (summary.value.totalOrders / summary.value.totalCustomers).toFixed(1)
+      : '0',
+    icon: 'i-lucide-repeat'
   }
 ])
 
@@ -362,4 +468,100 @@ const columns = computed(() => [
 ])
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
+
+// --- Customer Order History ---
+
+interface CustomerOrder {
+  id: string
+  createdAt: string
+  status: string
+  type: string
+  totalPrice: string
+  items: { quantity: number; product: { name: string } }[]
+}
+
+const selectedCustomer = ref<CustomerStats | null>(null)
+const showOrderHistory = ref(false)
+const customerOrders = ref<CustomerOrder[]>([])
+const loadingOrders = ref(false)
+const loadingMoreOrders = ref(false)
+const ordersPage = ref(1)
+const ordersPageSize = 20
+
+const CUSTOMER_ORDERS_QUERY = print(gql`
+  query CustomerOrders($userId: ID!, $first: Int, $page: Int) {
+    customerOrders(userId: $userId, first: $first, page: $page) {
+      id
+      createdAt
+      status
+      type
+      totalPrice
+      items {
+        quantity
+        product {
+          name
+        }
+      }
+    }
+  }
+`)
+
+const { $gqlFetch } = useNuxtApp()
+
+const fetchCustomerOrders = (userId: string, pageNum: number) =>
+  $gqlFetch<{ customerOrders: CustomerOrder[] }>(CUSTOMER_ORDERS_QUERY, {
+    variables: { userId, first: ordersPageSize, page: pageNum }
+  })
+
+const openCustomerOrders = async (customer: CustomerStats) => {
+  selectedCustomer.value = customer
+  showOrderHistory.value = true
+  customerOrders.value = []
+  ordersPage.value = 1
+  loadingOrders.value = true
+
+  try {
+    const res = await fetchCustomerOrders(customer.userId, 1)
+    customerOrders.value = res.customerOrders
+  } catch {
+    customerOrders.value = []
+  } finally {
+    loadingOrders.value = false
+  }
+}
+
+const loadMoreOrders = async () => {
+  if (!selectedCustomer.value) return
+  loadingMoreOrders.value = true
+  ordersPage.value++
+
+  try {
+    const res = await fetchCustomerOrders(selectedCustomer.value.userId, ordersPage.value)
+    customerOrders.value.push(...res.customerOrders)
+  } catch {
+    // Keep existing orders on failure
+  } finally {
+    loadingMoreOrders.value = false
+  }
+}
+
+type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
+
+const getOrderStatusColor = (status: string): UiColor => {
+  const colors: Record<string, UiColor> = {
+    PENDING: 'warning',
+    CONFIRMED: 'info',
+    PREPARING: 'primary',
+    AWAITING_PICK_UP: 'success',
+    OUT_FOR_DELIVERY: 'info',
+    DELIVERED: 'success',
+    PICKED_UP: 'success',
+    FAILED: 'error',
+    CANCELLED: 'error'
+  }
+  return colors[status] ?? 'neutral'
+}
+
+const formatOrderDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 </script>
