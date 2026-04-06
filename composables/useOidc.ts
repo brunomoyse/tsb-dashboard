@@ -50,7 +50,7 @@ export function useOidc() {
                 // Renew failed — redirect to dashboard login
                 const { useAuthStore } = await import('~/stores/auth')
                 useAuthStore().clearUser()
-                window.location.href = `/${locale}/login`
+                window.location.href = `/${locale}/auth/login?session=expired`
             }
         })
 
@@ -58,7 +58,7 @@ export function useOidc() {
             // Silent renew failed — redirect to dashboard login
             const { useAuthStore } = await import('~/stores/auth')
             useAuthStore().clearUser()
-            window.location.href = `/${locale}/login`
+            window.location.href = `/${locale}/auth/login?session=expired`
         })
 
         return userManager
