@@ -396,7 +396,7 @@ const CUSTOMER_STATS_QUERY = gql`
 const { data, pending, refetch } = await useGqlQuery<{ customerStats: CustomerStatsResponse }>(
   print(CUSTOMER_STATS_QUERY),
   () => queryVariables.value,
-  { immediate: true, cache: false }
+  { immediate: true, cache: false, server: false }
 )
 
 // Refetch when filters change

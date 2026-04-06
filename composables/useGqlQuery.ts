@@ -8,6 +8,7 @@ type Vars = Record<string, unknown> | (() => Record<string, unknown>)
 interface Options {
     immediate?: boolean
     cache?: boolean
+    server?: boolean
 }
 
 interface GqlQueryResult<T> {
@@ -28,11 +29,10 @@ export const useGqlQuery = async <T>(
     const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
 
     // Choose overload: with key (cache) or without key (no cache)
+    const asyncOpts = { immediate: opts.immediate, server: opts.server }
     const asyncData = opts.cache
-        ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, {
-            immediate: opts.immediate,
-        })
-        : await useAsyncData<T>(handler, { immediate: opts.immediate })
+        ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, asyncOpts)
+        : await useAsyncData<T>(handler, asyncOpts)
 
     if (typeof variables === 'function') {
         watch(
