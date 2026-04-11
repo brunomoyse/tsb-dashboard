@@ -37,6 +37,8 @@ export interface UpdateProductChoiceInput {
     translations?: ChoiceTranslationInput[];
 }
 
+export type VatCategory = 'food' | 'beverage' | 'zero_rated' | 'out_of_scope';
+
 export interface Product {
     categoryId: string;
     code: string | null;
@@ -50,6 +52,7 @@ export interface Product {
     pieceCount: number | null;
     price: string;
     slug: string;
+    vatCategory: VatCategory;
 
     name: string;
     description: string | null;
@@ -79,6 +82,7 @@ export interface CreateProductInput {
     isVisible: boolean
     pieceCount?: number
     price: string
+    vatCategory: VatCategory
 
     translations: TranslationInput[]
 
@@ -96,6 +100,7 @@ export interface UpdateProductInput {
     isVisible?: boolean
     pieceCount?: number
     price?: string
+    vatCategory?: VatCategory
 
     translations?: TranslationInput[]
 

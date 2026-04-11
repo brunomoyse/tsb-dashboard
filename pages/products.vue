@@ -310,6 +310,8 @@ const PRODUCTS_QUERY = gql`
       isHalal
       isSpicy
       isVegan
+      isDiscountable
+      vatCategory
       name
       description
       category {
@@ -364,6 +366,8 @@ const CREATE_PRODUCT_MUTATION = gql`
       isHalal
       isSpicy
       isVegan
+      isDiscountable
+      vatCategory
       name
       description
       category {
@@ -403,6 +407,8 @@ const UPDATE_PRODUCT_MUTATION = gql`
       isHalal
       isSpicy
       isVegan
+      isDiscountable
+      vatCategory
       name
       description
       category {
@@ -453,6 +459,7 @@ const SUB_PRODUCT_UPDATED = gql`
       isSpicy
       isVegan
       isDiscountable
+      vatCategory
       name
       slug
     }
