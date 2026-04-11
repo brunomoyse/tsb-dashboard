@@ -50,6 +50,21 @@
                 :placeholder="t('products.pieceCount')"
               />
             </UFormField>
+
+            <UFormField label="VAT category" name="vatCategory" required>
+              <USelect
+                v-model="editedProduct.vatCategory"
+                :items="vatCategoryOptions"
+                value-key="value"
+                label-key="label"
+                placeholder="VAT category"
+              />
+              <template #help>
+                <span class="text-xs text-muted">
+                  Belgian rates: food=12% dine-in / 6% takeaway · beverage=21% · zero_rated=0%.
+                </span>
+              </template>
+            </UFormField>
           </div>
 
           <!-- Right Column: Image Preview / Upload -->
@@ -320,6 +335,7 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
         isVisible: sourceProduct.isVisible,
         pieceCount: sourceProduct.pieceCount ?? undefined,
         price: sourceProduct.price,
+        vatCategory: sourceProduct.vatCategory ?? 'food',
         translations
     }
 }
@@ -336,8 +352,18 @@ const createDefaultProduct = (): CreateProductInput => ({
     isVisible: false,
     pieceCount: undefined,
     price: '',
+    vatCategory: 'food',
     translations: languages.map(language => ({ language, name: '', description: '' }))
 })
+
+// VAT category options (Belgian SCE 2.0 classification).
+// The concrete rate depends on the order service type — displayed as helper text.
+const vatCategoryOptions = [
+    { value: 'food', label: 'Food (12% dine-in / 6% takeaway)' },
+    { value: 'beverage', label: 'Beverage (21% all)' },
+    { value: 'zero_rated', label: 'Zero-rated (0%)' },
+    { value: 'out_of_scope', label: 'Out of scope' }
+]
 
 // Initialize the edited product based on mode.
 const editedProduct = ref<CreateProductInput | UIUpdateProductInput>(
@@ -532,6 +558,12 @@ const saveChanges = async () => {
         if (isNaN(priceNum) || priceNum <= 0) {
             validationErrors.value.push(t('validation.pricePositive'))
         }
+    }
+
+    // VAT category required
+    const validVatCategories = ['food', 'beverage', 'zero_rated', 'out_of_scope']
+    if (!editedProduct.value.vatCategory || !validVatCategories.includes(editedProduct.value.vatCategory)) {
+        validationErrors.value.push('VAT category is required and must be one of: food, beverage, zero_rated, out_of_scope')
     }
 
     // Description max 500 chars per language
