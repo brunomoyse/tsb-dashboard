@@ -118,6 +118,7 @@
       </template>
 
       <template #body>
+        <HubriseHealthBanner />
         <div class="pb-20 md:pb-0">
           <slot />
         </div>

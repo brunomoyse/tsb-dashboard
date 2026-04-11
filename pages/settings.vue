@@ -74,6 +74,71 @@
         </div>
       </details>
     </UPageCard>
+
+    <!-- HubRise Integration -->
+    <UPageCard>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="text-base sm:text-lg font-semibold">HubRise</h2>
+            <p class="text-sm text-muted">
+              Webshop → HubRise → POS. Order bus + catalog sync.
+            </p>
+          </div>
+          <UBadge
+            :color="hubriseStatus?.connected ? 'success' : 'neutral'"
+            :label="hubriseStatus?.connected ? 'Connected' : 'Disconnected'"
+          />
+        </div>
+
+        <div v-if="hubriseStatus?.connected" class="space-y-2 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div><span class="text-muted">Location:</span> {{ hubriseStatus.location_id }}</div>
+            <div><span class="text-muted">Account:</span> {{ hubriseStatus.account_id }}</div>
+            <div v-if="hubriseStatus.catalog_id">
+              <span class="text-muted">Catalog:</span> {{ hubriseStatus.catalog_id }}
+            </div>
+            <div v-if="hubriseStatus.last_pushed_at">
+              <span class="text-muted">Last push:</span>
+              {{ new Date(hubriseStatus.last_pushed_at).toLocaleString() }}
+            </div>
+          </div>
+          <div v-if="hubriseStatus.last_error" class="text-sm text-red-600">
+            Last error: {{ hubriseStatus.last_error }}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <UButton
+            v-if="!hubriseStatus?.connected"
+            label="Connect to HubRise"
+            icon="i-lucide-link"
+            size="sm"
+            :loading="hubriseLoading"
+            @click="connectHubRise"
+          />
+          <UButton
+            v-if="hubriseStatus?.connected"
+            label="Force catalog push"
+            icon="i-lucide-refresh-cw"
+            size="sm"
+            variant="soft"
+            :loading="hubriseLoading"
+            @click="forceHubRisePush"
+          />
+          <UButton
+            v-if="hubriseStatus?.connected"
+            label="Disconnect"
+            icon="i-lucide-unlink"
+            color="error"
+            variant="soft"
+            size="sm"
+            :loading="hubriseLoading"
+            @click="disconnectHubRise"
+          />
+        </div>
+      </div>
+    </UPageCard>
   </div>
 </template>
 
@@ -86,7 +151,64 @@ import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { $gqlFetch } = useNuxtApp()
+const { $gqlFetch, $api } = useNuxtApp()
+const runtimeConfig = useRuntimeConfig()
+
+// HubRise integration state
+interface HubRiseStatus {
+  connected: boolean
+  account_id?: string
+  location_id?: string
+  catalog_id?: string | null
+  customer_list_id?: string | null
+  last_pushed_version?: number | null
+  last_pushed_at?: string | null
+  last_push_status?: string | null
+  last_error?: string | null
+}
+
+const hubriseStatus = ref<HubRiseStatus | null>(null)
+const hubriseLoading = ref(false)
+
+const loadHubriseStatus = async () => {
+  try {
+    hubriseStatus.value = await ($api as any)<HubRiseStatus>('/hubrise/webshop/status', { method: 'GET' })
+  } catch (err) {
+    console.error('hubrise status fetch failed', err)
+    hubriseStatus.value = { connected: false }
+  }
+}
+
+const connectHubRise = () => {
+  // Open the OAuth authorize URL — the server redirects to HubRise
+  // then back to the dashboard with `?hubrise=connected`.
+  const base = runtimeConfig.public.api as string
+  window.location.href = `${base}/hubrise/webshop/oauth/authorize`
+}
+
+const forceHubRisePush = async () => {
+  hubriseLoading.value = true
+  try {
+    await ($api as any)('/hubrise/webshop/catalog/push', { method: 'POST' })
+    await loadHubriseStatus()
+  } catch (err) {
+    console.error('hubrise catalog push failed', err)
+  } finally {
+    hubriseLoading.value = false
+  }
+}
+
+const disconnectHubRise = async () => {
+  hubriseLoading.value = true
+  try {
+    await ($api as any)('/hubrise/webshop/disconnect', { method: 'POST' })
+    await loadHubriseStatus()
+  } catch (err) {
+    console.error('hubrise disconnect failed', err)
+  } finally {
+    hubriseLoading.value = false
+  }
+}
 
 interface DaySchedule {
   open: string
@@ -251,6 +373,7 @@ const SUB_CONFIG_UPDATED = gql`
 
 onMounted(() => {
   loadConfig()
+  loadHubriseStatus()
 
   const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null } }>(
     print(SUB_CONFIG_UPDATED)
