@@ -1,5 +1,5 @@
+import { defineNuxtPlugin, navigateTo } from '#imports'
 import { Capacitor } from '@capacitor/core'
-import { defineNuxtPlugin } from '#imports'
 
 export default defineNuxtPlugin(async () => {
     if (!Capacitor.isNativePlatform()) return
@@ -17,4 +17,20 @@ export default defineNuxtPlugin(async () => {
         const { SplashScreen } = await import('@capacitor/splash-screen')
         await SplashScreen.hide()
     } catch { /* SplashScreen not available on web */ }
+
+    // Deep-link listener: route any same-origin auth callback back into the SPA.
+    // With androidScheme: 'https' and an in-WebView login, this usually doesn't
+    // Fire — it's defensive for future IdP / Browser.open flows that may land
+    // Back on the app via a deep link.
+    try {
+        const { App } = await import('@capacitor/app')
+        App.addListener('appUrlOpen', ({ url }) => {
+            try {
+                const parsed = new URL(url)
+                if (parsed.pathname.includes('/auth/callback')) {
+                    navigateTo(`${parsed.pathname}${parsed.search}`)
+                }
+            } catch { /* Ignore malformed URLs */ }
+        })
+    } catch { /* @capacitor/app not available */ }
 })

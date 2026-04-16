@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, definePageMeta, onMounted, ref, useRoute } from '#imports'
+import { computed, definePageMeta, onMounted, ref, useRoute, useRuntimeConfig } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { useZitadelApi } from '~/composables/useZitadelApi'
 
@@ -129,6 +129,9 @@ definePageMeta({
   public: true,
   layout: false
 })
+
+const config = useRuntimeConfig()
+const isCapacitor = config.public.appBuild === 'capacitor'
 
 useHead({
   link: [
@@ -190,8 +193,34 @@ const onSubmit = async () => {
     // 2. Finalize the OIDC flow
     if (effectiveAuthRequestId.value) {
       const result = await finalizeOidcAuth(effectiveAuthRequestId.value, session.sessionId, session.sessionToken)
-      // Zitadel returns a callback URL — redirect to it to complete OIDC code exchange
-      window.location.href = result.callbackUrl
+
+      if (isCapacitor) {
+        // Capacitor: exchange the auth code for tokens directly.
+        // We can't follow result.callbackUrl because the WebView runs at
+        // https://localhost — the public callback URL would navigate us
+        // out of the app and lose the OIDC state.
+        const callbackUrl = new URL(result.callbackUrl)
+        const code = callbackUrl.searchParams.get('code')
+        if (!code) throw new Error('No authorization code in callback URL')
+
+        const { useOidc } = await import('~/composables/useOidc')
+        const { exchangeCodeForTokens } = useOidc()
+        await exchangeCodeForTokens(code)
+
+        const { useAuthCallback } = await import('~/composables/useAuthCallback')
+        const { processCallback } = useAuthCallback()
+        const outcome = await processCallback()
+        if (!outcome.ok) {
+          loading.value = false
+          errorMessage.value = outcome.reason === 'not_admin'
+            ? t('login.accessDenied')
+            : t('login.callbackError')
+        }
+      } else {
+        // Web: follow Zitadel's callback URL so the browser completes the
+        // OIDC code exchange via pages/auth/callback.vue.
+        window.location.href = result.callbackUrl
+      }
     } else {
       // Fallback: start a fresh OIDC flow with login hint
       const { useOidc } = await import('~/composables/useOidc')
@@ -201,6 +230,16 @@ const onSubmit = async () => {
   } catch (error: any) {
     loading.value = false
     if (import.meta.dev) console.error('Login error:', error)
+
+    // Refresh the authRequestId so subsequent retries get a fresh one.
+    // Zitadel invalidates authRequestIds once consumed or on some errors.
+    if (isCapacitor) {
+      try {
+        const { useOidc } = await import('~/composables/useOidc')
+        fetchedAuthRequestId.value = await useOidc().getAuthRequestId()
+      } catch { /* best-effort */ }
+    }
+
     const status = error?.response?.status || error?.statusCode
     if (status === 429) {
       errorMessage.value = t('login.tooManyRequests')

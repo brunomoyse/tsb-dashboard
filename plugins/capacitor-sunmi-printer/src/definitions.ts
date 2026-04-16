@@ -52,6 +52,12 @@ export interface SunmiPrinterPlugin {
   /** Feed n blank lines. */
   lineWrap(options: { lines: number }): Promise<void>
 
+  /**
+   * Cut the paper. On devices without an auto-cutter, falls back to feeding
+   * a few extra lines so the user can tear along the serrated edge.
+   */
+  cutPaper(): Promise<void>
+
   /** Enter transaction buffer mode. All subsequent commands are queued. */
   enterBuffer(): Promise<void>
 

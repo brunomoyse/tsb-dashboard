@@ -1,21 +1,22 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 
 android {
     namespace 'dev.nuagemagique.sunmiprinter'
-    compileSdkVersion project.properties['android.compileSdkVersion'].toInteger()
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion project.properties['android.minSdkVersion'].toInteger()
-        targetSdkVersion project.properties['android.targetSdkVersion'].toInteger()
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '21'
     }
 }
 
@@ -30,8 +31,10 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    // Capacitor core (version resolved from the android/ project)
-    compileOnly "com.getcapacitor:core:+"
+    // Capacitor core module resolved from the host android/ project
+    implementation project(':capacitor-android')
+    // AppCompat: Capacitor's Plugin.activity is an AppCompatActivity
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.androidxAppCompatVersion}"
     // Sunmi built-in printer SDK
     implementation 'com.sunmi:printerlibrary:1.0.18'
 }

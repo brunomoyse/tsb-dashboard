@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { Order } from '~/types'
 import { usePlatform } from '~/composables/usePlatform'
+import { SunmiPrinter } from '~/plugins/capacitor-sunmi-printer/src/index'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
 
@@ -23,6 +24,41 @@ function receiptDateTime(dateStr: string): string {
 const SEP = '-'.repeat(32)
 const SEP_THICK = '='.repeat(32)
 
+/** Build a `***** [Category Name] *****` line padded to ~32 chars. */
+function categoryBanner(name: string): string {
+  const label = `[${name}]`
+  const remaining = Math.max(0, 32 - label.length)
+  const leftStars = '*'.repeat(Math.floor(remaining / 2))
+  const rightStars = '*'.repeat(Math.ceil(remaining / 2))
+  return `${leftStars}${label}${rightStars}`
+}
+
+/**
+ * Return the French name for a translatable object. Falls back to the default
+ * `name` if no French translation is stored (e.g. legacy data).
+ */
+function frName(obj: { name: string; translations?: { language: string; name: string }[] }): string {
+  const fr = obj.translations?.find(t => t.language === 'fr')?.name
+  return fr?.trim() || obj.name
+}
+
+/** Group order items by their product category (French name, insertion order). */
+function groupItemsByCategory(items: Order['items']) {
+  const groups = new Map<string, Order['items']>()
+  for (const item of items) {
+    const cat = item.product.category ? frName(item.product.category) : 'Autres'
+    const bucket = groups.get(cat) ?? []
+    bucket.push(item)
+    groups.set(cat, bucket)
+  }
+  return groups
+}
+
+/** Short human-readable order code (last 5 chars of UUID, uppercase). */
+function shortOrderCode(id: string): string {
+  return id.replace(/-/g, '').slice(-5).toUpperCase()
+}
+
 // ─── Composable ────────────────────────────────────────────────────────────────
 
 export const useSunmiPrinter = () => {
@@ -35,17 +71,16 @@ export const useSunmiPrinter = () => {
   /** True only when running inside Capacitor on an Android device. */
   const isNative = (): boolean => isCapacitor
 
-  /** Lazily import the plugin — avoids loading @capacitor/core on the server. */
-  const getPlugin = async () => {
-    const { SunmiPrinter } = await import('~/plugins/capacitor-sunmi-printer/src/index')
-    return SunmiPrinter
-  }
+  // Static import — returning the Capacitor Proxy from an async function makes
+  // `await` treat it as thenable (the Proxy intercepts `.then` as a plugin
+  // method call, which fails with "not implemented on android").
+  const getPlugin = () => SunmiPrinter
 
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
   const bind = async (): Promise<void> => {
     if (!isNative()) return
-    const plugin = await getPlugin()
+    const plugin = getPlugin()
     await plugin.bindService()
     isBound.value = true
     const result = await plugin.getStatus()
@@ -55,14 +90,14 @@ export const useSunmiPrinter = () => {
 
   const unbind = async (): Promise<void> => {
     if (!isNative() || !isBound.value) return
-    const plugin = await getPlugin()
+    const plugin = getPlugin()
     await plugin.unbindService()
     isBound.value = false
   }
 
   const refreshStatus = async (): Promise<void> => {
     if (!isNative()) return
-    const plugin = await getPlugin()
+    const plugin = getPlugin()
     const result = await plugin.getStatus()
     status.value = result.status
     statusText.value = result.statusText
@@ -73,7 +108,7 @@ export const useSunmiPrinter = () => {
 
   // ─── Internal: delivery receipt ─────────────────────────────────────────────
 
-  async function _printDelivery(plugin: Awaited<ReturnType<typeof getPlugin>>, order: Order) {
+  async function _printDelivery(plugin: ReturnType<typeof getPlugin>, order: Order) {
     await plugin.printerInit()
 
     // Header
@@ -82,27 +117,31 @@ export const useSunmiPrinter = () => {
     await plugin.setFontSize({ size: 28 })
     await plugin.printText({ text: 'TOKYO SUSHI BAR\n' })
     await plugin.setFontSize({ size: 24 })
+    const typeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'À EMPORTER'
+    await plugin.printText({ text: `${typeLabel}\n` })
+    await plugin.printText({ text: `** ${shortOrderCode(order.id)} **\n` })
     await plugin.setBold({ enabled: false })
     await plugin.setAlignment({ alignment: 'left' })
-    await plugin.printText({ text: `${SEP_THICK}\n` })
-    const typeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'RETRAIT'
-    const orderId = order.id.substring(0, 8).toUpperCase()
-    await plugin.printText({ text: `${receiptDateTime(order.createdAt)}\n` })
-    await plugin.printText({ text: `Cmd #${orderId}  ${typeLabel}\n` })
+    await plugin.printText({ text: `\n${SEP_THICK}\n` })
+
+    // Meta
+    await plugin.printText({ text: `Le: ${receiptDateTime(order.createdAt)}\n` })
+    const ready = order.estimatedReadyTime ?? order.preferredReadyTime
+    await plugin.printText({ text: `Prêt: ${ready ? receiptDateTime(ready) : 'ASAP'}\n` })
 
     // Customer
     if (order.customer) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       const fullName = `${order.customer.firstName} ${order.customer.lastName}`
-      await plugin.printText({ text: `Client: ${fullName}\n` })
+      await plugin.printText({ text: `${fullName}\n` })
       if (order.customer.phoneNumber) {
-        await plugin.printText({ text: `Tel: ${order.customer.phoneNumber}\n` })
+        await plugin.printText({ text: `${order.customer.phoneNumber}\n` })
       }
     }
 
     // Address
     if (order.address || order.displayAddress) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       if (order.address) {
         const { streetName, houseNumber, boxNumber, postcode, municipalityName } = order.address
         const box = boxNumber ? ` bte ${boxNumber}` : ''
@@ -116,59 +155,76 @@ export const useSunmiPrinter = () => {
       }
     }
 
-    // Timing
-    const ready = order.estimatedReadyTime ?? order.preferredReadyTime
-    if (ready) {
-      await plugin.printText({ text: `${SEP}\n` })
-      await plugin.printText({ text: `Prêt pour: ${receiptDateTime(ready)}\n` })
+    // Items — grouped by category, with product code + plain-text header.
+    // (printColumnsText with a 4/20/8 layout can wrap on 58mm depending on
+    //  font width; hand-padded printText is predictable.)
+    await plugin.printText({ text: `\n${SEP}\n` })
+    await plugin.printText({ text: 'Qte Article              Prix\n' })
+    for (const [catName, items] of groupItemsByCategory(order.items)) {
+      await plugin.printText({ text: `\n${categoryBanner(catName)}\n` })
+      for (const item of items) {
+        const code = item.product.code ? `${item.product.code}. ` : ''
+        const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
+        // Sunmi 58mm paper = 32 chars. Use 3 + 20 + 7 = 30 with 2-char safety.
+        await plugin.printColumnsText({
+          columns: [
+            { text: `${item.quantity}x`, width: 3, align: 'left' },
+            { text: `${code}${frName(item.product)}${choiceName}`, width: 20, align: 'left' },
+            { text: receiptPrice(item.totalPrice), width: 7, align: 'right' },
+          ],
+        })
+      }
     }
 
-    // Payment
-    await plugin.printText({ text: `${SEP}\n` })
-    const method = order.isOnlinePayment ? 'En ligne' : 'Espèces'
-    await plugin.printText({ text: `Paiement: ${method}\n` })
-
-    // Items
-    await plugin.printText({ text: `${SEP}\n` })
-    for (const item of order.items) {
-      const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
-      await plugin.printColumnsText({
-        columns: [
-          { text: `${item.quantity}x`, width: 1, align: 'left' },
-          { text: `${item.product.name}${choiceName}`, width: 5, align: 'left' },
-          { text: receiptPrice(item.totalPrice), width: 2, align: 'right' },
-        ],
-      })
-    }
-    await plugin.printText({ text: `${SEP}\n` })
+    // Totals
+    await plugin.printText({ text: `\n${SEP}\n` })
+    const itemsTotal = order.items.reduce((sum, it) => sum + Number(it.totalPrice), 0)
+    await plugin.printColumnsText({
+      columns: [
+        { text: 'Sous-total', width: 23, align: 'left' },
+        { text: receiptPrice(itemsTotal), width: 7, align: 'right' },
+      ],
+    })
     if (parseFloat(order.discountAmount) > 0) {
       await plugin.printColumnsText({
         columns: [
-          { text: 'Réduction', width: 6, align: 'left' },
-          { text: `-${receiptPrice(order.discountAmount)}`, width: 2, align: 'right' },
+          { text: 'Réduction', width: 23, align: 'left' },
+          { text: `-${receiptPrice(order.discountAmount)}`, width: 7, align: 'right' },
         ],
       })
     }
     if (order.deliveryFee && parseFloat(order.deliveryFee) > 0) {
       await plugin.printColumnsText({
         columns: [
-          { text: 'Livraison', width: 6, align: 'left' },
-          { text: receiptPrice(order.deliveryFee), width: 2, align: 'right' },
+          { text: 'Livraison', width: 23, align: 'left' },
+          { text: receiptPrice(order.deliveryFee), width: 7, align: 'right' },
         ],
       })
     }
     await plugin.setBold({ enabled: true })
     await plugin.printColumnsText({
       columns: [
-        { text: 'TOTAL', width: 6, align: 'left' },
-        { text: receiptPrice(order.totalPrice), width: 2, align: 'right' },
+        { text: 'TOTAL', width: 23, align: 'left' },
+        { text: receiptPrice(order.totalPrice), width: 7, align: 'right' },
       ],
     })
     await plugin.setBold({ enabled: false })
 
+    // Payment banner
+    await plugin.printText({ text: `\n${SEP}\n` })
+    await plugin.setAlignment({ alignment: 'center' })
+    await plugin.setBold({ enabled: true })
+    if (order.isOnlinePayment) {
+      await plugin.printText({ text: 'EN LIGNE — PAYÉ\n' })
+    } else {
+      await plugin.printText({ text: 'ESPÈCES\n' })
+    }
+    await plugin.setBold({ enabled: false })
+    await plugin.setAlignment({ alignment: 'left' })
+
     // Extras
     if (order.orderExtra?.length) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       for (const extra of order.orderExtra) {
         if (extra.name) {
           const opts = extra.options?.length ? `: ${extra.options.join(', ')}` : ''
@@ -179,20 +235,21 @@ export const useSunmiPrinter = () => {
 
     // Notes
     if (order.orderNote) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       await plugin.printText({ text: `Note: ${order.orderNote}\n` })
     }
 
-    await plugin.printText({ text: `${SEP_THICK}\n` })
+    // Footer
+    await plugin.printText({ text: `\n${SEP_THICK}\n` })
     await plugin.setAlignment({ alignment: 'center' })
-    await plugin.printText({ text: 'Merci et à bientôt!\n' })
+    await plugin.printText({ text: 'Merci pour votre commande\n' })
     await plugin.setAlignment({ alignment: 'left' })
-    await plugin.lineWrap({ lines: 3 })
+    await plugin.lineWrap({ lines: 4 })
   }
 
   // ─── Internal: kitchen receipt ───────────────────────────────────────────────
 
-  async function _printKitchen(plugin: Awaited<ReturnType<typeof getPlugin>>, order: Order) {
+  async function _printKitchen(plugin: ReturnType<typeof getPlugin>, order: Order) {
     await plugin.printerInit()
 
     // Header
@@ -201,30 +258,44 @@ export const useSunmiPrinter = () => {
     await plugin.setFontSize({ size: 32 })
     await plugin.printText({ text: 'CUISINE\n' })
     await plugin.setFontSize({ size: 24 })
+    const typeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'À EMPORTER'
+    await plugin.printText({ text: `${typeLabel}\n` })
+    await plugin.printText({ text: `** ${shortOrderCode(order.id)} **\n` })
     await plugin.setBold({ enabled: false })
     await plugin.setAlignment({ alignment: 'left' })
-    await plugin.printText({ text: `${SEP_THICK}\n` })
+    await plugin.printText({ text: `\n${SEP_THICK}\n` })
 
-    // Order info
-    const orderId = order.id.substring(0, 8).toUpperCase()
-    const typeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'RETRAIT'
-    await plugin.printText({ text: `#${orderId}  ${typeLabel}\n` })
-    await plugin.printText({ text: `${receiptDateTime(order.createdAt)}\n` })
+    // Order meta + customer context
+    await plugin.printText({ text: `Le: ${receiptDateTime(order.createdAt)}\n` })
+    const ready = order.estimatedReadyTime ?? order.preferredReadyTime
+    await plugin.printText({ text: `Prêt: ${ready ? receiptDateTime(ready) : 'ASAP'}\n` })
+    if (order.customer) {
+      const fullName = `${order.customer.firstName} ${order.customer.lastName}`
+      await plugin.printText({ text: `${fullName}\n` })
+      if (order.customer.phoneNumber) {
+        await plugin.printText({ text: `${order.customer.phoneNumber}\n` })
+      }
+    }
 
-    // Items
-    await plugin.printText({ text: `${SEP}\n` })
-    for (const item of order.items) {
-      const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
-      await plugin.setBold({ enabled: true })
-      await plugin.setFontSize({ size: 28 })
-      await plugin.printText({ text: `${item.quantity}x ${item.product.name}${choiceName}\n` })
-      await plugin.setFontSize({ size: 24 })
-      await plugin.setBold({ enabled: false })
+    // Items — grouped by category, bold + large font, with product code
+    await plugin.printText({ text: `\n${SEP}\n` })
+    await plugin.printText({ text: 'Qte Article\n' })
+    for (const [catName, items] of groupItemsByCategory(order.items)) {
+      await plugin.printText({ text: `\n${categoryBanner(catName)}\n` })
+      for (const item of items) {
+        const code = item.product.code ? `${item.product.code}. ` : ''
+        const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
+        await plugin.setBold({ enabled: true })
+        await plugin.setFontSize({ size: 28 })
+        await plugin.printText({ text: `${item.quantity}x ${code}${frName(item.product)}${choiceName}\n` })
+        await plugin.setFontSize({ size: 24 })
+        await plugin.setBold({ enabled: false })
+      }
     }
 
     // Extras
     if (order.orderExtra?.length) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       for (const extra of order.orderExtra) {
         if (extra.name) {
           const opts = extra.options?.length ? `: ${extra.options.join(', ')}` : ''
@@ -235,12 +306,12 @@ export const useSunmiPrinter = () => {
 
     // Notes
     if (order.orderNote) {
-      await plugin.printText({ text: `${SEP}\n` })
+      await plugin.printText({ text: `\n${SEP}\n` })
       await plugin.printText({ text: `Note: ${order.orderNote}\n` })
     }
 
-    await plugin.printText({ text: `${SEP_THICK}\n` })
-    await plugin.lineWrap({ lines: 3 })
+    await plugin.printText({ text: `\n${SEP_THICK}\n` })
+    await plugin.lineWrap({ lines: 4 })
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────────
@@ -251,7 +322,7 @@ export const useSunmiPrinter = () => {
       if (import.meta.dev) console.warn('[SunmiPrinter] Not on a Sunmi device — delivery print skipped')
       return
     }
-    const plugin = await getPlugin()
+    const plugin = getPlugin()
     await _printDelivery(plugin, order)
   }
 
@@ -261,15 +332,18 @@ export const useSunmiPrinter = () => {
       if (import.meta.dev) console.warn('[SunmiPrinter] Not on a Sunmi device — kitchen print skipped')
       return
     }
-    const plugin = await getPlugin()
+    const plugin = getPlugin()
     await _printKitchen(plugin, order)
   }
 
-  /** Print kitchen ticket first, then delivery ticket (500 ms apart). */
+  /**
+   * DEPRECATED for V3H (no auto-cutter) — prefer calling `printKitchen`
+   * and `printDelivery` with a user confirmation between them so the
+   * operator can tear the kitchen ticket before the delivery ticket
+   * prints. Kept for devices with a real auto-cutter.
+   */
   const printBoth = async (order: Order): Promise<void> => {
     await printKitchen(order)
-    // eslint-disable-next-line no-promise-executor-return
-    await new Promise(resolve => setTimeout(resolve, 500))
     await printDelivery(order)
   }
 

@@ -619,6 +619,32 @@
         </UButton>
       </template>
     </UModal>
+
+    <!-- Two-step print: tear kitchen ticket, then continue to client ticket -->
+    <UModal
+      v-model:open="showPrintContinueDialog"
+      :title="t('orders.printContinueTitle')"
+      :description="t('orders.printContinueMessage')"
+      :dismissible="false"
+      :ui="{ footer: 'flex justify-end gap-2' }"
+    >
+      <template #footer>
+        <UButton
+          color="neutral"
+          variant="outline"
+          @click="cancelContinueClientPrint"
+        >
+          {{ t('orders.back') }}
+        </UButton>
+        <UButton
+          color="primary"
+          icon="i-lucide-printer"
+          @click="continueToClientPrint"
+        >
+          {{ t('orders.printContinueCta') }}
+        </UButton>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -1167,9 +1193,17 @@ const ORDERS_QUERY = gql`
           id
           code
           name
+          translations {
+            language
+            name
+          }
           category {
             id
             name
+            translations {
+              language
+              name
+            }
           }
         }
         choice {
@@ -1376,9 +1410,17 @@ const { data: orderCreated } = useGqlSubscription<{
             id
             code
             name
+            translations {
+              language
+              name
+            }
             category {
               id
               name
+              translations {
+                language
+                name
+              }
             }
           }
           choice {
@@ -1487,7 +1529,7 @@ const updateOrder = async (newStatus?: OrderStatus) => {
 const formatOrderSummary = (order: Order) =>
   order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
 
-const { printDelivery: sunmiPrintDelivery, printKitchen: sunmiPrintKitchen, printBoth: sunmiPrintBoth } = useSunmiPrinter()
+const { printDelivery: sunmiPrintDelivery, printKitchen: sunmiPrintKitchen } = useSunmiPrinter()
 
 const printDelivery = async () => {
   if (!selectedOrder.value) return
@@ -1509,22 +1551,66 @@ const printKitchen = async () => {
   }
 }
 
+// Two-step print flow: kitchen → confirm → client. Required on devices
+// without an auto-cutter (Sunmi V3H) so the operator can tear the kitchen
+// ticket before the client ticket prints and the two sheets are not stuck
+// together.
+const showPrintContinueDialog = ref(false)
+const printContinueOrderId = ref<string | null>(null)
+
 const printBoth = async () => {
   if (!selectedOrder.value) return
   try {
-    await sunmiPrintBoth(selectedOrder.value)
+    await sunmiPrintKitchen(selectedOrder.value)
+    printContinueOrderId.value = selectedOrder.value.id
+    showPrintContinueDialog.value = true
   } catch (error) {
-    if (import.meta.dev) console.error('Print both failed:', error)
+    if (import.meta.dev) console.error('Kitchen print failed:', error)
     toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
   }
 }
 
-const notificationSound = () => {
+const continueToClientPrint = async () => {
+  showPrintContinueDialog.value = false
+  const orderId = printContinueOrderId.value
+  printContinueOrderId.value = null
+  if (!orderId) return
+  const order = ordersStore.orders.find(o => o.id === orderId) ?? selectedOrder.value
+  if (!order) return
   try {
-    const audioCtx = new AudioContext()
-    const t0 = audioCtx.currentTime
+    await sunmiPrintDelivery(order)
+  } catch (error) {
+    if (import.meta.dev) console.error('Client print failed:', error)
+    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
+  }
+}
 
-    // Two-tone chime: C5 → E5
+const cancelContinueClientPrint = () => {
+  showPrintContinueDialog.value = false
+  printContinueOrderId.value = null
+}
+
+// Single AudioContext reused across chimes — creating one per call leaks on
+// Android WebView, where Chromium caps the number of live contexts per page.
+let sharedAudioCtx: AudioContext | null = null
+
+const getAudioCtx = (): AudioContext | null => {
+  if (sharedAudioCtx) return sharedAudioCtx
+  try {
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    sharedAudioCtx = new Ctx()
+    return sharedAudioCtx
+  } catch {
+    return null
+  }
+}
+
+const notificationSound = () => {
+  const audioCtx = getAudioCtx()
+  if (!audioCtx) return
+  // WebViews suspend the context until a user gesture — resume each time.
+  const play = () => {
+    const t0 = audioCtx.currentTime
     const frequencies = [523.25, 659.25]
     for (let i = 0; i < frequencies.length; i++) {
       const osc = audioCtx.createOscillator()
@@ -1538,10 +1624,61 @@ const notificationSound = () => {
       osc.start(t0 + i * 0.15)
       osc.stop(t0 + i * 0.15 + 0.4)
     }
-  } catch {
-    // Audio playback not available
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(play).catch(() => { /* Autoplay blocked */ })
+  } else {
+    play()
   }
 }
+
+// Unlock the AudioContext on the first user interaction so later subscription
+// events can play immediately. Android WebView + Chromium autoplay policy
+// requires a gesture before any audio can be generated.
+onMounted(() => {
+  const unlock = () => {
+    const audioCtx = getAudioCtx()
+    if (audioCtx?.state === 'suspended') {
+      audioCtx.resume().catch(() => { /* Ignore */ })
+    }
+    window.removeEventListener('pointerdown', unlock)
+    window.removeEventListener('keydown', unlock)
+  }
+  window.addEventListener('pointerdown', unlock, { once: false })
+  window.addEventListener('keydown', unlock, { once: false })
+})
+
+// Keep chiming every few seconds as long as any pending order is still
+// unacknowledged (user hasn't opened it or changed its status).
+const PENDING_CHIME_INTERVAL_MS = 8000
+let pendingChimeTimer: ReturnType<typeof setInterval> | null = null
+
+watch(
+  () => ordersStore.unacknowledgedPendingCount,
+  (count, prev) => {
+    if (count > 0 && !pendingChimeTimer) {
+      pendingChimeTimer = setInterval(notificationSound, PENDING_CHIME_INTERVAL_MS)
+    } else if (count === 0 && pendingChimeTimer) {
+      clearInterval(pendingChimeTimer)
+      pendingChimeTimer = null
+    }
+    // First unacknowledged pending arriving while loop was dormant: ensure one
+    // immediate tick (notificationSound is already fired by orderCreated watcher
+    // for genuinely new orders; this covers the edge case of a refresh leaving
+    // an unacknowledged pending order behind).
+    if (prev === 0 && count > 0) {
+      notificationSound()
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  if (pendingChimeTimer) {
+    clearInterval(pendingChimeTimer)
+    pendingChimeTimer = null
+  }
+})
 
 // Cancellation confirmation dialog
 const openCancelDialog = () => {
