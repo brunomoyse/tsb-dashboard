@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+const isCapacitor = process.env.APP_BUILD === 'capacitor'
+
 // Derive origins for CSP from environment variables (dev defaults)
 const apiOrigin = new URL(process.env.API_BASE_URL || 'http://localhost:8080/api/v1').origin
 const wsOrigin = apiOrigin.replace(/^http/, 'ws')
@@ -50,6 +52,9 @@ export default defineNuxtConfig({
       // Zitadel OIDC
       zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
       zitadelClientId: process.env.ZITADEL_CLIENT_ID || '',
+      zitadelNativeClientId: process.env.ZITADEL_NATIVE_CLIENT_ID || '',
+      // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
+      appBuild: process.env.APP_BUILD || 'web',
     },
   },
 
@@ -96,8 +101,10 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
-      redirectOn: 'all' // Changed from 'root' to maintain v9 behavior (redirect on all pages)
+      // Capacitor WebViews drop redirect chains — restrict to root navigation only.
+      redirectOn: isCapacitor ? 'root' : 'all',
     },
+    rootRedirect: isCapacitor ? 'fr' : undefined,
     baseUrl: process.env.DASHBOARD_BASE_URL,
     vueI18n: "../i18n.config.ts",
   },

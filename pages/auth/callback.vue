@@ -15,67 +15,46 @@
 </template>
 
 <script lang="ts" setup>
-import { definePageMeta, navigateTo, onMounted, ref, useLocalePath, useNuxtApp } from '#imports'
-import type { User } from '@/types'
-import gql from 'graphql-tag'
-import { print } from 'graphql'
-import { useAuthStore } from '@/stores/auth'
+import { definePageMeta, onMounted, ref, useRuntimeConfig } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { useOidc } from '~/composables/useOidc'
+import { useAuthCallback } from '~/composables/useAuthCallback'
 
 definePageMeta({
   public: true,
   layout: false
 })
 
-const { handleCallback } = useOidc()
-const authStore = useAuthStore()
-const localePath = useLocalePath()
-const { $gqlFetch } = useNuxtApp()
+const config = useRuntimeConfig()
+const isCapacitor = config.public.appBuild === 'capacitor'
+
+const { handleCallback, exchangeCodeForTokens } = useOidc()
+const { processCallback } = useAuthCallback()
 const { t } = useI18n()
 const error = ref(false)
 const errorMessage = ref('')
 
-const ME = gql`
-    query {
-        me {
-            id
-            email
-            firstName
-            lastName
-            phoneNumber
-            isAdmin
-            address {
-                id
-                streetName
-                houseNumber
-                municipalityName
-                postcode
-                distance
-            }
-        }
-    }
-`
-
 onMounted(async () => {
     try {
-        await handleCallback()
-
-        // Fetch user profile from our API
-        const data = await $gqlFetch<{ me: User }>(print(ME))
-        if (data) {
-            // Check if user has admin role — if not, logout with error
-            if (!data.me.isAdmin) {
-                authStore.clearUser()
-                error.value = true
-                errorMessage.value = t('login.accessDenied')
-                return
-            }
-            authStore.setUser(data.me)
+        if (isCapacitor) {
+            // Capacitor: extract code from the URL and exchange via backend proxy.
+            // (oidc-client-ts's signinRedirectCallback validates a state cookie
+            // that doesn't survive the Session API + authorize-proxy round-trip.)
+            const url = new URL(window.location.href)
+            const code = url.searchParams.get('code')
+            if (!code) throw new Error('No authorization code in callback URL')
+            await exchangeCodeForTokens(code)
+        } else {
+            await handleCallback()
         }
 
-        // Redirect to dashboard home (orders page)
-        navigateTo(localePath('orders'))
+        const outcome = await processCallback()
+        if (!outcome.ok) {
+            error.value = true
+            errorMessage.value = outcome.reason === 'not_admin'
+                ? t('login.accessDenied')
+                : t('login.callbackError')
+        }
     } catch (e: any) {
         if (import.meta.dev) console.error('OIDC callback error:', e)
         error.value = true

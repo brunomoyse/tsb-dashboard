@@ -56,11 +56,17 @@ class SunmiPrinterService(private val context: Context) {
     private var onBindError: ((String) -> Unit)? = null
 
     private val innerPrinterCallback = object : InnerPrinterCallback() {
-        override fun onCalling(aidlService: SunmiAidlService) {
+        override fun onConnected(aidlService: SunmiAidlService) {
             sunmiService = aidlService
             isBound = true
             Log.d(TAG, "Printer service bound successfully")
             onBindSuccess?.invoke()
+        }
+
+        override fun onDisconnected() {
+            isBound = false
+            sunmiService = null
+            Log.d(TAG, "Printer service disconnected")
         }
     }
 
@@ -174,6 +180,25 @@ class SunmiPrinterService(private val context: Context) {
 
     fun lineWrap(lines: Int) {
         sunmiService?.lineWrap(lines, null)
+    }
+
+    /**
+     * Cut the paper. Only supported on devices with an auto-cutter (e.g. V1s,
+     * some V3 variants). On unsupported devices, the AIDL call throws; we
+     * swallow the error and fall back to feeding a few extra lines so the
+     * user can tear the ticket along the serrated edge.
+     */
+    fun cutPaper() {
+        try {
+            sunmiService?.cutPaper(null)
+        } catch (e: Exception) {
+            Log.w(TAG, "cutPaper not supported on this device, feeding extra lines", e)
+            try {
+                sunmiService?.lineWrap(4, null)
+            } catch (feedError: Exception) {
+                Log.w(TAG, "lineWrap fallback also failed", feedError)
+            }
+        }
     }
 
     // ─── Buffer mode ────────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 package dev.nuagemagique.sunmiprinter
 
-import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -8,12 +7,13 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
 @CapacitorPlugin(name = "SunmiPrinter")
+@Suppress("unused")
 class SunmiPrinterPlugin : Plugin() {
 
     private lateinit var printerService: SunmiPrinterService
 
     override fun load() {
-        printerService = SunmiPrinterService(activity.applicationContext)
+        printerService = SunmiPrinterService(context)
     }
 
     // ─── Lifecycle ──────────────────────────────────────────────────────────
@@ -193,6 +193,17 @@ class SunmiPrinterPlugin : Plugin() {
             printerService.requireBound()
             val lines = call.getInt("lines") ?: return call.reject("lines is required")
             printerService.lineWrap(lines)
+            call.resolve()
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun cutPaper(call: PluginCall) {
+        try {
+            printerService.requireBound()
+            printerService.cutPaper()
             call.resolve()
         } catch (e: Exception) {
             call.reject(e.message)

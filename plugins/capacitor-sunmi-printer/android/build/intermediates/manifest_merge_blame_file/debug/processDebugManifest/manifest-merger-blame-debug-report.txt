@@ -1,0 +1,10 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="dev.nuagemagique.sunmiprinter" >
+4    <!--
+5        No extra permissions needed for the Sunmi built-in printer.
+6        It is a system service, access is granted automatically on Sunmi devices.
+7    -->
+8    <uses-sdk android:minSdkVersion="24" />
+9
+10</manifest>
