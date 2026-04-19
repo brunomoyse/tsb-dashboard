@@ -91,14 +91,14 @@ export interface CreateProductInput {
 
 export interface UpdateProductInput {
     categoryID?: string
-    code?: string
+    code?: string | null
     isAvailable?: boolean
     isDiscountable?: boolean
     isHalal?: boolean
     isSpicy?: boolean
     isVegan?: boolean
     isVisible?: boolean
-    pieceCount?: number
+    pieceCount?: number | null
     price?: string
     vatCategory?: VatCategory
 

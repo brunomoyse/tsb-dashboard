@@ -591,8 +591,9 @@ const saveChanges = async () => {
     }
 
     // Piece count: positive integer (optional field)
-    if (editedProduct.value.pieceCount !== null) {
-        const pc = Number(editedProduct.value.pieceCount)
+    const rawPieceCount = editedProduct.value.pieceCount
+    if (rawPieceCount !== null && rawPieceCount !== undefined && String(rawPieceCount).trim() !== '') {
+        const pc = Number(rawPieceCount)
         if (!Number.isInteger(pc) || pc <= 0) {
             validationErrors.value.push(t('validation.pieceCountPositive'))
         }
@@ -617,8 +618,24 @@ const saveChanges = async () => {
         return
     }
 
+    // Normalize nullable fields: empty strings / invalid numbers → null
+    const normalizeCode = (v: unknown): string | null => {
+        if (typeof v !== 'string') return null
+        const trimmed = v.trim()
+        return trimmed === '' ? null : trimmed
+    }
+    const normalizePieceCount = (v: unknown): number | null => {
+        if (v === null || v === undefined || String(v).trim() === '') return null
+        const n = Number(v)
+        return Number.isInteger(n) ? n : null
+    }
+
     if (mode === 'create') {
-        const createProductInput: CreateProductInput = editedProduct.value as CreateProductInput
+        const createProductInput: CreateProductInput = {
+            ...(editedProduct.value as CreateProductInput),
+            code: normalizeCode(editedProduct.value.code) ?? undefined,
+            pieceCount: normalizePieceCount(editedProduct.value.pieceCount) ?? undefined,
+        }
 
         if (selectedImage.value) {
             createProductInput.image = selectedImage.value
@@ -630,7 +647,11 @@ const saveChanges = async () => {
         // Save choices first
         await saveChoices()
 
-        const updateProductInput: UpdateProductInput = editedProduct.value as UpdateProductInput
+        const updateProductInput: UpdateProductInput = {
+            ...(editedProduct.value as UpdateProductInput),
+            code: normalizeCode(editedProduct.value.code),
+            pieceCount: normalizePieceCount(editedProduct.value.pieceCount),
+        }
 
         if (selectedImage.value) {
             updateProductInput.image = selectedImage.value
