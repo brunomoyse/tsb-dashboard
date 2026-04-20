@@ -271,6 +271,33 @@
       "title": "Horaires de commande",
       "description": "Définir quand les commandes en ligne sont acceptées (si différent des horaires d'ouverture)",
       "fallbackNotice": "Aucun horaire défini — les commandes suivent les horaires d'ouverture."
+    },
+    "preparation": {
+      "title": "Délai de préparation",
+      "description": "Temps minimum entre la commande et le retrait (15-240 minutes)",
+      "label": "Minutes",
+      "save": "Enregistrer"
+    },
+    "overrides": {
+      "title": "Jours spéciaux",
+      "description": "Fermer ou modifier les horaires pour une date précise (congés, jours fériés…)",
+      "empty": "Aucun jour spécial programmé.",
+      "addButton": "Ajouter un jour spécial",
+      "editButton": "Modifier",
+      "deleteButton": "Supprimer",
+      "confirmDelete": "Supprimer ce jour spécial ?",
+      "labelClosed": "Fermé",
+      "labelSpecialHours": "Horaires spéciaux",
+      "modalTitleAdd": "Ajouter un jour spécial",
+      "modalTitleEdit": "Modifier le jour spécial",
+      "fieldDate": "Date",
+      "fieldType": "Type",
+      "fieldNote": "Note (optionnel)",
+      "notePlaceholder": "Ex: Noël, Congés d'été…",
+      "typeClosed": "Fermé",
+      "typeSpecial": "Horaires spéciaux",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
     }
   },
 

@@ -271,6 +271,33 @@
       "title": "Besteltijden",
       "description": "Instellen wanneer online bestellingen worden geaccepteerd (indien anders dan openingsuren)",
       "fallbackNotice": "Geen schema ingesteld — bestellingen volgen de openingsuren."
+    },
+    "preparation": {
+      "title": "Bereidingstijd",
+      "description": "Minimale tijd tussen bestelling en afhalen (15-240 minuten)",
+      "label": "Minuten",
+      "save": "Opslaan"
+    },
+    "overrides": {
+      "title": "Speciale dagen",
+      "description": "Sluit of wijzig de openingsuren voor een specifieke datum (feestdagen, vakanties…)",
+      "empty": "Geen speciale dagen ingepland.",
+      "addButton": "Speciale dag toevoegen",
+      "editButton": "Bewerken",
+      "deleteButton": "Verwijderen",
+      "confirmDelete": "Deze speciale dag verwijderen?",
+      "labelClosed": "Gesloten",
+      "labelSpecialHours": "Speciale uren",
+      "modalTitleAdd": "Speciale dag toevoegen",
+      "modalTitleEdit": "Speciale dag bewerken",
+      "fieldDate": "Datum",
+      "fieldType": "Type",
+      "fieldNote": "Notitie (optioneel)",
+      "notePlaceholder": "Bijv. Kerstmis, Zomersluiting…",
+      "typeClosed": "Gesloten",
+      "typeSpecial": "Speciale uren",
+      "save": "Opslaan",
+      "cancel": "Annuleren"
     }
   },
 
