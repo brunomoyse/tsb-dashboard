@@ -271,6 +271,33 @@
       "title": "下单时间",
       "description": "设置在线订单接受时间（如果与营业时间不同）",
       "fallbackNotice": "未设置时间表 — 订单遵循营业时间。"
+    },
+    "preparation": {
+      "title": "准备时间",
+      "description": "下单到取餐之间的最少时间（15-240分钟）",
+      "label": "分钟",
+      "save": "保存"
+    },
+    "overrides": {
+      "title": "特殊日期",
+      "description": "为特定日期关闭或修改营业时间（节假日、休假等）",
+      "empty": "暂无特殊日期安排。",
+      "addButton": "添加特殊日期",
+      "editButton": "编辑",
+      "deleteButton": "删除",
+      "confirmDelete": "删除此特殊日期？",
+      "labelClosed": "关闭",
+      "labelSpecialHours": "特殊时间",
+      "modalTitleAdd": "添加特殊日期",
+      "modalTitleEdit": "编辑特殊日期",
+      "fieldDate": "日期",
+      "fieldType": "类型",
+      "fieldNote": "备注（可选）",
+      "notePlaceholder": "例如：圣诞节、暑期休假…",
+      "typeClosed": "关闭",
+      "typeSpecial": "特殊时间",
+      "save": "保存",
+      "cancel": "取消"
     }
   },
 

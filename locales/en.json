@@ -270,6 +270,33 @@
       "title": "Ordering Hours",
       "description": "Set when online orders are accepted (if different from opening hours)",
       "fallbackNotice": "No schedule set — orders follow opening hours."
+    },
+    "preparation": {
+      "title": "Preparation time",
+      "description": "Minimum time between order placement and pickup (15-240 minutes)",
+      "label": "Minutes",
+      "save": "Save"
+    },
+    "overrides": {
+      "title": "Special days",
+      "description": "Close or change hours for a specific date (holidays, vacations…)",
+      "empty": "No special days scheduled.",
+      "addButton": "Add special day",
+      "editButton": "Edit",
+      "deleteButton": "Delete",
+      "confirmDelete": "Delete this special day?",
+      "labelClosed": "Closed",
+      "labelSpecialHours": "Special hours",
+      "modalTitleAdd": "Add special day",
+      "modalTitleEdit": "Edit special day",
+      "fieldDate": "Date",
+      "fieldType": "Type",
+      "fieldNote": "Note (optional)",
+      "notePlaceholder": "e.g. Christmas, Summer break…",
+      "typeClosed": "Closed",
+      "typeSpecial": "Special hours",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
 
