@@ -1,8 +1,0 @@
-include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
-
-include ':capacitor-sunmi-printer'
-project(':capacitor-sunmi-printer').projectDir = new File('../plugins/capacitor-sunmi-printer/android')
-
-apply from: 'capacitor.settings.gradle'
