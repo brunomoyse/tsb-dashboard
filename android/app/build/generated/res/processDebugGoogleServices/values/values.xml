@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">959460341387</string>
+    <string name="google_api_key" translatable="false">AIzaSyCVSPky-CMw0y0lNu730X5VT4y4oANpZlA</string>
+    <string name="google_app_id" translatable="false">1:959460341387:android:9756dce7df09daee54068e</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCVSPky-CMw0y0lNu730X5VT4y4oANpZlA</string>
+    <string name="google_storage_bucket" translatable="false">tokyo-sushi-bar-8fd3a.firebasestorage.app</string>
+    <string name="project_id" translatable="false">tokyo-sushi-bar-8fd3a</string>
+</resources>

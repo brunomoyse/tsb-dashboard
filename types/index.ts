@@ -47,7 +47,7 @@ export interface Product {
     isDiscountable: boolean;
     isHalal: boolean;
     isSpicy: boolean;
-    isVegan: boolean;
+    isVegetarian: boolean;
     isVisible: boolean;
     pieceCount: number | null;
     price: string;
@@ -78,7 +78,7 @@ export interface CreateProductInput {
     isDiscountable: boolean
     isHalal: boolean
     isSpicy: boolean
-    isVegan: boolean
+    isVegetarian: boolean
     isVisible: boolean
     pieceCount?: number
     price: string
@@ -96,7 +96,7 @@ export interface UpdateProductInput {
     isDiscountable?: boolean
     isHalal?: boolean
     isSpicy?: boolean
-    isVegan?: boolean
+    isVegetarian?: boolean
     isVisible?: boolean
     pieceCount?: number | null
     price?: string
