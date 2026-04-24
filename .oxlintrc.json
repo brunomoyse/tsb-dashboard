@@ -33,5 +33,12 @@
   "env": {
     "browser": true
   },
-  "ignorePatterns": [".nuxt", ".output", "node_modules"]
+  "ignorePatterns": [
+    ".nuxt",
+    ".output",
+    "node_modules",
+    "android/**/build",
+    "android/app/src/main/assets/public",
+    "android/capacitor-cordova-android-plugins"
+  ]
 }
