@@ -162,8 +162,8 @@
             size="sm"
           />
           <USwitch
-            v-model="editedProduct.isVegan"
-            :label="t('products.vegan')"
+            v-model="editedProduct.isVegetarian"
+            :label="t('products.vegetarian')"
             size="sm"
           />
           <USwitch
@@ -331,7 +331,7 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
         isDiscountable: sourceProduct.isDiscountable,
         isHalal: sourceProduct.isHalal,
         isSpicy: sourceProduct.isSpicy,
-        isVegan: sourceProduct.isVegan,
+        isVegetarian: sourceProduct.isVegetarian,
         isVisible: sourceProduct.isVisible,
         pieceCount: sourceProduct.pieceCount ?? undefined,
         price: sourceProduct.price,
@@ -348,7 +348,7 @@ const createDefaultProduct = (): CreateProductInput => ({
     isDiscountable: true,
     isHalal: false,
     isSpicy: false,
-    isVegan: false,
+    isVegetarian: false,
     isVisible: false,
     pieceCount: undefined,
     price: '',

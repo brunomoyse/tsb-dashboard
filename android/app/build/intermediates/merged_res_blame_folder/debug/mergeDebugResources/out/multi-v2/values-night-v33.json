@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "dev.nuagemagique.tsb.app-mergeDebugResources-36:/values-night-v33/values-night-v33.xml",
+            "map": [
+                {
+                    "source": "/Users/brunomoyse/.gradle/caches/8.14.3/transforms/ebba73438b0669a52da6c46b2a3dc378/transformed/core-splashscreen-1.2.0/res/values-night-v33/values-night-v33.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "12",
+                        "endOffsets": "215"
+                    }
+                }
+            ]
+        }
+    ]
+}

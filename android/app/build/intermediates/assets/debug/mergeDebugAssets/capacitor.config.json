@@ -1,0 +1,22 @@
+{
+	"appId": "dev.nuagemagique.tsb",
+	"appName": "Tokyo Sushi Bar",
+	"webDir": ".output/public",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 1500,
+			"backgroundColor": "#1a1410",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"backgroundColor": "#1a1410",
+			"style": "DARK"
+		}
+	},
+	"android": {
+		"minWebViewVersion": 60
+	}
+}
