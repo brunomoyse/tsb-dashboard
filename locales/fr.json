@@ -39,6 +39,10 @@
     "translations": "Traductions",
     "image": "Changer l'image",
     "removeImage": "Supprimer l'image",
+    "previewBgRemoval": "Retirer le fond",
+    "processingPreview": "Traitement...",
+    "previewResult": "Aperçu traité",
+    "previewFailed": "Échec de l'aperçu",
     "choices": {
       "title": "Options du produit",
       "add": "Ajouter une option",

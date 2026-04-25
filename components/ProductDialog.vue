@@ -84,13 +84,35 @@
               </UButton>
             </div>
             <div v-else class="flex flex-col items-center justify-center gap-3 sm:gap-4 w-full">
-              <!-- Image preview -->
+              <!-- Processed preview (after background removal) -->
+              <div v-if="processedPreview" class="flex flex-col items-center gap-2">
+                <p class="text-xs text-muted">{{ t('products.previewResult') }}</p>
+                <img
+                  :src="processedPreview"
+                  alt="Processed preview"
+                  class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg border border-dashed border-gray-300"
+                />
+              </div>
+
+              <!-- Raw file preview (before background removal) -->
               <img
-                v-if="imagePreview"
+                v-else-if="imagePreview"
                 :src="imagePreview"
                 alt="Preview"
                 class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg"
               />
+
+              <!-- Background removal button -->
+              <UButton
+                v-if="selectedImage && !processedPreview"
+                variant="soft"
+                color="neutral"
+                :loading="processingPreview"
+                :disabled="processingPreview"
+                @click="previewProcessed"
+              >
+                {{ processingPreview ? t('products.processingPreview') : t('products.previewBgRemoval') }}
+              </UButton>
 
               <!-- File input -->
               <div class="w-full max-w-xs">
@@ -285,7 +307,7 @@ import type {
     UpdateProductInput,
     UpdateProductRequest
 } from '~/types'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
@@ -689,12 +711,18 @@ const hasImage = ref(false)
 // Reactive property to hold the file if the user uploads one.
 const selectedImage = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
+const processedPreview = ref<string | null>(null)
+const processingPreview = ref(false)
 
 const handleFileChange = (event: Event) => {
     const target = event.target as HTMLInputElement
     const file = target.files?.[0]
     if (file) {
         selectedImage.value = file
+        if (processedPreview.value) {
+            URL.revokeObjectURL(processedPreview.value)
+            processedPreview.value = null
+        }
         const reader = new FileReader()
         reader.onload = (e) => {
             imagePreview.value = e.target?.result as string
@@ -706,9 +734,34 @@ const handleFileChange = (event: Event) => {
     }
 }
 
+const previewProcessed = async () => {
+    if (!selectedImage.value) return
+    processingPreview.value = true
+    try {
+        const { $api } = useNuxtApp()
+        const form = new FormData()
+        form.append('image', selectedImage.value, selectedImage.value.name)
+        const blob = await ($api as any)<Blob>(`${config.public.api}/images/preview`, {
+            method: 'POST',
+            body: form,
+            responseType: 'blob',
+        })
+        if (processedPreview.value) URL.revokeObjectURL(processedPreview.value)
+        processedPreview.value = URL.createObjectURL(blob)
+    } catch {
+        toast.add({ title: t('products.previewFailed'), color: 'error' })
+    } finally {
+        processingPreview.value = false
+    }
+}
+
 watch(selectedImage, (file) => {
     if (!file) {
         imagePreview.value = null
+        if (processedPreview.value) {
+            URL.revokeObjectURL(processedPreview.value)
+            processedPreview.value = null
+        }
     }
 })
 
@@ -743,7 +796,15 @@ watch(imageUrl, (newUrl) => {
 const removeImage = () => {
     hasImage.value = false
     selectedImage.value = null
+    if (processedPreview.value) {
+        URL.revokeObjectURL(processedPreview.value)
+        processedPreview.value = null
+    }
 }
+
+onUnmounted(() => {
+    if (processedPreview.value) URL.revokeObjectURL(processedPreview.value)
+})
 </script>
 
 <style scoped>

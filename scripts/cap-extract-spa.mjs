@@ -13,15 +13,15 @@
  * client-side router takes over.
  */
 
+import { dirname, resolve } from 'node:path'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
 import { spawn } from 'node:child_process'
 
 const PORT = 3199
 const LOCALES = ['fr', 'en', 'zh', 'nl']
 // Keep in sync with pages/ — one entry per Vue page
 const PAGES = [
-  '', // locale root (/{locale}/)
+  '', // Locale root (/{locale}/)
   'auth/login',
   'auth/callback',
   'coupons',

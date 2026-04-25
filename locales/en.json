@@ -38,6 +38,10 @@
     "translations": "Translations",
     "image": "Change Image",
     "removeImage": "Remove Image",
+    "previewBgRemoval": "Remove background",
+    "processingPreview": "Processing...",
+    "previewResult": "Processed preview",
+    "previewFailed": "Preview failed",
     "choices": {
       "title": "Product Choices",
       "add": "Add Choice",

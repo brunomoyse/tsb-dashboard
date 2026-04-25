@@ -788,7 +788,7 @@ const touchDragJustEnded = ref(false)
 
 const onDocTouchMove = (e: TouchEvent) => {
   e.preventDefault()
-  const touch = e.touches[0]
+  const [touch] = e.touches
   if (!touch) return
 
   // Find which column the finger is over
@@ -815,7 +815,7 @@ const onDocTouchEnd = (e: TouchEvent) => {
   if (!draggedOrder.value) return
 
   // Find drop target
-  const touch = e.changedTouches[0]
+  const [touch] = e.changedTouches
   if (!touch) return
   const el = document.elementFromPoint(touch.clientX, touch.clientY)
   const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
@@ -1552,9 +1552,9 @@ const printKitchen = async () => {
 }
 
 // Two-step print flow: kitchen → confirm → client. Required on devices
-// without an auto-cutter (Sunmi V3H) so the operator can tear the kitchen
-// ticket before the client ticket prints and the two sheets are not stuck
-// together.
+// Without an auto-cutter (Sunmi V3H) so the operator can tear the kitchen
+// Ticket before the client ticket prints and the two sheets are not stuck
+// Together.
 const showPrintContinueDialog = ref(false)
 const printContinueOrderId = ref<string | null>(null)
 
@@ -1633,8 +1633,8 @@ const notificationSound = () => {
 }
 
 // Unlock the AudioContext on the first user interaction so later subscription
-// events can play immediately. Android WebView + Chromium autoplay policy
-// requires a gesture before any audio can be generated.
+// Events can play immediately. Android WebView + Chromium autoplay policy
+// Requires a gesture before any audio can be generated.
 onMounted(() => {
   const unlock = () => {
     const audioCtx = getAudioCtx()
@@ -1649,7 +1649,7 @@ onMounted(() => {
 })
 
 // Keep chiming every few seconds as long as any pending order is still
-// unacknowledged (user hasn't opened it or changed its status).
+// Unacknowledged (user hasn't opened it or changed its status).
 const PENDING_CHIME_INTERVAL_MS = 8000
 let pendingChimeTimer: ReturnType<typeof setInterval> | null = null
 
@@ -1663,9 +1663,9 @@ watch(
       pendingChimeTimer = null
     }
     // First unacknowledged pending arriving while loop was dormant: ensure one
-    // immediate tick (notificationSound is already fired by orderCreated watcher
-    // for genuinely new orders; this covers the edge case of a refresh leaving
-    // an unacknowledged pending order behind).
+    // Immediate tick (notificationSound is already fired by orderCreated watcher
+    // For genuinely new orders; this covers the edge case of a refresh leaving
+    // An unacknowledged pending order behind).
     if (prev === 0 && count > 0) {
       notificationSound()
     }

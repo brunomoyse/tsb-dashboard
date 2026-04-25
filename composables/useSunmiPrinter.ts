@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { Order } from '~/types'
-import { usePlatform } from '~/composables/usePlatform'
 import { SunmiPrinter } from '~/plugins/capacitor-sunmi-printer/src/index'
+import { usePlatform } from '~/composables/usePlatform'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ export const useSunmiPrinter = () => {
 
   // Static import — returning the Capacitor Proxy from an async function makes
   // `await` treat it as thenable (the Proxy intercepts `.then` as a plugin
-  // method call, which fails with "not implemented on android").
+  // Method call, which fails with "not implemented on android").
   const getPlugin = () => SunmiPrinter
 
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export const useSunmiPrinter = () => {
 
     // Items — grouped by category, with product code + plain-text header.
     // (printColumnsText with a 4/20/8 layout can wrap on 58mm depending on
-    //  font width; hand-padded printText is predictable.)
+    //  Font width; hand-padded printText is predictable.)
     await plugin.printText({ text: `\n${SEP}\n` })
     await plugin.printText({ text: 'Qte Article              Prix\n' })
     for (const [catName, items] of groupItemsByCategory(order.items)) {

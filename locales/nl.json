@@ -39,6 +39,10 @@
     "translations": "Vertalingen",
     "image": "Afbeelding wijzigen",
     "removeImage": "Afbeelding verwijderen",
+    "previewBgRemoval": "Achtergrond verwijderen",
+    "processingPreview": "Verwerken...",
+    "previewResult": "Verwerkte voorbeeldweergave",
+    "previewFailed": "Voorbeeldweergave mislukt",
     "choices": {
       "title": "Productopties",
       "add": "Optie toevoegen",
