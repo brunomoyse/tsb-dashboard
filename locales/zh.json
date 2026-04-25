@@ -331,7 +331,7 @@
     "subtitle": "登录以管理您的餐厅",
     "email": "电子邮件地址",
     "emailPlaceholder": "you{'@'}example.com",
-    "sendCode": "发送验证码",
+    "sendCode": "继续",
     "codeSent": "我们已将6位验证码发送至 {email}",
     "codeLabel": "验证码",
     "codePlaceholder": "123456",
