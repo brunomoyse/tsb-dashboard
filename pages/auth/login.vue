@@ -47,9 +47,8 @@
             <p class="login-form-subtitle">{{ t('login.subtitle') }}</p>
           </div>
 
-          <!-- Form -->
-          <form class="login-form" @submit.prevent="onSubmit">
-            <!-- Email -->
+          <!-- Step 1: Email -->
+          <form v-if="step === 'email'" class="login-form" @submit.prevent="requestCode">
             <div class="login-field">
               <label for="email" class="login-label">{{ t('login.email') }}</label>
               <div class="login-input-wrap">
@@ -62,52 +61,81 @@
                   autocomplete="email"
                   :placeholder="t('login.emailPlaceholder')"
                   class="login-input"
+                  :disabled="loading"
                 />
               </div>
             </div>
 
-            <!-- Password -->
-            <div class="login-field">
-              <label for="password" class="login-label">{{ t('login.password') }}</label>
-              <div class="login-input-wrap">
-                <UIcon name="i-lucide-lock" class="login-input-icon" />
-                <input
-                  id="password"
-                  v-model="password"
-                  :type="showPassword ? 'text' : 'password'"
-                  required
-                  autocomplete="current-password"
-                  :placeholder="t('login.passwordPlaceholder')"
-                  class="login-input login-input-password"
-                />
-                <button
-                  type="button"
-                  class="login-password-toggle"
-                  tabindex="-1"
-                  @click="showPassword = !showPassword"
-                >
-                  <UIcon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
-                </button>
-              </div>
-            </div>
-
-            <!-- Error -->
             <Transition name="login-error">
-              <div v-if="errorMessage" class="login-error">
+              <div v-if="errorMessage" class="login-error" role="alert">
                 <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
                 <span>{{ errorMessage }}</span>
               </div>
             </Transition>
 
-            <!-- Submit -->
             <button
               type="submit"
               class="login-submit"
               :disabled="loading"
             >
               <span v-if="loading" class="login-spinner" />
-              <span v-else>{{ t('login.submit') }}</span>
+              <span v-else>{{ t('login.sendCode') }}</span>
             </button>
+          </form>
+
+          <!-- Step 2: Code -->
+          <form v-else class="login-form" @submit.prevent="verifyCode">
+            <p class="login-code-hint">{{ t('login.codeSent', { email }) }}</p>
+
+            <div class="login-field">
+              <label for="otp-code" class="login-label">{{ t('login.codeLabel') }}</label>
+              <div class="login-input-wrap">
+                <UIcon name="i-lucide-key-round" class="login-input-icon" />
+                <input
+                  id="otp-code"
+                  v-model="code"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]{6}"
+                  maxlength="6"
+                  required
+                  autocomplete="one-time-code"
+                  :placeholder="t('login.codePlaceholder')"
+                  class="login-input login-input-code"
+                  :disabled="loading"
+                />
+              </div>
+            </div>
+
+            <Transition name="login-error">
+              <div v-if="errorMessage" class="login-error" role="alert">
+                <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
+                <span>{{ errorMessage }}</span>
+              </div>
+            </Transition>
+
+            <button
+              type="submit"
+              class="login-submit"
+              :disabled="loading || code.length < 6"
+            >
+              <span v-if="loading" class="login-spinner" />
+              <span v-else>{{ t('login.verify') }}</span>
+            </button>
+
+            <div class="login-code-actions">
+              <button type="button" class="login-link-button" @click="backToEmail">
+                {{ t('login.backToEmail') }}
+              </button>
+              <button
+                type="button"
+                class="login-link-button login-link-button-accent"
+                :disabled="resendCooldown > 0 || loading"
+                @click="resendCode"
+              >
+                {{ resendCooldown > 0 ? t('login.resendCooldown', { seconds: resendCooldown }) : t('login.resendCode') }}
+              </button>
+            </div>
           </form>
 
           <!-- Footer -->
@@ -143,14 +171,18 @@ useHead({
 
 const { t } = useI18n()
 const route = useRoute()
-const { createSession, finalizeOidcAuth } = useZitadelApi()
+const { requestOtpLogin, verifyOtpLogin, resendOtpLogin, finalizeOidcAuth } = useZitadelApi()
 
+const step = ref<'email' | 'code'>('email')
 const email = ref('')
-const password = ref('')
-const showPassword = ref(false)
+const code = ref('')
+const otpSessionId = ref('')
+const otpSessionToken = ref('')
 const errorMessage = ref('')
 const loading = ref(false)
 const initializing = ref(false)
+const resendCooldown = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
 // Zitadel passes authRequestID when redirecting to custom login (URL query param)
 const authRequestIdFromUrl = (route.query.authRequestID as string) || ''
@@ -181,30 +213,92 @@ onMounted(async () => {
   }
 })
 
-const onSubmit = async () => {
+const startCooldown = (seconds = 20) => {
+  resendCooldown.value = seconds
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  cooldownTimer = setInterval(() => {
+    resendCooldown.value--
+    if (resendCooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = null
+    }
+  }, 1000)
+}
+
+const requestCode = async () => {
   if (loading.value) return
   errorMessage.value = ''
   loading.value = true
 
   try {
-    // 1. Create session via Zitadel Session API
-    const session = await createSession(email.value, password.value)
+    const session = await requestOtpLogin(email.value)
+    otpSessionId.value = session.sessionId
+    otpSessionToken.value = session.sessionToken
+    step.value = 'code'
+    startCooldown()
+  } catch (error: any) {
+    if (import.meta.dev) console.error('OTP request error:', error)
+    const status = error?.response?.status || error?.statusCode
+    const errorCode = error?.data?.error
+    if (status === 429) {
+      errorMessage.value = t('login.tooManyRequests')
+    } else if (errorCode === 'email_not_verified') {
+      errorMessage.value = t('login.emailNotVerified')
+    } else {
+      errorMessage.value = t('login.requestFailed')
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
-    // 2. Finalize the OIDC flow
+const backToEmail = () => {
+  step.value = 'email'
+  code.value = ''
+  errorMessage.value = ''
+  otpSessionId.value = ''
+  otpSessionToken.value = ''
+}
+
+const resendCode = async () => {
+  if (!otpSessionId.value || !otpSessionToken.value) return
+  errorMessage.value = ''
+  loading.value = true
+  try {
+    await resendOtpLogin(otpSessionId.value, otpSessionToken.value)
+    startCooldown()
+  } catch (error: any) {
+    const status = error?.response?.status || error?.statusCode
+    errorMessage.value = status === 429
+      ? t('login.tooManyRequests')
+      : t('login.requestFailed')
+  } finally {
+    loading.value = false
+  }
+}
+
+const verifyCode = async () => {
+  if (loading.value) return
+  errorMessage.value = ''
+  loading.value = true
+
+  try {
+    const verified = await verifyOtpLogin(otpSessionId.value, otpSessionToken.value, code.value)
+
     if (effectiveAuthRequestId.value) {
-      const result = await finalizeOidcAuth(effectiveAuthRequestId.value, session.sessionId, session.sessionToken)
+      const result = await finalizeOidcAuth(effectiveAuthRequestId.value, verified.sessionId, verified.sessionToken)
 
       if (isCapacitor) {
         // Capacitor: exchange the auth code for tokens directly.
         // We can't follow result.callbackUrl — the WebView runs at https://localhost
         // And navigating there would lose the OIDC state.
         const callbackUrl = new URL(result.callbackUrl)
-        const code = callbackUrl.searchParams.get('code')
-        if (!code) throw new Error('No authorization code in callback URL')
+        const authCode = callbackUrl.searchParams.get('code')
+        if (!authCode) throw new Error('No authorization code in callback URL')
 
         const { useOidc } = await import('~/composables/useOidc')
         const { exchangeCodeForTokens } = useOidc()
-        await exchangeCodeForTokens(code)
+        await exchangeCodeForTokens(authCode)
 
         const { useAuthCallback } = await import('~/composables/useAuthCallback')
         const { processCallback } = useAuthCallback()
@@ -216,22 +310,18 @@ const onSubmit = async () => {
             : t('login.callbackError')
         }
       } else {
-        // Web: follow Zitadel's callback URL so the browser completes the
-        // OIDC code exchange via pages/auth/callback.vue.
         window.location.href = result.callbackUrl
       }
     } else {
-      // Fallback: start a fresh OIDC flow with login hint
       const { useOidc } = await import('~/composables/useOidc')
       const { signIn } = useOidc()
       await signIn({ login_hint: email.value })
     }
   } catch (error: any) {
     loading.value = false
-    if (import.meta.dev) console.error('Login error:', error)
+    if (import.meta.dev) console.error('OTP verify error:', error)
 
     // Refresh the authRequestId so subsequent retries get a fresh one.
-    // Zitadel invalidates authRequestIds once consumed or on some errors.
     if (isCapacitor) {
       try {
         const { useOidc } = await import('~/composables/useOidc')
@@ -243,7 +333,7 @@ const onSubmit = async () => {
     if (status === 429) {
       errorMessage.value = t('login.tooManyRequests')
     } else {
-      errorMessage.value = t('login.invalidCredentials')
+      errorMessage.value = t('login.invalidCode')
     }
   }
 }
@@ -508,29 +598,54 @@ const onSubmit = async () => {
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.06);
 }
 
-.login-input-password {
-  padding-right: 3rem;
+.login-input-code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 1.125rem;
+  letter-spacing: 0.5em;
+  text-align: center;
+  padding-left: 2.75rem;
+  padding-right: 1rem;
 }
 
-.login-password-toggle {
-  position: absolute;
-  right: 0.75rem;
+/* ── Code-step hint and actions ── */
+.login-code-hint {
+  font-size: 0.875rem;
+  color: rgba(250, 245, 239, 0.5);
+  line-height: 1.5;
+}
+
+.login-code-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: rgba(250, 245, 239, 0.25);
-  cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  justify-content: space-between;
+  font-size: 0.8125rem;
 }
 
-.login-password-toggle:hover {
-  color: rgba(250, 245, 239, 0.5);
-  background: rgba(250, 245, 239, 0.05);
+.login-link-button {
+  background: none;
+  border: none;
+  padding: 0.5rem 0.25rem;
+  color: rgba(250, 245, 239, 0.4);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.login-link-button:hover:not(:disabled) {
+  color: rgba(250, 245, 239, 0.7);
+}
+
+.login-link-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.login-link-button-accent {
+  color: rgba(217, 119, 6, 0.7);
+  font-weight: 500;
+}
+
+.login-link-button-accent:hover:not(:disabled) {
+  color: rgba(217, 119, 6, 0.95);
 }
 
 /* ── Error ── */
