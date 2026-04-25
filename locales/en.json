@@ -332,7 +332,7 @@
     "subtitle": "Sign in to manage your restaurant",
     "email": "Email address",
     "emailPlaceholder": "you{'@'}example.com",
-    "sendCode": "Send code",
+    "sendCode": "Continue",
     "codeSent": "We sent a 6-digit code to {email}",
     "codeLabel": "Verification code",
     "codePlaceholder": "123456",

@@ -333,7 +333,7 @@
     "subtitle": "Log in om uw restaurant te beheren",
     "email": "E-mailadres",
     "emailPlaceholder": "u{'@'}voorbeeld.com",
-    "sendCode": "Code versturen",
+    "sendCode": "Doorgaan",
     "codeSent": "We hebben een 6-cijferige code naar {email} verzonden",
     "codeLabel": "Verificatiecode",
     "codePlaceholder": "123456",
