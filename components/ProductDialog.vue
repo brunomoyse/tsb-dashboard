@@ -677,10 +677,10 @@ const saveLabel = computed(() =>
 
 // ----- Image Preview / Upload Section -----
 const config = useRuntimeConfig()
-// Compute the image URL based on the product slug.
+// Compute the image URL based on the product ID.
 const imageUrl = computed(() =>
-    product?.slug
-        ? `${config.public.s3bucketUrl}/images/thumbnails/${product.slug}.png`
+    product?.id
+        ? `${config.public.s3bucketUrl}/images/thumbnails/${product.id}.png`
         : ''
 )
 
