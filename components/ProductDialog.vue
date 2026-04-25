@@ -738,14 +738,23 @@ const previewProcessed = async () => {
     if (!selectedImage.value) return
     processingPreview.value = true
     try {
-        const { $api } = useNuxtApp()
         const form = new FormData()
         form.append('image', selectedImage.value, selectedImage.value.name)
-        const blob = await ($api as any)<Blob>(`${config.public.api}/images/preview`, {
+
+        const headers: Record<string, string> = {}
+        const { useOidc } = await import('~/composables/useOidc')
+        const { getAccessToken } = useOidc()
+        const token = await getAccessToken()
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const response = await fetch(`${config.public.api}/images/preview`, {
             method: 'POST',
             body: form,
-            responseType: 'blob',
+            headers,
         })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+        const blob = await response.blob()
         if (processedPreview.value) URL.revokeObjectURL(processedPreview.value)
         processedPreview.value = URL.createObjectURL(blob)
     } catch {
