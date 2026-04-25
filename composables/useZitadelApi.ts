@@ -12,17 +12,41 @@ interface FinalizeResponse {
 /**
  * Calls tsb-service auth proxy endpoints which forward to Zitadel's Session API.
  * The proxy adds the service account PAT — the frontend never touches Zitadel directly.
- * Dashboard-specific: only includes login-related methods (no registration, password reset, etc.)
+ * Dashboard-specific: only includes login-related methods.
  */
 export function useZitadelApi() {
     const config = useRuntimeConfig()
     const apiUrl = config.public.api as string
 
-    /** Create a session with email + password (login via proxy). */
-    function createSession(loginName: string, password: string): Promise<SessionResponse> {
-        return $fetch<SessionResponse>(`${apiUrl}/auth/session`, {
+    /** Detect current locale from URL path (safe outside Vue setup context). */
+    function getLang(): string {
+        if (typeof window !== 'undefined') {
+            return window.location.pathname.split('/')[1] || 'fr'
+        }
+        return 'fr'
+    }
+
+    /** Step 1: request an OTP — creates a Zitadel session and emails a 6-digit code. */
+    function requestOtpLogin(loginName: string): Promise<SessionResponse> {
+        return $fetch<SessionResponse>(`${apiUrl}/auth/session/otp/request`, {
             method: 'POST',
-            body: { loginName, password },
+            body: { loginName, lang: getLang() },
+        })
+    }
+
+    /** Step 2: verify the OTP code; returns a fresh sessionToken with otpEmail check fulfilled. */
+    function verifyOtpLogin(sessionId: string, sessionToken: string, code: string): Promise<SessionResponse> {
+        return $fetch<SessionResponse>(`${apiUrl}/auth/session/otp/verify`, {
+            method: 'POST',
+            body: { sessionId, sessionToken, code },
+        })
+    }
+
+    /** Re-issue a fresh OTP code for an existing pending session. */
+    function resendOtpLogin(sessionId: string, sessionToken: string): Promise<{ success: true }> {
+        return $fetch<{ success: true }>(`${apiUrl}/auth/session/otp/resend`, {
+            method: 'POST',
+            body: { sessionId, sessionToken, lang: getLang() },
         })
     }
 
@@ -35,7 +59,9 @@ export function useZitadelApi() {
     }
 
     return {
-        createSession,
+        requestOtpLogin,
+        verifyOtpLogin,
+        resendOtpLogin,
         finalizeOidcAuth,
     }
 }
