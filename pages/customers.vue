@@ -7,7 +7,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -66,25 +66,27 @@
       </div>
 
       <!-- Min Orders -->
-      <UInput
-        v-model.number="minOrders"
-        type="number"
-        :placeholder="t('customers.filters.minOrders')"
-        :min="1"
-        size="sm"
-        class="w-32"
-        icon="i-lucide-hash"
-      />
-    </div>
+      <div class="flex items-center gap-2">
+        <label for="min-orders" class="sr-only">{{ t('customers.filters.minOrders') }}</label>
+        <UInput
+          id="min-orders"
+          v-model.number="minOrders"
+          type="number"
+          :placeholder="t('customers.filters.minOrders')"
+          :min="1"
+          size="sm"
+          class="w-32"
+          icon="i-lucide-hash"
+        />
+      </div>
 
-    <!-- Search Bar -->
-    <div class="mb-4">
+      <!-- Search -->
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('customers.search')"
-        size="lg"
-        class="flex-1"
+        size="sm"
+        class="flex-1 min-w-40"
       />
     </div>
 
