@@ -87,6 +87,7 @@ export interface CreateProductInput {
     translations: TranslationInput[]
 
     image?: File;
+    removeBackground?: boolean
 }
 
 export interface UpdateProductInput {
@@ -105,6 +106,7 @@ export interface UpdateProductInput {
     translations?: TranslationInput[]
 
     image?: File;
+    removeBackground?: boolean
 }
 
 export interface UpdateProductRequest {

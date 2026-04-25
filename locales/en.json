@@ -39,6 +39,7 @@
     "image": "Change Image",
     "removeImage": "Remove Image",
     "previewBgRemoval": "Remove background",
+    "removeBackground": "Remove background on save",
     "processingPreview": "Processing...",
     "previewResult": "Processed preview",
     "previewFailed": "Preview failed",
