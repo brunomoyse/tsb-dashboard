@@ -39,6 +39,10 @@
     "translations": "翻译",
     "image": "更改图片",
     "removeImage": "删除图片",
+    "previewBgRemoval": "去除背景",
+    "processingPreview": "处理中...",
+    "previewResult": "处理预览",
+    "previewFailed": "预览失败",
     "choices": {
       "title": "产品选项",
       "add": "添加选项",

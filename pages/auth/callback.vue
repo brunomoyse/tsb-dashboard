@@ -16,9 +16,9 @@
 
 <script lang="ts" setup>
 import { definePageMeta, onMounted, ref, useRuntimeConfig } from '#imports'
+import { useAuthCallback } from '~/composables/useAuthCallback'
 import { useI18n } from 'vue-i18n'
 import { useOidc } from '~/composables/useOidc'
-import { useAuthCallback } from '~/composables/useAuthCallback'
 
 definePageMeta({
   public: true,
@@ -39,7 +39,7 @@ onMounted(async () => {
         if (isCapacitor) {
             // Capacitor: extract code from the URL and exchange via backend proxy.
             // (oidc-client-ts's signinRedirectCallback validates a state cookie
-            // that doesn't survive the Session API + authorize-proxy round-trip.)
+            // That doesn't survive the Session API + authorize-proxy round-trip.)
             const url = new URL(window.location.href)
             const code = url.searchParams.get('code')
             if (!code) throw new Error('No authorization code in callback URL')

@@ -179,6 +179,21 @@ export function useOidc() {
         return user
     }
 
+    /** Try to load a valid token from localStorage into capacitorTokenCache. Returns the token if found. */
+    function loadCachedCapacitorToken(now: number): string | null {
+        if (typeof localStorage === 'undefined') return null
+        const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
+        if (!stored) return null
+        try {
+            const data: CapacitorTokens = JSON.parse(stored)
+            if (data.expires_at > now) {
+                capacitorTokenCache = data
+                return data.access_token
+            }
+        } catch { /* Invalid data */ }
+        return null
+    }
+
     /** Get the current access token (or null if not authenticated). */
     async function getAccessToken(): Promise<string | null> {
         if (isCapacitor) {
@@ -187,18 +202,8 @@ export function useOidc() {
                 return capacitorTokenCache.access_token
             }
 
-            if (typeof localStorage !== 'undefined') {
-                const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
-                if (stored) {
-                    try {
-                        const data: CapacitorTokens = JSON.parse(stored)
-                        if (data.expires_at > now) {
-                            capacitorTokenCache = data
-                            return data.access_token
-                        }
-                    } catch { /* Invalid data */ }
-                }
-            }
+            const cached = loadCachedCapacitorToken(now)
+            if (cached) return cached
 
             const renewed = await silentRenew()
             return renewed ? capacitorTokenCache?.access_token ?? null : null
@@ -222,9 +227,9 @@ export function useOidc() {
     /** Attempt silent token renewal. */
     async function silentRenew(): Promise<OidcUser | null> {
         if (isCapacitor) {
-            const stored = typeof localStorage !== 'undefined'
-                ? localStorage.getItem(CAPACITOR_TOKEN_KEY)
-                : null
+            const stored = typeof localStorage === 'undefined'
+                ? null
+                : localStorage.getItem(CAPACITOR_TOKEN_KEY)
             if (!stored) return null
             try {
                 const data: CapacitorTokens = JSON.parse(stored)

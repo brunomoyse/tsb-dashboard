@@ -1,7 +1,7 @@
-import gql from 'graphql-tag'
-import { print } from 'graphql'
 import { navigateTo, useLocalePath, useNuxtApp } from '#imports'
 import type { User } from '@/types'
+import gql from 'graphql-tag'
+import { print } from 'graphql'
 import { useAuthStore } from '@/stores/auth'
 import { useOidc } from '~/composables/useOidc'
 

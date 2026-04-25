@@ -196,9 +196,8 @@ const onSubmit = async () => {
 
       if (isCapacitor) {
         // Capacitor: exchange the auth code for tokens directly.
-        // We can't follow result.callbackUrl because the WebView runs at
-        // https://localhost — the public callback URL would navigate us
-        // out of the app and lose the OIDC state.
+        // We can't follow result.callbackUrl — the WebView runs at https://localhost
+        // And navigating there would lose the OIDC state.
         const callbackUrl = new URL(result.callbackUrl)
         const code = callbackUrl.searchParams.get('code')
         if (!code) throw new Error('No authorization code in callback URL')
@@ -237,7 +236,7 @@ const onSubmit = async () => {
       try {
         const { useOidc } = await import('~/composables/useOidc')
         fetchedAuthRequestId.value = await useOidc().getAuthRequestId()
-      } catch { /* best-effort */ }
+      } catch { /* Best-effort */ }
     }
 
     const status = error?.response?.status || error?.statusCode

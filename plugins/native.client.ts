@@ -1,4 +1,4 @@
-// plugins/native.client.ts — Native Android app polish (Capacitor only)
+// Native Android app polish (Capacitor only)
 import { defineNuxtPlugin } from '#imports'
 
 export default defineNuxtPlugin(async () => {
