@@ -275,11 +275,12 @@
     "orderingHours": {
       "title": "Besteltijden",
       "description": "Instellen wanneer online bestellingen worden geaccepteerd (indien anders dan openingsuren)",
-      "fallbackNotice": "Geen schema ingesteld — bestellingen volgen de openingsuren."
+      "fallbackNotice": "Geen schema ingesteld — bestellingen volgen de openingsuren.",
+      "customHoursSwitch": "Andere uren dan de openingsuren"
     },
     "preparation": {
       "title": "Bereidingstijd",
-      "description": "Minimale tijd tussen bestelling en afhalen (15-240 minuten)",
+      "description": "Minimale tijd tussen het huidige tijdstip en het gewenste afhaaltijdstip van de klant (15-240 minuten)",
       "label": "Minuten",
       "save": "Opslaan"
     },

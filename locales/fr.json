@@ -275,26 +275,27 @@
     "orderingHours": {
       "title": "Horaires de commande",
       "description": "Définir quand les commandes en ligne sont acceptées (si différent des horaires d'ouverture)",
-      "fallbackNotice": "Aucun horaire défini — les commandes suivent les horaires d'ouverture."
+      "fallbackNotice": "Aucun horaire défini — les commandes suivent les horaires d'ouverture.",
+      "customHoursSwitch": "Horaires différents des horaires d'ouverture"
     },
     "preparation": {
       "title": "Délai de préparation",
-      "description": "Temps minimum entre la commande et le retrait (15-240 minutes)",
+      "description": "Délai minimum entre l'heure actuelle et l'heure de retrait souhaitée par le client (15-240 minutes)",
       "label": "Minutes",
       "save": "Enregistrer"
     },
     "overrides": {
-      "title": "Jours spéciaux",
+      "title": "Jours de congés exceptionnels",
       "description": "Fermer ou modifier les horaires pour une date précise (congés, jours fériés…)",
-      "empty": "Aucun jour spécial programmé.",
-      "addButton": "Ajouter un jour spécial",
+      "empty": "Aucun congé exceptionnel programmé.",
+      "addButton": "Ajouter un congé exceptionnel",
       "editButton": "Modifier",
       "deleteButton": "Supprimer",
-      "confirmDelete": "Supprimer ce jour spécial ?",
+      "confirmDelete": "Supprimer ce congé exceptionnel ?",
       "labelClosed": "Fermé",
       "labelSpecialHours": "Horaires spéciaux",
-      "modalTitleAdd": "Ajouter un jour spécial",
-      "modalTitleEdit": "Modifier le jour spécial",
+      "modalTitleAdd": "Ajouter un congé exceptionnel",
+      "modalTitleEdit": "Modifier le congé exceptionnel",
       "fieldDate": "Date",
       "fieldType": "Type",
       "fieldNote": "Note (optionnel)",

@@ -274,11 +274,12 @@
     "orderingHours": {
       "title": "Ordering Hours",
       "description": "Set when online orders are accepted (if different from opening hours)",
-      "fallbackNotice": "No schedule set — orders follow opening hours."
+      "fallbackNotice": "No schedule set — orders follow opening hours.",
+      "customHoursSwitch": "Different hours from opening hours"
     },
     "preparation": {
       "title": "Preparation time",
-      "description": "Minimum time between order placement and pickup (15-240 minutes)",
+      "description": "Minimum time between the current time and the customer's requested pickup time (15-240 minutes)",
       "label": "Minutes",
       "save": "Save"
     },
