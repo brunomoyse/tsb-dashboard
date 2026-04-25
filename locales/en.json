@@ -153,6 +153,7 @@
     "newEstimatedTime": "New estimate",
     "staleAlert": "{count} order(s) waiting for over 2h",
     "staleDetailAlert": "This order has been waiting for {hours}h. Consider contacting the customer or cancelling.",
+    "advanceStatus": "Advance status",
     "statusAdvanced": "Status updated",
     "errors": {
       "updateFailed": "Failed to update order",

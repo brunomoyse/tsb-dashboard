@@ -154,6 +154,7 @@
     "newEstimatedTime": "Nieuwe schatting",
     "staleAlert": "{count} bestelling(en) wachten al meer dan 2 uur",
     "staleDetailAlert": "Deze bestelling wacht al {hours} uur. Overweeg de klant te contacteren of te annuleren.",
+    "advanceStatus": "Status bevorderen",
     "statusAdvanced": "Status bijgewerkt",
     "errors": {
       "updateFailed": "Bestelling bijwerken mislukt",

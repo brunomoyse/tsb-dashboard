@@ -154,6 +154,7 @@
     "newEstimatedTime": "新估计",
     "staleAlert": "{count} 个订单等待超过2小时",
     "staleDetailAlert": "此订单已等待 {hours} 小时。建议联系客户或取消。",
+    "advanceStatus": "推进状态",
     "statusAdvanced": "状态已更新",
     "errors": {
       "updateFailed": "更新订单失败",
