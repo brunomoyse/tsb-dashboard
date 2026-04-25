@@ -51,17 +51,17 @@
               />
             </UFormField>
 
-            <UFormField label="VAT category" name="vatCategory" required>
+            <UFormField :label="t('products.vatCategory.label')" name="vatCategory" required>
               <USelect
                 v-model="editedProduct.vatCategory"
                 :items="vatCategoryOptions"
                 value-key="value"
                 label-key="label"
-                placeholder="VAT category"
+                :placeholder="t('products.vatCategory.label')"
               />
               <template #help>
                 <span class="text-xs text-muted">
-                  Belgian rates: food=12% dine-in / 6% takeaway · beverage=21% · zero_rated=0%.
+                  {{ t('products.vatCategory.help') }}
                 </span>
               </template>
             </UFormField>
@@ -388,12 +388,12 @@ const createDefaultProduct = (): CreateProductInput => ({
 
 // VAT category options (Belgian SCE 2.0 classification).
 // The concrete rate depends on the order service type — displayed as helper text.
-const vatCategoryOptions = [
-    { value: 'food', label: 'Food (12% dine-in / 6% takeaway)' },
-    { value: 'beverage', label: 'Beverage (21% all)' },
-    { value: 'zero_rated', label: 'Zero-rated (0%)' },
-    { value: 'out_of_scope', label: 'Out of scope' }
-]
+const vatCategoryOptions = computed(() => [
+    { value: 'food', label: t('products.vatCategory.options.food') },
+    { value: 'beverage', label: t('products.vatCategory.options.beverage') },
+    { value: 'zero_rated', label: t('products.vatCategory.options.zeroRated') },
+    { value: 'out_of_scope', label: t('products.vatCategory.options.outOfScope') }
+])
 
 // Initialize the edited product based on mode.
 const editedProduct = ref<CreateProductInput | UIUpdateProductInput>(
@@ -526,8 +526,6 @@ const saveChoices = async () => {
             })
         }
     }
-
-    emit('choicesChanged')
 }
 
 // Watch dialog state and emit close when it becomes false
@@ -593,7 +591,7 @@ const saveChanges = async () => {
     // VAT category required
     const validVatCategories = ['food', 'beverage', 'zero_rated', 'out_of_scope']
     if (!editedProduct.value.vatCategory || !validVatCategories.includes(editedProduct.value.vatCategory)) {
-        validationErrors.value.push('VAT category is required and must be one of: food, beverage, zero_rated, out_of_scope')
+        validationErrors.value.push(t('validation.vatCategoryRequired'))
     }
 
     // Description max 500 chars per language

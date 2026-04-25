@@ -246,10 +246,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
 import { useGqlSubscription, useNuxtApp } from '#imports'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
 import gql from 'graphql-tag'
+import { onBeforeRouteLeave } from 'vue-router'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
 

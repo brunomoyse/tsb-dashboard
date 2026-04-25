@@ -52,6 +52,16 @@
       "new": "新选项",
       "priceModifier": "价格调整（欧元）",
       "sortOrder": "排序"
+    },
+    "vatCategory": {
+      "label": "增值税类别",
+      "help": "比利时税率：食品=堂食12% / 外带6% · 饮料=21% · 零税率=0%。",
+      "options": {
+        "food": "食品（堂食12% / 外带6%）",
+        "beverage": "饮料（一律21%）",
+        "zeroRated": "零税率（0%）",
+        "outOfScope": "不适用"
+      }
     }
   },
 
@@ -352,7 +362,8 @@
     "codeFormat": "产品代码必须由大写字母和数字组成（如A10）",
     "pieceCountPositive": "件数必须为正整数",
     "choiceNameRequired": "选项#{index}必须至少有一个名称",
-    "choicePriceRequired": "选项#{index}必须有有效的价格调整值"
+    "choicePriceRequired": "选项#{index}必须有有效的价格调整值",
+    "vatCategoryRequired": "必须填写增值税类别，且必须为：食品、饮料、零税率或不适用"
   },
 
   "notifications": {
