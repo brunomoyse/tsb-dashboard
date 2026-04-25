@@ -12,7 +12,15 @@
       class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm sm:text-base text-warning"
     >
       <UIcon name="i-lucide-alert-triangle" class="size-4 sm:size-5 shrink-0" />
-      <span>{{ t('orders.staleAlert', { count: staleOrderCount }) }}</span>
+      <span class="flex-1">{{ t('orders.staleAlert', { count: staleOrderCount }) }}</span>
+      <UButton
+        v-if="firstStaleOrder"
+        size="xs"
+        variant="soft"
+        color="warning"
+        :label="t('orders.orderDetails')"
+        @click="openOrderDetails(firstStaleOrder)"
+      />
     </div>
 
     <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
@@ -35,6 +43,9 @@
             :class="selectedTab === chip.value ? 'text-white/80' : ''"
           >
             {{ chip.count }}
+          </span>
+          <span class="text-xs leading-none" :class="selectedTab === chip.value ? 'text-white/70' : 'text-muted'">
+            {{ chip.label }}
           </span>
           <!-- Unacknowledged pulse dot -->
           <span
@@ -116,6 +127,7 @@
             color="primary"
             square
             class="shrink-0"
+            :aria-label="t('orders.advanceStatus')"
             @click.stop="quickAdvanceStatus(order)"
           />
         </div>
@@ -1079,12 +1091,14 @@ const hasBreakdown = computed(() => {
 })
 
 // Stale orders count (for banner)
-const staleOrderCount = computed(() =>
+const staleOrders = computed(() =>
   orders.value.filter(o =>
     isActiveStatus(o.status)
     && (now.value.getTime() - new Date(o.createdAt).getTime()) > 7200000 // 2h
-  ).length
+  )
 )
+const staleOrderCount = computed(() => staleOrders.value.length)
+const firstStaleOrder = computed(() => staleOrders.value[0] ?? null)
 
 // Status icon mapping
 const getStatusIcon = (status: OrderStatus): string => {
