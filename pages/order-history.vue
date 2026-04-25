@@ -7,7 +7,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -32,14 +32,18 @@
     <div class="space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3 mb-4">
       <!-- Date Range -->
       <div class="flex items-center gap-2">
+        <label for="start-date" class="sr-only">{{ t('orderHistory.startDate') }}</label>
         <UInput
+          id="start-date"
           v-model="startDate"
           type="date"
           size="md"
           class="flex-1 sm:w-40 sm:flex-none"
         />
-        <span class="text-muted text-sm">-</span>
+        <span class="text-muted text-sm" aria-hidden="true">-</span>
+        <label for="end-date" class="sr-only">{{ t('orderHistory.endDate') }}</label>
         <UInput
+          id="end-date"
           v-model="endDate"
           type="date"
           size="md"
@@ -70,7 +74,7 @@
             @click="selectedType = opt.value"
           >
             <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
-            <span class="hidden sm:inline">{{ opt.label }}</span>
+            <span>{{ opt.label }}</span>
           </button>
         </div>
       </div>
@@ -188,26 +192,23 @@
       <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
     </div>
 
-    <!-- Infinite scroll: load more trigger -->
-    <div
-      v-if="hasMore && !initialLoading"
-      ref="loadMoreTrigger"
-      class="flex justify-center py-6"
-    >
+    <!-- Load more button -->
+    <div v-if="hasMore && !initialLoading" class="flex justify-center py-6">
       <UButton
-        v-if="loadingMore"
-        loading
+        :loading="loadingMore"
         variant="ghost"
         color="neutral"
         size="lg"
-      />
-      <span v-else class="text-sm text-muted">{{ t('orderHistory.scrollForMore') }}</span>
+        @click="loadNextPage"
+      >
+        {{ t('common.loadMore') }}
+      </UButton>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -252,33 +253,6 @@ const summary = ref<HistorySummary | null>(null)
 const initialLoading = ref(true)
 const loadingMore = ref(false)
 const hasMore = ref(true)
-
-// --- Infinite scroll ---
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-
-onMounted(() => {
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && hasMore.value && !loadingMore.value && !initialLoading.value) {
-        loadNextPage()
-      }
-    },
-    { rootMargin: '200px' }
-  )
-  watchTriggerElement()
-})
-
-onUnmounted(() => {
-  observer?.disconnect()
-})
-
-const watchTriggerElement = () => {
-  watch(loadMoreTrigger, (el) => {
-    observer?.disconnect()
-    if (el) observer?.observe(el)
-  }, { immediate: true })
-}
 
 // --- Filter options ---
 const statusOptions = computed(() => [

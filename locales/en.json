@@ -179,7 +179,9 @@
     "type": "Type",
     "total": "Total",
     "items": "Items",
-    "scrollForMore": "Scroll to load more"
+    "scrollForMore": "Scroll to load more",
+    "startDate": "Start date",
+    "endDate": "End date"
   },
 
   "coupons": {
