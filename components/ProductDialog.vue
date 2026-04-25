@@ -114,6 +114,14 @@
                 {{ processingPreview ? t('products.processingPreview') : t('products.previewBgRemoval') }}
               </UButton>
 
+              <!-- Remove background toggle -->
+              <USwitch
+                v-if="selectedImage"
+                v-model="removeBackground"
+                :label="t('products.removeBackground')"
+                size="sm"
+              />
+
               <!-- File input -->
               <div class="w-full max-w-xs">
                 <UFormField label="Upload Image" name="image">
@@ -661,6 +669,7 @@ const saveChanges = async () => {
 
         if (selectedImage.value) {
             createProductInput.image = selectedImage.value
+            createProductInput.removeBackground = removeBackground.value
         }
         emit('create', createProductInput)
     } else {
@@ -677,6 +686,7 @@ const saveChanges = async () => {
 
         if (selectedImage.value) {
             updateProductInput.image = selectedImage.value
+            updateProductInput.removeBackground = removeBackground.value
         }
 
         const { categoryId, ...rest } = (updateProductInput as any)
@@ -713,12 +723,14 @@ const selectedImage = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const processedPreview = ref<string | null>(null)
 const processingPreview = ref(false)
+const removeBackground = ref(false)
 
 const handleFileChange = (event: Event) => {
     const target = event.target as HTMLInputElement
     const file = target.files?.[0]
     if (file) {
         selectedImage.value = file
+        removeBackground.value = false
         if (processedPreview.value) {
             URL.revokeObjectURL(processedPreview.value)
             processedPreview.value = null
@@ -757,6 +769,7 @@ const previewProcessed = async () => {
         const blob = await response.blob()
         if (processedPreview.value) URL.revokeObjectURL(processedPreview.value)
         processedPreview.value = URL.createObjectURL(blob)
+        removeBackground.value = true
     } catch {
         toast.add({ title: t('products.previewFailed'), color: 'error' })
     } finally {
@@ -767,6 +780,7 @@ const previewProcessed = async () => {
 watch(selectedImage, (file) => {
     if (!file) {
         imagePreview.value = null
+        removeBackground.value = false
         if (processedPreview.value) {
             URL.revokeObjectURL(processedPreview.value)
             processedPreview.value = null
