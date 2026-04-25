@@ -1,4 +1,7 @@
 <template>
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-(--ui-bg) focus:border focus:border-(--ui-border) focus:rounded-lg focus:text-sm focus:font-medium">
+    Skip to content
+  </a>
   <UDashboardGroup storage="cookie" storage-key="tsb-dashboard">
     <!-- Sidebar (tablet+ : collapsible) -->
     <UDashboardSidebar
@@ -68,10 +71,11 @@
         />
 
         <!-- Logout Button -->
+        <div class="h-px bg-(--ui-border)" />
         <UButton
           :label="(isCollapsed && !isMobile) ? undefined : t('navigation.logout')"
           icon="i-lucide-log-out"
-          color="neutral"
+          color="error"
           variant="ghost"
           size="lg"
           block
@@ -118,7 +122,7 @@
       </template>
 
       <template #body>
-        <div class="pb-20 md:pb-0">
+        <div id="main-content" class="pb-20 md:pb-0">
           <slot />
         </div>
       </template>
@@ -168,11 +172,11 @@ onMounted(() => {
 })
 
 type AppLocale = 'fr' | 'en' | 'nl' | 'zh'
-const languages: { value: AppLocale; label: string; icon: string }[] = [
-  { value: 'fr', label: 'Français', icon: 'i-lucide-flag' },
-  { value: 'en', label: 'English', icon: 'i-lucide-flag' },
-  { value: 'nl', label: 'Nederlands', icon: 'i-lucide-flag' },
-  { value: 'zh', label: '中文', icon: 'i-lucide-flag' }
+const languages: { value: AppLocale; label: string }[] = [
+  { value: 'fr', label: 'Français' },
+  { value: 'en', label: 'English' },
+  { value: 'nl', label: 'Nederlands' },
+  { value: 'zh', label: '中文' }
 ]
 
 const currentLocaleLabel = computed(() =>
@@ -190,6 +194,12 @@ const languageItems = computed(() =>
 
 const navigationItems = computed<NavigationMenuItem[][]>(() => [[
   {
+    label: t('navigation.products'),
+    icon: 'i-lucide-package',
+    to: `/${locale.value}/products`,
+    active: route.path.includes('/products')
+  },
+  {
     label: t('navigation.orders'),
     icon: 'i-lucide-shopping-bag',
     to: `/${locale.value}/orders`,
@@ -203,12 +213,6 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
     icon: 'i-lucide-history',
     to: `/${locale.value}/order-history`,
     active: route.path.includes('/order-history')
-  },
-  {
-    label: t('navigation.products'),
-    icon: 'i-lucide-package',
-    to: `/${locale.value}/products`,
-    active: route.path.includes('/products')
   },
   {
     label: t('navigation.customers'),
@@ -232,6 +236,13 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
 
 const bottomNavItems = computed(() => [
   {
+    label: t('navigation.products'),
+    icon: 'i-lucide-package',
+    to: `/${locale.value}/products`,
+    active: route.path.includes('/products'),
+    badge: 0
+  },
+  {
     label: t('navigation.orders'),
     icon: 'i-lucide-shopping-bag',
     to: `/${locale.value}/orders`,
@@ -239,10 +250,10 @@ const bottomNavItems = computed(() => [
     badge: ordersStore.unacknowledgedPendingCount
   },
   {
-    label: t('navigation.products'),
-    icon: 'i-lucide-package',
-    to: `/${locale.value}/products`,
-    active: route.path.includes('/products'),
+    label: t('navigation.orderHistory'),
+    icon: 'i-lucide-history',
+    to: `/${locale.value}/order-history`,
+    active: route.path.includes('/order-history'),
     badge: 0
   },
   {
@@ -301,6 +312,6 @@ const toggleTheme = () => {
 
 <style>
 html {
-  font-size: 14px;
+  font-size: 16px;
 }
 </style>
