@@ -263,10 +263,13 @@ const getFlagEmoji = (lang: string) => {
   }
 }
 
+const imageCacheBust = reactive<Record<string, number>>({})
+
 // Helper: Get product thumbnail URL
 const getProductImageUrl = (product: Product) => {
-  if (!s3bucketUrl || !product.slug) return null
-  return `${s3bucketUrl}/images/thumbnails/${product.slug}.png`
+  if (!s3bucketUrl || !product.id) return null
+  const bust = imageCacheBust[product.id]
+  return `${s3bucketUrl}/images/thumbnails/${product.id}.png${bust ? `?v=${bust}` : ''}`
 }
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
@@ -711,6 +714,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
       }
 
       updated = res.data.updateProduct
+      imageCacheBust[updated.id] = Date.now()
     } else {
       const { mutate: mutationUpdateProduct } = useGqlMutation<{ updateProduct: Product }>(
         UPDATE_PRODUCT_MUTATION
