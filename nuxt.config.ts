@@ -51,7 +51,7 @@ export default defineNuxtConfig({
       graphqlWs: process.env.GRAPHQL_WS_URL,
       // Zitadel OIDC
       zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
-      zitadelClientId: process.env.ZITADEL_CLIENT_ID || '',
+      zitadelClientId: process.env.DASHBOARD_ZITADEL_CLIENT_ID || process.env.ZITADEL_CLIENT_ID || '',
       zitadelNativeClientId: process.env.ZITADEL_NATIVE_CLIENT_ID || '',
       // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
       appBuild: process.env.APP_BUILD || 'web',
