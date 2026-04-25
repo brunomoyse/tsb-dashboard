@@ -14,15 +14,47 @@
       </UButton>
     </div>
 
-    <!-- Search Bar -->
-    <div class="mb-4">
+    <!-- Filters Bar -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('coupons.search')"
-        size="lg"
-        class="flex-1"
+        size="md"
+        class="flex-1 min-w-40"
       />
+
+      <!-- Status filter -->
+      <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
+        <button
+          v-for="opt in statusFilterOptions"
+          :key="opt.value"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :class="filterStatus === opt.value
+            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
+            : 'text-muted hover:text-highlighted'
+          "
+          @click="filterStatus = opt.value as typeof filterStatus"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <!-- Type filter -->
+      <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
+        <button
+          v-for="opt in typeFilterOptions"
+          :key="opt.value"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :class="filterType === opt.value
+            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
+            : 'text-muted hover:text-highlighted'
+          "
+          @click="filterType = opt.value as typeof filterType"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Data Table -->
@@ -64,15 +96,13 @@
         </template>
 
         <template #maxUses-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">{{ row.original.maxUses ?? t('coupons.unlimited') }}</span>
+          <span class="text-sm tabular-nums text-muted">
+            {{ row.original.usedCount }} / {{ row.original.maxUses ?? t('coupons.unlimited') }}
+          </span>
         </template>
 
         <template #maxUsesPerUser-cell="{ row }">
           <span class="text-sm tabular-nums text-muted">{{ row.original.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
-        </template>
-
-        <template #usedCount-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">{{ row.original.usedCount }}</span>
         </template>
 
         <template #isActive-cell="{ row }">
@@ -86,18 +116,28 @@
             @click.stop="toggleActive(row.original)"
           >
             <UIcon
-              :name="row.original.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              :name="togglingId === row.original.id ? 'i-lucide-loader-2' : (row.original.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
               class="size-3.5"
               :class="{ 'animate-spin': togglingId === row.original.id }"
             />
-            {{ row.original.isActive ? t('common.available') : t('common.unavailable') }}
+            {{ row.original.isActive ? t('coupons.active') : t('coupons.inactive') }}
           </button>
         </template>
 
         <template #validPeriod-cell="{ row }">
-          <span class="text-sm text-muted">
-            {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-muted">
+              {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
+            </span>
+            <UBadge
+              v-if="row.original.validUntil && new Date(row.original.validUntil) < new Date()"
+              color="error"
+              variant="subtle"
+              size="xs"
+            >
+              {{ t('coupons.expired') }}
+            </UBadge>
+          </div>
         </template>
 
         <template #actions-cell="{ row }">
@@ -250,6 +290,8 @@ const belPriceFormat = new Intl.NumberFormat('fr-BE', {
 })
 
 const searchQuery = ref('')
+const filterStatus = ref<'all' | 'active' | 'inactive'>('all')
+const filterType = ref<'all' | 'PERCENTAGE' | 'FIXED'>('all')
 const page = ref(1)
 const pageSize = ref(10)
 
@@ -259,9 +301,8 @@ const columns = computed(() => [
   { accessorKey: 'discountType', header: t('coupons.type'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
   { accessorKey: 'discountValue', header: t('coupons.value') },
   { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'maxUses', header: t('coupons.maxUses'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'maxUses', header: `${t('coupons.used')} / ${t('coupons.maxUses')}`, meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'maxUsesPerUser', header: t('coupons.maxUsesPerUser'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'usedCount', header: t('coupons.used'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
   { accessorKey: 'isActive', header: t('coupons.active'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'validPeriod', header: t('coupons.validUntil'), enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
   { accessorKey: 'actions', header: '', enableSorting: false }
@@ -361,9 +402,13 @@ const { data: dataCoupons, pending } = await useGqlQuery<{ coupons: Coupon[] }>(
 const coupons = computed(() => dataCoupons.value?.coupons ?? [])
 
 const filteredCoupons = computed(() => {
-  if (!searchQuery.value) return coupons.value
-  const query = searchQuery.value.toLowerCase()
-  return coupons.value.filter(c => c.code.toLowerCase().includes(query))
+  return coupons.value.filter(c => {
+    if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
+    if (filterStatus.value === 'active' && !c.isActive) return false
+    if (filterStatus.value === 'inactive' && c.isActive) return false
+    if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
+    return true
+  })
 })
 
 const paginatedCoupons = computed(() => {
@@ -371,7 +416,7 @@ const paginatedCoupons = computed(() => {
   return filteredCoupons.value.slice(start, start + pageSize.value)
 })
 
-watch(searchQuery, () => { page.value = 1 })
+watch([searchQuery, filterStatus, filterType], () => { page.value = 1 })
 
 // Inline toggle state
 const togglingId = ref<string | null>(null)
@@ -403,6 +448,18 @@ const isSaving = ref(false)
 const validationError = ref('')
 
 const discountTypeOptions = computed(() => [
+  { label: t('coupons.percentage'), value: 'PERCENTAGE' },
+  { label: t('coupons.fixed'), value: 'FIXED' }
+])
+
+const statusFilterOptions = computed(() => [
+  { label: t('orderHistory.allTypes'), value: 'all' },
+  { label: t('coupons.active'), value: 'active' },
+  { label: t('coupons.inactive'), value: 'inactive' }
+])
+
+const typeFilterOptions = computed(() => [
+  { label: t('orderHistory.allTypes'), value: 'all' },
   { label: t('coupons.percentage'), value: 'PERCENTAGE' },
   { label: t('coupons.fixed'), value: 'FIXED' }
 ])

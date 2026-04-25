@@ -193,6 +193,8 @@
     "maxUsesPerUser": "Utilisations max. / utilisateur",
     "used": "Utilisé",
     "active": "Actif",
+    "inactive": "Inactif",
+    "expired": "Expiré",
     "validFrom": "Valide à partir de",
     "validUntil": "Valide jusqu'à",
     "percentage": "Pourcentage",

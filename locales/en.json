@@ -192,6 +192,8 @@
     "maxUsesPerUser": "Max Uses / User",
     "used": "Used",
     "active": "Active",
+    "inactive": "Inactive",
+    "expired": "Expired",
     "validFrom": "Valid From",
     "validUntil": "Valid Until",
     "percentage": "Percentage",

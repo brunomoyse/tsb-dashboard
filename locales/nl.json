@@ -193,6 +193,8 @@
     "maxUsesPerUser": "Max. gebruik / gebruiker",
     "used": "Gebruikt",
     "active": "Actief",
+    "inactive": "Inactief",
+    "expired": "Verlopen",
     "validFrom": "Geldig vanaf",
     "validUntil": "Geldig tot",
     "percentage": "Percentage",
