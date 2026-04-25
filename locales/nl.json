@@ -180,7 +180,9 @@
     "type": "Type",
     "total": "Totaal",
     "items": "Artikelen",
-    "scrollForMore": "Scroll om meer te laden"
+    "scrollForMore": "Scroll om meer te laden",
+    "startDate": "Startdatum",
+    "endDate": "Einddatum"
   },
 
   "coupons": {
