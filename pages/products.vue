@@ -732,7 +732,10 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
     if (dataProducts.value?.products) {
       const idx = dataProducts.value.products.findIndex(p => p.id === updated.id)
       if (idx !== -1) {
-        dataProducts.value.products.splice(idx, 1, updated)
+        dataProducts.value = {
+          ...dataProducts.value,
+          products: dataProducts.value.products.map((p, i) => (i === idx ? updated : p))
+        }
       }
     }
 

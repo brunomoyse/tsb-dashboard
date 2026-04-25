@@ -52,6 +52,16 @@
       "new": "Nieuwe optie",
       "priceModifier": "Prijswijziging (€)",
       "sortOrder": "Volgorde"
+    },
+    "vatCategory": {
+      "label": "BTW-categorie",
+      "help": "Belgische tarieven: voeding=12% ter plaatse / 6% afhalen · drank=21% · nultarief=0%.",
+      "options": {
+        "food": "Voeding (12% ter plaatse / 6% afhalen)",
+        "beverage": "Drank (21% overal)",
+        "zeroRated": "Nultarief (0%)",
+        "outOfScope": "Buiten toepassingsgebied"
+      }
     }
   },
 
@@ -354,7 +364,8 @@
     "codeFormat": "De productcode moet bestaan uit hoofdletters gevolgd door cijfers (bijv. A10)",
     "pieceCountPositive": "Het aantal stuks moet een positief geheel getal zijn",
     "choiceNameRequired": "Optie #{index} moet minstens één naam hebben",
-    "choicePriceRequired": "Optie #{index} moet een geldige prijswijziging hebben"
+    "choicePriceRequired": "Optie #{index} moet een geldige prijswijziging hebben",
+    "vatCategoryRequired": "BTW-categorie is vereist en moet zijn: voeding, drank, nultarief of buiten toepassingsgebied"
   },
 
   "notifications": {

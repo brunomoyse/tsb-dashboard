@@ -401,15 +401,13 @@ const { data: dataCoupons, pending } = await useGqlQuery<{ coupons: Coupon[] }>(
 
 const coupons = computed(() => dataCoupons.value?.coupons ?? [])
 
-const filteredCoupons = computed(() => {
-  return coupons.value.filter(c => {
-    if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
-    if (filterStatus.value === 'active' && !c.isActive) return false
-    if (filterStatus.value === 'inactive' && c.isActive) return false
-    if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
-    return true
-  })
-})
+const filteredCoupons = computed(() => coupons.value.filter(c => {
+  if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
+  if (filterStatus.value === 'active' && !c.isActive) return false
+  if (filterStatus.value === 'inactive' && c.isActive) return false
+  if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
+  return true
+}))
 
 const paginatedCoupons = computed(() => {
   const start = (page.value - 1) * pageSize.value

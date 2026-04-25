@@ -51,6 +51,16 @@
       "new": "New choice",
       "priceModifier": "Price Modifier (€)",
       "sortOrder": "Sort Order"
+    },
+    "vatCategory": {
+      "label": "VAT category",
+      "help": "Belgian rates: food=12% dine-in / 6% takeaway · beverage=21% · zero-rated=0%.",
+      "options": {
+        "food": "Food (12% dine-in / 6% takeaway)",
+        "beverage": "Beverage (21% all)",
+        "zeroRated": "Zero-rated (0%)",
+        "outOfScope": "Out of scope"
+      }
     }
   },
 
@@ -353,7 +363,8 @@
     "codeFormat": "Product code must be uppercase letters followed by digits (e.g. A10)",
     "pieceCountPositive": "Piece count must be a positive integer",
     "choiceNameRequired": "Choice #{index} must have at least one name",
-    "choicePriceRequired": "Choice #{index} must have a valid price modifier"
+    "choicePriceRequired": "Choice #{index} must have a valid price modifier",
+    "vatCategoryRequired": "VAT category is required and must be one of: food, beverage, zero-rated, out of scope"
   },
 
   "notifications": {

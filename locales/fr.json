@@ -52,6 +52,16 @@
       "new": "Nouvelle option",
       "priceModifier": "Modificateur de prix (€)",
       "sortOrder": "Ordre d'affichage"
+    },
+    "vatCategory": {
+      "label": "Catégorie TVA",
+      "help": "Taux belges : nourriture=12% sur place / 6% à emporter · boisson=21% · taux zéro=0%.",
+      "options": {
+        "food": "Nourriture (12% sur place / 6% à emporter)",
+        "beverage": "Boisson (21% partout)",
+        "zeroRated": "Taux zéro (0%)",
+        "outOfScope": "Hors champ"
+      }
     }
   },
 
@@ -354,7 +364,8 @@
     "codeFormat": "Le code produit doit être composé de lettres majuscules suivies de chiffres (ex: A10)",
     "pieceCountPositive": "Le nombre de pièces doit être un entier positif",
     "choiceNameRequired": "L'option #{index} doit avoir au moins un nom renseigné",
-    "choicePriceRequired": "L'option #{index} doit avoir un modificateur de prix valide"
+    "choicePriceRequired": "L'option #{index} doit avoir un modificateur de prix valide",
+    "vatCategoryRequired": "La catégorie TVA est requise et doit être : nourriture, boisson, taux zéro ou hors champ"
   },
 
   "notifications": {
