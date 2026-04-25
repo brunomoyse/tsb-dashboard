@@ -193,6 +193,8 @@
     "maxUsesPerUser": "每用户最大使用次数",
     "used": "已使用",
     "active": "激活",
+    "inactive": "未激活",
+    "expired": "已过期",
     "validFrom": "有效期从",
     "validUntil": "有效期至",
     "percentage": "百分比",
