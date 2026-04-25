@@ -28,14 +28,7 @@
           <p class="text-sm text-muted">{{ t('settings.preparation.description') }}</p>
         </div>
         <div class="flex items-center gap-2">
-          <input
-            v-model.number="preparationMinutes"
-            type="number"
-            min="15"
-            max="240"
-            step="5"
-            class="border border-default rounded px-3 py-1.5 text-sm bg-default w-24"
-          />
+          <UInput v-model.number="preparationMinutes" type="number" min="15" max="240" step="5" class="w-24" />
           <span class="text-sm text-muted">{{ t('settings.preparation.label') }}</span>
           <UButton
             :label="t('common.save')"
@@ -51,25 +44,19 @@
     <!-- Opening Hours -->
     <UPageCard>
       <details open class="group">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <div class="flex items-center gap-2 min-w-0">
-            <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
-            <div>
-              <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
-              <p class="text-sm text-muted hidden sm:block">{{ t('settings.hours.description') }}</p>
-            </div>
+        <summary class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+          <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
+          <div>
+            <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
+            <p class="text-sm text-muted hidden sm:block">{{ t('settings.hours.description') }}</p>
           </div>
-          <UButton
-            :label="t('common.save')"
-            icon="i-lucide-save"
-            size="sm"
-            :loading="updatingHours"
-            @click.prevent="saveOpeningHours"
-          />
         </summary>
 
-        <div class="mt-4">
+        <div class="mt-4 space-y-4">
           <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
+          <div class="flex justify-end">
+            <UButton :label="t('common.save')" icon="i-lucide-save" size="sm" :loading="updatingHours" @click="saveOpeningHours" />
+          </div>
         </div>
       </details>
     </UPageCard>
@@ -77,21 +64,12 @@
     <!-- Ordering Hours -->
     <UPageCard>
       <details class="group">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <div class="flex items-center gap-2 min-w-0">
-            <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
-            <div>
-              <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
-              <p class="text-sm text-muted hidden sm:block">{{ t('settings.orderingHours.description') }}</p>
-            </div>
+        <summary class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+          <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
+          <div>
+            <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
+            <p class="text-sm text-muted hidden sm:block">{{ t('settings.orderingHours.description') }}</p>
           </div>
-          <UButton
-            :label="t('common.save')"
-            icon="i-lucide-save"
-            size="sm"
-            :loading="updatingOrderingHours"
-            @click.prevent="saveOrderingHours"
-          />
         </summary>
 
         <div class="mt-4 space-y-4">
@@ -111,6 +89,9 @@
             :days="days"
             @toggle-day="toggleOrderingDay"
           />
+          <div class="flex justify-end">
+            <UButton :label="t('common.save')" icon="i-lucide-save" size="sm" :loading="updatingOrderingHours" @click="saveOrderingHours" />
+          </div>
         </div>
       </details>
     </UPageCard>
@@ -265,6 +246,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import { useGqlSubscription, useNuxtApp } from '#imports'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
 import gql from 'graphql-tag'
@@ -300,6 +282,8 @@ const days = [
   { key: 'saturday' },
   { key: 'sunday' },
 ]
+
+const isDirty = ref(false)
 
 const orderingEnabled = ref(true)
 const preparationMinutes = ref(30)
@@ -433,10 +417,12 @@ const defaultSchedule = (): DaySchedule => ({ open: '11:00', close: '14:00', din
 
 const toggleDay = (dayKey: string, open: boolean) => {
   localHours[dayKey] = open ? defaultSchedule() : null
+  isDirty.value = true
 }
 
 const toggleOrderingDay = (dayKey: string, open: boolean) => {
   localOrderingHours[dayKey] = open ? defaultSchedule() : null
+  isDirty.value = true
 }
 
 const toggleCustomOrderingHours = (enabled: boolean) => {
@@ -469,6 +455,7 @@ const saveOpeningHours = async () => {
   updatingHours.value = true
   try {
     await $gqlFetch(print(UPDATE_HOURS), { variables: { hours: buildHoursInput(localHours) } })
+    isDirty.value = false
   } finally {
     updatingHours.value = false
   }
@@ -478,6 +465,7 @@ const saveOrderingHours = async () => {
   updatingOrderingHours.value = true
   try {
     await $gqlFetch(print(UPDATE_ORDERING_HOURS), { variables: { hours: buildHoursInput(localOrderingHours) } })
+    isDirty.value = false
   } finally {
     updatingOrderingHours.value = false
   }
@@ -488,10 +476,19 @@ const savePreparation = async () => {
   updatingPreparation.value = true
   try {
     await $gqlFetch(print(UPDATE_PREPARATION), { variables: { minutes: preparationMinutes.value } })
+    isDirty.value = false
   } finally {
     updatingPreparation.value = false
   }
 }
+
+watch(preparationMinutes, () => { isDirty.value = true })
+
+onBeforeRouteLeave(() => {
+  if (isDirty.value) {
+    return window.confirm('You have unsaved changes. Leave anyway?')
+  }
+})
 
 // Override modal state
 const modalOpen = ref(false)
