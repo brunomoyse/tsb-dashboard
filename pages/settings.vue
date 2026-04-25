@@ -94,11 +94,23 @@
           />
         </summary>
 
-        <div class="mt-4">
-          <p v-if="!hasOrderingHours" class="text-sm text-muted italic mb-3">
-            {{ t('settings.orderingHours.fallbackNotice') }}
-          </p>
-          <ScheduleEditor :hours="localOrderingHours" :days="days" @toggle-day="toggleOrderingDay" />
+        <div class="mt-4 space-y-4">
+          <div class="flex items-center justify-between gap-4">
+            <span class="text-sm">{{ t('settings.orderingHours.customHoursSwitch') }}</span>
+            <USwitch
+              :model-value="hasOrderingHours"
+              size="md"
+              checked-icon="i-lucide-check"
+              unchecked-icon="i-lucide-x"
+              @update:model-value="toggleCustomOrderingHours"
+            />
+          </div>
+          <ScheduleEditor
+            v-if="hasOrderingHours"
+            :hours="localOrderingHours"
+            :days="days"
+            @toggle-day="toggleOrderingDay"
+          />
         </div>
       </details>
     </UPageCard>
@@ -425,6 +437,14 @@ const toggleDay = (dayKey: string, open: boolean) => {
 
 const toggleOrderingDay = (dayKey: string, open: boolean) => {
   localOrderingHours[dayKey] = open ? defaultSchedule() : null
+}
+
+const toggleCustomOrderingHours = (enabled: boolean) => {
+  for (const day of days) {
+    localOrderingHours[day.key] = enabled
+      ? (localHours[day.key] ? { ...localHours[day.key]! } : null)
+      : null
+  }
 }
 
 const buildHoursInput = (hours: OpeningHoursMap) => {
