@@ -23,6 +23,7 @@
     "add": "Add Product",
     "edit": "Edit Product",
     "noProducts": "No products found",
+    "noProductsFiltered": "No products match your filters",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"

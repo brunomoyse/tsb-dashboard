@@ -45,7 +45,8 @@
         :loading="pending"
         :ui="{
           th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
-          td: 'py-3 px-4'
+          td: 'py-3 px-4',
+          tr: 'cursor-pointer hover:bg-(--ui-bg-elevated) transition-colors'
         }"
         @select="onRowSelect"
       >
@@ -60,6 +61,7 @@
                 :src="getProductImageUrl(row.original) ?? undefined"
                 :alt="row.original.name"
                 class="size-full object-cover"
+                @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')"
               />
               <UIcon v-else name="i-lucide-image-off" class="size-4 text-muted" />
             </div>
@@ -99,7 +101,7 @@
             @click.stop="toggleProductField(row.original, 'isVisible', !row.original.isVisible)"
           >
             <UIcon
-              :name="row.original.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+              :name="togglingField === `${row.original.id}-isVisible` ? 'i-lucide-loader-2' : (row.original.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off')"
               class="size-3.5"
               :class="{ 'animate-spin': togglingField === `${row.original.id}-isVisible` }"
             />
@@ -119,7 +121,7 @@
             @click.stop="toggleProductField(row.original, 'isAvailable', !row.original.isAvailable)"
           >
             <UIcon
-              :name="row.original.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              :name="togglingField === `${row.original.id}-isAvailable` ? 'i-lucide-loader-2' : (row.original.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
               class="size-3.5"
               :class="{ 'animate-spin': togglingField === `${row.original.id}-isAvailable` }"
             />
@@ -152,7 +154,7 @@
               variant="soft"
               size="xs"
             >
-              {{ getFlagEmoji(lang) }}
+              {{ lang.toUpperCase() }}
             </UBadge>
           </div>
         </template>
@@ -190,7 +192,7 @@
       <!-- Empty State -->
       <div v-if="!pending && filteredProducts.length === 0" class="flex flex-col items-center justify-center py-16">
         <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
-        <p class="text-muted text-sm">{{ t('products.noProducts') }}</p>
+        <p class="text-muted text-sm">{{ (searchQuery || selectedCategoryId) ? t('products.noProductsFiltered') : t('products.noProducts') }}</p>
       </div>
     </div>
 

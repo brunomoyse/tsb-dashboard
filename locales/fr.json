@@ -24,6 +24,7 @@
     "add": "Ajouter un produit",
     "edit": "Modifier le produit",
     "noProducts": "Aucun produit trouvé",
+    "noProductsFiltered": "Aucun produit ne correspond à vos filtres",
     "visibility": {
       "visible": "Visible",
       "invisible": "Invisible"

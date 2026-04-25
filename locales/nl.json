@@ -24,6 +24,7 @@
     "add": "Product toevoegen",
     "edit": "Product bewerken",
     "noProducts": "Geen producten gevonden",
+    "noProductsFiltered": "Geen producten gevonden voor uw filters",
     "visibility": {
       "visible": "Zichtbaar",
       "invisible": "Onzichtbaar"

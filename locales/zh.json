@@ -24,6 +24,7 @@
     "add": "添加产品",
     "edit": "编辑产品",
     "noProducts": "未找到产品",
+    "noProductsFiltered": "没有符合筛选条件的产品",
     "visibility": {
       "visible": "可见",
       "invisible": "不可见"
