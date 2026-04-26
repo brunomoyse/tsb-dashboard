@@ -270,6 +270,8 @@
 
   "settings": {
     "title": "餐厅设置",
+    "unsaved": "未保存",
+    "leaveConfirm": "您有未保存的更改。仍要离开吗？",
     "ordering": {
       "title": "在线订购",
       "description": "启用或禁用在线订购"
@@ -278,6 +280,8 @@
       "title": "营业时间",
       "description": "设置每天的营业时间",
       "closed": "休息",
+      "lunch": "午餐",
+      "dinner": "晚餐",
       "monday": "周一",
       "tuesday": "周二",
       "wednesday": "周三",
@@ -295,6 +299,7 @@
     "preparation": {
       "title": "准备时间",
       "description": "当前时间与客户所选取餐时间之间的最短间隔（15-240分钟）",
+      "unit": "分钟",
       "label": "分钟",
       "save": "保存"
     },

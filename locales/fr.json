@@ -272,6 +272,8 @@
 
   "settings": {
     "title": "Paramètres du restaurant",
+    "unsaved": "Non enregistré",
+    "leaveConfirm": "Vous avez des modifications non enregistrées. Quitter quand même ?",
     "ordering": {
       "title": "Commandes en ligne",
       "description": "Activer ou désactiver les commandes en ligne"
@@ -280,6 +282,8 @@
       "title": "Horaires d'ouverture",
       "description": "Définir les horaires d'ouverture pour chaque jour de la semaine",
       "closed": "Fermé",
+      "lunch": "Midi",
+      "dinner": "Soir",
       "monday": "Lundi",
       "tuesday": "Mardi",
       "wednesday": "Mercredi",
@@ -297,6 +301,7 @@
     "preparation": {
       "title": "Délai de préparation",
       "description": "Délai minimum entre l'heure actuelle et l'heure de retrait souhaitée par le client (15-240 minutes)",
+      "unit": "min",
       "label": "Minutes",
       "save": "Enregistrer"
     },

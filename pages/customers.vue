@@ -1,97 +1,165 @@
 <template>
-  <div class="p-4 sm:p-6">
+  <div class="p-3 sm:p-4 md:p-6">
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-highlighted">{{ t('customers.title') }}</h1>
-      <p class="text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
+    <div class="mb-3 sm:mb-6">
+      <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('customers.title') }}</h1>
+      <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+    <!-- Summary Cards (compact on mobile) -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-4"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
       >
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented)">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="hidden sm:flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
             <UIcon :name="card.icon" class="size-5 text-muted" />
           </div>
-          <div>
-            <p class="text-xs text-muted">{{ card.label }}</p>
-            <p class="text-lg font-bold text-highlighted tabular-nums">
-              <template v-if="pending">
-                <USkeleton class="h-5 w-16 mt-1" />
-              </template>
+          <div class="min-w-0">
+            <p class="text-[11px] sm:text-xs text-muted leading-tight">{{ card.label }}</p>
+            <div class="text-base sm:text-lg font-bold text-highlighted tabular-nums truncate">
+              <USkeleton v-if="pending" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
-            </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Filters Bar -->
-    <div class="flex flex-wrap items-center gap-3 mb-4">
-      <!-- Period Presets -->
-      <div class="flex items-center gap-1 rounded-lg bg-(--ui-bg-accented) p-1">
-        <button
-          v-for="preset in periodPresets"
-          :key="preset.key"
-          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
-          :class="selectedPeriod === preset.key
-            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-            : 'text-muted hover:text-highlighted'
-          "
-          @click="selectPeriod(preset.key)"
-        >
-          {{ preset.label }}
-        </button>
-      </div>
-
-      <!-- Order Type Filter -->
-      <div class="flex items-center gap-1 rounded-lg bg-(--ui-bg-accented) p-1">
-        <button
-          v-for="opt in orderTypeOptions"
-          :key="opt.value"
-          class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
-          :class="selectedOrderType === opt.value
-            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-            : 'text-muted hover:text-highlighted'
-          "
-          @click="selectedOrderType = opt.value"
-        >
-          <UIcon v-if="opt.icon" :name="opt.icon" class="size-3.5" />
-          {{ opt.label }}
-        </button>
-      </div>
-
-      <!-- Min Orders -->
+    <!-- Filters Bar (sticky on mobile) -->
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
+      <!-- Search row (search + min orders) -->
       <div class="flex items-center gap-2">
-        <label for="min-orders" class="sr-only">{{ t('customers.filters.minOrders') }}</label>
+        <UInput
+          v-model="searchQuery"
+          icon="i-lucide-search"
+          :placeholder="t('customers.search')"
+          size="lg"
+          class="flex-1"
+          :ui="{ base: 'h-12 text-base' }"
+        />
         <UInput
           id="min-orders"
           v-model.number="minOrders"
           type="number"
           :placeholder="t('customers.filters.minOrders')"
           :min="1"
-          size="sm"
-          class="w-32"
+          size="lg"
+          class="w-24 sm:w-32 shrink-0"
           icon="i-lucide-hash"
+          :ui="{ base: 'h-12 text-base' }"
+          :aria-label="t('customers.filters.minOrders')"
         />
       </div>
 
-      <!-- Search -->
-      <UInput
-        v-model="searchQuery"
-        icon="i-lucide-search"
-        :placeholder="t('customers.search')"
-        size="sm"
-        class="flex-1 min-w-40"
-      />
+      <!-- Combined chip rail: period + type -->
+      <div class="mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
+        <button
+          v-for="preset in periodPresets"
+          :key="`p-${preset.key}`"
+          type="button"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          :class="selectedPeriod === preset.key
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+          "
+          @click="selectPeriod(preset.key)"
+        >
+          {{ preset.label }}
+        </button>
+
+        <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
+
+        <button
+          v-for="opt in orderTypeOptions"
+          :key="`t-${opt.value}`"
+          type="button"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          :class="selectedOrderType === opt.value
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+          "
+          @click="selectedOrderType = opt.value"
+        >
+          <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <!-- ========== MOBILE VIEW: Cards (< md) ========== -->
+    <div class="md:hidden">
+      <!-- Skeleton -->
+      <div v-if="pending" class="space-y-2">
+        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+          <USkeleton class="size-10 rounded-full shrink-0" />
+          <div class="flex-1 space-y-1.5">
+            <div class="flex justify-between">
+              <USkeleton class="h-4 w-32" />
+              <USkeleton class="h-4 w-16" />
+            </div>
+            <USkeleton class="h-3 w-40" />
+            <USkeleton class="h-3 w-28" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div
+        v-else-if="filteredCustomers.length === 0"
+        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+      >
+        <UIcon name="i-lucide-users" class="size-14 mb-3 text-muted" />
+        <p class="text-muted text-sm">{{ t('customers.noResults') }}</p>
+      </div>
+
+      <!-- Cards -->
+      <div v-else class="space-y-2">
+        <button
+          v-for="customer in paginatedCustomers"
+          :key="customer.userId"
+          type="button"
+          class="w-full flex items-start gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border) text-left active:bg-(--ui-bg-elevated) transition-colors"
+          @click="openCustomerOrders(customer)"
+        >
+          <div class="size-10 rounded-full bg-(--ui-bg-accented) flex items-center justify-center shrink-0 text-sm font-semibold text-(--ui-text-muted)">
+            {{ getInitials(customer.firstName, customer.lastName) }}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-semibold text-sm text-highlighted truncate">{{ customer.firstName }} {{ customer.lastName }}</span>
+              <span class="font-bold text-sm text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(customer.totalAmount)) }}</span>
+            </div>
+            <p class="text-xs text-muted truncate mt-0.5">{{ customer.email }}</p>
+            <div class="flex items-center gap-2 mt-1.5 text-xs">
+              <span
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium"
+                :class="customer.preferredOrderType === 'DELIVERY'
+                  ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                "
+              >
+                <UIcon
+                  :name="customer.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                  class="size-3"
+                />
+                {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
+              </span>
+              <span class="text-muted tabular-nums">{{ customer.totalOrders }} {{ t('orders.items') }}</span>
+              <span class="text-muted truncate">· {{ formatDate(customer.lastOrderDate) }}</span>
+            </div>
+          </div>
+
+          <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0 mt-1" />
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
+    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
       <UTable
         v-if="!pending && filteredCustomers.length > 0"
         :columns="columns"
@@ -182,11 +250,12 @@
         show-edges
       />
     </div>
-    <!-- Customer Order History Slideover -->
+    <!-- Customer Order History Slideover (bottom sheet on mobile, side panel on desktop) -->
     <USlideover
       v-model:open="showOrderHistory"
       :title="t('customers.orderHistory')"
-      side="right"
+      :side="sheetSide"
+      :ui="sheetUi"
     >
       <template v-if="selectedCustomer" #body>
         <div class="space-y-5">
@@ -284,13 +353,27 @@
 
 <script lang="ts" setup>
 import type { CustomerStats, CustomerStatsResponse } from '~/types'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useGqlQuery } from '#imports'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+
+// Mobile detection for slideover side (bottom sheet on phone, right panel on desktop)
+const isMobile = ref(false)
+onMounted(() => {
+  const mql = window.matchMedia('(max-width: 767px)')
+  isMobile.value = mql.matches
+  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
+})
+const sheetSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
+const sheetUi = computed(() =>
+  isMobile.value
+    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
+    : { content: 'max-w-md' }
+)
 
 const belPriceFormat = new Intl.NumberFormat('fr-BE', {
   minimumFractionDigits: 2,
@@ -470,6 +553,9 @@ const columns = computed(() => [
 ])
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
+
+const getInitials = (firstName: string, lastName: string) =>
+  `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
 
 // --- Customer Order History ---
 
