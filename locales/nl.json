@@ -295,7 +295,7 @@
     "orderingHours": {
       "title": "Besteltijden",
       "description": "Instellen wanneer online bestellingen worden geaccepteerd (indien anders dan openingsuren)",
-      "fallbackNotice": "Geen schema ingesteld — bestellingen volgen de openingsuren.",
+      "fallbackNotice": "Geen schema ingesteld. Bestellingen volgen de openingsuren.",
       "customHoursSwitch": "Andere uren dan de openingsuren"
     },
     "preparation": {

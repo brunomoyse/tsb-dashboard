@@ -293,7 +293,7 @@
     "orderingHours": {
       "title": "下单时间",
       "description": "设置在线订单接受时间（如果与营业时间不同）",
-      "fallbackNotice": "未设置时间表 — 订单遵循营业时间。",
+      "fallbackNotice": "未设置时间表，订单遵循营业时间。",
       "customHoursSwitch": "与营业时间不同的时间"
     },
     "preparation": {
