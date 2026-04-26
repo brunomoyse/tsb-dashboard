@@ -295,7 +295,7 @@
     "orderingHours": {
       "title": "Horaires de commande",
       "description": "Définir quand les commandes en ligne sont acceptées (si différent des horaires d'ouverture)",
-      "fallbackNotice": "Aucun horaire défini — les commandes suivent les horaires d'ouverture.",
+      "fallbackNotice": "Aucun horaire défini. Les commandes suivent les horaires d'ouverture.",
       "customHoursSwitch": "Horaires différents des horaires d'ouverture"
     },
     "preparation": {
