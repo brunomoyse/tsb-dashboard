@@ -271,6 +271,8 @@
 
   "settings": {
     "title": "Restaurant Settings",
+    "unsaved": "Unsaved",
+    "leaveConfirm": "You have unsaved changes. Leave anyway?",
     "ordering": {
       "title": "Online Ordering",
       "description": "Enable or disable online ordering"
@@ -279,6 +281,8 @@
       "title": "Opening Hours",
       "description": "Set opening hours for each day of the week",
       "closed": "Closed",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
       "monday": "Monday",
       "tuesday": "Tuesday",
       "wednesday": "Wednesday",
@@ -296,6 +300,7 @@
     "preparation": {
       "title": "Preparation time",
       "description": "Minimum time between the current time and the customer's requested pickup time (15-240 minutes)",
+      "unit": "min",
       "label": "Minutes",
       "save": "Save"
     },

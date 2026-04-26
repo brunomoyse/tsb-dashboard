@@ -272,6 +272,8 @@
 
   "settings": {
     "title": "Restaurantinstellingen",
+    "unsaved": "Niet opgeslagen",
+    "leaveConfirm": "Je hebt niet-opgeslagen wijzigingen. Toch verlaten?",
     "ordering": {
       "title": "Online bestellen",
       "description": "Online bestellen in- of uitschakelen"
@@ -280,6 +282,8 @@
       "title": "Openingsuren",
       "description": "Openingsuren instellen voor elke dag van de week",
       "closed": "Gesloten",
+      "lunch": "Middag",
+      "dinner": "Avond",
       "monday": "Maandag",
       "tuesday": "Dinsdag",
       "wednesday": "Woensdag",
@@ -297,6 +301,7 @@
     "preparation": {
       "title": "Bereidingstijd",
       "description": "Minimale tijd tussen het huidige tijdstip en het gewenste afhaaltijdstip van de klant (15-240 minuten)",
+      "unit": "min",
       "label": "Minuten",
       "save": "Opslaan"
     },

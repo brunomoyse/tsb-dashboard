@@ -1,13 +1,13 @@
 <template>
-  <div class="p-3 sm:p-6">
+  <div class="p-3 sm:p-4 md:p-6">
     <!-- Page Header -->
-    <div class="mb-4 sm:mb-6">
+    <div class="mb-3 sm:mb-6">
       <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('orderHistory.title') }}</h1>
       <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('orderHistory.subtitle') }}</p>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+    <!-- Summary Cards (compact 3-col on mobile) -->
+    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
@@ -17,76 +17,76 @@
           <div class="hidden sm:flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented)">
             <UIcon :name="card.icon" class="size-5 text-muted" />
           </div>
-          <div>
-            <p class="text-xs text-muted">{{ card.label }}</p>
-            <p class="text-base sm:text-lg font-bold text-highlighted tabular-nums">
-              <USkeleton v-if="initialLoading" class="h-5 w-16 mt-1" />
+          <div class="min-w-0">
+            <p class="text-[11px] sm:text-xs text-muted leading-tight">{{ card.label }}</p>
+            <div class="text-sm sm:text-lg font-bold text-highlighted tabular-nums truncate">
+              <USkeleton v-if="initialLoading" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
-            </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Filters Bar -->
-    <div class="space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3 mb-4">
-      <!-- Date Range -->
-      <div class="flex items-center gap-2">
-        <label for="start-date" class="sr-only">{{ t('orderHistory.startDate') }}</label>
-        <UInput
-          id="start-date"
-          v-model="startDate"
-          type="date"
-          size="md"
-          class="flex-1 sm:w-40 sm:flex-none"
-        />
-        <span class="text-muted text-sm" aria-hidden="true">-</span>
-        <label for="end-date" class="sr-only">{{ t('orderHistory.endDate') }}</label>
-        <UInput
-          id="end-date"
-          v-model="endDate"
-          type="date"
-          size="md"
-          class="flex-1 sm:w-40 sm:flex-none"
-        />
-      </div>
-
-      <!-- Status + Type + Search row -->
-      <div class="flex items-center gap-2">
-        <!-- Status Filter -->
-        <USelectMenu
-          v-model="selectedStatus"
-          :items="statusOptions"
-          size="md"
-          class="flex-1 sm:w-44 sm:flex-none"
-        />
-
-        <!-- Type Filter -->
-        <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
-          <button
-            v-for="opt in typeOptions"
-            :key="opt.value"
-            class="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer"
-            :class="selectedType === opt.value
-              ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-              : 'text-muted hover:text-highlighted'
-            "
-            @click="selectedType = opt.value"
-          >
-            <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
-            <span>{{ opt.label }}</span>
-          </button>
-        </div>
-      </div>
-
+    <!-- Filters Bar (sticky on mobile) -->
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
       <!-- Search -->
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('orderHistory.search')"
-        size="md"
-        class="sm:w-48"
+        size="lg"
+        class="w-full sm:w-56 sm:order-3"
+        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm' }"
       />
+
+      <!-- Date Range -->
+      <div class="flex items-center gap-2 sm:order-1">
+        <label for="start-date" class="sr-only">{{ t('orderHistory.startDate') }}</label>
+        <UInput
+          id="start-date"
+          v-model="startDate"
+          type="date"
+          size="lg"
+          class="flex-1 sm:w-40 sm:flex-none"
+          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm tabular-nums' }"
+        />
+        <span class="text-muted text-sm" aria-hidden="true">–</span>
+        <label for="end-date" class="sr-only">{{ t('orderHistory.endDate') }}</label>
+        <UInput
+          id="end-date"
+          v-model="endDate"
+          type="date"
+          size="lg"
+          class="flex-1 sm:w-40 sm:flex-none"
+          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm tabular-nums' }"
+        />
+      </div>
+
+      <!-- Status + Type chip rail (horizontal scroll on mobile) -->
+      <div class="-mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide sm:order-2">
+        <USelectMenu
+          v-model="selectedStatus"
+          :items="statusOptions"
+          size="lg"
+          class="shrink-0 min-w-44"
+          :ui="{ base: 'h-10 text-sm' }"
+        />
+        <button
+          v-for="opt in typeOptions"
+          :key="opt.value"
+          type="button"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          :class="selectedType === opt.value
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+          "
+          @click="selectedType = opt.value"
+        >
+          <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
+          <span>{{ opt.label }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Desktop: Table view (>= md) -->

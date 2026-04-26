@@ -1,54 +1,64 @@
 <template>
-  <div class="p-4 sm:p-6">
+  <div class="p-3 sm:p-4 md:p-6">
     <!-- Page Header -->
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-highlighted">{{ t('coupons.title') }}</h1>
-        <p class="text-sm text-muted mt-0.5">{{ filteredCoupons.length }} {{ t('coupons.title').toLowerCase() }}</p>
+    <div class="mb-3 sm:mb-6 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-lg sm:text-2xl font-bold text-highlighted truncate">{{ t('coupons.title') }}</h1>
+        <p class="text-xs sm:text-sm text-muted mt-0.5">{{ filteredCoupons.length }} {{ t('coupons.title').toLowerCase() }}</p>
       </div>
       <UButton
         icon="i-lucide-plus"
+        size="md"
+        class="sm:hidden shrink-0"
+        :aria-label="t('coupons.add')"
+        @click="openCreateDialog"
+      />
+      <UButton
+        icon="i-lucide-plus"
+        class="hidden sm:inline-flex"
         @click="openCreateDialog"
       >
         {{ t('coupons.add') }}
       </UButton>
     </div>
 
-    <!-- Filters Bar -->
-    <div class="flex flex-wrap items-center gap-3 mb-4">
+    <!-- Filters Bar (sticky on mobile) -->
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('coupons.search')"
-        size="md"
-        class="flex-1 min-w-40"
+        size="lg"
+        class="w-full"
+        :ui="{ base: 'h-12 text-base' }"
       />
 
-      <!-- Status filter -->
-      <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
+      <!-- Combined chip rail: status + type -->
+      <div class="mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
         <button
           v-for="opt in statusFilterOptions"
-          :key="opt.value"
-          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :key="`s-${opt.value}`"
+          type="button"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
           :class="filterStatus === opt.value
-            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-            : 'text-muted hover:text-highlighted'
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
           "
           @click="filterStatus = opt.value as typeof filterStatus"
         >
           {{ opt.label }}
         </button>
-      </div>
 
-      <!-- Type filter -->
-      <div class="flex items-center gap-0.5 rounded-lg bg-(--ui-bg-accented) p-1">
+        <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
+
         <button
           v-for="opt in typeFilterOptions"
-          :key="opt.value"
-          class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          :key="`t-${opt.value}`"
+          type="button"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
           :class="filterType === opt.value
-            ? 'bg-(--ui-bg) text-highlighted shadow-sm'
-            : 'text-muted hover:text-highlighted'
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
           "
           @click="filterType = opt.value as typeof filterType"
         >
@@ -57,8 +67,104 @@
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <!-- ========== MOBILE VIEW: Cards (< md) ========== -->
+    <div class="md:hidden">
+      <!-- Skeleton -->
+      <div v-if="pending" class="space-y-2">
+        <div v-for="i in 6" :key="i" class="rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden">
+          <div class="p-3 space-y-2">
+            <USkeleton class="h-4 w-24" />
+            <USkeleton class="h-3 w-40" />
+            <USkeleton class="h-3 w-32" />
+          </div>
+          <USkeleton class="h-11 rounded-none border-t border-(--ui-border)" />
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div
+        v-else-if="filteredCoupons.length === 0"
+        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+      >
+        <UIcon name="i-lucide-ticket" class="size-14 mb-3 text-muted" />
+        <p class="text-muted text-sm">{{ t('coupons.noResults') }}</p>
+      </div>
+
+      <!-- Cards -->
+      <div v-else class="space-y-2">
+        <div
+          v-for="coupon in filteredCoupons"
+          :key="coupon.id"
+          class="rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden"
+        >
+          <button
+            type="button"
+            class="w-full p-3 text-left active:bg-(--ui-bg-elevated) transition-colors"
+            @click="openEditDialog(coupon)"
+          >
+            <!-- Top row: code + discount -->
+            <div class="flex items-center justify-between gap-3">
+              <span class="font-mono text-sm font-bold text-highlighted truncate">{{ coupon.code }}</span>
+              <span class="font-bold text-base text-(--ui-primary) shrink-0 tabular-nums">
+                {{ coupon.discountType === 'PERCENTAGE'
+                  ? `-${coupon.discountValue}%`
+                  : `-${belPriceFormat.format(Number(coupon.discountValue))}`
+                }}
+              </span>
+            </div>
+
+            <!-- Meta row -->
+            <div class="mt-1.5 flex items-center gap-3 text-xs text-muted">
+              <span class="inline-flex items-center gap-1">
+                <UIcon name="i-lucide-users" class="size-3.5" />
+                <span class="tabular-nums">{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</span>
+              </span>
+              <span v-if="coupon.minOrderAmount" class="inline-flex items-center gap-1">
+                <UIcon name="i-lucide-shopping-cart" class="size-3.5" />
+                <span class="tabular-nums">{{ belPriceFormat.format(Number(coupon.minOrderAmount)) }}</span>
+              </span>
+            </div>
+
+            <!-- Validity row -->
+            <div class="mt-1.5 flex items-center gap-2 text-xs">
+              <UIcon name="i-lucide-calendar" class="size-3.5 text-muted" />
+              <span class="text-muted truncate">{{ formatDateRange(coupon.validFrom, coupon.validUntil) }}</span>
+              <UBadge
+                v-if="coupon.validUntil && new Date(coupon.validUntil) < new Date()"
+                color="error"
+                variant="subtle"
+                size="xs"
+              >
+                {{ t('coupons.expired') }}
+              </UBadge>
+            </div>
+          </button>
+
+          <!-- Active toggle (full-width touch target) -->
+          <button
+            type="button"
+            class="w-full flex items-center justify-center gap-1.5 h-12 text-sm font-medium border-t border-(--ui-border) transition-colors active:scale-[0.99]"
+            :class="coupon.isActive
+              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+              : 'text-(--ui-text-muted) opacity-70'
+            "
+            :disabled="togglingId === coupon.id"
+            :aria-pressed="coupon.isActive"
+            @click="toggleActive(coupon)"
+          >
+            <UIcon
+              :name="togglingId === coupon.id ? 'i-lucide-loader-2' : (coupon.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
+              class="size-4"
+              :class="{ 'animate-spin': togglingId === coupon.id }"
+            />
+            {{ coupon.isActive ? t('coupons.active') : t('coupons.inactive') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
+    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
       <UTable
         v-if="!pending && filteredCoupons.length > 0"
         :columns="columns"
@@ -171,16 +277,16 @@
         <UIcon name="i-lucide-ticket" class="size-12 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('coupons.noResults') }}</p>
       </div>
-    </div>
 
-    <!-- Pagination -->
-    <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center mt-6">
-      <UPagination
-        v-model:page="page"
-        :total="filteredCoupons.length"
-        :items-per-page="pageSize"
-        show-edges
-      />
+      <!-- Pagination -->
+      <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center py-4 border-t border-(--ui-border)">
+        <UPagination
+          v-model:page="page"
+          :total="filteredCoupons.length"
+          :items-per-page="pageSize"
+          show-edges
+        />
+      </div>
     </div>
   </div>
 

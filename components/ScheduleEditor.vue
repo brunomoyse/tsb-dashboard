@@ -1,13 +1,15 @@
 <template>
-  <div class="space-y-1">
+  <div class="divide-y divide-default">
     <div
       v-for="day in days"
       :key="day.key"
-      class="py-3 border-b border-default last:border-0"
+      class="py-3 first:pt-0 last:pb-0"
     >
-      <!-- Row 1: Day name + toggle (+ closed label) -->
+      <!-- Header row: day name + toggle (+ inline times on desktop) -->
       <div class="flex items-center gap-3">
-        <div class="w-20 sm:w-28 font-medium shrink-0 text-sm sm:text-base">{{ t(`settings.hours.${day.key}`) }}</div>
+        <div class="font-medium text-sm sm:text-base flex-1 sm:flex-none sm:w-28 min-w-0 truncate">
+          {{ t(`settings.hours.${day.key}`) }}
+        </div>
         <USwitch
           :model-value="!!hours[day.key]"
           size="lg"
@@ -15,64 +17,71 @@
           unchecked-icon="i-lucide-x"
           @update:model-value="(val: boolean) => emit('toggle-day', day.key, val)"
         />
-        <span v-if="!hours[day.key]" class="text-sm text-muted italic">{{ t('settings.hours.closed') }}</span>
+        <span v-if="!hours[day.key]" class="text-xs sm:text-sm text-muted italic">
+          {{ t('settings.hours.closed') }}
+        </span>
 
-        <!-- Time inputs inline on desktop -->
-        <template v-if="hours[day.key]">
-          <div class="hidden sm:flex items-center gap-2 ml-auto">
-            <input
-              type="time"
-              v-model="hours[day.key]!.open"
-              class="border border-default rounded px-2 py-1 text-sm bg-default"
-            />
-            <span class="text-muted">–</span>
-            <input
-              type="time"
-              v-model="hours[day.key]!.close"
-              class="border border-default rounded px-2 py-1 text-sm bg-default"
-            />
-            <span class="text-muted mx-1">|</span>
-            <input
-              type="time"
-              v-model="hours[day.key]!.dinnerOpen"
-              class="border border-default rounded px-2 py-1 text-sm bg-default"
-            />
-            <span class="text-muted">–</span>
-            <input
-              type="time"
-              v-model="hours[day.key]!.dinnerClose"
-              class="border border-default rounded px-2 py-1 text-sm bg-default"
-            />
-          </div>
-        </template>
+        <!-- Desktop inline times -->
+        <div v-if="hours[day.key]" class="hidden sm:flex items-center gap-2 ml-auto tabular-nums">
+          <input
+            v-model="hours[day.key]!.open"
+            type="time"
+            class="border border-default rounded px-2 py-1 text-sm bg-default"
+          >
+          <span class="text-muted">–</span>
+          <input
+            v-model="hours[day.key]!.close"
+            type="time"
+            class="border border-default rounded px-2 py-1 text-sm bg-default"
+          >
+          <span class="text-muted mx-1">|</span>
+          <input
+            v-model="hours[day.key]!.dinnerOpen"
+            type="time"
+            class="border border-default rounded px-2 py-1 text-sm bg-default"
+          >
+          <span class="text-muted">–</span>
+          <input
+            v-model="hours[day.key]!.dinnerClose"
+            type="time"
+            class="border border-default rounded px-2 py-1 text-sm bg-default"
+          >
+        </div>
       </div>
 
-      <!-- Row 2: Time inputs on mobile — both ranges on one row -->
-      <div v-if="hours[day.key]" class="sm:hidden mt-2 ml-8">
-        <div class="flex items-center gap-1.5">
+      <!-- Mobile: stacked Lunch / Dinner rows -->
+      <div v-if="hours[day.key]" class="sm:hidden mt-3 space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-10 text-xs uppercase tracking-wide text-muted shrink-0">
+            {{ t('settings.hours.lunch') }}
+          </span>
           <input
-            type="time"
             v-model="hours[day.key]!.open"
-            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
-          />
-          <span class="text-muted text-xs">–</span>
-          <input
             type="time"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+          >
+          <span class="text-muted text-sm">–</span>
+          <input
             v-model="hours[day.key]!.close"
-            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
-          />
-          <span class="text-muted text-xs mx-0.5">|</span>
-          <input
             type="time"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+          >
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-10 text-xs uppercase tracking-wide text-muted shrink-0">
+            {{ t('settings.hours.dinner') }}
+          </span>
+          <input
             v-model="hours[day.key]!.dinnerOpen"
-            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
-          />
-          <span class="text-muted text-xs">–</span>
-          <input
             type="time"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+          >
+          <span class="text-muted text-sm">–</span>
+          <input
             v-model="hours[day.key]!.dinnerClose"
-            class="border border-default rounded-lg px-2 py-2 text-base bg-default flex-1 min-w-0"
-          />
+            type="time"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+          >
         </div>
       </div>
     </div>

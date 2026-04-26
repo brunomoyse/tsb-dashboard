@@ -1,13 +1,15 @@
 <template>
-  <div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-4 sm:space-y-8">
-    <h1 class="text-xl sm:text-2xl font-bold">{{ t('settings.title') }}</h1>
+  <div class="p-3 sm:p-4 md:p-6 max-w-4xl mx-auto space-y-3 sm:space-y-4">
+    <h1 class="text-lg sm:text-2xl font-bold">{{ t('settings.title') }}</h1>
 
-    <!-- Ordering Toggle -->
-    <UPageCard>
+    <!-- Online ordering toggle -->
+    <div class="bg-default ring ring-default rounded-xl px-4 py-4 sm:px-5">
       <div class="flex items-center justify-between gap-4">
         <div class="min-w-0">
-          <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.ordering.title') }}</h2>
-          <p class="text-sm text-muted">{{ t('settings.ordering.description') }}</p>
+          <h2 class="text-base sm:text-lg font-semibold leading-tight">{{ t('settings.ordering.title') }}</h2>
+          <p class="text-xs sm:text-sm text-muted mt-1 leading-snug">
+            {{ t('settings.ordering.description') }}
+          </p>
         </div>
         <USwitch
           v-model="orderingEnabled"
@@ -18,236 +20,335 @@
           @update:model-value="toggleOrdering"
         />
       </div>
-    </UPageCard>
+    </div>
 
-    <!-- Preparation Time -->
-    <UPageCard>
-      <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div class="min-w-0">
-          <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.preparation.title') }}</h2>
-          <p class="text-sm text-muted">{{ t('settings.preparation.description') }}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <UInput v-model.number="preparationMinutes" type="number" min="15" max="240" step="5" class="w-24" />
-          <span class="text-sm text-muted">{{ t('settings.preparation.label') }}</span>
-          <UButton
-            :label="t('common.save')"
-            icon="i-lucide-save"
-            size="sm"
-            :loading="updatingPreparation"
-            @click.prevent="savePreparation"
-          />
-        </div>
-      </div>
-    </UPageCard>
-
-    <!-- Opening Hours -->
-    <UPageCard>
-      <details open class="group">
-        <summary class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
-          <div>
-            <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.hours.title') }}</h2>
-            <p class="text-sm text-muted hidden sm:block">{{ t('settings.hours.description') }}</p>
-          </div>
-        </summary>
-
-        <div class="mt-4 space-y-4">
-          <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
-          <div class="flex justify-end">
-            <UButton :label="t('common.save')" icon="i-lucide-save" size="sm" :loading="updatingHours" @click="saveOpeningHours" />
-          </div>
-        </div>
-      </details>
-    </UPageCard>
-
-    <!-- Ordering Hours -->
-    <UPageCard>
-      <details class="group">
-        <summary class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
-          <div>
-            <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.orderingHours.title') }}</h2>
-            <p class="text-sm text-muted hidden sm:block">{{ t('settings.orderingHours.description') }}</p>
-          </div>
-        </summary>
-
-        <div class="mt-4 space-y-4">
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-sm">{{ t('settings.orderingHours.customHoursSwitch') }}</span>
-            <USwitch
-              :model-value="hasOrderingHours"
-              size="md"
-              checked-icon="i-lucide-check"
-              unchecked-icon="i-lucide-x"
-              @update:model-value="toggleCustomOrderingHours"
+    <!-- Preparation time -->
+    <div class="bg-default ring ring-default rounded-xl px-4 py-4 sm:px-5">
+      <div class="flex items-start gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-base sm:text-lg font-semibold leading-tight">{{ t('settings.preparation.title') }}</h2>
+            <UBadge
+              v-if="preparationDirty"
+              :label="t('settings.unsaved')"
+              color="warning"
+              variant="subtle"
+              size="sm"
             />
           </div>
-          <ScheduleEditor
-            v-if="hasOrderingHours"
-            :hours="localOrderingHours"
-            :days="days"
-            @toggle-day="toggleOrderingDay"
-          />
-          <div class="flex justify-end">
-            <UButton :label="t('common.save')" icon="i-lucide-save" size="sm" :loading="updatingOrderingHours" @click="saveOrderingHours" />
-          </div>
-        </div>
-      </details>
-    </UPageCard>
-
-    <!-- Schedule Overrides (special days) -->
-    <UPageCard>
-      <details class="group">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <div class="flex items-center gap-2 min-w-0">
-            <UIcon name="i-lucide-chevron-right" class="size-5 shrink-0 transition-transform group-open:rotate-90 text-muted" />
-            <div>
-              <h2 class="text-base sm:text-lg font-semibold">{{ t('settings.overrides.title') }}</h2>
-              <p class="text-sm text-muted hidden sm:block">{{ t('settings.overrides.description') }}</p>
-            </div>
-          </div>
-          <UButton
-            :label="t('settings.overrides.addButton')"
-            icon="i-lucide-plus"
-            size="sm"
-            @click.prevent="openAddOverride"
-          />
-        </summary>
-
-        <div class="mt-4">
-          <p v-if="overrides.length === 0" class="text-sm text-muted italic">
-            {{ t('settings.overrides.empty') }}
+          <p class="text-xs sm:text-sm text-muted mt-1 leading-snug">
+            {{ t('settings.preparation.description') }}
           </p>
-          <ul v-else class="divide-y divide-default">
-            <li
-              v-for="ov in overrides"
-              :key="ov.date"
-              class="flex items-center gap-3 py-3"
-            >
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-medium">{{ formatOverrideDate(ov.date) }}</span>
-                  <UBadge
-                    :label="ov.closed ? t('settings.overrides.labelClosed') : t('settings.overrides.labelSpecialHours')"
-                    :color="ov.closed ? 'error' : 'warning'"
-                    variant="subtle"
-                    size="sm"
-                  />
-                </div>
-                <p v-if="ov.note" class="text-xs text-muted mt-0.5">{{ ov.note }}</p>
-                <p v-if="!ov.closed && ov.schedule" class="text-xs text-muted mt-0.5 tabular-nums">
-                  {{ ov.schedule.open }}–{{ ov.schedule.close }}<span v-if="ov.schedule.dinnerOpen && ov.schedule.dinnerClose"> | {{ ov.schedule.dinnerOpen }}–{{ ov.schedule.dinnerClose }}</span>
-                </p>
-              </div>
-              <UButton
-                icon="i-lucide-pencil"
-                size="sm"
-                variant="soft"
-                :aria-label="t('settings.overrides.editButton')"
-                @click.prevent="openEditOverride(ov)"
-              />
-              <UButton
-                icon="i-lucide-trash"
-                size="sm"
-                color="error"
-                variant="soft"
-                :aria-label="t('settings.overrides.deleteButton')"
-                @click.prevent="deleteOverride(ov.date)"
-              />
-            </li>
-          </ul>
         </div>
-      </details>
-    </UPageCard>
+      </div>
 
-    <!-- Override modal -->
-    <UModal v-model:open="modalOpen">
-      <template #content>
-        <div class="p-5 space-y-4 min-w-0 sm:min-w-[28rem]">
-          <h3 class="text-lg font-semibold">
-            {{ editingDate ? t('settings.overrides.modalTitleEdit') : t('settings.overrides.modalTitleAdd') }}
-          </h3>
+      <div class="mt-4 flex items-center justify-center gap-3 sm:justify-start">
+        <UButton
+          icon="i-lucide-minus"
+          variant="soft"
+          color="neutral"
+          size="lg"
+          square
+          :disabled="preparationMinutes <= 15"
+          :aria-label="t('common.actions')"
+          @click.prevent="adjustPreparation(-5)"
+        />
+        <div class="flex items-baseline gap-1.5 min-w-[120px] justify-center">
+          <span class="text-3xl font-semibold tabular-nums leading-none">{{ preparationMinutes }}</span>
+          <span class="text-sm text-muted">{{ t('settings.preparation.unit') }}</span>
+        </div>
+        <UButton
+          icon="i-lucide-plus"
+          variant="soft"
+          color="neutral"
+          size="lg"
+          square
+          :disabled="preparationMinutes >= 240"
+          :aria-label="t('common.actions')"
+          @click.prevent="adjustPreparation(5)"
+        />
+      </div>
 
+      <UButton
+        v-if="preparationDirty"
+        :label="t('common.save')"
+        icon="i-lucide-save"
+        :loading="updatingPreparation"
+        block
+        class="mt-4"
+        @click.prevent="savePreparation"
+      />
+    </div>
+
+    <!-- Opening hours -->
+    <SettingsSection
+      v-model:open="openingHoursOpen"
+      :title="t('settings.hours.title')"
+      :description="t('settings.hours.description')"
+      :dirty="openingHoursDirty"
+    >
+      <div class="space-y-4">
+        <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
+        <UButton
+          v-if="openingHoursDirty"
+          :label="t('common.save')"
+          icon="i-lucide-save"
+          :loading="updatingHours"
+          block
+          @click="saveOpeningHours"
+        />
+      </div>
+    </SettingsSection>
+
+    <!-- Ordering hours -->
+    <SettingsSection
+      v-model:open="orderingHoursOpen"
+      :title="t('settings.orderingHours.title')"
+      :description="t('settings.orderingHours.description')"
+      :dirty="orderingHoursDirty"
+    >
+      <div class="space-y-4">
+        <div class="flex items-center justify-between gap-4 py-1">
+          <span class="text-sm leading-snug">{{ t('settings.orderingHours.customHoursSwitch') }}</span>
+          <USwitch
+            :model-value="hasOrderingHours"
+            size="md"
+            checked-icon="i-lucide-check"
+            unchecked-icon="i-lucide-x"
+            @update:model-value="toggleCustomOrderingHours"
+          />
+        </div>
+        <ScheduleEditor
+          v-if="hasOrderingHours"
+          :hours="localOrderingHours"
+          :days="days"
+          @toggle-day="toggleOrderingDay"
+        />
+        <p
+          v-else
+          class="text-xs sm:text-sm text-muted italic"
+        >
+          {{ t('settings.orderingHours.fallbackNotice') }}
+        </p>
+        <UButton
+          v-if="orderingHoursDirty"
+          :label="t('common.save')"
+          icon="i-lucide-save"
+          :loading="updatingOrderingHours"
+          block
+          @click="saveOrderingHours"
+        />
+      </div>
+    </SettingsSection>
+
+    <!-- Schedule overrides -->
+    <SettingsSection
+      v-model:open="overridesOpen"
+      :title="t('settings.overrides.title')"
+      :description="t('settings.overrides.description')"
+    >
+      <template #actions>
+        <UButton
+          icon="i-lucide-plus"
+          size="sm"
+          square
+          :aria-label="t('settings.overrides.addButton')"
+          @click="openAddOverride"
+        />
+      </template>
+
+      <!-- Empty state -->
+      <div
+        v-if="overrides.length === 0"
+        class="py-8 flex flex-col items-center text-center gap-3"
+      >
+        <div class="size-12 rounded-full bg-elevated flex items-center justify-center">
+          <UIcon name="i-lucide-calendar-off" class="size-6 text-muted" />
+        </div>
+        <p class="text-sm text-muted max-w-xs">{{ t('settings.overrides.empty') }}</p>
+        <UButton
+          :label="t('settings.overrides.addButton')"
+          icon="i-lucide-plus"
+          size="sm"
+          variant="soft"
+          @click="openAddOverride"
+        />
+      </div>
+
+      <!-- Overrides list -->
+      <ul v-else class="space-y-2">
+        <li v-for="ov in overrides" :key="ov.date">
+          <div
+            role="button"
+            tabindex="0"
+            class="rounded-xl ring ring-default bg-elevated/50 p-3 sm:p-4 flex items-start gap-3 cursor-pointer transition-colors hover:bg-elevated active:bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            @click="openEditOverride(ov)"
+            @keydown.enter.prevent="openEditOverride(ov)"
+            @keydown.space.prevent="openEditOverride(ov)"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-medium text-sm">{{ formatOverrideDate(ov.date) }}</span>
+                <UBadge
+                  :label="ov.closed ? t('settings.overrides.labelClosed') : t('settings.overrides.labelSpecialHours')"
+                  :color="ov.closed ? 'error' : 'warning'"
+                  variant="subtle"
+                  size="sm"
+                />
+              </div>
+              <p v-if="ov.note" class="text-xs text-muted mt-1 line-clamp-2">{{ ov.note }}</p>
+              <p
+                v-if="!ov.closed && ov.schedule"
+                class="text-xs text-muted mt-1 tabular-nums"
+              >
+                {{ ov.schedule.open }}–{{ ov.schedule.close }}<span v-if="ov.schedule.dinnerOpen && ov.schedule.dinnerClose"> · {{ ov.schedule.dinnerOpen }}–{{ ov.schedule.dinnerClose }}</span>
+              </p>
+            </div>
+            <UDropdownMenu :items="overrideMenuItems(ov)" :content="{ align: 'end' }">
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                square
+                :aria-label="t('common.actions')"
+                @click.stop
+              />
+            </UDropdownMenu>
+          </div>
+        </li>
+      </ul>
+    </SettingsSection>
+
+    <!-- Override editor: bottom sheet on mobile, side panel on desktop -->
+    <USlideover
+      v-model:open="modalOpen"
+      :side="sheetSide"
+      :ui="sheetUi"
+      :title="editingDate ? t('settings.overrides.modalTitleEdit') : t('settings.overrides.modalTitleAdd')"
+    >
+      <template #body>
+        <div class="space-y-5">
+          <!-- Date -->
           <div>
-            <label class="block text-sm font-medium mb-1">{{ t('settings.overrides.fieldDate') }}</label>
+            <label class="block text-sm font-medium mb-1.5">{{ t('settings.overrides.fieldDate') }}</label>
             <input
               v-model="form.date"
               type="date"
               :disabled="!!editingDate"
-              class="border border-default rounded px-3 py-2 text-sm bg-default w-full"
-            />
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full disabled:opacity-60"
+            >
           </div>
 
+          <!-- Type segmented control -->
           <div>
-            <label class="block text-sm font-medium mb-1">{{ t('settings.overrides.fieldType') }}</label>
-            <div class="flex gap-2">
-              <UButton
-                :label="t('settings.overrides.typeClosed')"
-                :variant="form.closed ? 'solid' : 'soft'"
-                :color="form.closed ? 'error' : 'neutral'"
-                size="sm"
+            <label class="block text-sm font-medium mb-1.5">{{ t('settings.overrides.fieldType') }}</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                class="flex flex-col items-center justify-center rounded-xl border-2 transition-colors py-3 cursor-pointer min-h-[68px]"
+                :class="form.closed
+                  ? 'border-error bg-error/5 text-error'
+                  : 'border-default bg-default text-default hover:bg-elevated'"
                 @click.prevent="form.closed = true"
-              />
-              <UButton
-                :label="t('settings.overrides.typeSpecial')"
-                :variant="!form.closed ? 'solid' : 'soft'"
-                :color="!form.closed ? 'warning' : 'neutral'"
-                size="sm"
+              >
+                <UIcon name="i-lucide-x-circle" class="size-5 mb-1" />
+                <span class="text-sm font-medium">{{ t('settings.overrides.typeClosed') }}</span>
+              </button>
+              <button
+                type="button"
+                class="flex flex-col items-center justify-center rounded-xl border-2 transition-colors py-3 cursor-pointer min-h-[68px]"
+                :class="!form.closed
+                  ? 'border-warning bg-warning/5 text-warning'
+                  : 'border-default bg-default text-default hover:bg-elevated'"
                 @click.prevent="form.closed = false"
-              />
+              >
+                <UIcon name="i-lucide-clock" class="size-5 mb-1" />
+                <span class="text-sm font-medium">{{ t('settings.overrides.typeSpecial') }}</span>
+              </button>
             </div>
           </div>
 
-          <div v-if="!form.closed" class="space-y-2">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm w-16 shrink-0">Lunch</span>
-              <input v-model="form.schedule.open" type="time" class="border border-default rounded px-2 py-1 text-sm bg-default" />
-              <span class="text-muted">–</span>
-              <input v-model="form.schedule.close" type="time" class="border border-default rounded px-2 py-1 text-sm bg-default" />
+          <!-- Special hours -->
+          <div v-if="!form.closed" class="space-y-3">
+            <div>
+              <label class="block text-xs uppercase tracking-wide text-muted mb-1.5">
+                {{ t('settings.hours.lunch') }}
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="form.schedule.open"
+                  type="time"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                >
+                <span class="text-muted">–</span>
+                <input
+                  v-model="form.schedule.close"
+                  type="time"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                >
+              </div>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm w-16 shrink-0">Dinner</span>
-              <input v-model="form.schedule.dinnerOpen" type="time" class="border border-default rounded px-2 py-1 text-sm bg-default" />
-              <span class="text-muted">–</span>
-              <input v-model="form.schedule.dinnerClose" type="time" class="border border-default rounded px-2 py-1 text-sm bg-default" />
+            <div>
+              <label class="block text-xs uppercase tracking-wide text-muted mb-1.5">
+                {{ t('settings.hours.dinner') }}
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="form.schedule.dinnerOpen"
+                  type="time"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                >
+                <span class="text-muted">–</span>
+                <input
+                  v-model="form.schedule.dinnerClose"
+                  type="time"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                >
+              </div>
             </div>
           </div>
 
+          <!-- Note -->
           <div>
-            <label class="block text-sm font-medium mb-1">{{ t('settings.overrides.fieldNote') }}</label>
+            <label class="block text-sm font-medium mb-1.5">{{ t('settings.overrides.fieldNote') }}</label>
             <input
               v-model="form.note"
               type="text"
               :placeholder="t('settings.overrides.notePlaceholder')"
-              class="border border-default rounded px-3 py-2 text-sm bg-default w-full"
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <UButton
-              :label="t('settings.overrides.cancel')"
-              variant="soft"
-              color="neutral"
-              @click.prevent="modalOpen = false"
-            />
-            <UButton
-              :label="t('settings.overrides.save')"
-              icon="i-lucide-save"
-              :loading="savingOverride"
-              @click.prevent="saveOverride"
-            />
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full"
+            >
           </div>
         </div>
       </template>
-    </UModal>
+      <template #footer>
+        <div class="flex gap-2 w-full">
+          <UButton
+            :label="t('settings.overrides.cancel')"
+            variant="soft"
+            color="neutral"
+            class="flex-1 justify-center"
+            @click.prevent="modalOpen = false"
+          />
+          <UButton
+            :label="t('settings.overrides.save')"
+            icon="i-lucide-save"
+            :loading="savingOverride"
+            class="flex-1 justify-center"
+            @click.prevent="saveOverride"
+          />
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useGqlSubscription, useNuxtApp } from '#imports'
+import type { DropdownMenuItem } from '@nuxt/ui'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
+import SettingsSection from '~/components/SettingsSection.vue'
 import gql from 'graphql-tag'
 import { onBeforeRouteLeave } from 'vue-router'
 import { print } from 'graphql'
@@ -283,7 +384,26 @@ const days = [
   { key: 'sunday' },
 ]
 
-const isDirty = ref(false)
+// Section open state
+const openingHoursOpen = ref(true)
+const orderingHoursOpen = ref(false)
+const overridesOpen = ref(false)
+
+/*
+ * Per-section dirty state. The `syncing` flag suppresses the deep watchers
+ * below while applying server data, so loading config doesn't flag the form dirty.
+ */
+const preparationDirty = ref(false)
+const openingHoursDirty = ref(false)
+const orderingHoursDirty = ref(false)
+const isAnyDirty = computed(() => preparationDirty.value || openingHoursDirty.value || orderingHoursDirty.value)
+let syncing = false
+
+const resetDirty = () => {
+  preparationDirty.value = false
+  openingHoursDirty.value = false
+  orderingHoursDirty.value = false
+}
 
 const orderingEnabled = ref(true)
 const preparationMinutes = ref(30)
@@ -303,6 +423,15 @@ const overrides = ref<ScheduleOverride[]>([])
 
 const hasOrderingHours = computed(() =>
   days.some(d => localOrderingHours[d.key] !== null)
+)
+
+// Mobile detection for slideover side
+const isMobile = ref(false)
+const sheetSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
+const sheetUi = computed(() =>
+  isMobile.value
+    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
+    : { content: 'max-w-md' }
 )
 
 const GET_CONFIG = gql`
@@ -381,6 +510,7 @@ const loadConfig = async () => {
     print(GET_CONFIG)
   )
   if (data) {
+    syncing = true
     orderingEnabled.value = data.restaurantConfig.orderingEnabled
     preparationMinutes.value = data.restaurantConfig.preparationMinutes
     for (const day of days) {
@@ -389,6 +519,9 @@ const loadConfig = async () => {
         ? parseSchedule(data.restaurantConfig.orderingHours[day.key])
         : null
     }
+    await nextTick()
+    syncing = false
+    resetDirty()
   }
 }
 
@@ -417,12 +550,12 @@ const defaultSchedule = (): DaySchedule => ({ open: '11:00', close: '14:00', din
 
 const toggleDay = (dayKey: string, open: boolean) => {
   localHours[dayKey] = open ? defaultSchedule() : null
-  isDirty.value = true
+  openingHoursDirty.value = true
 }
 
 const toggleOrderingDay = (dayKey: string, open: boolean) => {
   localOrderingHours[dayKey] = open ? defaultSchedule() : null
-  isDirty.value = true
+  orderingHoursDirty.value = true
 }
 
 const toggleCustomOrderingHours = (enabled: boolean) => {
@@ -431,6 +564,7 @@ const toggleCustomOrderingHours = (enabled: boolean) => {
       ? (localHours[day.key] ? { ...localHours[day.key]! } : null)
       : null
   }
+  orderingHoursDirty.value = true
 }
 
 const buildHoursInput = (hours: OpeningHoursMap) => {
@@ -455,7 +589,7 @@ const saveOpeningHours = async () => {
   updatingHours.value = true
   try {
     await $gqlFetch(print(UPDATE_HOURS), { variables: { hours: buildHoursInput(localHours) } })
-    isDirty.value = false
+    openingHoursDirty.value = false
   } finally {
     updatingHours.value = false
   }
@@ -465,9 +599,16 @@ const saveOrderingHours = async () => {
   updatingOrderingHours.value = true
   try {
     await $gqlFetch(print(UPDATE_ORDERING_HOURS), { variables: { hours: buildHoursInput(localOrderingHours) } })
-    isDirty.value = false
+    orderingHoursDirty.value = false
   } finally {
     updatingOrderingHours.value = false
+  }
+}
+
+const adjustPreparation = (delta: number) => {
+  const next = Math.min(240, Math.max(15, preparationMinutes.value + delta))
+  if (next !== preparationMinutes.value) {
+    preparationMinutes.value = next
   }
 }
 
@@ -476,21 +617,27 @@ const savePreparation = async () => {
   updatingPreparation.value = true
   try {
     await $gqlFetch(print(UPDATE_PREPARATION), { variables: { minutes: preparationMinutes.value } })
-    isDirty.value = false
+    preparationDirty.value = false
   } finally {
     updatingPreparation.value = false
   }
 }
 
-watch(preparationMinutes, () => { isDirty.value = true })
+watch(preparationMinutes, (val, old) => {
+  if (!syncing && val !== old) preparationDirty.value = true
+})
+
+// Watch deep into localHours / localOrderingHours so per-day time edits flag dirty
+watch(localHours, () => { if (!syncing) openingHoursDirty.value = true }, { deep: true })
+watch(localOrderingHours, () => { if (!syncing) orderingHoursDirty.value = true }, { deep: true })
 
 onBeforeRouteLeave(() => {
-  if (isDirty.value) {
-    return window.confirm('You have unsaved changes. Leave anyway?')
+  if (isAnyDirty.value) {
+    return window.confirm(t('settings.leaveConfirm'))
   }
 })
 
-// Override modal state
+// Override sheet state
 const modalOpen = ref(false)
 const editingDate = ref<string | null>(null)
 const savingOverride = ref(false)
@@ -514,7 +661,6 @@ const resetForm = () => {
 
 const openAddOverride = () => {
   resetForm()
-  // Default to tomorrow
   const d = new Date()
   d.setDate(d.getDate() + 1)
   form.date = d.toISOString().slice(0, 10)
@@ -530,8 +676,8 @@ const openEditOverride = (ov: ScheduleOverride) => {
   if (ov.schedule) {
     form.schedule.open = ov.schedule.open
     form.schedule.close = ov.schedule.close
-    form.schedule.dinnerOpen = ov.schedule.dinnerOpen ?? ''
-    form.schedule.dinnerClose = ov.schedule.dinnerClose ?? ''
+    form.schedule.dinnerOpen = ov.schedule.dinnerOpen ?? '17:00'
+    form.schedule.dinnerClose = ov.schedule.dinnerClose ?? '22:00'
   }
   modalOpen.value = true
 }
@@ -567,6 +713,22 @@ const deleteOverride = async (date: string) => {
   await loadOverrides()
 }
 
+const overrideMenuItems = (ov: ScheduleOverride): DropdownMenuItem[][] => [
+  [
+    {
+      label: t('settings.overrides.editButton'),
+      icon: 'i-lucide-pencil',
+      onSelect: () => openEditOverride(ov),
+    },
+    {
+      label: t('settings.overrides.deleteButton'),
+      icon: 'i-lucide-trash',
+      color: 'error',
+      onSelect: () => deleteOverride(ov.date),
+    },
+  ],
+]
+
 const formatOverrideDate = (iso: string) => {
   const d = new Date(iso)
   return new Intl.DateTimeFormat(locale.value, {
@@ -597,12 +759,17 @@ onMounted(() => {
   loadConfig()
   loadOverrides()
 
+  const mql = window.matchMedia('(max-width: 767px)')
+  isMobile.value = mql.matches
+  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
+
   const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null; preparationMinutes: number } }>(
     print(SUB_CONFIG_UPDATED)
   )
-  watch(liveConfig, (val) => {
+  watch(liveConfig, async (val) => {
     if (!val?.restaurantConfigUpdated) return
     const cfg = val.restaurantConfigUpdated
+    syncing = true
     orderingEnabled.value = cfg.orderingEnabled
     preparationMinutes.value = cfg.preparationMinutes
     if (cfg.openingHours) {
@@ -615,6 +782,9 @@ onMounted(() => {
         ? parseSchedule(cfg.orderingHours[day.key])
         : null
     }
+    await nextTick()
+    syncing = false
+    resetDirty()
   })
 
   const { data: liveOverrides } = useGqlSubscription<{ scheduleOverridesUpdated: ScheduleOverride[] }>(
