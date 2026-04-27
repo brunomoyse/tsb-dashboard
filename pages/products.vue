@@ -768,14 +768,16 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
       input: { [field]: value }
     })
 
-    // Update local data
+    // Update local data — reassign dataProducts.value because useAsyncData uses shallowRef
     if (dataProducts.value?.products) {
       const idx = dataProducts.value.products.findIndex(p => p.id === product.id)
       if (idx !== -1) {
-        dataProducts.value.products[idx] = {
-          ...dataProducts.value.products[idx]!,
-          [field]: value
-        } as Product
+        dataProducts.value = {
+          ...dataProducts.value,
+          products: dataProducts.value.products.map((p, i) =>
+            i === idx ? { ...p, [field]: value } as Product : p
+          )
+        }
       }
     }
   } catch (err) {
@@ -853,7 +855,10 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
     }
 
     if (dataProducts.value?.products) {
-      dataProducts.value.products.unshift(newProduct)
+      dataProducts.value = {
+        ...dataProducts.value,
+        products: [newProduct, ...dataProducts.value.products]
+      }
     }
 
     createDialog.value = false
