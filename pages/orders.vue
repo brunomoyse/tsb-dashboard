@@ -526,7 +526,7 @@
               </span>
             </div>
 
-            <div class="grid grid-cols-4 gap-1.5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <UButton
                 v-for="minutes in [15, 30, 45, 60]"
                 :key="minutes"
@@ -570,7 +570,7 @@
       </template>
 
       <template #footer>
-        <div class="flex gap-2 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex flex-col sm:flex-row gap-2 pb-[env(safe-area-inset-bottom)]">
           <UButton
             color="neutral"
             variant="outline"

@@ -259,6 +259,7 @@
   },
 
   "navigation": {
+    "menu": "Menu",
     "products": "Products",
     "orders": "Orders",
     "orderHistory": "History",

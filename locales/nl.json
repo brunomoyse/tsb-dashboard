@@ -260,6 +260,7 @@
   },
 
   "navigation": {
+    "menu": "Menu",
     "products": "Producten",
     "orders": "Bestellingen",
     "orderHistory": "Geschiedenis",

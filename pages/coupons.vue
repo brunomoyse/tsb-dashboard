@@ -34,7 +34,7 @@
       />
 
       <!-- Combined chip rail: status + type -->
-      <div class="mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
+      <div class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
         <button
           v-for="opt in statusFilterOptions"
           :key="`s-${opt.value}`"
@@ -64,6 +64,7 @@
         >
           {{ opt.label }}
         </button>
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 
