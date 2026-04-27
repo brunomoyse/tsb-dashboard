@@ -209,6 +209,8 @@
     "active": "Actief",
     "inactive": "Inactief",
     "expired": "Verlopen",
+    "scheduled": "Gepland",
+    "exhausted": "Uitgeput",
     "validFrom": "Geldig vanaf",
     "validUntil": "Geldig tot",
     "percentage": "Percentage",

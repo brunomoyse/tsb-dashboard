@@ -207,6 +207,8 @@
     "active": "激活",
     "inactive": "未激活",
     "expired": "已过期",
+    "scheduled": "已排程",
+    "exhausted": "已用尽",
     "validFrom": "有效期从",
     "validUntil": "有效期至",
     "percentage": "百分比",
