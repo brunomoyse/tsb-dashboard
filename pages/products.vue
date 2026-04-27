@@ -1,33 +1,25 @@
 <template>
   <div>
-  <div class="p-3 sm:p-4 md:p-6">
-    <!-- Page Header -->
-    <div class="mb-3 sm:mb-6 flex items-center justify-between gap-3">
+    <!-- Page Header (mobile gets its own padding, desktop inherits the wrapper) -->
+    <div class="px-3 pt-3 pb-3 sm:hidden flex items-center justify-between gap-3">
       <div class="min-w-0">
-        <h1 class="text-lg sm:text-2xl font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
-        <p class="text-xs sm:text-sm text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
+        <h1 class="text-lg font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
+        <p class="text-xs text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
       </div>
       <UButton
         icon="i-lucide-plus"
         size="md"
-        class="sm:hidden shrink-0"
+        class="shrink-0"
         :aria-label="t('products.add')"
         @click="openCreateDialog"
       />
-      <UButton
-        icon="i-lucide-plus"
-        class="hidden sm:inline-flex"
-        @click="openCreateDialog"
-      >
-        {{ t('products.add') }}
-      </UButton>
     </div>
 
-    <!-- Toolbar: Search + Category Chips (sticky on mobile) -->
-    <div class="sticky top-0 z-30 -mx-3 -mt-3 sm:mx-0 sm:mt-0 px-3 sm:px-0 pt-3 pb-3 sm:pb-4 sm:pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
+    <!-- Toolbar: Search + Category Chips (sticky on mobile, sibling of wrapper so it pins flush) -->
+    <div class="sticky top-0 z-30 px-3 pb-3 pt-1 bg-(--ui-bg-accented) sm:hidden">
       <UInput
         v-model="searchQuery"
-        name="search-products"
+        name="search-products-mobile"
         icon="i-lucide-search"
         :placeholder="t('products.search')"
         size="lg"
@@ -35,8 +27,8 @@
         :ui="{ base: 'h-12 text-base' }"
       />
 
-      <!-- Category chips (horizontal scroll on mobile, wrap on desktop) -->
-      <div class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
+      <!-- Category chips (horizontal scroll on mobile) -->
+      <div class="relative mt-2 -mx-3 px-3 flex gap-2 overflow-x-auto scrollbar-hide">
         <button
           v-for="cat in categoryFilterItems"
           :key="cat.id ?? 'all'"
@@ -50,7 +42,51 @@
         >
           {{ cat.name }}
         </button>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent" aria-hidden="true" />
+      </div>
+    </div>
+
+  <div class="p-3 sm:p-4 md:p-6">
+    <!-- Page Header (desktop only) -->
+    <div class="mb-6 hidden sm:flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
+        <p class="text-sm text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
+      </div>
+      <UButton
+        icon="i-lucide-plus"
+        @click="openCreateDialog"
+      >
+        {{ t('products.add') }}
+      </UButton>
+    </div>
+
+    <!-- Toolbar (desktop only, in normal flow inside wrapper) -->
+    <div class="hidden sm:block pb-4">
+      <UInput
+        v-model="searchQuery"
+        name="search-products"
+        icon="i-lucide-search"
+        :placeholder="t('products.search')"
+        size="lg"
+        class="w-full"
+        :ui="{ base: 'h-12 text-base' }"
+      />
+
+      <div class="relative mt-3 flex gap-2 flex-wrap">
+        <button
+          v-for="cat in categoryFilterItems"
+          :key="`d-${cat.id ?? 'all'}`"
+          type="button"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          :class="selectedCategoryId === cat.id
+            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
+            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+          "
+          @click="selectedCategoryId = cat.id"
+        >
+          {{ cat.name }}
+        </button>
       </div>
     </div>
 
@@ -377,7 +413,7 @@
 
 <script lang="ts" setup>
 import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useCategoriesStore, useGqlMutation, useGqlQuery, useGqlSubscription, useNuxtApp } from '#imports'
 import ProductDialog from '~/components/ProductDialog.vue'
 import gql from 'graphql-tag'
@@ -904,20 +940,18 @@ const handleChoicesChanged = async () => {
   await refetchProducts()
 }
 
-// Subscribe to real-time product updates
-onMounted(() => {
-  const { data: liveProduct } = useGqlSubscription<{ productUpdated: Partial<Product> }>(
-    print(SUB_PRODUCT_UPDATED)
-  )
-  watch(liveProduct, (val) => {
-    if (!val?.productUpdated?.id || !dataProducts.value?.products) return
-    const idx = dataProducts.value.products.findIndex(p => p.id === val.productUpdated.id)
-    if (idx !== -1) {
-      dataProducts.value.products.splice(idx, 1, {
-        ...dataProducts.value.products[idx]!,
-        ...val.productUpdated,
-      } as Product)
-    }
-  })
+// Subscribe in setup so onScopeDispose ties to the component scope; in onMounted it leaks the WebSocket.
+const { data: liveProduct } = useGqlSubscription<{ productUpdated: Partial<Product> }>(
+  print(SUB_PRODUCT_UPDATED)
+)
+watch(liveProduct, (val) => {
+  if (!val?.productUpdated?.id || !dataProducts.value?.products) return
+  const idx = dataProducts.value.products.findIndex(p => p.id === val.productUpdated.id)
+  if (idx !== -1) {
+    dataProducts.value.products.splice(idx, 1, {
+      ...dataProducts.value.products[idx]!,
+      ...val.productUpdated,
+    } as Product)
+  }
 })
 </script>

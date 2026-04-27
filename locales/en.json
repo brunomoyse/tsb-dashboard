@@ -208,6 +208,8 @@
     "active": "Active",
     "inactive": "Inactive",
     "expired": "Expired",
+    "scheduled": "Scheduled",
+    "exhausted": "Exhausted",
     "validFrom": "Valid From",
     "validUntil": "Valid Until",
     "percentage": "Percentage",

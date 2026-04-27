@@ -120,6 +120,8 @@ export interface TranslationInput {
     name: string
 }
 
+export type CouponStatus = 'ACTIVE' | 'INACTIVE' | 'SCHEDULED' | 'EXPIRED' | 'EXHAUSTED';
+
 export interface Coupon {
     id: string;
     code: string;
@@ -130,6 +132,7 @@ export interface Coupon {
     maxUsesPerUser: number | null;
     usedCount: number;
     isActive: boolean;
+    status: CouponStatus;
     validFrom: string | null;
     validUntil: string | null;
     createdAt: string;
