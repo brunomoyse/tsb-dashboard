@@ -130,35 +130,24 @@
             <div class="mt-1.5 flex items-center gap-2 text-xs">
               <UIcon name="i-lucide-calendar" class="size-3.5 text-muted" />
               <span class="text-muted truncate">{{ formatDateRange(coupon.validFrom, coupon.validUntil) }}</span>
-              <UBadge
-                v-if="coupon.validUntil && new Date(coupon.validUntil) < new Date()"
-                color="error"
-                variant="subtle"
-                size="xs"
-              >
-                {{ t('coupons.expired') }}
-              </UBadge>
             </div>
           </button>
 
-          <!-- Active toggle (full-width touch target) -->
+          <!-- Status pill (clickable when admin can toggle, read-only otherwise) -->
           <button
             type="button"
-            class="w-full flex items-center justify-center gap-1.5 h-12 text-sm font-medium border-t border-(--ui-border) transition-colors active:scale-[0.99]"
-            :class="coupon.isActive
-              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-              : 'text-(--ui-text-muted) opacity-70'
-            "
-            :disabled="togglingId === coupon.id"
-            :aria-pressed="coupon.isActive"
+            class="w-full flex items-center justify-center gap-1.5 h-12 text-sm font-medium border-t border-(--ui-border) transition-colors active:scale-[0.99] disabled:cursor-not-allowed"
+            :class="statusMeta(coupon.status).tone"
+            :disabled="togglingId === coupon.id || (coupon.status !== 'ACTIVE' && coupon.status !== 'INACTIVE')"
+            :aria-pressed="coupon.status === 'ACTIVE'"
             @click="toggleActive(coupon)"
           >
             <UIcon
-              :name="togglingId === coupon.id ? 'i-lucide-loader-2' : (coupon.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
+              :name="togglingId === coupon.id ? 'i-lucide-loader-2' : statusMeta(coupon.status).icon"
               class="size-4"
               :class="{ 'animate-spin': togglingId === coupon.id }"
             />
-            {{ coupon.isActive ? t('coupons.active') : t('coupons.inactive') }}
+            {{ statusMeta(coupon.status).label }}
           </button>
         </div>
       </div>
@@ -214,37 +203,24 @@
 
         <template #isActive-cell="{ row }">
           <button
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
-            :class="row.original.isActive
-              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
-              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
-            "
-            :disabled="togglingId === row.original.id"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+            :class="[statusMeta(row.original.status).tone, 'border-transparent']"
+            :disabled="togglingId === row.original.id || (row.original.status !== 'ACTIVE' && row.original.status !== 'INACTIVE')"
             @click.stop="toggleActive(row.original)"
           >
             <UIcon
-              :name="togglingId === row.original.id ? 'i-lucide-loader-2' : (row.original.isActive ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
+              :name="togglingId === row.original.id ? 'i-lucide-loader-2' : statusMeta(row.original.status).icon"
               class="size-3.5"
               :class="{ 'animate-spin': togglingId === row.original.id }"
             />
-            {{ row.original.isActive ? t('coupons.active') : t('coupons.inactive') }}
+            {{ statusMeta(row.original.status).label }}
           </button>
         </template>
 
         <template #validPeriod-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-muted">
-              {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
-            </span>
-            <UBadge
-              v-if="row.original.validUntil && new Date(row.original.validUntil) < new Date()"
-              color="error"
-              variant="subtle"
-              size="xs"
-            >
-              {{ t('coupons.expired') }}
-            </UBadge>
-          </div>
+          <span class="text-sm text-muted">
+            {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
+          </span>
         </template>
 
         <template #actions-cell="{ row }">
@@ -380,7 +356,7 @@
 
 <script lang="ts" setup>
 import type { Coupon, CreateCouponInput, UpdateCouponInput } from '~/types'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useGqlMutation, useGqlQuery, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
@@ -427,6 +403,7 @@ const COUPONS_QUERY = gql`
       maxUsesPerUser
       usedCount
       isActive
+      status
       validFrom
       validUntil
       createdAt
@@ -446,6 +423,7 @@ const CREATE_COUPON_MUTATION = gql`
       maxUsesPerUser
       usedCount
       isActive
+      status
       validFrom
       validUntil
       createdAt
@@ -465,6 +443,7 @@ const UPDATE_COUPON_MUTATION = gql`
       maxUsesPerUser
       usedCount
       isActive
+      status
       validFrom
       validUntil
       createdAt
@@ -477,6 +456,7 @@ const TOGGLE_COUPON_MUTATION = gql`
     updateCoupon(id: $id, input: $input) {
       id
       isActive
+      status
     }
   }
 `
@@ -493,6 +473,7 @@ const SUB_COUPON_UPDATED = gql`
       maxUsesPerUser
       usedCount
       isActive
+      status
       validFrom
       validUntil
       createdAt
@@ -510,11 +491,26 @@ const coupons = computed(() => dataCoupons.value?.coupons ?? [])
 
 const filteredCoupons = computed(() => coupons.value.filter(c => {
   if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
-  if (filterStatus.value === 'active' && !c.isActive) return false
-  if (filterStatus.value === 'inactive' && c.isActive) return false
+  if (filterStatus.value === 'active' && c.status !== 'ACTIVE') return false
+  if (filterStatus.value === 'inactive' && c.status === 'ACTIVE') return false
   if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
   return true
 }))
+
+const statusMeta = (status: Coupon['status']) => {
+  switch (status) {
+    case 'ACTIVE':
+      return { label: t('coupons.active'), icon: 'i-lucide-circle-check', tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' }
+    case 'INACTIVE':
+      return { label: t('coupons.inactive'), icon: 'i-lucide-circle-x', tone: 'text-(--ui-text-muted) opacity-70' }
+    case 'EXPIRED':
+      return { label: t('coupons.expired'), icon: 'i-lucide-clock-alert', tone: 'bg-red-500/10 text-red-700 dark:text-red-400' }
+    case 'SCHEDULED':
+      return { label: t('coupons.scheduled'), icon: 'i-lucide-calendar-clock', tone: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' }
+    case 'EXHAUSTED':
+      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' }
+  }
+}
 
 const paginatedCoupons = computed(() => {
   const start = (page.value - 1) * pageSize.value
@@ -703,19 +699,17 @@ const handleSubmit = async () => {
   }
 }
 
-// Subscribe to real-time coupon updates
-onMounted(() => {
-  const { data: liveCoupon } = useGqlSubscription<{ couponUpdated: Coupon }>(
-    print(SUB_COUPON_UPDATED)
-  )
-  watch(liveCoupon, (val) => {
-    if (!val?.couponUpdated?.id || !dataCoupons.value?.coupons) return
-    const idx = dataCoupons.value.coupons.findIndex(c => c.id === val.couponUpdated.id)
-    if (idx === -1) {
-      dataCoupons.value.coupons.unshift(val.couponUpdated)
-    } else {
-      dataCoupons.value.coupons.splice(idx, 1, val.couponUpdated)
-    }
-  })
+// Subscribe in setup so onScopeDispose ties to the component scope; in onMounted it leaks the WebSocket.
+const { data: liveCoupon } = useGqlSubscription<{ couponUpdated: Coupon }>(
+  print(SUB_COUPON_UPDATED)
+)
+watch(liveCoupon, (val) => {
+  if (!val?.couponUpdated?.id || !dataCoupons.value?.coupons) return
+  const idx = dataCoupons.value.coupons.findIndex(c => c.id === val.couponUpdated.id)
+  if (idx === -1) {
+    dataCoupons.value.coupons.unshift(val.couponUpdated)
+  } else {
+    dataCoupons.value.coupons.splice(idx, 1, val.couponUpdated)
+  }
 })
 </script>
