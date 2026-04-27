@@ -755,6 +755,40 @@ const SUB_OVERRIDES_UPDATED = gql`
   }
 `
 
+// Subscribe in setup so onScopeDispose ties to the component scope; in onMounted it leaks the WebSocket.
+const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null; preparationMinutes: number } }>(
+  print(SUB_CONFIG_UPDATED)
+)
+watch(liveConfig, async (val) => {
+  if (!val?.restaurantConfigUpdated) return
+  const cfg = val.restaurantConfigUpdated
+  syncing = true
+  orderingEnabled.value = cfg.orderingEnabled
+  preparationMinutes.value = cfg.preparationMinutes
+  if (cfg.openingHours) {
+    for (const day of days) {
+      localHours[day.key] = parseSchedule(cfg.openingHours[day.key])
+    }
+  }
+  for (const day of days) {
+    localOrderingHours[day.key] = cfg.orderingHours
+      ? parseSchedule(cfg.orderingHours[day.key])
+      : null
+  }
+  await nextTick()
+  syncing = false
+  resetDirty()
+})
+
+const { data: liveOverrides } = useGqlSubscription<{ scheduleOverridesUpdated: ScheduleOverride[] }>(
+  print(SUB_OVERRIDES_UPDATED)
+)
+watch(liveOverrides, (val) => {
+  if (val?.scheduleOverridesUpdated) {
+    overrides.value = val.scheduleOverridesUpdated
+  }
+})
+
 onMounted(() => {
   loadConfig()
   loadOverrides()
@@ -762,38 +796,5 @@ onMounted(() => {
   const mql = window.matchMedia('(max-width: 767px)')
   isMobile.value = mql.matches
   mql.addEventListener('change', (e) => { isMobile.value = e.matches })
-
-  const { data: liveConfig } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean; openingHours: OpeningHoursMap; orderingHours: OpeningHoursMap | null; preparationMinutes: number } }>(
-    print(SUB_CONFIG_UPDATED)
-  )
-  watch(liveConfig, async (val) => {
-    if (!val?.restaurantConfigUpdated) return
-    const cfg = val.restaurantConfigUpdated
-    syncing = true
-    orderingEnabled.value = cfg.orderingEnabled
-    preparationMinutes.value = cfg.preparationMinutes
-    if (cfg.openingHours) {
-      for (const day of days) {
-        localHours[day.key] = parseSchedule(cfg.openingHours[day.key])
-      }
-    }
-    for (const day of days) {
-      localOrderingHours[day.key] = cfg.orderingHours
-        ? parseSchedule(cfg.orderingHours[day.key])
-        : null
-    }
-    await nextTick()
-    syncing = false
-    resetDirty()
-  })
-
-  const { data: liveOverrides } = useGqlSubscription<{ scheduleOverridesUpdated: ScheduleOverride[] }>(
-    print(SUB_OVERRIDES_UPDATED)
-  )
-  watch(liveOverrides, (val) => {
-    if (val?.scheduleOverridesUpdated) {
-      overrides.value = val.scheduleOverridesUpdated
-    }
-  })
 })
 </script>
