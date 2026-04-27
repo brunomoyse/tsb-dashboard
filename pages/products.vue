@@ -24,7 +24,7 @@
     </div>
 
     <!-- Toolbar: Search + Category Chips (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
+    <div class="sticky top-0 z-30 -mx-3 -mt-3 sm:mx-0 sm:mt-0 px-3 sm:px-0 pt-3 pb-3 sm:pb-4 sm:pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
       <UInput
         v-model="searchQuery"
         name="search-products"
