@@ -90,7 +90,7 @@
 
     <UDashboardPanel :ui="{ body: 'bg-(--ui-bg-accented)' }">
       <template #header>
-        <UDashboardNavbar class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <UDashboardNavbar :toggle="false" class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <!-- Mobile header: hamburger + logo -->
           <template #left>
             <div class="flex items-center gap-2">
