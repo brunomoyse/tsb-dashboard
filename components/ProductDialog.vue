@@ -7,8 +7,8 @@
     :ui="{
       content: 'max-lg:h-full max-lg:max-h-full max-lg:rounded-none lg:max-w-4xl',
       overlay: 'backdrop-blur-sm bg-gray-950/75',
-      body: 'max-lg:p-4',
-      footer: 'max-lg:flex-col max-lg:gap-2 lg:justify-end'
+      body: 'max-lg:p-4 max-lg:overflow-y-auto',
+      footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end'
     }"
   >
     <template #body>
@@ -67,8 +67,8 @@
             </UFormField>
           </div>
 
-          <!-- Right Column: Image Preview / Upload -->
-          <div class="flex flex-col items-center justify-center">
+          <!-- Right Column: Image Preview / Upload (shown first on mobile) -->
+          <div class="flex flex-col items-center justify-center order-first md:order-none">
             <div v-if="hasImage" class="flex flex-col items-center justify-center gap-3 sm:gap-4">
               <img
                 :src="imageUrl"

@@ -90,10 +90,18 @@
 
     <UDashboardPanel :ui="{ body: 'bg-(--ui-bg-accented)' }">
       <template #header>
-        <UDashboardNavbar class="md:hidden">
-          <!-- Mobile header: logo + menu -->
+        <UDashboardNavbar class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+          <!-- Mobile header: hamburger + logo -->
           <template #left>
-            <div class="flex items-center gap-2 md:hidden">
+            <div class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-menu"
+                color="neutral"
+                variant="ghost"
+                size="md"
+                :aria-label="t('navigation.menu')"
+                @click="drawerOpen = true"
+              />
               <img
                 src="/tsb-logo-b.png"
                 alt="TSB Logo"
@@ -106,51 +114,88 @@
               />
             </div>
           </template>
-          <template #right>
-            <div class="md:hidden flex items-center gap-1">
-              <UDropdownMenu :items="mobileMenuItems">
-                <UButton
-                  icon="i-lucide-ellipsis-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  size="md"
-                />
-              </UDropdownMenu>
-            </div>
-          </template>
         </UDashboardNavbar>
       </template>
 
       <template #body>
-        <div id="main-content" class="pb-20 md:pb-0">
+        <div id="main-content">
           <slot />
         </div>
       </template>
     </UDashboardPanel>
 
-    <!-- Bottom Navigation Bar (tablet/mobile only) -->
-    <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-(--ui-bg-elevated) border-t border-(--ui-border)">
-      <nav class="flex justify-around items-center h-16">
-        <NuxtLink
-          v-for="item in bottomNavItems"
-          :key="item.to"
-          :to="item.to"
-          class="relative flex flex-col items-center justify-center gap-1 py-2 px-3 min-w-16 min-h-12 rounded-lg transition-colors"
-          :class="item.active ? 'text-(--ui-primary)' : 'text-(--ui-text-muted)'"
-        >
-          <span class="relative">
-            <UIcon :name="item.icon" class="size-6" />
-            <span
-              v-if="item.badge && item.badge > 0"
-              class="absolute -top-1 -right-2 min-w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 animate-pulse"
-            >
-              {{ item.badge }}
-            </span>
-          </span>
-          <span class="text-[11px] font-medium">{{ item.label }}</span>
-        </NuxtLink>
-      </nav>
-    </div>
+    <!-- Mobile Navigation Drawer -->
+    <USlideover
+      v-model:open="drawerOpen"
+      side="left"
+      :title="t('navigation.menu')"
+      :ui="{
+        content: 'max-w-xs',
+        header: 'border-b border-default',
+        body: 'p-0',
+        footer: 'border-t border-default flex flex-col gap-3 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
+      }"
+    >
+      <template #header>
+        <div class="flex items-center justify-center py-2 w-full">
+          <img
+            src="/tsb-logo-b.png"
+            alt="TSB Logo"
+            class="h-12 w-auto dark:hidden"
+          />
+          <img
+            src="/tsb-logo-w.png"
+            alt="TSB Logo"
+            class="h-12 w-auto hidden dark:block"
+          />
+        </div>
+      </template>
+
+      <template #body>
+        <UNavigationMenu
+          :items="navigationItems"
+          orientation="vertical"
+          size="lg"
+          class="flex-1"
+          :ui="{ link: 'py-4 px-4 text-base w-full' }"
+        />
+      </template>
+
+      <template #footer>
+        <UDropdownMenu :items="languageItems">
+          <UButton
+            :label="currentLocaleLabel"
+            :icon="currentLocaleIcon"
+            color="neutral"
+            variant="ghost"
+            size="lg"
+            block
+          />
+        </UDropdownMenu>
+
+        <UButton
+          :label="colorMode.value === 'dark' ? t('theme.dark') : t('theme.light')"
+          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          block
+          @click="toggleTheme"
+        />
+
+        <div class="h-px bg-(--ui-border)" />
+
+        <UButton
+          :label="t('navigation.logout')"
+          icon="i-lucide-log-out"
+          color="error"
+          variant="ghost"
+          size="lg"
+          block
+          @click="handleLogout"
+        />
+      </template>
+    </USlideover>
   </UDashboardGroup>
 </template>
 
@@ -159,10 +204,16 @@ import type { NavigationMenuItem } from '#ui/types'
 
 const { locale, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
-const localePath = useLocalePath()
 const route = useRoute()
 const colorMode = useColorMode()
 const ordersStore = useOrdersStore()
+
+const drawerOpen = ref(false)
+
+// Auto-close drawer on navigation
+watch(() => route.fullPath, () => {
+  drawerOpen.value = false
+})
 
 const isMobile = ref(false)
 onMounted(() => {
@@ -233,65 +284,6 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => [[
     active: route.path.includes('/settings')
   }
 ]])
-
-const bottomNavItems = computed(() => [
-  {
-    label: t('navigation.products'),
-    icon: 'i-lucide-package',
-    to: `/${locale.value}/products`,
-    active: route.path.includes('/products'),
-    badge: 0
-  },
-  {
-    label: t('navigation.orders'),
-    icon: 'i-lucide-shopping-bag',
-    to: `/${locale.value}/orders`,
-    active: route.path.includes('/orders'),
-    badge: ordersStore.unacknowledgedPendingCount
-  },
-  {
-    label: t('navigation.orderHistory'),
-    icon: 'i-lucide-history',
-    to: `/${locale.value}/order-history`,
-    active: route.path.includes('/order-history'),
-    badge: 0
-  },
-  {
-    label: t('navigation.coupons'),
-    icon: 'i-lucide-ticket',
-    to: `/${locale.value}/coupons`,
-    active: route.path.includes('/coupons'),
-    badge: 0
-  },
-  {
-    label: t('navigation.settings'),
-    icon: 'i-lucide-settings',
-    to: `/${locale.value}/settings`,
-    active: route.path.includes('/settings'),
-    badge: 0
-  }
-])
-
-const mobileMenuItems = computed(() => [
-  languages.map(lang => ({
-    label: lang.label,
-    icon: lang.value === locale.value ? 'i-lucide-check' : 'i-lucide-languages',
-    disabled: lang.value === locale.value,
-    onClick: () => onLanguageChange(lang.value)
-  })),
-  [
-    {
-      label: colorMode.value === 'dark' ? t('theme.dark') : t('theme.light'),
-      icon: colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun',
-      onClick: toggleTheme
-    },
-    {
-      label: t('navigation.logout'),
-      icon: 'i-lucide-log-out',
-      onClick: handleLogout
-    }
-  ]
-])
 
 const onLanguageChange = (newLocale: 'fr' | 'en' | 'nl' | 'zh') => {
   const newPath = switchLocalePath(newLocale)

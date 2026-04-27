@@ -258,6 +258,7 @@
   },
 
   "navigation": {
+    "menu": "菜单",
     "products": "产品",
     "orders": "订单",
     "orderHistory": "历史",

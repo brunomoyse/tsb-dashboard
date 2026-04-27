@@ -6,19 +6,19 @@
       <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
     </div>
 
-    <!-- Summary Cards (compact on mobile) -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-6">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-3 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
         class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
       >
-        <div class="flex items-center gap-2 sm:gap-3">
-          <div class="hidden sm:flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
             <UIcon :name="card.icon" class="size-5 text-muted" />
           </div>
           <div class="min-w-0">
-            <p class="text-[11px] sm:text-xs text-muted leading-tight">{{ card.label }}</p>
+            <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
             <div class="text-base sm:text-lg font-bold text-highlighted tabular-nums truncate">
               <USkeleton v-if="pending" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
@@ -55,7 +55,7 @@
       </div>
 
       <!-- Combined chip rail: period + type -->
-      <div class="mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
+      <div class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
         <button
           v-for="preset in periodPresets"
           :key="`p-${preset.key}`"
@@ -86,6 +86,7 @@
           <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
           {{ opt.label }}
         </button>
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 

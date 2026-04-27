@@ -6,20 +6,20 @@
       <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('orderHistory.subtitle') }}</p>
     </div>
 
-    <!-- Summary Cards (compact 3-col on mobile) -->
-    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-6">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-6">
       <div
         v-for="card in summaryCards"
         :key="card.label"
         class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
       >
-        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-          <div class="hidden sm:flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented)">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
             <UIcon :name="card.icon" class="size-5 text-muted" />
           </div>
           <div class="min-w-0">
-            <p class="text-[11px] sm:text-xs text-muted leading-tight">{{ card.label }}</p>
-            <div class="text-sm sm:text-lg font-bold text-highlighted tabular-nums truncate">
+            <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
+            <div class="text-base sm:text-lg font-bold text-highlighted tabular-nums truncate">
               <USkeleton v-if="initialLoading" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
             </div>
@@ -63,15 +63,17 @@
         />
       </div>
 
-      <!-- Status + Type chip rail (horizontal scroll on mobile) -->
-      <div class="-mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide sm:order-2">
-        <USelectMenu
-          v-model="selectedStatus"
-          :items="statusOptions"
-          size="lg"
-          class="shrink-0 min-w-44"
-          :ui="{ base: 'h-10 text-sm' }"
-        />
+      <!-- Status filter (full-width on mobile, inline on sm+) -->
+      <USelectMenu
+        v-model="selectedStatus"
+        :items="statusOptions"
+        size="lg"
+        class="w-full sm:w-auto sm:min-w-44 sm:order-2"
+        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm' }"
+      />
+
+      <!-- Type chip rail (horizontal scroll on mobile) -->
+      <div class="relative -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide sm:order-2">
         <button
           v-for="opt in typeOptions"
           :key="opt.value"
@@ -86,6 +88,7 @@
           <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
           <span>{{ opt.label }}</span>
         </button>
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 
