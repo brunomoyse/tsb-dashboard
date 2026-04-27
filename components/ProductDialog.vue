@@ -170,36 +170,42 @@
         </div>
 
         <!-- Row 3: Toggles -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div class="flex flex-wrap gap-x-5 gap-y-3">
           <USwitch
             v-model="editedProduct.isVisible"
             :label="t('common.visible')"
             size="sm"
+            class="shrink-0"
           />
           <USwitch
             v-model="editedProduct.isAvailable"
             :label="t('common.available')"
             size="sm"
+            class="shrink-0"
           />
           <USwitch
             v-model="editedProduct.isDiscountable"
             :label="t('products.discountable')"
             size="sm"
+            class="shrink-0"
           />
           <USwitch
             v-model="editedProduct.isHalal"
             :label="t('products.halal')"
             size="sm"
+            class="shrink-0"
           />
           <USwitch
             v-model="editedProduct.isVegetarian"
             :label="t('products.vegetarian')"
             size="sm"
+            class="shrink-0"
           />
           <USwitch
             v-model="editedProduct.isSpicy"
             :label="t('products.spicy')"
             size="sm"
+            class="shrink-0"
           />
         </div>
 
