@@ -48,6 +48,13 @@
     "choices": {
       "title": "Options du produit",
       "add": "Ajouter une option",
+      "groupAdd": "Ajouter un groupe",
+      "groupLabel": "Groupe #{index}",
+      "groupNew": "Nouveau groupe",
+      "groupName": "Nom du groupe",
+      "choicesTitle": "Options",
+      "minSelections": "Sélections min.",
+      "maxSelections": "Sélections max.",
       "none": "Aucune option définie",
       "new": "Nouvelle option",
       "priceModifier": "Modificateur de prix (€)",
@@ -373,6 +380,10 @@
     "pieceCountPositive": "Le nombre de pièces doit être un entier positif",
     "choiceNameRequired": "L'option #{index} doit avoir au moins un nom renseigné",
     "choicePriceRequired": "L'option #{index} doit avoir un modificateur de prix valide",
+    "choiceGroupNameRequired": "Le groupe #{index} doit avoir au moins un nom renseigné",
+    "choiceGroupRangeInvalid": "Le groupe #{index} a des valeurs min/max invalides",
+    "choiceGroupEmpty": "Le groupe #{index} doit contenir au moins une option",
+    "choiceSaveFailed": "Impossible d'enregistrer les groupes/options du produit",
     "vatCategoryRequired": "La catégorie TVA est requise et doit être : nourriture, boisson, taux zéro ou hors champ"
   },
 

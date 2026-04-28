@@ -515,6 +515,7 @@ const PRODUCTS_QUERY = gql`
       choices {
         id
         productId
+        choiceGroupId
         priceModifier
         sortOrder
         name
@@ -571,6 +572,7 @@ const CREATE_PRODUCT_MUTATION = gql`
       choices {
         id
         productId
+        choiceGroupId
         priceModifier
         sortOrder
         name
@@ -612,6 +614,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
       choices {
         id
         productId
+        choiceGroupId
         priceModifier
         sortOrder
         name

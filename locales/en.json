@@ -47,6 +47,13 @@
     "choices": {
       "title": "Product Choices",
       "add": "Add Choice",
+      "groupAdd": "Add Group",
+      "groupLabel": "Group #{index}",
+      "groupNew": "New Group",
+      "groupName": "Group Name",
+      "choicesTitle": "Choices",
+      "minSelections": "Min selections",
+      "maxSelections": "Max selections",
       "none": "No choices defined",
       "new": "New choice",
       "priceModifier": "Price Modifier (€)",
@@ -372,6 +379,10 @@
     "pieceCountPositive": "Piece count must be a positive integer",
     "choiceNameRequired": "Choice #{index} must have at least one name",
     "choicePriceRequired": "Choice #{index} must have a valid price modifier",
+    "choiceGroupNameRequired": "Group #{index} must have at least one name",
+    "choiceGroupRangeInvalid": "Group #{index} has invalid min/max selections",
+    "choiceGroupEmpty": "Group #{index} must contain at least one choice",
+    "choiceSaveFailed": "Failed to save product groups/choices",
     "vatCategoryRequired": "VAT category is required and must be one of: food, beverage, zero-rated, out of scope"
   },
 

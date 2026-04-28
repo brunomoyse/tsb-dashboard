@@ -124,7 +124,7 @@
 
               <!-- File input -->
               <div class="w-full max-w-xs">
-                <UFormField label="Upload Image" name="image">
+                <UFormField :label="t('products.image')" name="image">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -209,7 +209,7 @@
           />
         </div>
 
-        <!-- Row 4: Product Choices (edit mode only) -->
+        <!-- Row 4: Product Choice Groups (edit mode only) -->
         <div v-if="mode === 'edit' && product" class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-medium">{{ t('products.choices.title') }}</h3>
@@ -217,47 +217,55 @@
               icon="i-lucide-plus"
               size="xs"
               variant="outline"
-              @click="addNewChoice"
+              @click="addNewChoiceGroup"
             >
-              {{ t('products.choices.add') }}
+              {{ t('products.choices.groupAdd') }}
             </UButton>
           </div>
 
-          <div v-if="editedChoices.length === 0" class="text-sm text-muted italic">
+          <div v-if="editedChoiceGroups.length === 0" class="text-sm text-muted italic">
             {{ t('products.choices.none') }}
           </div>
 
           <div v-else class="space-y-3">
             <div
-              v-for="(choice, cIdx) in editedChoices"
-              :key="choice.id || `new-${cIdx}`"
-              class="border rounded-lg p-3 space-y-2"
+              v-for="(group, gIdx) in editedChoiceGroups"
+              :key="group.id || `group-new-${gIdx}`"
+              class="border rounded-lg p-3 space-y-3"
             >
               <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-muted">
-                  {{ choice.id ? `#${cIdx + 1}` : t('products.choices.new') }}
+                <span class="text-xs font-semibold text-muted">
+                  {{ group.id ? t('products.choices.groupLabel', { index: gIdx + 1 }) : t('products.choices.groupNew') }}
                 </span>
                 <UButton
                   icon="i-lucide-trash-2"
                   size="xs"
                   color="error"
                   variant="ghost"
-                  @click="removeChoice(cIdx)"
+                  @click="removeChoiceGroup(gIdx)"
                 />
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <UFormField :label="t('products.choices.priceModifier')" :name="`choice-${cIdx}-price`">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <UFormField :label="t('products.choices.minSelections')" :name="`group-${gIdx}-min`">
                   <UInput
-                    v-model="choice.priceModifier"
+                    v-model.number="group.minSelections"
                     type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                    min="0"
+                    placeholder="1"
                   />
                 </UFormField>
-                <UFormField :label="t('products.choices.sortOrder')" :name="`choice-${cIdx}-sort`">
+                <UFormField :label="t('products.choices.maxSelections')" :name="`group-${gIdx}-max`">
                   <UInput
-                    v-model.number="choice.sortOrder"
+                    v-model.number="group.maxSelections"
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                  />
+                </UFormField>
+                <UFormField :label="t('products.choices.sortOrder')" :name="`group-${gIdx}-sort`">
+                  <UInput
+                    v-model.number="group.sortOrder"
                     type="number"
                     placeholder="0"
                   />
@@ -268,14 +276,76 @@
                 <UFormField
                   v-for="lang in languages"
                   :key="lang"
-                  :label="`${lang.toUpperCase()} ${t('common.name')}`"
-                  :name="`choice-${cIdx}-${lang}`"
+                  :label="`${lang.toUpperCase()} ${t('products.choices.groupName')}`"
+                  :name="`group-${gIdx}-${lang}`"
                 >
                   <UInput
-                    v-model="getChoiceTranslation(choice, lang).name"
+                    v-model="getGroupTranslation(group, lang).name"
                     :placeholder="t('common.name')"
                   />
                 </UFormField>
+              </div>
+
+                <div class="border-t pt-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-muted">{{ t('products.choices.choicesTitle') }}</span>
+                  <UButton icon="i-lucide-plus" size="xs" variant="outline" @click="addNewChoice(gIdx)">
+                    {{ t('products.choices.add') }}
+                  </UButton>
+                </div>
+
+                <div v-if="group.choices.length === 0" class="text-xs text-muted italic">
+                  {{ t('products.choices.none') }}
+                </div>
+
+                <div
+                  v-for="(choice, cIdx) in group.choices"
+                  :key="choice.id || `new-${gIdx}-${cIdx}`"
+                  class="border rounded-md p-2 space-y-2"
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-muted">{{ choice.id ? `#${cIdx + 1}` : t('products.choices.new') }}</span>
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      size="xs"
+                      color="error"
+                      variant="ghost"
+                      @click="removeChoice(gIdx, cIdx)"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <UFormField :label="t('products.choices.priceModifier')" :name="`choice-${gIdx}-${cIdx}-price`">
+                      <UInput
+                        v-model="choice.priceModifier"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                      />
+                    </UFormField>
+                    <UFormField :label="t('products.choices.sortOrder')" :name="`choice-${gIdx}-${cIdx}-sort`">
+                      <UInput
+                        v-model.number="choice.sortOrder"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </UFormField>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <UFormField
+                      v-for="lang in languages"
+                      :key="lang"
+                      :label="`${lang.toUpperCase()} ${t('common.name')}`"
+                      :name="`choice-${gIdx}-${cIdx}-${lang}`"
+                    >
+                      <UInput
+                        v-model="getChoiceTranslation(choice, lang).name"
+                        :placeholder="t('common.name')"
+                      />
+                    </UFormField>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -316,6 +386,7 @@ import type {
     CreateProductInput,
     Product,
     ProductChoice,
+    ProductChoiceGroup,
     Translation,
     TranslationInput,
     UpdateProductInput,
@@ -430,17 +501,65 @@ interface EditableChoice {
     _isNew?: boolean
 }
 
-const editedChoices = ref<EditableChoice[]>(
-    product?.choices?.map(c => ({
-        id: c.id,
-        priceModifier: c.priceModifier,
-        sortOrder: c.sortOrder,
+interface EditableChoiceGroup {
+    id?: string
+    minSelections: number
+    maxSelections: number
+    sortOrder: number
+    translations: ChoiceTranslation[]
+    choices: EditableChoice[]
+    _deleted?: boolean
+    _isNew?: boolean
+}
+
+const editedChoiceGroups = ref<EditableChoiceGroup[]>(
+    product?.choiceGroups?.map(group => ({
+        id: group.id,
+        minSelections: group.minSelections,
+        maxSelections: group.maxSelections,
+        sortOrder: group.sortOrder,
         translations: languages.map(lang => {
-            const existing = c.translations?.find(tr => tr.locale === lang)
+            const existing = group.translations?.find(tr => tr.locale === lang)
             return { locale: lang, name: existing?.name || '' }
-        })
+        }),
+        choices: (group.choices ?? []).map(choice => ({
+            id: choice.id,
+            priceModifier: choice.priceModifier,
+            sortOrder: choice.sortOrder,
+            translations: languages.map(lang => {
+                const existing = choice.translations?.find(tr => tr.locale === lang)
+                return { locale: lang, name: existing?.name || '' }
+            }),
+        })),
     })) ?? []
 )
+
+if (editedChoiceGroups.value.length === 0 && (product?.choices?.length ?? 0) > 0) {
+    editedChoiceGroups.value.push({
+        minSelections: 1,
+        maxSelections: 1,
+        sortOrder: 0,
+        translations: languages.map(lang => ({ locale: lang, name: '' })),
+        choices: product!.choices.map(choice => ({
+            id: choice.id,
+            priceModifier: choice.priceModifier,
+            sortOrder: choice.sortOrder,
+            translations: languages.map(lang => {
+                const existing = choice.translations?.find(tr => tr.locale === lang)
+                return { locale: lang, name: existing?.name || '' }
+            }),
+        })),
+    })
+}
+
+const getGroupTranslation = (group: EditableChoiceGroup, lang: string) => {
+    let translation = group.translations.find(tr => tr.locale === lang)
+    if (!translation) {
+        translation = { locale: lang, name: '' }
+        group.translations.push(translation)
+    }
+    return translation
+}
 
 const getChoiceTranslation = (choice: EditableChoice, lang: string) => {
     let translation = choice.translations.find(tr => tr.locale === lang)
@@ -451,19 +570,82 @@ const getChoiceTranslation = (choice: EditableChoice, lang: string) => {
     return translation
 }
 
-const addNewChoice = () => {
-    editedChoices.value.push({
-        priceModifier: '0',
-        sortOrder: editedChoices.value.length,
-        translations: languages.map(lang => ({ locale: lang, name: '' })),
-        _isNew: true
+const ensureFrenchChoiceTranslations = (translations: ChoiceTranslation[]): ChoiceTranslation[] => {
+    const nonEmpty = translations.filter(tr => tr.name.trim() !== '')
+    const hasFrench = nonEmpty.some(tr => tr.locale === 'fr')
+    if (hasFrench) return nonEmpty
+
+    const fallback = translations.find(tr => tr.locale === 'fr')?.name.trim()
+        || nonEmpty[0]?.name.trim()
+        || ''
+    if (fallback === '') return nonEmpty
+
+    return [{ locale: 'fr', name: fallback }, ...nonEmpty.filter(tr => tr.locale !== 'fr')]
+}
+
+const normalizeChoiceOrdering = () => {
+    editedChoiceGroups.value.forEach((group, groupIndex) => {
+        group.sortOrder = groupIndex
+        group.choices.forEach((choice, choiceIndex) => {
+            choice.sortOrder = choiceIndex
+        })
     })
 }
 
-const removeChoice = async (idx: number) => {
-    const choice = editedChoices.value[idx]!
+const addNewChoiceGroup = () => {
+    editedChoiceGroups.value.push({
+        minSelections: 1,
+        maxSelections: 1,
+        sortOrder: editedChoiceGroups.value.length,
+        translations: languages.map(lang => ({ locale: lang, name: '' })),
+        choices: [],
+        _isNew: true,
+    })
+    normalizeChoiceOrdering()
+}
+
+const addNewChoice = (groupIdx: number) => {
+    const group = editedChoiceGroups.value[groupIdx]
+    if (!group) return
+    group.choices.push({
+        priceModifier: '0',
+        sortOrder: group.choices.length,
+        translations: languages.map(lang => ({ locale: lang, name: '' })),
+        _isNew: true,
+    })
+    normalizeChoiceOrdering()
+}
+
+const removeChoiceGroup = async (groupIdx: number) => {
+    const group = editedChoiceGroups.value[groupIdx]
+    if (!group) return
+
+    if (group.id) {
+        try {
+            const DELETE_GROUP = gql`
+              mutation ($id: ID!) {
+                deleteProductChoiceGroup(id: $id)
+              }
+            `
+            const { mutate } = useGqlMutation<{ deleteProductChoiceGroup: boolean }>(DELETE_GROUP)
+            await mutate({ id: group.id })
+        } catch (err) {
+            if (import.meta.dev) console.error('Failed to delete choice group:', err)
+            return
+        }
+    }
+
+    editedChoiceGroups.value.splice(groupIdx, 1)
+    normalizeChoiceOrdering()
+    emit('choicesChanged')
+}
+
+const removeChoice = async (groupIdx: number, choiceIdx: number) => {
+    const group = editedChoiceGroups.value[groupIdx]
+    const choice = group?.choices[choiceIdx]
+    if (!group || !choice) return
+
     if (choice.id) {
-        // Delete existing choice via GraphQL
         try {
             const DELETE_CHOICE = gql`
               mutation ($id: ID!) {
@@ -477,18 +659,50 @@ const removeChoice = async (idx: number) => {
             return
         }
     }
-    editedChoices.value.splice(idx, 1)
+
+    group.choices.splice(choiceIdx, 1)
+    normalizeChoiceOrdering()
     emit('choicesChanged')
 }
 
 const saveChoices = async () => {
     if (!product?.id) return
 
+    normalizeChoiceOrdering()
+
+    const CREATE_GROUP = gql`
+      mutation ($input: CreateProductChoiceGroupInput!) {
+        createProductChoiceGroup(input: $input) {
+          id
+          productId
+          minSelections
+          maxSelections
+          sortOrder
+          name
+          translations { locale name }
+        }
+      }
+    `
+    const UPDATE_GROUP = gql`
+      mutation ($id: ID!, $input: UpdateProductChoiceGroupInput!) {
+        updateProductChoiceGroup(id: $id, input: $input) {
+          id
+          productId
+          minSelections
+          maxSelections
+          sortOrder
+          name
+          translations { locale name }
+        }
+      }
+    `
+
     const CREATE_CHOICE = gql`
       mutation ($input: CreateProductChoiceInput!) {
         createProductChoice(input: $input) {
           id
           productId
+          choiceGroupId
           priceModifier
           sortOrder
           name
@@ -501,6 +715,7 @@ const saveChoices = async () => {
         updateProductChoice(id: $id, input: $input) {
           id
           productId
+          choiceGroupId
           priceModifier
           sortOrder
           name
@@ -509,27 +724,58 @@ const saveChoices = async () => {
       }
     `
 
-    for (const choice of editedChoices.value) {
-        if (choice._isNew) {
-            const { mutate } = useGqlMutation<{ createProductChoice: ProductChoice }>(CREATE_CHOICE)
-            await mutate({
+    for (const group of editedChoiceGroups.value) {
+        let groupId = group.id
+
+        if (group._isNew || !groupId) {
+            const { mutate } = useGqlMutation<{ createProductChoiceGroup: ProductChoiceGroup }>(CREATE_GROUP)
+            const created = await mutate({
                 input: {
                     productId: product!.id,
-                    priceModifier: choice.priceModifier,
-                    sortOrder: choice.sortOrder,
-                    translations: choice.translations.filter(tr => tr.name.trim() !== '')
-                }
+                    minSelections: group.minSelections,
+                    maxSelections: group.maxSelections,
+                    sortOrder: group.sortOrder,
+                    translations: ensureFrenchChoiceTranslations(group.translations),
+                },
             })
-        } else if (choice.id) {
-            const { mutate } = useGqlMutation<{ updateProductChoice: ProductChoice }>(UPDATE_CHOICE)
+            groupId = created.createProductChoiceGroup.id
+            group.id = groupId
+            group._isNew = false
+        } else {
+            const { mutate } = useGqlMutation<{ updateProductChoiceGroup: ProductChoiceGroup }>(UPDATE_GROUP)
             await mutate({
-                id: choice.id,
+                id: groupId,
                 input: {
-                    priceModifier: choice.priceModifier,
-                    sortOrder: choice.sortOrder,
-                    translations: choice.translations.filter(tr => tr.name.trim() !== '')
-                }
+                    minSelections: group.minSelections,
+                    maxSelections: group.maxSelections,
+                    sortOrder: group.sortOrder,
+                    translations: ensureFrenchChoiceTranslations(group.translations),
+                },
             })
+        }
+
+        for (const choice of group.choices) {
+            if (choice._isNew) {
+                const { mutate } = useGqlMutation<{ createProductChoice: ProductChoice }>(CREATE_CHOICE)
+                await mutate({
+                    input: {
+                        choiceGroupId: groupId,
+                        priceModifier: choice.priceModifier,
+                        sortOrder: choice.sortOrder,
+                        translations: ensureFrenchChoiceTranslations(choice.translations),
+                    },
+                })
+            } else if (choice.id) {
+                const { mutate } = useGqlMutation<{ updateProductChoice: ProductChoice }>(UPDATE_CHOICE)
+                await mutate({
+                    id: choice.id,
+                    input: {
+                        priceModifier: choice.priceModifier,
+                        sortOrder: choice.sortOrder,
+                        translations: ensureFrenchChoiceTranslations(choice.translations),
+                    },
+                })
+            }
         }
     }
 }
@@ -635,15 +881,30 @@ const saveChanges = async () => {
 
     // Choice validation (edit mode only)
     if (mode === 'edit') {
-        for (let i = 0; i < editedChoices.value.length; i++) {
-            const choice = editedChoices.value[i]!
-            const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
-            if (!hasAnyName) {
-                validationErrors.value.push(t('validation.choiceNameRequired', { index: i + 1 }))
+        for (let gIdx = 0; gIdx < editedChoiceGroups.value.length; gIdx++) {
+            const group = editedChoiceGroups.value[gIdx]!
+            const hasGroupName = group.translations.some(tr => tr.name.trim() !== '')
+            if (!hasGroupName) {
+                validationErrors.value.push(t('validation.choiceGroupNameRequired', { index: gIdx + 1 }))
             }
-            const pm = parseFloat(String(choice.priceModifier).replace(',', '.'))
-            if (isNaN(pm)) {
-                validationErrors.value.push(t('validation.choicePriceRequired', { index: i + 1 }))
+            if (group.minSelections < 0 || group.maxSelections < 1 || group.minSelections > group.maxSelections) {
+                validationErrors.value.push(t('validation.choiceGroupRangeInvalid', { index: gIdx + 1 }))
+            }
+
+            if (group.choices.length === 0) {
+                validationErrors.value.push(t('validation.choiceGroupEmpty', { index: gIdx + 1 }))
+            }
+
+            for (let cIdx = 0; cIdx < group.choices.length; cIdx++) {
+                const choice = group.choices[cIdx]!
+                const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
+                if (!hasAnyName) {
+                    validationErrors.value.push(t('validation.choiceNameRequired', { index: cIdx + 1 }))
+                }
+                const pm = parseFloat(String(choice.priceModifier).replace(',', '.'))
+                if (isNaN(pm)) {
+                    validationErrors.value.push(t('validation.choicePriceRequired', { index: cIdx + 1 }))
+                }
             }
         }
     }
@@ -680,7 +941,12 @@ const saveChanges = async () => {
         if (!product?.id) return
 
         // Save choices first
-        await saveChoices()
+        try {
+            await saveChoices()
+        } catch {
+            validationErrors.value.push(t('validation.choiceSaveFailed'))
+            return
+        }
 
         const updateProductInput: UpdateProductInput = {
             ...(editedProduct.value as UpdateProductInput),

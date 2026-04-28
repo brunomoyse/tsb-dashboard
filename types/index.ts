@@ -13,10 +13,22 @@ export interface ChoiceTranslation {
 export interface ProductChoice {
     id: string;
     productId: string;
+    choiceGroupId?: string;
     priceModifier: string;
     sortOrder: number;
     name: string;
     translations: ChoiceTranslation[];
+}
+
+export interface ProductChoiceGroup {
+    id: string;
+    productId: string;
+    minSelections: number;
+    maxSelections: number;
+    sortOrder: number;
+    name: string;
+    translations: ChoiceTranslation[];
+    choices: ProductChoice[];
 }
 
 export interface ChoiceTranslationInput {
@@ -59,6 +71,7 @@ export interface Product {
 
     category: ProductCategory;
     choices: ProductChoice[];
+    choiceGroups?: ProductChoiceGroup[];
 
     translations: Translation[];
 }
