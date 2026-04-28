@@ -48,6 +48,13 @@
     "choices": {
       "title": "产品选项",
       "add": "添加选项",
+      "groupAdd": "添加分组",
+      "groupLabel": "分组 #{index}",
+      "groupNew": "新分组",
+      "groupName": "分组名称",
+      "choicesTitle": "选项",
+      "minSelections": "最少选择数",
+      "maxSelections": "最多选择数",
       "none": "未定义选项",
       "new": "新选项",
       "priceModifier": "价格调整（欧元）",
@@ -371,6 +378,10 @@
     "pieceCountPositive": "件数必须为正整数",
     "choiceNameRequired": "选项#{index}必须至少有一个名称",
     "choicePriceRequired": "选项#{index}必须有有效的价格调整值",
+    "choiceGroupNameRequired": "分组#{index}必须至少填写一个名称",
+    "choiceGroupRangeInvalid": "分组#{index}的最小/最大选择数无效",
+    "choiceGroupEmpty": "分组#{index}必须至少包含一个选项",
+    "choiceSaveFailed": "保存产品分组/选项失败",
     "vatCategoryRequired": "必须填写增值税类别，且必须为：食品、饮料、零税率或不适用"
   },
 
