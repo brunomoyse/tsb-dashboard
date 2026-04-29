@@ -58,7 +58,9 @@ export function useOidc() {
                 scope: 'openid profile email offline_access urn:zitadel:iam:org:project:roles',
                 automaticSilentRenew: true,
                 silentRequestTimeoutInSeconds: 5,
-                userStore: new WebStorageStateStore({ store: sessionStorage }),
+                // Persist tokens across tabs and browser close; Zitadel enforces the 7-day idle expiry.
+                userStore: new WebStorageStateStore({ store: localStorage }),
+                stateStore: new WebStorageStateStore({ store: localStorage }),
             })
         }
 
