@@ -210,7 +210,7 @@
         </div>
 
         <!-- Row 4: Product Choice Groups (edit mode only) -->
-        <div v-if="mode === 'edit' && product" class="space-y-3">
+        <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-medium">{{ t('products.choices.title') }}</h3>
             <UButton
@@ -403,10 +403,12 @@ type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryI
 // Props and emits definition.
 const {
     product,
-    mode = 'create'
+    mode = 'create',
+    onCreate
 } = defineProps<{
     product?: Product
     mode?: 'create' | 'edit'
+    onCreate?: (input: CreateProductInput) => Promise<Product | null>
 }>()
 
 const emit = defineEmits<{
@@ -665,7 +667,7 @@ const removeChoice = async (groupIdx: number, choiceIdx: number) => {
     emit('choicesChanged')
 }
 
-const saveChoices = async () => {
+const saveChoices = async (productId: string) => {
     if (!product?.id) return
 
     normalizeChoiceOrdering()
@@ -731,7 +733,7 @@ const saveChoices = async () => {
             const { mutate } = useGqlMutation<{ createProductChoiceGroup: ProductChoiceGroup }>(CREATE_GROUP)
             const created = await mutate({
                 input: {
-                    productId: product!.id,
+                    productId,
                     minSelections: group.minSelections,
                     maxSelections: group.maxSelections,
                     sortOrder: group.sortOrder,
@@ -879,32 +881,30 @@ const saveChanges = async () => {
         }
     }
 
-    // Choice validation (edit mode only)
-    if (mode === 'edit') {
-        for (let gIdx = 0; gIdx < editedChoiceGroups.value.length; gIdx++) {
-            const group = editedChoiceGroups.value[gIdx]!
-            const hasGroupName = group.translations.some(tr => tr.name.trim() !== '')
-            if (!hasGroupName) {
-                validationErrors.value.push(t('validation.choiceGroupNameRequired', { index: gIdx + 1 }))
-            }
-            if (group.minSelections < 0 || group.maxSelections < 1 || group.minSelections > group.maxSelections) {
-                validationErrors.value.push(t('validation.choiceGroupRangeInvalid', { index: gIdx + 1 }))
-            }
+    // Choice validation (applies to both create and edit modes)
+    for (let gIdx = 0; gIdx < editedChoiceGroups.value.length; gIdx++) {
+        const group = editedChoiceGroups.value[gIdx]!
+        const hasGroupName = group.translations.some(tr => tr.name.trim() !== '')
+        if (!hasGroupName) {
+            validationErrors.value.push(t('validation.choiceGroupNameRequired', { index: gIdx + 1 }))
+        }
+        if (group.minSelections < 0 || group.maxSelections < 1 || group.minSelections > group.maxSelections) {
+            validationErrors.value.push(t('validation.choiceGroupRangeInvalid', { index: gIdx + 1 }))
+        }
 
-            if (group.choices.length === 0) {
-                validationErrors.value.push(t('validation.choiceGroupEmpty', { index: gIdx + 1 }))
-            }
+        if (group.choices.length === 0) {
+            validationErrors.value.push(t('validation.choiceGroupEmpty', { index: gIdx + 1 }))
+        }
 
-            for (let cIdx = 0; cIdx < group.choices.length; cIdx++) {
-                const choice = group.choices[cIdx]!
-                const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
-                if (!hasAnyName) {
-                    validationErrors.value.push(t('validation.choiceNameRequired', { index: cIdx + 1 }))
-                }
-                const pm = parseFloat(String(choice.priceModifier).replace(',', '.'))
-                if (isNaN(pm)) {
-                    validationErrors.value.push(t('validation.choicePriceRequired', { index: cIdx + 1 }))
-                }
+        for (let cIdx = 0; cIdx < group.choices.length; cIdx++) {
+            const choice = group.choices[cIdx]!
+            const hasAnyName = choice.translations.some(tr => tr.name.trim() !== '')
+            if (!hasAnyName) {
+                validationErrors.value.push(t('validation.choiceNameRequired', { index: cIdx + 1 }))
+            }
+            const pm = parseFloat(String(choice.priceModifier).replace(',', '.'))
+            if (isNaN(pm)) {
+                validationErrors.value.push(t('validation.choicePriceRequired', { index: cIdx + 1 }))
             }
         }
     }
@@ -936,13 +936,29 @@ const saveChanges = async () => {
             createProductInput.image = selectedImage.value
             createProductInput.removeBackground = removeBackground.value
         }
-        emit('create', createProductInput)
+
+        if (onCreate) {
+            const created = await onCreate(createProductInput)
+            if (!created) return
+
+            if (editedChoiceGroups.value.length > 0) {
+                try {
+                    await saveChoices(created.id)
+                } catch {
+                    validationErrors.value.push(t('validation.choiceSaveFailed'))
+                    return
+                }
+            }
+            emit('close')
+        } else {
+            emit('create', createProductInput)
+        }
     } else {
         if (!product?.id) return
 
         // Save choices first
         try {
-            await saveChoices()
+            await saveChoices(product.id)
         } catch {
             validationErrors.value.push(t('validation.choiceSaveFailed'))
             return

@@ -396,7 +396,7 @@
   <ProductDialog
     v-if="createDialog"
     mode="create"
-    @create="handleCreate"
+    :on-create="handleCreate"
     @close="createDialog = false"
   />
 
@@ -806,8 +806,8 @@ const openCreateDialog = () => {
   createDialog.value = true
 }
 
-const handleCreate = async (newProductInput: CreateProductInput) => {
-  let newProduct
+const handleCreate = async (newProductInput: CreateProductInput): Promise<Product | null> => {
+  let newProduct: Product
   const form = new FormData()
   const { image, ...productData } = newProductInput
 
@@ -843,7 +843,7 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
       if (res.errors?.length) {
         if (import.meta.dev) console.error('GraphQL errors:', res.errors)
         toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
-        return
+        return null
       }
 
       newProduct = res.data.createProduct
@@ -864,10 +864,11 @@ const handleCreate = async (newProductInput: CreateProductInput) => {
       }
     }
 
-    createDialog.value = false
+    return newProduct
   } catch (err) {
     if (import.meta.dev) console.error('handleCreate failed:', err)
     toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+    return null
   }
 }
 
