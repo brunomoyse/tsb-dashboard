@@ -14,17 +14,15 @@
           <!-- Decorative vertical line -->
           <div class="login-accent-line" />
 
-          <!-- Decorative text (vertical) -->
-          <p class="login-jp-text">Tokyo Sushi</p>
+          <!-- Decorative text (vertical, hanzi for moyun — "ink rhyme") -->
+          <p class="login-jp-text">墨韻</p>
 
           <!-- Main branding -->
           <div class="login-brand-content">
             <div class="login-brand-icon">
-              <UIcon name="i-lucide-utensils" class="size-7 text-amber-500" />
+              <img src="/moyun-logo.svg" alt="moyun" class="size-9 object-contain" />
             </div>
-            <h1 class="login-brand-name">
-              Tokyo<br />Sushi Bar
-            </h1>
+            <h1 class="login-brand-name">moyun</h1>
             <div class="login-brand-divider" />
             <p class="login-brand-tagline">Dashboard</p>
           </div>
@@ -140,7 +138,7 @@
 
           <!-- Footer -->
           <p class="login-footer-text">
-            Tokyo Sushi Bar &middot; Admin
+            moyun &middot; Admin
           </p>
         </div>
       </div>
@@ -374,8 +372,8 @@ const verifyCode = async () => {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(217, 119, 6, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 60% at 70% 60%, rgba(180, 83, 9, 0.04) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(167, 14, 30, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 70% 60%, rgba(199, 31, 48, 0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -384,8 +382,8 @@ const verifyCode = async () => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(217, 119, 6, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(217, 119, 6, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(167, 14, 30, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 14, 30, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 70%);
   pointer-events: none;
@@ -405,7 +403,7 @@ const verifyCode = async () => {
   position: relative;
   width: 42%;
   min-height: 100dvh;
-  border-right: 1px solid rgba(217, 119, 6, 0.1);
+  border-right: 1px solid rgba(167, 14, 30, 0.12);
 }
 
 @media (min-width: 1024px) {
@@ -432,20 +430,21 @@ const verifyCode = async () => {
   top: -6rem;
   width: 1px;
   height: 4rem;
-  background: linear-gradient(to bottom, transparent, rgba(217, 119, 6, 0.4));
+  background: linear-gradient(to bottom, transparent, rgba(167, 14, 30, 0.45));
   animation: login-fade-in 1.2s ease-out 0.3s both;
 }
 
-/* Japanese vertical text */
+/* Hanzi vertical text — 墨韻 (moyun) */
 .login-jp-text {
   position: absolute;
-  right: -3rem;
+  right: -3.5rem;
   top: 50%;
   transform: translateY(-50%);
   writing-mode: vertical-rl;
-  font-size: 0.75rem;
-  letter-spacing: 0.5em;
-  color: rgba(217, 119, 6, 0.15);
+  font-family: 'Cormorant Garamond', 'Songti SC', 'STSong', serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.4em;
+  color: rgba(167, 14, 30, 0.22);
   user-select: none;
 }
 
@@ -463,24 +462,25 @@ const verifyCode = async () => {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 1rem;
-  border: 1px solid rgba(217, 119, 6, 0.2);
-  background: rgba(217, 119, 6, 0.06);
+  border: 1px solid rgba(167, 14, 30, 0.28);
+  background: rgba(167, 14, 30, 0.08);
 }
 
 .login-brand-name {
   font-family: 'Cormorant Garamond', 'Georgia', serif;
-  font-size: 3rem;
+  font-size: 3.75rem;
   font-weight: 300;
-  line-height: 1.1;
+  font-style: italic;
+  line-height: 1;
   text-align: center;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: #faf5ef;
 }
 
 .login-brand-divider {
   width: 2.5rem;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(217, 119, 6, 0.5), transparent);
+  background: linear-gradient(to right, transparent, rgba(167, 14, 30, 0.55), transparent);
 }
 
 .login-brand-tagline {
@@ -488,7 +488,7 @@ const verifyCode = async () => {
   font-weight: 500;
   letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: rgba(217, 119, 6, 0.5);
+  color: rgba(199, 31, 48, 0.65);
 }
 
 .login-brand-footer {
@@ -503,13 +503,13 @@ const verifyCode = async () => {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(217, 119, 6, 0.3);
+  background: rgba(167, 14, 30, 0.4);
 }
 
 .login-brand-footer-line {
   width: 2rem;
   height: 1px;
-  background: rgba(217, 119, 6, 0.15);
+  background: rgba(167, 14, 30, 0.18);
 }
 
 /* ── Form panel ── */
@@ -592,7 +592,7 @@ const verifyCode = async () => {
 }
 
 .login-input-wrap:focus-within .login-input-icon {
-  color: rgba(217, 119, 6, 0.6);
+  color: rgba(199, 31, 48, 0.7);
 }
 
 .login-input {
@@ -613,9 +613,9 @@ const verifyCode = async () => {
 }
 
 .login-input:focus {
-  border-color: rgba(217, 119, 6, 0.4);
-  background: rgba(217, 119, 6, 0.03);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.06);
+  border-color: rgba(199, 31, 48, 0.5);
+  background: rgba(167, 14, 30, 0.04);
+  box-shadow: 0 0 0 3px rgba(167, 14, 30, 0.10);
 }
 
 .login-input-code {
@@ -660,12 +660,12 @@ const verifyCode = async () => {
 }
 
 .login-link-button-accent {
-  color: rgba(217, 119, 6, 0.7);
+  color: rgba(199, 31, 48, 0.85);
   font-weight: 500;
 }
 
 .login-link-button-accent:hover:not(:disabled) {
-  color: rgba(217, 119, 6, 0.95);
+  color: rgba(222, 62, 78, 1);
 }
 
 /* ── Error ── */
@@ -703,34 +703,34 @@ const verifyCode = async () => {
   margin-top: 0.5rem;
   border: none;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #b45309, #92400e);
-  color: #fef3c7;
+  background: linear-gradient(135deg, #a70e1e, #7a0a16);
+  color: #f4f0e7;
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(217, 119, 6, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(167, 14, 30, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .login-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #d97706, #b45309);
+  background: linear-gradient(135deg, #c71f30, #a70e1e);
   box-shadow:
-    0 4px 12px rgba(180, 83, 9, 0.3),
-    0 0 0 1px rgba(217, 119, 6, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 4px 14px rgba(167, 14, 30, 0.4),
+    0 0 0 1px rgba(199, 31, 48, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
 }
 
 .login-submit:active:not(:disabled) {
   transform: translateY(0);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(217, 119, 6, 0.15),
-    inset 0 1px 4px rgba(0, 0, 0, 0.2);
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(167, 14, 30, 0.25),
+    inset 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .login-submit:disabled {
@@ -742,8 +742,8 @@ const verifyCode = async () => {
 .login-spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid rgba(254, 243, 199, 0.25);
-  border-top-color: #fef3c7;
+  border: 2px solid rgba(244, 240, 231, 0.25);
+  border-top-color: #f4f0e7;
   border-radius: 50%;
   animation: login-spin 0.6s linear infinite;
 }

@@ -140,7 +140,7 @@
                 class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium"
                 :class="customer.preferredOrderType === 'DELIVERY'
                   ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
-                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  : 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]'
                 "
               >
                 <UIcon
@@ -204,7 +204,7 @@
             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
             :class="row.original.preferredOrderType === 'DELIVERY'
               ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
-              : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+              : 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]'
             "
           >
             <UIcon

@@ -508,7 +508,7 @@ const statusMeta = (status: Coupon['status']) => {
     case 'SCHEDULED':
       return { label: t('coupons.scheduled'), icon: 'i-lucide-calendar-clock', tone: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' }
     case 'EXHAUSTED':
-      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' }
+      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]' }
   }
 }
 

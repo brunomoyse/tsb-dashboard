@@ -25,48 +25,48 @@ button, a, [role="button"], [tabindex], .select-none {
   opacity: 0;
 }
 
-/* Light Theme - Warm sushi restaurant identity */
+/* Light Theme — moyun: cream surfaces, crimson accents */
 :root {
   --ui-bg: theme('colors.white');
-  --ui-bg-elevated: #faf8f5;
-  --ui-bg-accented: #f5f0ea;
-  --ui-border: #e8dfd4;
-  --ui-border-accented: #d4c5b3;
+  --ui-bg-elevated: #faf6ef;
+  --ui-bg-accented: #f4ede3;
+  --ui-border: #e8ddcc;
+  --ui-border-accented: #d4bfa8;
 
   /* Text colors */
-  --ui-text: #3d2e1f;
-  --ui-text-highlighted: #1a0f05;
-  --ui-text-muted: #8a7560;
+  --ui-text: #2a1117;
+  --ui-text-highlighted: #160a0e;
+  --ui-text-muted: #8a6a72;
 
-  /* Actions - Warm amber */
-  --ui-primary: theme('colors.amber.800');
-  --ui-primary-highlighted: theme('colors.amber.900');
+  /* Actions — moyun crimson */
+  --ui-primary: #a70e1e;
+  --ui-primary-highlighted: #860b18;
 
-  /* Neutral */
-  --ui-neutral: #d4c5b3;
-  --ui-neutral-highlighted: #c4b29e;
+  /* Neutral — terracotta */
+  --ui-neutral: #d4bfa8;
+  --ui-neutral-highlighted: #c4a98c;
 }
 
-/* Dark Theme - Deep warm dark */
+/* Dark Theme — moyun: burgundy-black surfaces, lifted crimson */
 .dark {
-  --ui-bg: #1a1410;
-  --ui-bg-elevated: #231c15;
-  --ui-bg-accented: #2d241b;
-  --ui-border: #3d3228;
-  --ui-border-accented: #4d4238;
+  --ui-bg: #241217;
+  --ui-bg-elevated: #301920;
+  --ui-bg-accented: #44252d;
+  --ui-border: #5a3138;
+  --ui-border-accented: #6e3c44;
 
   /* Text colors */
-  --ui-text: #e8dfd4;
-  --ui-text-highlighted: #faf8f5;
-  --ui-text-muted: #9a8570;
+  --ui-text: #f4f0e7;
+  --ui-text-highlighted: #ffffff;
+  --ui-text-muted: #c79aa3;
 
-  /* Actions - Amber accent */
-  --ui-primary: theme('colors.amber.600');
-  --ui-primary-highlighted: theme('colors.amber.500');
+  /* Actions — moyun crimson, lifted for dark surfaces */
+  --ui-primary: #c71f30;
+  --ui-primary-highlighted: #de3e4e;
 
-  /* Neutral */
-  --ui-neutral: #3d3228;
-  --ui-neutral-highlighted: #4d4238;
+  /* Neutral — terracotta */
+  --ui-neutral: #a26f59;
+  --ui-neutral-highlighted: #b88670;
 }
 
 /* Global minimum touch targets for touch devices */
@@ -106,17 +106,18 @@ button, a, [role="button"], [tabindex], .select-none {
   padding: 0.75rem;
 }
 
-/* Status accent colors for column headers */
-.kanban-accent-warning { border-top: 3px solid var(--color-amber-500); }
-.kanban-accent-info { border-top: 3px solid var(--color-sky-500); }
-.kanban-accent-primary { border-top: 3px solid var(--color-amber-800); }
-.kanban-accent-success { border-top: 3px solid var(--color-emerald-500); }
+/* Status accent classes — kept as no-ops so column config can keep referencing them
+   while the rebrand drops decorative stripes in favour of icon-led differentiation. */
+.kanban-accent-warning,
+.kanban-accent-info,
+.kanban-accent-primary,
+.kanban-accent-success { /* intentionally empty */ }
 
 /* Kanban drag-and-drop feedback */
 .kanban-drop-target {
-  outline: 2px dashed var(--color-amber-500);
+  outline: 2px dashed var(--ui-primary);
   outline-offset: -2px;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 85%, var(--color-amber-500));
+  background: color-mix(in srgb, var(--ui-bg-elevated) 85%, var(--ui-primary));
 }
 
 .kanban-drag-source {
