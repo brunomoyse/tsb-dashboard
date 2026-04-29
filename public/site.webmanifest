@@ -1,13 +1,13 @@
 {
-  "name": "Tokyo Sushi Bar - Dashboard",
-  "short_name": "TSB Dashboard",
-  "description": "Restaurant order management dashboard",
+  "name": "moyun – Dashboard",
+  "short_name": "moyun",
+  "description": "Restaurant order management dashboard for moyun",
   "start_url": "/fr/orders",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#1a1410",
-  "background_color": "#1a1410",
+  "theme_color": "#241217",
+  "background_color": "#241217",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

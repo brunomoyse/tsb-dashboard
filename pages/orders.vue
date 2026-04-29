@@ -9,7 +9,7 @@
     <!-- Stale order alert banner (Phase 8) -->
     <div
       v-if="staleOrderCount > 0"
-      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm sm:text-base text-warning"
+      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-[#D08A2E]/10 border border-[#D08A2E]/25 text-sm sm:text-base text-[#D08A2E]"
     >
       <UIcon name="i-lucide-alert-triangle" class="size-4 sm:size-5 shrink-0" />
       <span class="flex-1">{{ t('orders.staleAlert', { count: staleOrderCount }) }}</span>
@@ -695,11 +695,11 @@ interface KanbanColumnDef {
 }
 
 const kanbanColumnDefs: KanbanColumnDef[] = [
-  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
-  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-amber-800/15 text-amber-900 dark:text-amber-500', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
-  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' },
-  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-400', accentClass: 'kanban-accent-info', badgeColor: 'info' },
-  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', accentClass: 'kanban-accent-success', badgeColor: 'success' }
+  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
+  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
+  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-success', badgeColor: 'success' },
+  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-info', badgeColor: 'info' },
+  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-success', badgeColor: 'success' }
 ]
 
 // Completed column date filter (defaults to today)
@@ -922,7 +922,7 @@ const getTimeSince = (createdAt: string): { text: string; color: string; cardCla
     color = 'text-success'
   } else if (diffMin < 15) {
     color = 'text-warning'
-    cardClass = 'border-l-3 border-l-amber-500'
+    cardClass = 'border-l-3 border-l-[#D08A2E]'
   } else if (diffMin < 60) {
     color = 'text-error'
     cardClass = 'border-l-3 border-l-red-500'
@@ -1073,7 +1073,7 @@ const quickAdvanceStatus = async (order: Order) => {
 // Payment icon class based on status
 const getPaymentIconClass = (order: Order): string => {
   if (order.payment?.status?.toLowerCase() === 'failed') return 'text-red-500'
-  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-amber-500'
+  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-[#D08A2E]'
   return ''
 }
 

@@ -1,6 +1,6 @@
 export default defineAppConfig({
   ui: {
-    primary: 'amber',
-    neutral: 'stone'
+    primary: 'red',
+    neutral: 'neutral'
   } as Record<string, string>
 })

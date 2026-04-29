@@ -166,7 +166,7 @@
                 <UIcon
                   v-if="hasMissingTranslations(product)"
                   name="i-lucide-languages"
-                  class="size-3.5 text-amber-500"
+                  class="size-3.5 text-[#D08A2E]"
                   :title="t('products.translations')"
                 />
               </div>
