@@ -225,8 +225,19 @@ const startCooldown = (seconds = 20) => {
   }, 1000)
 }
 
+/*
+ * Synchronous in-flight flags. The reactive `loading` ref drives the UI but
+ * Vue's reactivity is async — a tight double-fire (form submit + click,
+ * hydration remount, retry path) can sneak past `if (loading.value) return`.
+ * These plain JS booleans flip atomically inside the handler, blocking the
+ * duplicate before it ever reaches the network.
+ */
+let requestInFlight = false
+let verifyInFlight = false
+
 const requestCode = async () => {
-  if (loading.value) return
+  if (requestInFlight || loading.value) return
+  requestInFlight = true
   errorMessage.value = ''
   loading.value = true
 
@@ -248,6 +259,7 @@ const requestCode = async () => {
       errorMessage.value = t('login.requestFailed')
     }
   } finally {
+    requestInFlight = false
     loading.value = false
   }
 }
@@ -278,7 +290,8 @@ const resendCode = async () => {
 }
 
 const verifyCode = async () => {
-  if (loading.value) return
+  if (verifyInFlight || loading.value) return
+  verifyInFlight = true
   errorMessage.value = ''
   loading.value = true
 
@@ -335,6 +348,13 @@ const verifyCode = async () => {
     } else {
       errorMessage.value = t('login.invalidCode')
     }
+  } finally {
+    /*
+     * Always release the in-flight flag so retries (after error or after a
+     * not_admin outcome that keeps us on the page) can re-fire. The success
+     * path triggers a navigation; clearing the flag there is a no-op.
+     */
+    verifyInFlight = false
   }
 }
 </script>
