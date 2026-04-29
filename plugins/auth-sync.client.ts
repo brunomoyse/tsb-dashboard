@@ -1,11 +1,10 @@
 /**
- * Syncs the persisted auth store (localStorage) with the actual OIDC session (sessionStorage).
+ * On app start, validate that the stored OIDC refresh token is still accepted by Zitadel.
  *
- * Problem: pinia-plugin-persistedstate keeps User in localStorage (survives browser restart),
- * but OIDC tokens live in sessionStorage (cleared on close). This creates a mismatch where the
- * UI shows admin state even though the session is gone.
- *
- * Solution: On app start, check if the OIDC session is still valid. If not, clear the store.
+ * Both web and Capacitor persist tokens in localStorage, so a user profile in the Pinia
+ * store may outlive the refresh token's idle expiry (Zitadel default: 30 days idle / 90
+ * days absolute). This plugin calls silentRenew() and clears the store only if Zitadel
+ * rejects the refresh token.
  */
 export default defineNuxtPlugin(async () => {
     const { useAuthStore } = await import('~/stores/auth')
@@ -24,6 +23,8 @@ export default defineNuxtPlugin(async () => {
     const renewed = await silentRenew()
     if (renewed) return
 
-    // No valid session — clear stale store so UI reflects reality
+    // No valid session — clear stale OIDC session + Pinia store
+    const { removeUser } = useOidc()
+    await removeUser()
     authStore.clearUser()
 })
