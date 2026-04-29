@@ -5,11 +5,19 @@ import { useRuntimeConfig } from '#imports'
 let userManager: UserManager | null = null
 const oidcUser: Ref<OidcUser | null> = ref(null)
 
-// Simple token storage for Capacitor (bypasses oidc-client-ts UserManager complexity)
+// Simple token storage for Capacitor (bypasses oidc-client-ts complexity)
 const CAPACITOR_TOKEN_KEY = 'capacitor_oidc_tokens'
 
-// In-memory cache — avoids any localStorage timing issues in WebView
+// In-memory cache — avoids any localStorage timing issues in WKWebView
 let capacitorTokenCache: CapacitorTokens | null = null
+
+/*
+ * Module-scope coalescer for silent renewal. Every caller (middleware, plugins,
+ * getAccessToken, accessTokenExpired event) routes through the same in-flight
+ * promise. Zitadel rotates the refresh token on first use, so two concurrent
+ * renews would race and the loser would be logged out mid-session.
+ */
+let silentRenewPromise: Promise<OidcUser | null> | null = null
 
 interface CapacitorTokens {
     access_token: string
@@ -19,9 +27,8 @@ interface CapacitorTokens {
 
 /**
  * Provides OIDC Authorization Code + PKCE flow via oidc-client-ts.
- * On Capacitor (Android/iOS), token storage/retrieval uses a simple localStorage key
- * instead of oidc-client-ts's UserManager (which has complex validation unsuited to
- * the Session API + authorize-proxy flow used here).
+ * On Capacitor, token storage/retrieval uses a simple localStorage key
+ * instead of oidc-client-ts's UserManager (which has complex validation).
  */
 export function useOidc() {
     const config = useRuntimeConfig()
@@ -53,12 +60,13 @@ export function useOidc() {
                 authority: config.public.zitadelAuthority as string,
                 client_id: config.public.zitadelClientId as string,
                 redirect_uri: `${baseUrl}/${locale}/auth/callback`,
+                silent_redirect_uri: `${baseUrl}/silent-renew.html`,
                 post_logout_redirect_uri: `${baseUrl}/${locale}`,
                 response_type: 'code',
                 scope: 'openid profile email offline_access urn:zitadel:iam:org:project:roles',
-                automaticSilentRenew: true,
-                silentRequestTimeoutInSeconds: 5,
-                // Persist tokens across tabs and browser close; Zitadel enforces the 7-day idle expiry.
+                // Off: the background renewal raced with middleware/plugin calls on the same refresh token; Zitadel's rotation logged the loser out mid-session. Renew lazily on navigation and on 401 instead.
+                automaticSilentRenew: false,
+                // Persist tokens across browser close; Zitadel enforces the 30-day idle / 90-day absolute refresh-token TTL.
                 userStore: new WebStorageStateStore({ store: localStorage }),
                 stateStore: new WebStorageStateStore({ store: localStorage }),
             })
@@ -68,34 +76,35 @@ export function useOidc() {
         userManager.events.addUserUnloaded(() => { oidcUser.value = null })
 
         userManager.events.addAccessTokenExpired(async () => {
-            try {
-                await userManager!.signinSilent()
-            } catch {
-                const { useAuthStore } = await import('~/stores/auth')
-                useAuthStore().clearUser()
-                window.location.href = `/${locale}/auth/login?session=expired`
-            }
+            /*
+             * Route through the module-level coalescer so this event-driven
+             * renewal cannot race with a concurrent silentRenew() call from
+             * middleware/plugins on the same refresh token.
+             */
+            await silentRenew()
         })
 
-        userManager.events.addSilentRenewError(async () => {
-            const { useAuthStore } = await import('~/stores/auth')
-            useAuthStore().clearUser()
-            window.location.href = `/${locale}/auth/login?session=expired`
-        })
+        /*
+         * Note: addSilentRenewError intentionally has no handler. A losing race
+         * (Zitadel rejected an already-rotated refresh token) would otherwise
+         * call removeUser() and wipe a session another caller had just renewed.
+         * Real session termination is handled by the callers checking the
+         * silentRenew() return value.
+         */
 
         return userManager
     }
 
-    /** Start the OIDC authorize redirect (web only — goes to Zitadel). */
+    /** Start the OIDC authorize redirect (web only). */
     async function signIn(extraParams?: Record<string, string>) {
         const mgr = getUserManager()
         await mgr.signinRedirect({ extraQueryParams: extraParams })
     }
 
     /**
-     * Get authRequestID from Zitadel without a browser redirect.
+     * Capacitor: get authRequestID from Zitadel without navigating away.
      * Creates the OIDC authorize URL, sends it to the backend proxy which follows
-     * the redirect server-side and extracts the authRequestID.
+     * the redirect and extracts the authRequestID.
      */
     async function getAuthRequestId(): Promise<string> {
         const mgr = getUserManager()
@@ -141,6 +150,7 @@ export function useOidc() {
             }
         }
 
+        // Exchange code via backend proxy (avoids CORS with Zitadel token endpoint)
         const apiUrl = config.public.api as string
         const tokens = await $fetch<{
             access_token: string
@@ -156,16 +166,18 @@ export function useOidc() {
             },
         })
 
+        // Store tokens in simple localStorage key
         const tokenData: CapacitorTokens = {
             access_token: tokens.access_token,
             refresh_token: tokens.refresh_token,
             expires_at: Math.floor(Date.now() / 1000) + (tokens.expires_in || 3600),
         }
+        // Store in both memory and localStorage
         capacitorTokenCache = tokenData
         localStorage.setItem(CAPACITOR_TOKEN_KEY, JSON.stringify(tokenData))
     }
 
-    /** Complete the OIDC callback (web — exchange code via oidc-client-ts). */
+    /** Complete the OIDC callback (web only — exchange code for tokens). */
     async function handleCallback(): Promise<OidcUser> {
         const mgr = getUserManager()
         const user = await mgr.signinRedirectCallback()
@@ -181,62 +193,70 @@ export function useOidc() {
         return user
     }
 
-    /** Try to load a valid token from localStorage into capacitorTokenCache. Returns the token if found. */
-    function loadCachedCapacitorToken(now: number): string | null {
-        if (typeof localStorage === 'undefined') return null
-        const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
-        if (!stored) return null
-        try {
-            const data: CapacitorTokens = JSON.parse(stored)
-            if (data.expires_at > now) {
-                capacitorTokenCache = data
-                return data.access_token
-            }
-        } catch { /* Invalid data */ }
-        return null
-    }
-
     /** Get the current access token (or null if not authenticated). */
     async function getAccessToken(): Promise<string | null> {
-        if (isCapacitor) {
-            const now = Math.floor(Date.now() / 1000)
-            if (capacitorTokenCache && capacitorTokenCache.expires_at > now) {
-                return capacitorTokenCache.access_token
+        // Check in-memory cache first (fastest, no async)
+        const now = Math.floor(Date.now() / 1000)
+        if (capacitorTokenCache && capacitorTokenCache.expires_at > now) {
+            return capacitorTokenCache.access_token
+        }
+
+        // Then check localStorage (survives app restart)
+        if (typeof localStorage !== 'undefined') {
+            const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
+            if (stored) {
+                try {
+                    const data: CapacitorTokens = JSON.parse(stored)
+                    if (data.expires_at > now) {
+                        capacitorTokenCache = data
+                        return data.access_token
+                    }
+                } catch { /* Invalid data */ }
             }
+        }
 
-            const cached = loadCachedCapacitorToken(now)
-            if (cached) return cached
-
+        // Capacitor: token expired, attempt refresh
+        if (isCapacitor) {
             const renewed = await silentRenew()
             return renewed ? capacitorTokenCache?.access_token ?? null : null
         }
-
+        // Web: use oidc-client-ts UserManager
         const mgr = getUserManager()
         const user = await mgr.getUser()
         if (user && !user.expired) return user.access_token
-        if (!user) return null
+        if (!user) return null // No session — nothing to renew
 
-        try {
-            const renewed = await mgr.signinSilent()
-            if (renewed) {
-                oidcUser.value = renewed
-                return renewed.access_token
-            }
-        } catch { /* Silent renew failed */ }
-        return null
+        /*
+         * Token expired — route through the coalesced silentRenew so concurrent
+         * callers share one refresh-token use (Zitadel rotates on first use).
+         */
+        const renewed = await silentRenew()
+        return renewed?.access_token ?? null
     }
 
-    /** Attempt silent token renewal. */
-    async function silentRenew(): Promise<OidcUser | null> {
+    /**
+     * Attempt silent token renewal. All callers (middleware, plugins, the
+     * accessTokenExpired event, getAccessToken) share a single in-flight
+     * promise so we never use the same refresh token twice in parallel —
+     * Zitadel rotates on first use and would log the loser out.
+     */
+    function silentRenew(): Promise<OidcUser | null> {
+        silentRenewPromise ??= doSilentRenew().finally(() => {
+            silentRenewPromise = null
+        })
+        return silentRenewPromise
+    }
+
+    async function doSilentRenew(): Promise<OidcUser | null> {
         if (isCapacitor) {
-            const stored = typeof localStorage === 'undefined'
-                ? null
-                : localStorage.getItem(CAPACITOR_TOKEN_KEY)
+            // Read stored refresh token
+            const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
             if (!stored) return null
             try {
                 const data: CapacitorTokens = JSON.parse(stored)
                 if (!data.refresh_token) return null
 
+                // Exchange refresh token via backend proxy
                 const apiUrl = config.public.api as string
                 const tokens = await $fetch<{
                     access_token: string
@@ -250,6 +270,7 @@ export function useOidc() {
                     },
                 })
 
+                // Update stored tokens (use new refresh_token if rotated, else keep old)
                 const tokenData: CapacitorTokens = {
                     access_token: tokens.access_token,
                     refresh_token: tokens.refresh_token ?? data.refresh_token,
@@ -263,10 +284,9 @@ export function useOidc() {
                 return null
             }
         }
-
         const mgr = getUserManager()
         const existing = await mgr.getUser()
-        if (!existing) return null
+        if (!existing) return null // No session to renew
         try {
             const user = await mgr.signinSilent()
             oidcUser.value = user
@@ -302,10 +322,16 @@ export function useOidc() {
         return user !== null && !user.expired
     }
 
-    /** Get the current OIDC user (web — from oidc-client-ts cache). */
+    /** Get the current OIDC user (from cache). */
     function getUser(): Promise<OidcUser | null> {
         const mgr = getUserManager()
         return mgr.getUser()
+    }
+
+    /** Clear stale OIDC session from storage (prevents automaticSilentRenew loops). */
+    async function removeUser(): Promise<void> {
+        const mgr = getUserManager()
+        await mgr.removeUser()
     }
 
     return {
@@ -321,5 +347,6 @@ export function useOidc() {
         logoutCapacitor,
         isAuthenticated,
         getUser,
+        removeUser,
     }
 }
