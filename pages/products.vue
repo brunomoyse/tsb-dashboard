@@ -502,6 +502,7 @@ const PRODUCTS_QUERY = gql`
       isVisible
       isAvailable
       isHalal
+      isLunchOnly
       isSpicy
       isVegetarian
       isDiscountable
@@ -559,6 +560,7 @@ const CREATE_PRODUCT_MUTATION = gql`
       isVisible
       isAvailable
       isHalal
+      isLunchOnly
       isSpicy
       isVegetarian
       isDiscountable
@@ -601,6 +603,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
       isVisible
       isAvailable
       isHalal
+      isLunchOnly
       isSpicy
       isVegetarian
       isDiscountable
@@ -653,6 +656,7 @@ const SUB_PRODUCT_UPDATED = gql`
       code
       pieceCount
       isHalal
+      isLunchOnly
       isSpicy
       isVegetarian
       isDiscountable

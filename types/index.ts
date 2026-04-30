@@ -58,6 +58,7 @@ export interface Product {
     isAvailable: boolean;
     isDiscountable: boolean;
     isHalal: boolean;
+    isLunchOnly: boolean;
     isSpicy: boolean;
     isVegetarian: boolean;
     isVisible: boolean;
@@ -90,6 +91,7 @@ export interface CreateProductInput {
     isAvailable: boolean
     isDiscountable: boolean
     isHalal: boolean
+    isLunchOnly: boolean
     isSpicy: boolean
     isVegetarian: boolean
     isVisible: boolean
@@ -109,6 +111,7 @@ export interface UpdateProductInput {
     isAvailable?: boolean
     isDiscountable?: boolean
     isHalal?: boolean
+    isLunchOnly?: boolean
     isSpicy?: boolean
     isVegetarian?: boolean
     isVisible?: boolean
