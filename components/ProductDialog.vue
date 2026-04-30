@@ -207,6 +207,12 @@
             size="sm"
             class="shrink-0"
           />
+          <USwitch
+            v-model="editedProduct.isLunchOnly"
+            :label="t('products.lunchOnly')"
+            size="sm"
+            class="shrink-0"
+          />
         </div>
 
         <!-- Row 4: Product Choice Groups (edit mode only) -->
@@ -439,6 +445,7 @@ const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
         isAvailable: sourceProduct.isAvailable,
         isDiscountable: sourceProduct.isDiscountable,
         isHalal: sourceProduct.isHalal,
+        isLunchOnly: sourceProduct.isLunchOnly,
         isSpicy: sourceProduct.isSpicy,
         isVegetarian: sourceProduct.isVegetarian,
         isVisible: sourceProduct.isVisible,
@@ -456,6 +463,7 @@ const createDefaultProduct = (): CreateProductInput => ({
     isAvailable: false,
     isDiscountable: true,
     isHalal: false,
+    isLunchOnly: false,
     isSpicy: false,
     isVegetarian: false,
     isVisible: false,
