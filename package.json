@@ -25,7 +25,7 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "capacitor-sunmi-printer": "file:./plugins/capacitor-sunmi-printer",
-    "@iconify-json/lucide": "^1.2.104",
+    "@iconify-json/lucide": "^1.2.105",
     "@nuxt/icon": "^2.2.1",
     "@nuxt/ui": "^4.7.1",
     "@pinia/nuxt": "^0.11.3",
