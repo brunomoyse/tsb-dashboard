@@ -822,7 +822,7 @@ const closeDialog = () => {
 
 const LANG_LABELS: Record<string, string> = { fr: 'FR', en: 'EN', zh: 'ZH', nl: 'NL' }
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024 // 50 MB
 const CODE_REGEX = /^[A-Z]+\d+$/
 
 const saveChanges = async () => {

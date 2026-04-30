@@ -367,7 +367,7 @@
     "invalidPrice": "Ongeldig prijsformaat",
     "pricePositive": "De prijs moet groter zijn dan 0",
     "descriptionTooLong": "De beschrijving ({lang}) mag niet langer zijn dan 500 tekens",
-    "imageTooLarge": "De afbeelding mag niet groter zijn dan 5 MB",
+    "imageTooLarge": "De afbeelding mag niet groter zijn dan 50 MB",
     "imageInvalidType": "De afbeelding moet in PNG-, JPEG- of WebP-formaat zijn",
     "codeFormat": "De productcode moet bestaan uit hoofdletters gevolgd door cijfers (bijv. A10)",
     "pieceCountPositive": "Het aantal stuks moet een positief geheel getal zijn",
