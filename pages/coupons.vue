@@ -265,10 +265,8 @@
         />
       </div>
     </div>
-  </div>
 
-  <!-- Modals -->
-  <Teleport to="body">
+    <!-- Modals (UModal handles its own teleport) -->
     <UModal v-model:open="showDialog">
       <template #content>
         <div class="p-6 space-y-4">
@@ -351,7 +349,7 @@
         </div>
       </template>
     </UModal>
-  </Teleport>
+  </div>
 </template>
 
 <script lang="ts" setup>
