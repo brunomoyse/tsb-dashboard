@@ -170,49 +170,35 @@
         </div>
 
         <!-- Row 3: Toggles -->
-        <div class="flex flex-wrap gap-x-5 gap-y-3">
-          <USwitch
-            v-model="editedProduct.isVisible"
-            :label="t('common.visible')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isAvailable"
-            :label="t('common.available')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isDiscountable"
-            :label="t('products.discountable')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isHalal"
-            :label="t('products.halal')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isVegetarian"
-            :label="t('products.vegetarian')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isSpicy"
-            :label="t('products.spicy')"
-            size="sm"
-            class="shrink-0"
-          />
-          <USwitch
-            v-model="editedProduct.isLunchOnly"
-            :label="t('products.lunchOnly')"
-            size="sm"
-            class="shrink-0"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('common.visible') }}</span>
+            <USwitch v-model="editedProduct.isVisible" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('common.available') }}</span>
+            <USwitch v-model="editedProduct.isAvailable" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('products.discountable') }}</span>
+            <USwitch v-model="editedProduct.isDiscountable" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('products.halal') }}</span>
+            <USwitch v-model="editedProduct.isHalal" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('products.vegetarian') }}</span>
+            <USwitch v-model="editedProduct.isVegetarian" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('products.spicy') }}</span>
+            <USwitch v-model="editedProduct.isSpicy" size="md" class="shrink-0" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+            <span class="text-sm">{{ t('products.lunchOnly') }}</span>
+            <USwitch v-model="editedProduct.isLunchOnly" size="md" class="shrink-0" />
+          </label>
         </div>
 
         <!-- Row 4: Product Choice Groups (edit mode only) -->
