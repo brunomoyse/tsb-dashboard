@@ -72,6 +72,31 @@ export const formatPrice = (price: number | string): string =>
 const pad2 = (n: number): string =>
     n.toString().padStart(2, '0');
 
+// The en-CA locale renders dates as YYYY-MM-DD, which is what we want for ISO date keys.
+const brusselsDateFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Brussels',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
+/**
+ * Returns the calendar date in Europe/Brussels as YYYY-MM-DD.
+ * Independent of the runtime timezone — never rely on `toISOString().slice(0,10)`
+ * for "today" because that yields the UTC date.
+ */
+export const brusselsDateISO = (date: Date = new Date()): string =>
+    brusselsDateFormatter.format(date);
+
+/**
+ * Adds `days` to a YYYY-MM-DD date string using calendar arithmetic
+ * (DST-safe, timezone-independent).
+ */
+export const shiftBrusselsDate = (iso: string, days: number): string => {
+    const [y, m, d] = iso.split('-').map(Number);
+    const t = Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1) + days * 86_400_000;
+    const out = new Date(t);
+    return `${out.getUTCFullYear()}-${pad2(out.getUTCMonth() + 1)}-${pad2(out.getUTCDate())}`;
+};
+
 /**
  * Formats a Date as an RFC3339 string with local timezone offset.
  *
