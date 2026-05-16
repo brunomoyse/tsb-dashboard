@@ -236,7 +236,7 @@
               <button
                 class="text-xs font-medium text-muted hover:text-highlighted transition-colors"
                 :class="isCompletedFilterToday ? '' : 'underline'"
-                @click="completedFilterDate = new Date().toISOString().slice(0, 10)"
+                @click="completedFilterDate = brusselsDateISO()"
               >
                 {{ completedFilterLabel }}
               </button>
@@ -663,7 +663,7 @@
 <script setup lang="ts">
 import type { Order, OrderStatus, OrderType } from '~/types'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { formatDate, formatPrice, formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
+import { brusselsDateISO, formatDate, formatPrice, formatTimeOnly, shiftBrusselsDate, timeToRFC3339 } from '~/utils/utils'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -702,24 +702,21 @@ const kanbanColumnDefs: KanbanColumnDef[] = [
   { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-success', badgeColor: 'success' }
 ]
 
-// Completed column date filter (defaults to today)
-const completedFilterDate = ref<string>(new Date().toISOString().slice(0, 10))
+// Completed-column filter anchored to Europe/Brussels (UTC slicing would list yesterday's orders just past Brussels midnight).
+const completedFilterDate = ref<string>(brusselsDateISO())
 
 const completedFilterLabel = computed(() => {
-  const today = new Date().toISOString().slice(0, 10)
-  const date = new Date(`${completedFilterDate.value}T12:00:00`)
-  if (completedFilterDate.value === today) {
-    return new Intl.DateTimeFormat(locale.value, { weekday: 'short' }).format(date)
+  const date = new Date(`${completedFilterDate.value}T12:00:00Z`)
+  if (completedFilterDate.value === brusselsDateISO()) {
+    return new Intl.DateTimeFormat(locale.value, { weekday: 'short', timeZone: 'Europe/Brussels' }).format(date)
   }
-  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(date)
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short', timeZone: 'Europe/Brussels' }).format(date)
 })
 
-const isCompletedFilterToday = computed(() => completedFilterDate.value === new Date().toISOString().slice(0, 10))
+const isCompletedFilterToday = computed(() => completedFilterDate.value === brusselsDateISO())
 
 const shiftCompletedDate = (days: number) => {
-  const d = new Date(`${completedFilterDate.value}T12:00:00`)
-  d.setDate(d.getDate() + days)
-  completedFilterDate.value = d.toISOString().slice(0, 10)
+  completedFilterDate.value = shiftBrusselsDate(completedFilterDate.value, days)
 }
 
 // Drag state (kanban)
@@ -1271,7 +1268,7 @@ const kanbanColumns = computed(() =>
   kanbanColumnDefs.map(def => {
     let filtered = orders.value.filter(o => def.statuses.includes(o.status))
     if (def.key === 'COMPLETED') {
-      filtered = filtered.filter(o => o.updatedAt?.slice(0, 10) === completedFilterDate.value)
+      filtered = filtered.filter(o => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value)
     }
     return {
       ...def,
