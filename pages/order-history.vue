@@ -67,6 +67,7 @@
       <USelectMenu
         v-model="selectedStatus"
         :items="statusOptions"
+        value-key="value"
         size="lg"
         class="w-full sm:w-auto sm:min-w-44 sm:order-2"
         :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm' }"
@@ -195,23 +196,20 @@
       <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
     </div>
 
-    <!-- Load more button -->
-    <div v-if="hasMore && !initialLoading" class="flex justify-center py-6">
-      <UButton
-        :loading="loadingMore"
-        variant="ghost"
-        color="neutral"
-        size="lg"
-        @click="loadNextPage"
-      >
-        {{ t('common.loadMore') }}
-      </UButton>
+    <!-- Infinite-scroll sentinel: enters viewport → loadNextPage() -->
+    <div
+      v-if="hasMore && !initialLoading"
+      ref="loadMoreSentinel"
+      class="flex justify-center items-center py-6 min-h-12"
+      aria-hidden="true"
+    >
+      <UIcon v-if="loadingMore" name="i-lucide-loader-2" class="size-5 animate-spin text-muted" />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -258,6 +256,7 @@ const loadingMore = ref(false)
 const hasMore = ref(true)
 
 // --- Filter options ---
+// Cancelled and failed orders are filtered out server-side, hence omitted from this dropdown.
 const statusOptions = computed(() => [
   { label: t('orderHistory.allStatuses'), value: '' },
   { label: t('orders.status.pending'), value: 'PENDING' },
@@ -266,9 +265,7 @@ const statusOptions = computed(() => [
   { label: t('orders.status.awaiting_pick_up'), value: 'AWAITING_PICK_UP' },
   { label: t('orders.status.out_for_delivery'), value: 'OUT_FOR_DELIVERY' },
   { label: t('orders.status.delivered'), value: 'DELIVERED' },
-  { label: t('orders.status.picked_up'), value: 'PICKED_UP' },
-  { label: t('orders.status.cancelled'), value: 'CANCELLED' },
-  { label: t('orders.status.failed'), value: 'FAILED' }
+  { label: t('orders.status.picked_up'), value: 'PICKED_UP' }
 ])
 
 const typeOptions = computed(() => [
@@ -357,6 +354,25 @@ const loadNextPage = async () => {
 
 // Initial fetch
 await fetchOrders()
+
+// --- Infinite scroll ---
+// IntersectionObserver triggers loadNextPage when the bottom sentinel enters the viewport; rootMargin pre-fetches ~one viewport early so the spinner is rarely visible.
+const loadMoreSentinel = ref<HTMLElement | null>(null)
+let scrollObserver: IntersectionObserver | null = null
+
+watch(loadMoreSentinel, (el, _prev, onCleanup) => {
+  if (!el || typeof IntersectionObserver === 'undefined') return
+  scrollObserver = new IntersectionObserver((entries) => {
+    if (entries.some(e => e.isIntersecting)) loadNextPage()
+  }, { rootMargin: '400px 0px' })
+  scrollObserver.observe(el)
+  onCleanup(() => {
+    scrollObserver?.disconnect()
+    scrollObserver = null
+  })
+})
+
+onBeforeUnmount(() => scrollObserver?.disconnect())
 
 // Refetch on filter changes (reset to page 1)
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
