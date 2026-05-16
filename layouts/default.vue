@@ -10,7 +10,7 @@
       class="hidden md:flex"
       :ui="{
         footer: 'border-t border-default flex flex-col gap-4',
-        body: 'flex flex-col gap-4',
+        body: 'flex flex-col gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         header: 'flex justify-center border-b border-default'
       }"
     >
@@ -33,7 +33,7 @@
           size="lg"
           class="flex-1"
           :ui="{
-            link: (isCollapsed && !isMobile) ? 'py-8 px-0 text-base justify-center' : 'py-8 px-4 text-base w-full'
+            link: (isCollapsed && !isMobile) ? 'py-3 px-0 text-base justify-center' : 'py-3 px-4 text-base w-full'
           }"
         />
       </template>
