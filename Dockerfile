@@ -1,9 +1,7 @@
 FROM node:24.15-slim AS builder
 
-# Set working directory
 WORKDIR /usr/src/app
 
-# Build arguments for environment variables
 ARG DASHBOARD_BASE_URL
 ARG API_BASE_URL
 ARG S3_BUCKET_URL
@@ -11,56 +9,58 @@ ARG GRAPHQL_WS_URL
 ARG ZITADEL_AUTHORITY
 ARG ZITADEL_CLIENT_ID
 
-ENV DASHBOARD_BASE_URL=${DASHBOARD_BASE_URL}
-ENV API_BASE_URL=${API_BASE_URL}
-ENV S3_BUCKET_URL=${S3_BUCKET_URL}
-ENV GRAPHQL_WS_URL=${GRAPHQL_WS_URL}
-ENV ZITADEL_AUTHORITY=${ZITADEL_AUTHORITY}
-ENV ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
+ENV DASHBOARD_BASE_URL=${DASHBOARD_BASE_URL} \
+    API_BASE_URL=${API_BASE_URL} \
+    S3_BUCKET_URL=${S3_BUCKET_URL} \
+    GRAPHQL_WS_URL=${GRAPHQL_WS_URL} \
+    ZITADEL_AUTHORITY=${ZITADEL_AUTHORITY} \
+    ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies (optionalDependencies in package.json handle native bindings)
 RUN npm ci --prefer-offline --no-audit
 
-# Copy the rest of the application code
 COPY . .
 
-# Build the Nuxt application
-RUN npm run build
+# `nuxt generate` (vs `nuxt build`) ensures Nitro emits the SPA shell as a real
+# /index.html in .output/public/ rather than serving it from a virtual server
+# module at runtime — required for static file serving.
+RUN npm run generate
 
-# Stage 2: Production
-FROM node:24.15-alpine3.23
+# ---------- Runtime (Caddy) ----------
+FROM caddy:2-alpine
 
-# Create non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# ARGs don't cross stages — re-declare the subset needed for the CSP origins.
+ARG API_BASE_URL
+ARG S3_BUCKET_URL
+ARG GRAPHQL_WS_URL
+ARG ZITADEL_AUTHORITY
 
-# Set working directory
-WORKDIR /usr/src/app
+COPY Caddyfile.template /tmp/Caddyfile.template
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV NITRO_PRESET=node-server
+# Derive the CSP origins exactly the way nuxt.config.ts does (URL → origin,
+# http→ws), then envsubst them into the Caddyfile. gettext is removed after
+# substitution so the runtime image stays minimal.
+RUN apk add --no-cache gettext && \
+    export API_ORIGIN=$(echo "$API_BASE_URL" | awk -F/ '{print $1"//"$3}') && \
+    export WS_ORIGIN=$(echo "$API_ORIGIN" | sed 's/^http/ws/') && \
+    export S3_BUCKET_URL ZITADEL_AUTHORITY && \
+    envsubst '${API_ORIGIN} ${WS_ORIGIN} ${S3_BUCKET_URL} ${ZITADEL_AUTHORITY}' \
+        < /tmp/Caddyfile.template > /etc/caddy/Caddyfile && \
+    rm /tmp/Caddyfile.template && \
+    apk del gettext
 
-# Copy only the built output and necessary files
-COPY --from=builder /usr/src/app/.output ./.output
-COPY --from=builder /usr/src/app/package*.json ./
+# Strip the base image's welcome page so any future Nuxt rename doesn't leave
+# it lingering alongside the SPA shell.
+RUN rm -rf /usr/share/caddy/*
 
-# Install only production dependencies (skip postinstall since .output is already built)
-RUN npm install --production --ignore-scripts
+COPY --from=builder /usr/src/app/.output/public /usr/share/caddy
 
-# Clean npm cache to reduce image size
-RUN npm cache clean --force
+USER 1000:1000
 
-# Switch to non-root user
-USER appuser
-
-# Expose the port that the application will run on
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://localhost:3000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget -qO- http://localhost:3000/healthz || exit 1
 
-# Command to run the Nuxt server
-CMD ["node", ".output/server/index.mjs"]
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
