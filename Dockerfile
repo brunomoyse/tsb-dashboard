@@ -41,14 +41,21 @@ COPY Caddyfile.template /tmp/Caddyfile.template
 # Derive the CSP origins exactly the way nuxt.config.ts does (URL → origin,
 # http→ws), then envsubst them into the Caddyfile. gettext is removed after
 # substitution so the runtime image stays minimal.
-RUN apk add --no-cache gettext && \
+RUN apk add --no-cache gettext libcap && \
     export API_ORIGIN=$(echo "$API_BASE_URL" | awk -F/ '{print $1"//"$3}') && \
     export WS_ORIGIN=$(echo "$API_ORIGIN" | sed 's/^http/ws/') && \
     export S3_BUCKET_URL ZITADEL_AUTHORITY && \
     envsubst '${API_ORIGIN} ${WS_ORIGIN} ${S3_BUCKET_URL} ${ZITADEL_AUTHORITY}' \
         < /tmp/Caddyfile.template > /etc/caddy/Caddyfile && \
     rm /tmp/Caddyfile.template && \
-    apk del gettext
+    setcap -r /usr/bin/caddy && \
+    apk del gettext libcap
+
+# Strip cap_net_bind_service from /usr/bin/caddy above. The base image grants
+# it so Caddy can bind ports <1024; we listen on 3000 so it's unused, and
+# leaving it on breaks Kubernetes pods that set allowPrivilegeEscalation:false
+# + drop:ALL caps — the kernel refuses to exec a binary whose file caps
+# exceed the container's bounding set under no_new_privs.
 
 # Strip the base image's welcome page so any future Nuxt rename doesn't leave
 # it lingering alongside the SPA shell.
