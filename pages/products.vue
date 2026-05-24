@@ -540,6 +540,7 @@ const PRODUCT_CATEGORIES_QUERY = gql`
       id
       name
       order
+      slug
       translations {
         language
         name

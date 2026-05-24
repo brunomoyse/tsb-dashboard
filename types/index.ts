@@ -81,6 +81,7 @@ export interface ProductCategory {
     id: string;
     name: string;
     order: number;
+    slug: string;
 
     translations: Translation[];
 }
