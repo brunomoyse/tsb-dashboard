@@ -41,7 +41,7 @@
     "@nuxt/test-utils": "^4.0.3",
     "@nuxtjs/i18n": "^10.3.0",
     "@types/node": "^24.12.4",
-    "oxlint": "^1.65.0",
+    "oxlint": "^1.66.0",
     "tailwindcss": "^4.3.0",
     "vitest": "^4.1.6"
   },
