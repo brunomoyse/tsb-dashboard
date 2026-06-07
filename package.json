@@ -27,7 +27,7 @@
     "capacitor-sunmi-printer": "file:./plugins/capacitor-sunmi-printer",
     "@iconify-json/lucide": "^1.2.111",
     "@nuxt/icon": "^2.2.2",
-    "@nuxt/ui": "^4.8.1",
+    "@nuxt/ui": "^4.8.2",
     "@pinia/nuxt": "^0.11.3",
     "graphql": "^16.14.0",
     "graphql-tag": "^2.12.6",
