@@ -43,7 +43,7 @@
     "@types/node": "^24.13.2",
     "oxlint": "^1.70.0",
     "tailwindcss": "^4.3.1",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   },
   "optionalDependencies": {
     "@esbuild/linux-arm64": "^0.28.1",
