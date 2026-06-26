@@ -24,7 +24,7 @@
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
-    "@iconify-json/lucide": "^1.2.111",
+    "@iconify-json/lucide": "^1.2.114",
     "@nuxt/icon": "^2.2.3",
     "@nuxt/ui": "^4.9.0",
     "@pinia/nuxt": "^0.11.3",
