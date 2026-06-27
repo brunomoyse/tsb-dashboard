@@ -220,7 +220,11 @@
     "createTitle": "Nieuwe kortingscode",
     "noResults": "Geen kortingscodes gevonden",
     "created": "Kortingscode succesvol aangemaakt",
-    "updated": "Kortingscode succesvol bijgewerkt"
+    "updated": "Kortingscode succesvol bijgewerkt",
+    "errors": {
+      "saveFailed": "Kortingscode opslaan mislukt. Probeer het opnieuw.",
+      "percentageMax": "Een procentuele korting mag niet hoger zijn dan 100%."
+    }
   },
 
   "customers": {

@@ -226,7 +226,11 @@
     "createTitle": "新优惠券",
     "noResults": "未找到优惠券",
     "created": "优惠券创建成功",
-    "updated": "优惠券更新成功"
+    "updated": "优惠券更新成功",
+    "errors": {
+      "saveFailed": "保存优惠券失败，请重试。",
+      "percentageMax": "百分比折扣不能超过 100%。"
+    }
   },
 
   "customers": {

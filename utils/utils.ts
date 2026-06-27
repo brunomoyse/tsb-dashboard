@@ -97,6 +97,64 @@ export const shiftBrusselsDate = (iso: string, days: number): string => {
     return `${out.getUTCFullYear()}-${pad2(out.getUTCMonth() + 1)}-${pad2(out.getUTCDate())}`;
 };
 
+// Renders the wall-clock components of an instant as seen in Europe/Brussels,
+// used to derive the zone's UTC offset at that instant (DST-aware).
+const brusselsPartsFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Brussels',
+    hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+});
+
+/** Europe/Brussels offset from UTC, in milliseconds, at the given instant. */
+const brusselsOffsetMs = (date: Date): number => {
+    const map: Record<string, number> = {};
+    for (const p of brusselsPartsFormatter.formatToParts(date)) {
+        if (p.type !== 'literal') map[p.type] = Number(p.value);
+    }
+    const asUTC = Date.UTC(
+        map.year ?? 1970, (map.month ?? 1) - 1, map.day ?? 1,
+        map.hour ?? 0, map.minute ?? 0, map.second ?? 0,
+    );
+    return asUTC - date.getTime();
+};
+
+/**
+ * Interprets a `<input type="datetime-local">` value ("YYYY-MM-DDTHH:mm") as a
+ * Europe/Brussels wall-clock time and returns the corresponding UTC instant as
+ * an ISO string. Independent of the browser's timezone — never use
+ * `new Date(local).toISOString()`, which interprets the value in the runtime TZ.
+ * Returns null for empty/invalid input.
+ */
+export const brusselsDateTimeLocalToISO = (local: string | null | undefined): string | null => {
+    if (!local) return null;
+    const m = local.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!m) return null;
+    const [, y, mo, d, h, mi] = m.map(Number) as number[];
+    // Treat the wall-clock components as if they were UTC, then subtract the
+    // Brussels offset at that instant to recover the true UTC instant.
+    const asUTC = Date.UTC(y!, mo! - 1, d!, h!, mi!);
+    const offset = brusselsOffsetMs(new Date(asUTC));
+    return new Date(asUTC - offset).toISOString();
+};
+
+/**
+ * Inverse of {@link brusselsDateTimeLocalToISO}: renders a UTC ISO instant as a
+ * Europe/Brussels wall-clock "YYYY-MM-DDTHH:mm" string suitable for seeding a
+ * `<input type="datetime-local">`, so an open→save round-trip doesn't shift the
+ * time. Returns '' for empty/invalid input.
+ */
+export const isoToBrusselsDateTimeLocal = (iso: string | null | undefined): string => {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    const map: Record<string, string> = {};
+    for (const p of brusselsPartsFormatter.formatToParts(date)) {
+        if (p.type !== 'literal') map[p.type] = p.value;
+    }
+    return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
+};
+
 /**
  * Formats a Date as an RFC3339 string with local timezone offset.
  *

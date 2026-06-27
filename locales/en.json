@@ -227,7 +227,11 @@
     "createTitle": "New Coupon",
     "noResults": "No coupons found",
     "created": "Coupon created successfully",
-    "updated": "Coupon updated successfully"
+    "updated": "Coupon updated successfully",
+    "errors": {
+      "saveFailed": "Failed to save coupon. Please try again.",
+      "percentageMax": "A percentage discount cannot exceed 100%."
+    }
   },
 
   "customers": {

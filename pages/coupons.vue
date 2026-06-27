@@ -354,6 +354,7 @@
 
 <script lang="ts" setup>
 import type { Coupon, CreateCouponInput, UpdateCouponInput } from '~/types'
+import { brusselsDateTimeLocalToISO, isoToBrusselsDateTimeLocal } from '~/utils/utils'
 import { computed, ref, watch } from 'vue'
 import { useGqlMutation, useGqlQuery, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'
@@ -593,12 +594,6 @@ const formatDateRange = (from: string | null, until: string | null) => {
   return '-'
 }
 
-const toLocalDatetime = (iso: string | null) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
 
 const openEditDialog = (coupon: Coupon) => {
   isEditing.value = true
@@ -611,8 +606,8 @@ const openEditDialog = (coupon: Coupon) => {
     maxUses: coupon.maxUses !== null && coupon.maxUses !== undefined ? String(coupon.maxUses) : '',
     maxUsesPerUser: coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined ? String(coupon.maxUsesPerUser) : '',
     isActive: coupon.isActive,
-    validFrom: toLocalDatetime(coupon.validFrom),
-    validUntil: toLocalDatetime(coupon.validUntil)
+    validFrom: isoToBrusselsDateTimeLocal(coupon.validFrom),
+    validUntil: isoToBrusselsDateTimeLocal(coupon.validUntil)
   }
   validationError.value = ''
   showDialog.value = true
@@ -626,6 +621,11 @@ const validate = (): boolean => {
   const val = Number(form.value.discountValue)
   if (!form.value.discountValue || isNaN(val) || val <= 0) {
     validationError.value = `${t('coupons.value')} must be greater than 0`
+    return false
+  }
+  // Mirror the backend validateDiscount rule for immediate feedback (backend stays authoritative).
+  if (form.value.discountType === 'PERCENTAGE' && val > 100) {
+    validationError.value = t('coupons.errors.percentageMax')
     return false
   }
   if (form.value.validFrom && form.value.validUntil) {
@@ -652,8 +652,8 @@ const handleSubmit = async () => {
         maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
         maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
-        validFrom: form.value.validFrom ? new Date(form.value.validFrom).toISOString() : null,
-        validUntil: form.value.validUntil ? new Date(form.value.validUntil).toISOString() : null
+        validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
+        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil)
       }
 
       const { mutate } = useGqlMutation<{ updateCoupon: Coupon }>(UPDATE_COUPON_MUTATION)
@@ -676,8 +676,8 @@ const handleSubmit = async () => {
         maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
         maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
-        validFrom: form.value.validFrom ? new Date(form.value.validFrom).toISOString() : null,
-        validUntil: form.value.validUntil ? new Date(form.value.validUntil).toISOString() : null
+        validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
+        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil)
       }
 
       const { mutate } = useGqlMutation<{ createCoupon: Coupon }>(CREATE_COUPON_MUTATION)
@@ -692,6 +692,7 @@ const handleSubmit = async () => {
     showDialog.value = false
   } catch (err) {
     if (import.meta.dev) console.error('Coupon save failed:', err)
+    toast.add({ title: t('coupons.errors.saveFailed'), color: 'error' })
   } finally {
     isSaving.value = false
   }

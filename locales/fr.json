@@ -228,7 +228,11 @@
     "createTitle": "Nouveau coupon",
     "noResults": "Aucun coupon trouvé",
     "created": "Coupon créé avec succès",
-    "updated": "Coupon mis à jour avec succès"
+    "updated": "Coupon mis à jour avec succès",
+    "errors": {
+      "saveFailed": "Échec de l'enregistrement du coupon. Veuillez réessayer.",
+      "percentageMax": "Une remise en pourcentage ne peut pas dépasser 100 %."
+    }
   },
 
   "customers": {
