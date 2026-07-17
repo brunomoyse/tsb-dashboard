@@ -293,8 +293,12 @@ const receiptPreview = computed(() => {
   const d = new Date(sampleOrder.createdAt)
   const dt = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
 
+  // Restaurant name (white-label), roughly centered in the 32-char receipt.
+  const name = (useRuntimeConfig().public.restaurantName as string).toUpperCase()
+  const nameLine = ' '.repeat(Math.max(0, Math.floor((32 - name.length) / 2))) + name
+
   const lines: string[] = [
-    '     TOKYO SUSHI BAR',
+    nameLine,
     thick,
     dt,
     `Cmd #${orderId}  RETRAIT`,

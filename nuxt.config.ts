@@ -55,6 +55,10 @@ export default defineNuxtConfig({
       zitadelNativeClientId: process.env.ZITADEL_NATIVE_CLIENT_ID || '',
       // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
       appBuild: process.env.APP_BUILD || 'web',
+      // Restaurant name printed on receipts (white-label). Read from a plain
+      // (non-NUXT_PUBLIC_) env var so it's baked at build time — the runtime
+      // override machinery never fires for this static SPA (served by Caddy).
+      restaurantName: process.env.RESTAURANT_NAME || 'Tokyo Sushi Bar',
     },
   },
 

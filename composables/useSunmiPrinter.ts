@@ -66,6 +66,9 @@ export const useSunmiPrinter = () => {
   const status = ref<number | null>(null)
   const statusText = ref<string>('')
 
+  // Receipt header: restaurant name (white-label), uppercased for the ticket.
+  const restaurantName = (useRuntimeConfig().public.restaurantName as string).toUpperCase()
+
   const { isCapacitor } = usePlatform()
 
   /** True only when running inside Capacitor on an Android device. */
@@ -115,7 +118,7 @@ export const useSunmiPrinter = () => {
     await plugin.setAlignment({ alignment: 'center' })
     await plugin.setBold({ enabled: true })
     await plugin.setFontSize({ size: 28 })
-    await plugin.printText({ text: 'TOKYO SUSHI BAR\n' })
+    await plugin.printText({ text: `${restaurantName}\n` })
     await plugin.setFontSize({ size: 24 })
     const typeLabel = order.type === 'DELIVERY' ? 'LIVRAISON' : 'À EMPORTER'
     await plugin.printText({ text: `${typeLabel}\n` })
