@@ -29,7 +29,7 @@
     "@nuxt/ui": "^4.9.0",
     "@pinia/nuxt": "^0.11.3",
     "capacitor-sunmi-printer": "file:./plugins/capacitor-sunmi-printer",
-    "graphql": "^16.14.2",
+    "graphql": "^17.0.2",
     "graphql-tag": "^2.12.7",
     "graphql-ws": "^6.0.8",
     "nuxt": "4.5.0",
