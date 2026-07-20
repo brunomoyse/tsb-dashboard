@@ -26,7 +26,7 @@
     "@capacitor/status-bar": "^8.0.2",
     "@iconify-json/lucide": "^1.2.118",
     "@nuxt/icon": "^2.3.1",
-    "@nuxt/ui": "^4.9.0",
+    "@nuxt/ui": "^4.10.0",
     "@pinia/nuxt": "^0.11.3",
     "capacitor-sunmi-printer": "file:./plugins/capacitor-sunmi-printer",
     "graphql": "^16.14.2",
