@@ -240,6 +240,18 @@
             >
           </div>
 
+          <!-- End date (range, add mode only) -->
+          <div v-if="!editingDate">
+            <label class="block text-sm font-medium mb-1.5">{{ t('settings.overrides.fieldDateEnd') }}</label>
+            <input
+              v-model="form.dateEnd"
+              type="date"
+              :min="form.date"
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full"
+            >
+            <p class="text-xs text-muted mt-1">{{ t('settings.overrides.dateEndHint') }}</p>
+          </div>
+
           <!-- Type segmented control -->
           <div>
             <label class="block text-sm font-medium mb-1.5">{{ t('settings.overrides.fieldType') }}</label>
@@ -643,6 +655,7 @@ const editingDate = ref<string | null>(null)
 const savingOverride = ref(false)
 const form = reactive({
   date: '',
+  dateEnd: '',
   closed: true,
   note: '',
   schedule: { open: '11:00', close: '14:00', dinnerOpen: '17:00', dinnerClose: '22:00' },
@@ -650,6 +663,7 @@ const form = reactive({
 
 const resetForm = () => {
   form.date = ''
+  form.dateEnd = ''
   form.closed = true
   form.note = ''
   form.schedule.open = '11:00'
@@ -682,24 +696,43 @@ const openEditOverride = (ov: ScheduleOverride) => {
   modalOpen.value = true
 }
 
+// Inclusive list of local dates from start to end (end empty or before start → start only)
+const rangeDates = (start: string, end: string): Date[] => {
+  const from = new Date(`${start}T00:00:00`)
+  const to = end ? new Date(`${end}T00:00:00`) : from
+  const dayCount = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1)
+  return Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(from)
+    d.setDate(d.getDate() + i)
+    return d
+  })
+}
+
 const saveOverride = async () => {
   if (!form.date) return
+  const dates = editingDate.value
+    ? [new Date(`${form.date}T00:00:00`)]
+    : rangeDates(form.date, form.dateEnd)
+  if (dates.length > 7 && !confirm(t('settings.overrides.confirmRange', { count: dates.length }))) return
   savingOverride.value = true
   try {
-    const input: Record<string, unknown> = {
-      date: new Date(`${form.date}T00:00:00`).toISOString(),
+    const base: Record<string, unknown> = {
       closed: form.closed,
       note: form.note || null,
     }
     if (!form.closed) {
-      input.schedule = {
+      base.schedule = {
         open: form.schedule.open,
         close: form.schedule.close,
         ...(form.schedule.dinnerOpen ? { dinnerOpen: form.schedule.dinnerOpen } : {}),
         ...(form.schedule.dinnerClose ? { dinnerClose: form.schedule.dinnerClose } : {}),
       }
     }
-    await $gqlFetch(print(UPSERT_OVERRIDE), { variables: { input } })
+    for (const date of dates) {
+      await $gqlFetch(print(UPSERT_OVERRIDE), {
+        variables: { input: { ...base, date: date.toISOString() } },
+      })
+    }
     modalOpen.value = false
     await loadOverrides()
   } finally {
