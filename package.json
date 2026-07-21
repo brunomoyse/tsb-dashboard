@@ -39,7 +39,7 @@
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",
     "@nuxt/test-utils": "^4.0.3",
-    "@nuxtjs/i18n": "^10.4.0",
+    "@nuxtjs/i18n": "^10.5.0",
     "@types/node": "^24.13.2",
     "oxlint": "^1.72.0",
     "tailwindcss": "^4.3.2",
