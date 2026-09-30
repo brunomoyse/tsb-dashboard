@@ -12,21 +12,21 @@
 
         <div class="flex items-center gap-3">
           <span class="text-sm text-muted w-20">Platform</span>
-          <UBadge :color="isNative() ? 'success' : 'neutral'" variant="soft">
+          <UBadge :color="isNative() ? 'success' : 'neutral'" variant="solid">
             {{ isNative() ? 'Sunmi (native)' : 'Web (browser)' }}
           </UBadge>
         </div>
 
         <div class="flex items-center gap-3">
           <span class="text-sm text-muted w-20">Service</span>
-          <UBadge :color="isBound ? 'success' : 'neutral'" variant="soft">
+          <UBadge :color="isBound ? 'success' : 'neutral'" variant="solid">
             {{ isBound ? 'Bound' : 'Not bound' }}
           </UBadge>
         </div>
 
         <div v-if="status !== null" class="flex items-center gap-3">
           <span class="text-sm text-muted w-20">Status</span>
-          <UBadge :color="statusBadgeColor" variant="soft">
+          <UBadge :color="statusBadgeColor" variant="solid">
             {{ statusText || `Code ${status}` }}
           </UBadge>
         </div>
@@ -49,7 +49,7 @@
           <UButton
             v-else
             color="neutral"
-            variant="soft"
+            variant="solid"
             icon="i-lucide-plug-2"
             @click="handleUnbind"
           >
@@ -80,7 +80,7 @@
         <div v-if="lastPrintResult" class="flex items-center gap-2 text-sm">
           <UIcon
             :name="lastPrintResult === 'ok' ? 'i-lucide-check-circle' : 'i-lucide-alert-circle'"
-            :class="lastPrintResult === 'ok' ? 'text-green-500' : 'text-red-500'"
+            :class="lastPrintResult === 'ok' ? 'text-success' : 'text-error'"
             class="size-4 shrink-0"
           />
           <span>{{ lastPrintResult === 'ok' ? 'Print successful' : `Error: ${lastPrintResult}` }}</span>
@@ -104,7 +104,7 @@
       <div class="space-y-3">
         <h2 class="text-lg font-semibold">Receipt Preview</h2>
         <p class="text-sm text-muted">What the receipt will look like (approximate).</p>
-        <pre class="text-xs font-mono bg-(--ui-bg-muted) rounded-lg p-4 overflow-x-auto whitespace-pre leading-relaxed">{{ receiptPreview }}</pre>
+        <pre class="text-xs font-mono bg-accented rounded-lg p-4 overflow-x-auto whitespace-pre leading-relaxed">{{ receiptPreview }}</pre>
       </div>
     </UPageCard>
   </div>
@@ -307,10 +307,10 @@ const receiptPreview = computed(() => {
     `Tel: +32 477 00 00 00`,
     sep,
     ...sampleOrder.items.map(item =>
-      `${item.quantity}x ${item.product.name}`.padEnd(25) + `${item.totalPrice}€`.padStart(7)
+      `${item.quantity}x ${item.product.name}`.padEnd(23) + formatPrice(item.totalPrice).padStart(9)
     ),
     sep,
-    'TOTAL'.padEnd(25) + '27,50€'.padStart(7),
+    'TOTAL'.padEnd(23) + formatPrice(27.5).padStart(9),
     sep,
     `Paiement: En ligne`,
     sep,

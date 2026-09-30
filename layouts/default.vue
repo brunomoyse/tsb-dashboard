@@ -7,7 +7,7 @@
     <UDashboardSidebar
       collapsible
       collapsed
-      class="hidden md:flex"
+      class="hidden md:flex bg-elevated border-r border-default"
       :ui="{
         footer: 'border-t border-default flex flex-col gap-4',
         body: 'flex flex-col gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
@@ -17,10 +17,10 @@
       <template #header="{ collapsed }">
         <div class="flex items-center justify-center py-6 w-full">
           <img
-            src="/moyun-logo.svg"
-            alt="moyun"
-            class="w-auto object-contain transition-all duration-300"
-            :class="collapsed ? 'h-10' : 'h-14'"
+            :src="collapsed ? '/pili-mark.svg' : '/pili-wordmark.svg'"
+            alt="Pili"
+            class="w-auto object-contain"
+            :class="collapsed ? 'h-8' : 'h-7'"
           />
         </div>
       </template>
@@ -52,28 +52,18 @@
           />
         </UDropdownMenu>
 
-        <!-- Theme Toggle -->
-        <UButton
-          :label="(isCollapsed && !isMobile) ? undefined : (colorMode.value === 'dark' ? t('theme.dark') : t('theme.light'))"
-          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          block
-          :square="isCollapsed && !isMobile"
-          @click="toggleTheme"
-        />
 
         <!-- Logout Button -->
         <div class="h-px bg-(--ui-border)" />
         <UButton
           :label="(isCollapsed && !isMobile) ? undefined : t('navigation.logout')"
           icon="i-lucide-log-out"
-          color="error"
+          color="neutral"
           variant="ghost"
           size="lg"
           block
           :square="isCollapsed && !isMobile"
+          :ui="{ leadingIcon: 'text-error' }"
           @click="handleLogout"
         />
 
@@ -82,7 +72,7 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel :ui="{ body: 'bg-(--ui-bg-accented)' }">
+    <UDashboardPanel :ui="{ body: 'bg-default' }">
       <template #header>
         <UDashboardNavbar :toggle="false" class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <!-- Mobile header: hamburger + logo -->
@@ -97,9 +87,9 @@
                 @click="drawerOpen = true"
               />
               <img
-                src="/moyun-logo.svg"
-                alt="moyun"
-                class="h-8 w-auto"
+                src="/pili-wordmark.svg"
+                alt="Pili"
+                class="h-7 w-auto"
               />
             </div>
           </template>
@@ -128,9 +118,9 @@
       <template #header>
         <div class="flex items-center justify-center py-2 w-full">
           <img
-            src="/moyun-logo.svg"
-            alt="moyun"
-            class="h-12 w-auto"
+            src="/pili-wordmark.svg"
+            alt="Pili"
+            class="h-8 w-auto"
           />
         </div>
       </template>
@@ -157,25 +147,17 @@
           />
         </UDropdownMenu>
 
-        <UButton
-          :label="colorMode.value === 'dark' ? t('theme.dark') : t('theme.light')"
-          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          block
-          @click="toggleTheme"
-        />
 
         <div class="h-px bg-(--ui-border)" />
 
         <UButton
           :label="t('navigation.logout')"
           icon="i-lucide-log-out"
-          color="error"
+          color="neutral"
           variant="ghost"
           size="lg"
           block
+          :ui="{ leadingIcon: 'text-error' }"
           @click="handleLogout"
         />
       </template>
@@ -189,7 +171,6 @@ import type { NavigationMenuItem } from '#ui/types'
 const { locale, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const route = useRoute()
-const colorMode = useColorMode()
 const ordersStore = useOrdersStore()
 
 const drawerOpen = ref(false)
@@ -227,47 +208,37 @@ const languageItems = computed(() =>
   }))
 )
 
-const navigationItems = computed<NavigationMenuItem[][]>(() => [[
-  {
-    label: t('navigation.products'),
-    icon: 'i-lucide-package',
-    to: `/${locale.value}/products`,
-    active: route.path.includes('/products')
-  },
-  {
-    label: t('navigation.orders'),
-    icon: 'i-lucide-shopping-bag',
-    to: `/${locale.value}/orders`,
-    active: route.path.includes('/orders'),
-    badge: ordersStore.unacknowledgedPendingCount > 0
-      ? { label: String(ordersStore.unacknowledgedPendingCount), color: 'error' as const }
-      : undefined
-  },
-  {
-    label: t('navigation.orderHistory'),
-    icon: 'i-lucide-history',
-    to: `/${locale.value}/order-history`,
-    active: route.path.includes('/order-history')
-  },
-  {
-    label: t('navigation.customers'),
-    icon: 'i-lucide-users',
-    to: `/${locale.value}/customers`,
-    active: route.path.includes('/customers')
-  },
-  {
-    label: t('navigation.coupons'),
-    icon: 'i-lucide-ticket',
-    to: `/${locale.value}/coupons`,
-    active: route.path.includes('/coupons')
-  },
-  {
-    label: t('navigation.settings'),
-    icon: 'i-lucide-settings',
-    to: `/${locale.value}/settings`,
-    active: route.path.includes('/settings')
+// Pili: the active item is a Brume fill with Encre text and icon, never Volt.
+const navItemUi = (active: boolean) => active
+  ? {
+      link: 'text-inverted hover:text-inverted before:bg-inverted hover:before:bg-inverted',
+      linkLeadingIcon: 'text-inverted group-hover:text-inverted'
+    }
+  : {
+      link: 'text-muted hover:before:bg-accented',
+      linkLeadingIcon: 'text-muted'
+    }
+
+const navigationItems = computed<NavigationMenuItem[][]>(() => {
+  const item = (label: string, icon: string, path: string): NavigationMenuItem => {
+    const active = route.path.includes(`/${path}`)
+    return { label, icon, to: `/${locale.value}/${path}`, active, ui: navItemUi(active) }
   }
-]])
+  return [[
+    item(t('navigation.products'), 'i-lucide-package', 'products'),
+    {
+      ...item(t('navigation.orders'), 'i-lucide-shopping-bag', 'orders'),
+      // Unacknowledged orders are waiting, not an error: amber, in mono.
+      badge: ordersStore.unacknowledgedPendingCount > 0
+        ? { label: String(ordersStore.unacknowledgedPendingCount), color: 'warning' as const, variant: 'solid' as const, class: 'font-mono tabular-nums font-bold' }
+        : undefined
+    },
+    item(t('navigation.orderHistory'), 'i-lucide-history', 'order-history'),
+    item(t('navigation.customers'), 'i-lucide-users', 'customers'),
+    item(t('navigation.coupons'), 'i-lucide-ticket', 'coupons'),
+    item(t('navigation.settings'), 'i-lucide-settings', 'settings')
+  ]]
+})
 
 const onLanguageChange = (newLocale: 'fr' | 'en' | 'nl' | 'zh') => {
   const newPath = switchLocalePath(newLocale)
@@ -281,9 +252,6 @@ const handleLogout = async () => {
   await authStore.logout()
 }
 
-const toggleTheme = () => {
-  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
-}
 </script>
 
 <style>

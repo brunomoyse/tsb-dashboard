@@ -13,6 +13,7 @@
         <USwitch
           :model-value="!!hours[day.key]"
           size="lg"
+          color="success"
           checked-icon="i-lucide-check"
           unchecked-icon="i-lucide-x"
           @update:model-value="(val: boolean) => emit('toggle-day', day.key, val)"
@@ -26,25 +27,25 @@
           <input
             v-model="hours[day.key]!.open"
             type="time"
-            class="border border-default rounded px-2 py-1 text-sm bg-default"
+            class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
           >
           <span class="text-muted">–</span>
           <input
             v-model="hours[day.key]!.close"
             type="time"
-            class="border border-default rounded px-2 py-1 text-sm bg-default"
+            class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
           >
           <span class="text-muted mx-1">|</span>
           <input
             v-model="hours[day.key]!.dinnerOpen"
             type="time"
-            class="border border-default rounded px-2 py-1 text-sm bg-default"
+            class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
           >
           <span class="text-muted">–</span>
           <input
             v-model="hours[day.key]!.dinnerClose"
             type="time"
-            class="border border-default rounded px-2 py-1 text-sm bg-default"
+            class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
           >
         </div>
       </div>
@@ -58,13 +59,13 @@
           <input
             v-model="hours[day.key]!.open"
             type="time"
-            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
           >
           <span class="text-muted text-sm">–</span>
           <input
             v-model="hours[day.key]!.close"
             type="time"
-            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
           >
         </div>
         <div class="flex items-center gap-2">
@@ -74,13 +75,13 @@
           <input
             v-model="hours[day.key]!.dinnerOpen"
             type="time"
-            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
           >
           <span class="text-muted text-sm">–</span>
           <input
             v-model="hours[day.key]!.dinnerClose"
             type="time"
-            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+            class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
           >
         </div>
       </div>

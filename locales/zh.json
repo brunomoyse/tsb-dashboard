@@ -179,7 +179,9 @@
       "invalidTransition": "此订单不允许该状态转换",
       "printFailed": "打印失败",
       "paymentUpdateFailed": "更新支付状态失败"
-    }
+    },
+    "lateChip": "已超时",
+    "toCollect": "待收款"
   },
 
   "orderHistory": {
@@ -342,11 +344,6 @@
       "save": "保存",
       "cancel": "取消"
     }
-  },
-
-  "theme": {
-    "light": "浅色模式",
-    "dark": "深色模式"
   },
 
   "login": {

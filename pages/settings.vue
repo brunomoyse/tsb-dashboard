@@ -3,7 +3,7 @@
     <h1 class="text-lg sm:text-2xl font-bold">{{ t('settings.title') }}</h1>
 
     <!-- Online ordering toggle -->
-    <div class="bg-default ring ring-default rounded-xl px-4 py-4 sm:px-5">
+    <div class="bg-elevated border border-default rounded-[14px] px-4 py-4 sm:px-5">
       <div class="flex items-center justify-between gap-4">
         <div class="min-w-0">
           <h2 class="text-base sm:text-lg font-semibold leading-tight">{{ t('settings.ordering.title') }}</h2>
@@ -14,6 +14,7 @@
         <USwitch
           v-model="orderingEnabled"
           size="lg"
+          color="success"
           :loading="updatingOrdering"
           checked-icon="i-lucide-check"
           unchecked-icon="i-lucide-x"
@@ -23,7 +24,7 @@
     </div>
 
     <!-- Preparation time -->
-    <div class="bg-default ring ring-default rounded-xl px-4 py-4 sm:px-5">
+    <div class="bg-elevated border border-default rounded-[14px] px-4 py-4 sm:px-5">
       <div class="flex items-start gap-3">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
@@ -32,8 +33,9 @@
               v-if="preparationDirty"
               :label="t('settings.unsaved')"
               color="warning"
-              variant="subtle"
+              variant="solid"
               size="sm"
+              class="rounded-[5px] text-[11px] font-bold"
             />
           </div>
           <p class="text-xs sm:text-sm text-muted mt-1 leading-snug">
@@ -45,7 +47,7 @@
       <div class="mt-4 flex items-center justify-center gap-3 sm:justify-start">
         <UButton
           icon="i-lucide-minus"
-          variant="soft"
+          variant="solid"
           color="neutral"
           size="lg"
           square
@@ -54,12 +56,12 @@
           @click.prevent="adjustPreparation(-5)"
         />
         <div class="flex items-baseline gap-1.5 min-w-[120px] justify-center">
-          <span class="text-3xl font-semibold tabular-nums leading-none">{{ preparationMinutes }}</span>
+          <span class="text-3xl font-semibold font-mono tabular-nums leading-none">{{ preparationMinutes }}</span>
           <span class="text-sm text-muted">{{ t('settings.preparation.unit') }}</span>
         </div>
         <UButton
           icon="i-lucide-plus"
-          variant="soft"
+          variant="solid"
           color="neutral"
           size="lg"
           square
@@ -74,6 +76,8 @@
         :label="t('common.save')"
         icon="i-lucide-save"
         :loading="updatingPreparation"
+        :color="firstDirty === 'preparation' ? 'primary' : 'neutral'"
+        variant="solid"
         block
         class="mt-4"
         @click.prevent="savePreparation"
@@ -94,6 +98,8 @@
           :label="t('common.save')"
           icon="i-lucide-save"
           :loading="updatingHours"
+          :color="firstDirty === 'hours' ? 'primary' : 'neutral'"
+          variant="solid"
           block
           @click="saveOpeningHours"
         />
@@ -113,6 +119,7 @@
           <USwitch
             :model-value="hasOrderingHours"
             size="md"
+            color="success"
             checked-icon="i-lucide-check"
             unchecked-icon="i-lucide-x"
             @update:model-value="toggleCustomOrderingHours"
@@ -135,6 +142,8 @@
           :label="t('common.save')"
           icon="i-lucide-save"
           :loading="updatingOrderingHours"
+          :color="firstDirty === 'orderingHours' ? 'primary' : 'neutral'"
+          variant="solid"
           block
           @click="saveOrderingHours"
         />
@@ -151,6 +160,8 @@
         <UButton
           icon="i-lucide-plus"
           size="sm"
+          color="neutral"
+          variant="solid"
           square
           :aria-label="t('settings.overrides.addButton')"
           @click="openAddOverride"
@@ -162,7 +173,7 @@
         v-if="overrides.length === 0"
         class="py-8 flex flex-col items-center text-center gap-3"
       >
-        <div class="size-12 rounded-full bg-elevated flex items-center justify-center">
+        <div class="size-12 rounded-full bg-accented flex items-center justify-center">
           <UIcon name="i-lucide-calendar-off" class="size-6 text-muted" />
         </div>
         <p class="text-sm text-muted max-w-xs">{{ t('settings.overrides.empty') }}</p>
@@ -170,7 +181,8 @@
           :label="t('settings.overrides.addButton')"
           icon="i-lucide-plus"
           size="sm"
-          variant="soft"
+          color="neutral"
+          variant="solid"
           @click="openAddOverride"
         />
       </div>
@@ -181,7 +193,7 @@
           <div
             role="button"
             tabindex="0"
-            class="rounded-xl ring ring-default bg-elevated/50 p-3 sm:p-4 flex items-start gap-3 cursor-pointer transition-colors hover:bg-elevated active:bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            class="rounded-xl border border-default bg-accented p-3 sm:p-4 flex items-start gap-3 cursor-pointer transition-colors hover:border-muted focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-inverted"
             @click="openEditOverride(ov)"
             @keydown.enter.prevent="openEditOverride(ov)"
             @keydown.space.prevent="openEditOverride(ov)"
@@ -192,14 +204,15 @@
                 <UBadge
                   :label="ov.closed ? t('settings.overrides.labelClosed') : t('settings.overrides.labelSpecialHours')"
                   :color="ov.closed ? 'error' : 'warning'"
-                  variant="subtle"
+                  variant="solid"
                   size="sm"
+                  class="rounded-[5px] text-[11px] font-bold"
                 />
               </div>
               <p v-if="ov.note" class="text-xs text-muted mt-1 line-clamp-2">{{ ov.note }}</p>
               <p
                 v-if="!ov.closed && ov.schedule"
-                class="text-xs text-muted mt-1 tabular-nums"
+                class="text-xs text-muted mt-1 font-mono tabular-nums"
               >
                 {{ ov.schedule.open }}–{{ ov.schedule.close }}<span v-if="ov.schedule.dinnerOpen && ov.schedule.dinnerClose"> · {{ ov.schedule.dinnerOpen }}–{{ ov.schedule.dinnerClose }}</span>
               </p>
@@ -236,7 +249,7 @@
               v-model="form.date"
               type="date"
               :disabled="!!editingDate"
-              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full disabled:opacity-60"
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-accented w-full disabled:opacity-60"
             >
           </div>
 
@@ -247,7 +260,7 @@
               v-model="form.dateEnd"
               type="date"
               :min="form.date"
-              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full"
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-accented w-full"
             >
             <p class="text-xs text-muted mt-1">{{ t('settings.overrides.dateEndHint') }}</p>
           </div>
@@ -260,8 +273,8 @@
                 type="button"
                 class="flex flex-col items-center justify-center rounded-xl border-2 transition-colors py-3 cursor-pointer min-h-[68px]"
                 :class="form.closed
-                  ? 'border-error bg-error/5 text-error'
-                  : 'border-default bg-default text-default hover:bg-elevated'"
+                  ? 'border-inverted bg-inverted text-inverted'
+                  : 'border-default bg-accented text-default hover:border-muted'"
                 @click.prevent="form.closed = true"
               >
                 <UIcon name="i-lucide-x-circle" class="size-5 mb-1" />
@@ -271,8 +284,8 @@
                 type="button"
                 class="flex flex-col items-center justify-center rounded-xl border-2 transition-colors py-3 cursor-pointer min-h-[68px]"
                 :class="!form.closed
-                  ? 'border-warning bg-warning/5 text-warning'
-                  : 'border-default bg-default text-default hover:bg-elevated'"
+                  ? 'border-inverted bg-inverted text-inverted'
+                  : 'border-default bg-accented text-default hover:border-muted'"
                 @click.prevent="form.closed = false"
               >
                 <UIcon name="i-lucide-clock" class="size-5 mb-1" />
@@ -291,13 +304,13 @@
                 <input
                   v-model="form.schedule.open"
                   type="time"
-                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
                 >
                 <span class="text-muted">–</span>
                 <input
                   v-model="form.schedule.close"
                   type="time"
-                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
                 >
               </div>
             </div>
@@ -309,13 +322,13 @@
                 <input
                   v-model="form.schedule.dinnerOpen"
                   type="time"
-                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
                 >
                 <span class="text-muted">–</span>
                 <input
                   v-model="form.schedule.dinnerClose"
                   type="time"
-                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-default tabular-nums"
+                  class="flex-1 min-w-0 border border-default rounded-lg px-3 py-2.5 text-base bg-accented font-mono tabular-nums"
                 >
               </div>
             </div>
@@ -328,7 +341,7 @@
               v-model="form.note"
               type="text"
               :placeholder="t('settings.overrides.notePlaceholder')"
-              class="border border-default rounded-lg px-3 py-2.5 text-base bg-default w-full"
+              class="border border-default rounded-lg px-3 py-2.5 text-base bg-accented w-full"
             >
           </div>
         </div>
@@ -337,7 +350,7 @@
         <div class="flex gap-2 w-full">
           <UButton
             :label="t('settings.overrides.cancel')"
-            variant="soft"
+            variant="solid"
             color="neutral"
             class="flex-1 justify-center"
             @click.prevent="modalOpen = false"
@@ -409,6 +422,13 @@ const preparationDirty = ref(false)
 const openingHoursDirty = ref(false)
 const orderingHoursDirty = ref(false)
 const isAnyDirty = computed(() => preparationDirty.value || openingHoursDirty.value || orderingHoursDirty.value)
+// Only the first dirty section's save button is Volt (one Volt element per page)
+const firstDirty = computed<'preparation' | 'hours' | 'orderingHours' | null>(() => {
+  if (preparationDirty.value) return 'preparation'
+  if (openingHoursDirty.value) return 'hours'
+  if (orderingHoursDirty.value) return 'orderingHours'
+  return null
+})
 let syncing = false
 
 const resetDirty = () => {

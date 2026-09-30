@@ -6,7 +6,7 @@
     :overlay="true"
     :ui="{
       content: 'max-lg:h-full max-lg:max-h-full max-lg:rounded-none lg:max-w-4xl',
-      overlay: 'backdrop-blur-sm bg-gray-950/75',
+      overlay: 'bg-default',
       body: 'max-lg:p-4 max-lg:overflow-y-auto',
       footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end'
     }"
@@ -19,17 +19,18 @@
           <div class="space-y-3 sm:space-y-4">
             <UFormField :label="t('products.category')" name="category" required>
               <USelectMenu
+                :ui="{ ...inputUi, content: 'min-w-[200px]' }"
                 v-model="editedProduct.categoryId"
                 :items="localizedCategories"
                 value-key="id"
                 label-key="name"
                 :placeholder="t('products.category')"
-                :ui="{ content: 'min-w-[200px]' }"
               />
             </UFormField>
 
             <UFormField :label="t('products.code')" name="code">
               <UInput
+                :ui="monoInputUi"
                 v-model="editedProduct.code"
                 :placeholder="t('products.code')"
               />
@@ -37,6 +38,7 @@
 
             <UFormField :label="t('products.priceEuro')" name="price" required>
               <UInput
+                :ui="monoInputUi"
                 v-model="editedProduct.price"
                 type="number"
                 :placeholder="t('products.priceEuro')"
@@ -45,6 +47,7 @@
 
             <UFormField :label="t('products.pieceCount')" name="pieceCount">
               <UInput
+                :ui="monoInputUi"
                 v-model.number="editedProduct.pieceCount"
                 type="number"
                 :placeholder="t('products.pieceCount')"
@@ -53,6 +56,7 @@
 
             <UFormField :label="t('products.vatCategory.label')" name="vatCategory" required>
               <USelect
+                :ui="inputUi"
                 v-model="editedProduct.vatCategory"
                 :items="vatCategoryOptions"
                 value-key="value"
@@ -90,7 +94,7 @@
                 <img
                   :src="processedPreview"
                   alt="Processed preview"
-                  class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg border border-dashed border-gray-300"
+                  class="w-32 max-h-32 sm:w-40 sm:max-h-40 object-contain rounded-lg border border-dashed border-default"
                 />
               </div>
 
@@ -105,7 +109,7 @@
               <!-- Background removal button -->
               <UButton
                 v-if="selectedImage && !processedPreview"
-                variant="soft"
+                variant="solid"
                 color="neutral"
                 :loading="processingPreview"
                 :disabled="processingPreview"
@@ -128,7 +132,7 @@
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
-                    class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accented file:text-highlighted hover:file:bg-(--pili-pressed) cursor-pointer"
                     @change="handleFileChange"
                   />
                 </UFormField>
@@ -150,6 +154,7 @@
               :required="translation.language === 'fr'"
             >
               <UInput
+                :ui="inputUi"
                 v-model="translation.name"
                 :placeholder="t('common.name')"
               />
@@ -160,6 +165,7 @@
               :name="`translation-${translation.language}-description`"
             >
               <UTextarea
+                :ui="inputUi"
                 v-model="translation.description"
                 :placeholder="t('common.description')"
                 :rows="2"
@@ -171,31 +177,31 @@
 
         <!-- Row 3: Toggles -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('common.visible') }}</span>
             <USwitch v-model="editedProduct.isVisible" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('common.available') }}</span>
             <USwitch v-model="editedProduct.isAvailable" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('products.discountable') }}</span>
             <USwitch v-model="editedProduct.isDiscountable" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('products.halal') }}</span>
             <USwitch v-model="editedProduct.isHalal" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('products.vegetarian') }}</span>
             <USwitch v-model="editedProduct.isVegetarian" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('products.spicy') }}</span>
             <USwitch v-model="editedProduct.isSpicy" size="md" class="shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default px-3 py-2 cursor-pointer hover:bg-elevated/50 transition-colors">
+          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
             <span class="text-sm">{{ t('products.lunchOnly') }}</span>
             <USwitch v-model="editedProduct.isLunchOnly" size="md" class="shrink-0" />
           </label>
@@ -223,7 +229,7 @@
             <div
               v-for="(group, gIdx) in editedChoiceGroups"
               :key="group.id || `group-new-${gIdx}`"
-              class="border rounded-lg p-3 space-y-3"
+              class="border border-default bg-elevated rounded-[14px] p-3 space-y-3"
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-muted">
@@ -233,7 +239,7 @@
                   icon="i-lucide-trash-2"
                   size="xs"
                   color="error"
-                  variant="ghost"
+                  variant="outline"
                   @click="removeChoiceGroup(gIdx)"
                 />
               </div>
@@ -241,6 +247,7 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <UFormField :label="t('products.choices.minSelections')" :name="`group-${gIdx}-min`">
                   <UInput
+                    :ui="monoInputUi"
                     v-model.number="group.minSelections"
                     type="number"
                     min="0"
@@ -249,6 +256,7 @@
                 </UFormField>
                 <UFormField :label="t('products.choices.maxSelections')" :name="`group-${gIdx}-max`">
                   <UInput
+                    :ui="monoInputUi"
                     v-model.number="group.maxSelections"
                     type="number"
                     min="1"
@@ -257,6 +265,7 @@
                 </UFormField>
                 <UFormField :label="t('products.choices.sortOrder')" :name="`group-${gIdx}-sort`">
                   <UInput
+                    :ui="monoInputUi"
                     v-model.number="group.sortOrder"
                     type="number"
                     placeholder="0"
@@ -272,13 +281,14 @@
                   :name="`group-${gIdx}-${lang}`"
                 >
                   <UInput
+                    :ui="inputUi"
                     v-model="getGroupTranslation(group, lang).name"
                     :placeholder="t('common.name')"
                   />
                 </UFormField>
               </div>
 
-                <div class="border-t pt-3 space-y-2">
+                <div class="border-t border-default pt-3 space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-medium text-muted">{{ t('products.choices.choicesTitle') }}</span>
                   <UButton icon="i-lucide-plus" size="xs" variant="outline" @click="addNewChoice(gIdx)">
@@ -293,7 +303,7 @@
                 <div
                   v-for="(choice, cIdx) in group.choices"
                   :key="choice.id || `new-${gIdx}-${cIdx}`"
-                  class="border rounded-md p-2 space-y-2"
+                  class="border border-default bg-accented rounded-lg p-2 space-y-2"
                 >
                   <div class="flex items-center justify-between">
                     <span class="text-xs text-muted">{{ choice.id ? `#${cIdx + 1}` : t('products.choices.new') }}</span>
@@ -301,7 +311,7 @@
                       icon="i-lucide-trash-2"
                       size="xs"
                       color="error"
-                      variant="ghost"
+                      variant="outline"
                       @click="removeChoice(gIdx, cIdx)"
                     />
                   </div>
@@ -309,6 +319,7 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <UFormField :label="t('products.choices.priceModifier')" :name="`choice-${gIdx}-${cIdx}-price`">
                       <UInput
+                        :ui="monoInputUi"
                         v-model="choice.priceModifier"
                         type="number"
                         step="0.01"
@@ -317,6 +328,7 @@
                     </UFormField>
                     <UFormField :label="t('products.choices.sortOrder')" :name="`choice-${gIdx}-${cIdx}-sort`">
                       <UInput
+                        :ui="monoInputUi"
                         v-model.number="choice.sortOrder"
                         type="number"
                         placeholder="0"
@@ -332,6 +344,7 @@
                       :name="`choice-${gIdx}-${cIdx}-${lang}`"
                     >
                       <UInput
+                        :ui="inputUi"
                         v-model="getChoiceTranslation(choice, lang).name"
                         :placeholder="t('common.name')"
                       />
@@ -344,8 +357,8 @@
         </div>
 
         <!-- Validation Errors -->
-        <div v-if="validationErrors.length > 0" class="rounded-md bg-red-50 p-3">
-          <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
+        <div v-if="validationErrors.length > 0" class="rounded-lg border border-error bg-elevated p-3">
+          <ul class="list-disc list-inside text-sm text-error space-y-1">
             <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
           </ul>
         </div>
@@ -354,7 +367,7 @@
 
     <template #footer>
       <UButton
-        variant="outline"
+        variant="ghost"
         color="neutral"
         class="max-sm:w-full"
         @click="closeDialog"
@@ -416,6 +429,14 @@ const toast = useToast()
 // Languages used for translations.
 const languages = ['fr', 'en', 'zh', 'nl']
 
+// Pili inputs: Ardoise fill, 1px border, Brume border on focus, no ring/glow.
+const inputUi = {
+    base: 'bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted'
+}
+const monoInputUi = {
+    base: `${inputUi.base} font-mono tabular-nums`
+}
+
 // Create a copy of an existing product with exactly the languages we need.
 const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
     const categoryId = sourceProduct.category?.id || ''
@@ -460,7 +481,7 @@ const createDefaultProduct = (): CreateProductInput => ({
 })
 
 // VAT category options (Belgian SCE 2.0 classification).
-// The concrete rate depends on the order service type — displayed as helper text.
+// The concrete rate depends on the order service type - displayed as helper text.
 const vatCategoryOptions = computed(() => [
     { value: 'food', label: t('products.vatCategory.options.food') },
     { value: 'beverage', label: t('products.vatCategory.options.beverage') },

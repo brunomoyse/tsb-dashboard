@@ -1,38 +1,13 @@
 <template>
   <div class="login-root">
-    <!-- Ambient glow -->
-    <div class="login-glow" />
-
-    <!-- Subtle grid pattern overlay -->
-    <div class="login-grid" />
-
     <!-- Content -->
     <div class="login-container">
       <!-- Left: Branding -->
       <div class="login-brand">
         <div class="login-brand-inner">
-          <!-- Decorative vertical line -->
-          <div class="login-accent-line" />
-
-          <!-- Decorative text (vertical, hanzi for moyun — "ink rhyme") -->
-          <p class="login-jp-text">墨韻</p>
-
-          <!-- Main branding -->
-          <div class="login-brand-content">
-            <div class="login-brand-icon">
-              <img src="/moyun-logo.svg" alt="moyun" class="size-9 object-contain" />
-            </div>
-            <h1 class="login-brand-name">moyun</h1>
-            <div class="login-brand-divider" />
-            <p class="login-brand-tagline">Dashboard</p>
-          </div>
-
-          <!-- Bottom decorative element -->
-          <div class="login-brand-footer">
-            <span class="login-brand-footer-dot" />
-            <span class="login-brand-footer-line" />
-            <span class="login-brand-footer-dot" />
-          </div>
+          <img src="/pili-wordmark.svg" alt="Pili" class="login-brand-wordmark" />
+          <p class="login-brand-zh" lang="zh">霹雳</p>
+          <p class="login-brand-tagline">Dashboard</p>
         </div>
       </div>
 
@@ -138,7 +113,7 @@
 
           <!-- Footer -->
           <p class="login-footer-text">
-            moyun &middot; Admin
+            PILI &middot; ADMIN
           </p>
         </div>
       </div>
@@ -158,14 +133,6 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const isCapacitor = config.public.appBuild === 'capacitor'
-
-useHead({
-  link: [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap' }
-  ]
-})
 
 const { t } = useI18n()
 const route = useRoute()
@@ -225,7 +192,7 @@ const startCooldown = (seconds = 20) => {
 
 /*
  * Synchronous in-flight flags. The reactive `loading` ref drives the UI but
- * Vue's reactivity is async — a tight double-fire (form submit + click,
+ * Vue's reactivity is async, a tight double-fire (form submit + click,
  * hydration remount, retry path) can sneak past `if (loading.value) return`.
  * These plain JS booleans flip atomically inside the handler, blocking the
  * duplicate before it ever reaches the network.
@@ -301,7 +268,7 @@ const verifyCode = async () => {
 
       if (isCapacitor) {
         // Capacitor: exchange the auth code for tokens directly.
-        // We can't follow result.callbackUrl — the WebView runs at https://localhost
+        // We can't follow result.callbackUrl, the WebView runs at https://localhost
         // And navigating there would lose the OIDC state.
         const callbackUrl = new URL(result.callbackUrl)
         const authCode = callbackUrl.searchParams.get('code')
@@ -358,52 +325,26 @@ const verifyCode = async () => {
 </script>
 
 <style scoped>
-/* ── Root ── */
+/* Root */
 .login-root {
-  position: relative;
   min-height: 100dvh;
-  overflow: hidden;
-  background: #0c0907;
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-sans);
 }
 
-/* ── Ambient glow ── */
-.login-glow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(167, 14, 30, 0.10) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 60% at 70% 60%, rgba(199, 31, 48, 0.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-/* ── Grid pattern ── */
-.login-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(167, 14, 30, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(167, 14, 30, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 70%);
-  pointer-events: none;
-}
-
-/* ── Container ── */
 .login-container {
-  position: relative;
-  z-index: 1;
   display: flex;
   min-height: 100dvh;
 }
 
-/* ── Brand panel ── */
+/* Brand panel */
 .login-brand {
   display: none;
-  position: relative;
   width: 42%;
   min-height: 100dvh;
-  border-right: 1px solid rgba(167, 14, 30, 0.12);
+  background: var(--ui-bg);
+  border-right: 1px solid var(--ui-border);
 }
 
 @media (min-width: 1024px) {
@@ -415,104 +356,32 @@ const verifyCode = async () => {
 }
 
 .login-brand-inner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  animation: login-fade-up 0.8s ease-out both;
-}
-
-/* Vertical accent line */
-.login-accent-line {
-  position: absolute;
-  left: 50%;
-  top: -6rem;
-  width: 1px;
-  height: 4rem;
-  background: linear-gradient(to bottom, transparent, rgba(167, 14, 30, 0.45));
-  animation: login-fade-in 1.2s ease-out 0.3s both;
-}
-
-/* Hanzi vertical text — 墨韻 (moyun) */
-.login-jp-text {
-  position: absolute;
-  right: -3.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  writing-mode: vertical-rl;
-  font-family: 'Cormorant Garamond', 'Songti SC', 'STSong', serif;
-  font-size: 1.25rem;
-  letter-spacing: 0.4em;
-  color: rgba(167, 14, 30, 0.22);
-  user-select: none;
-}
-
-.login-brand-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
 }
 
-.login-brand-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(167, 14, 30, 0.28);
-  background: rgba(167, 14, 30, 0.08);
+.login-brand-wordmark {
+  height: 96px;
+  width: auto;
 }
 
-.login-brand-name {
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
-  font-size: 3.75rem;
-  font-weight: 300;
-  font-style: italic;
-  line-height: 1;
-  text-align: center;
-  letter-spacing: 0.02em;
-  color: #faf5ef;
-}
-
-.login-brand-divider {
-  width: 2.5rem;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(167, 14, 30, 0.55), transparent);
+.login-brand-zh {
+  font-family: var(--font-zh);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ui-text-muted);
 }
 
 .login-brand-tagline {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: rgba(199, 31, 48, 0.65);
+  color: var(--ui-text-muted);
 }
 
-.login-brand-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  animation: login-fade-in 1.2s ease-out 0.5s both;
-}
-
-.login-brand-footer-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(167, 14, 30, 0.4);
-}
-
-.login-brand-footer-line {
-  width: 2rem;
-  height: 1px;
-  background: rgba(167, 14, 30, 0.18);
-}
-
-/* ── Form panel ── */
+/* Form panel */
 .login-form-panel {
   flex: 1;
   display: flex;
@@ -524,20 +393,17 @@ const verifyCode = async () => {
 .login-form-wrapper {
   width: 100%;
   max-width: 24rem;
-  animation: login-fade-up 0.8s ease-out 0.15s both;
 }
 
-/* ── Form header ── */
 .login-form-header {
   margin-bottom: 2.5rem;
 }
 
 .login-form-title {
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-family: var(--font-brand);
   font-size: 2rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  color: #faf5ef;
+  font-weight: 800;
+  color: var(--ui-text);
   margin-bottom: 0.5rem;
 }
 
@@ -549,17 +415,15 @@ const verifyCode = async () => {
 
 .login-form-subtitle {
   font-size: 0.875rem;
-  color: rgba(250, 245, 239, 0.4);
+  color: var(--ui-text-muted);
 }
 
-/* ── Form ── */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-/* ── Field ── */
 .login-field {
   display: flex;
   flex-direction: column;
@@ -571,10 +435,10 @@ const verifyCode = async () => {
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(250, 245, 239, 0.35);
+  color: var(--ui-text-muted);
 }
 
-/* ── Input ── */
+/* Input */
 .login-input-wrap {
   position: relative;
   display: flex;
@@ -586,40 +450,38 @@ const verifyCode = async () => {
   left: 1rem;
   width: 1rem;
   height: 1rem;
-  color: rgba(250, 245, 239, 0.2);
+  color: var(--ui-text-muted);
   pointer-events: none;
   transition: color 0.2s ease;
 }
 
 .login-input-wrap:focus-within .login-input-icon {
-  color: rgba(199, 31, 48, 0.7);
+  color: var(--ui-border-inverted);
 }
 
 .login-input {
   width: 100%;
   height: 3.25rem;
   padding: 0 1rem 0 2.75rem;
-  border: 1px solid rgba(250, 245, 239, 0.08);
+  border: 1px solid var(--ui-border);
   border-radius: 0.75rem;
-  background: rgba(250, 245, 239, 0.03);
-  color: #faf5ef;
+  background: var(--ui-bg-accented);
+  color: var(--ui-text);
   font-size: 0.9375rem;
   outline: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .login-input::placeholder {
-  color: rgba(250, 245, 239, 0.2);
+  color: var(--ui-text-muted);
 }
 
 .login-input:focus {
-  border-color: rgba(199, 31, 48, 0.5);
-  background: rgba(167, 14, 30, 0.04);
-  box-shadow: 0 0 0 3px rgba(167, 14, 30, 0.10);
+  border-color: var(--ui-border-inverted);
 }
 
 .login-input-code {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-mono);
   font-size: 1.125rem;
   letter-spacing: 0.5em;
   text-align: center;
@@ -627,10 +489,10 @@ const verifyCode = async () => {
   padding-right: 1rem;
 }
 
-/* ── Code-step hint and actions ── */
+/* Code step */
 .login-code-hint {
   font-size: 0.875rem;
-  color: rgba(250, 245, 239, 0.5);
+  color: var(--ui-text-muted);
   line-height: 1.5;
 }
 
@@ -645,13 +507,18 @@ const verifyCode = async () => {
   background: none;
   border: none;
   padding: 0.5rem 0.25rem;
-  color: rgba(250, 245, 239, 0.4);
+  color: var(--ui-text-muted);
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .login-link-button:hover:not(:disabled) {
-  color: rgba(250, 245, 239, 0.7);
+  color: var(--ui-text);
+}
+
+.login-link-button:focus-visible {
+  outline: 2px solid var(--ui-border-inverted);
+  outline-offset: 2px;
 }
 
 .login-link-button:disabled {
@@ -660,24 +527,21 @@ const verifyCode = async () => {
 }
 
 .login-link-button-accent {
-  color: rgba(199, 31, 48, 0.85);
+  color: var(--ui-text);
   font-weight: 500;
+  text-decoration: underline;
 }
 
-.login-link-button-accent:hover:not(:disabled) {
-  color: rgba(222, 62, 78, 1);
-}
-
-/* ── Error ── */
+/* Error */
 .login-error {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  background: rgba(239, 68, 68, 0.06);
-  color: #fca5a5;
+  border: 1px solid var(--ui-error);
+  background: var(--ui-bg-elevated);
+  color: var(--ui-error);
   font-size: 0.8125rem;
 }
 
@@ -692,9 +556,8 @@ const verifyCode = async () => {
   transform: translateY(-0.25rem);
 }
 
-/* ── Submit ── */
+/* Submit: the Volt button */
 .login-submit {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -703,76 +566,48 @@ const verifyCode = async () => {
   margin-top: 0.5rem;
   border: none;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #a70e1e, #7a0a16);
-  color: #f4f0e7;
+  background: var(--ui-primary);
+  color: var(--ui-text-inverted);
   font-size: 0.9375rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(167, 14, 30, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.login-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #c71f30, #a70e1e);
-  box-shadow:
-    0 4px 14px rgba(167, 14, 30, 0.4),
-    0 0 0 1px rgba(199, 31, 48, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
+  transition: transform 0.15s ease;
 }
 
 .login-submit:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(167, 14, 30, 0.25),
-    inset 0 1px 4px rgba(0, 0, 0, 0.25);
+  transform: scale(0.97);
+}
+
+.login-submit:focus-visible {
+  outline: 2px solid var(--ui-border-inverted);
+  outline-offset: 2px;
 }
 
 .login-submit:disabled {
-  opacity: 0.7;
+  background: var(--ui-bg-accented);
+  color: var(--ui-text-muted);
   cursor: not-allowed;
 }
 
-/* ── Spinner ── */
+/* Spinner */
 .login-spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid rgba(244, 240, 231, 0.25);
-  border-top-color: #f4f0e7;
+  border: 2px solid var(--ui-border);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: login-spin 0.6s linear infinite;
 }
 
-/* ── Footer ── */
+/* Footer */
 .login-footer-text {
   margin-top: 3rem;
   text-align: center;
-  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(250, 245, 239, 0.12);
-}
-
-/* ── Animations ── */
-@keyframes login-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes login-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  color: var(--ui-text-muted);
 }
 
 @keyframes login-spin {

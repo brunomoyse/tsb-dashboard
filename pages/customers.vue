@@ -11,15 +11,13 @@
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
+        class="rounded-[14px] border border-default bg-elevated p-3 sm:p-4"
       >
         <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
-            <UIcon :name="card.icon" class="size-5 text-muted" />
-          </div>
+          <UIcon :name="card.icon" class="size-5 text-muted shrink-0" />
           <div class="min-w-0">
             <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
-            <div class="text-base sm:text-lg font-bold text-highlighted tabular-nums truncate">
+            <div class="text-base sm:text-lg font-bold text-highlighted font-mono tabular-nums truncate">
               <USkeleton v-if="pending" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
             </div>
@@ -29,7 +27,7 @@
     </div>
 
     <!-- Filters Bar (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent">
       <!-- Search row (search + min orders) -->
       <div class="flex items-center gap-2">
         <UInput
@@ -38,7 +36,7 @@
           :placeholder="t('customers.search')"
           size="lg"
           class="flex-1"
-          :ui="{ base: 'h-12 text-base' }"
+          :ui="{ base: 'h-12 text-base bg-accented' }"
         />
         <UInput
           id="min-orders"
@@ -49,7 +47,7 @@
           size="lg"
           class="w-24 sm:w-32 shrink-0"
           icon="i-lucide-hash"
-          :ui="{ base: 'h-12 text-base' }"
+          :ui="{ base: 'h-12 text-base bg-accented font-mono tabular-nums' }"
           :aria-label="t('customers.filters.minOrders')"
         />
       </div>
@@ -60,10 +58,10 @@
           v-for="preset in periodPresets"
           :key="`p-${preset.key}`"
           type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="selectedPeriod === preset.key
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-transparent'
+            : 'bg-accented text-muted border-default hover:text-default'
           "
           @click="selectPeriod(preset.key)"
         >
@@ -76,17 +74,16 @@
           v-for="opt in orderTypeOptions"
           :key="`t-${opt.value}`"
           type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="selectedOrderType === opt.value
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-transparent'
+            : 'bg-accented text-muted border-default hover:text-default'
           "
           @click="selectedOrderType = opt.value"
         >
           <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
           {{ opt.label }}
         </button>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 
@@ -94,7 +91,7 @@
     <div class="md:hidden">
       <!-- Skeleton -->
       <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
           <USkeleton class="size-10 rounded-full shrink-0" />
           <div class="flex-1 space-y-1.5">
             <div class="flex justify-between">
@@ -110,7 +107,7 @@
       <!-- Empty -->
       <div
         v-else-if="filteredCustomers.length === 0"
-        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
       >
         <UIcon name="i-lucide-users" class="size-14 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('customers.noResults') }}</p>
@@ -122,35 +119,31 @@
           v-for="customer in paginatedCustomers"
           :key="customer.userId"
           type="button"
-          class="w-full flex items-start gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border) text-left active:bg-(--ui-bg-elevated) transition-colors"
+          class="w-full flex items-start gap-3 p-3 rounded-[14px] bg-elevated border border-default text-left active:bg-accented transition-colors"
           @click="openCustomerOrders(customer)"
         >
-          <div class="size-10 rounded-full bg-(--ui-bg-accented) flex items-center justify-center shrink-0 text-sm font-semibold text-(--ui-text-muted)">
+          <div class="size-10 rounded-full bg-accented flex items-center justify-center shrink-0 text-sm font-semibold text-muted">
             {{ getInitials(customer.firstName, customer.lastName) }}
           </div>
 
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <span class="font-semibold text-sm text-highlighted truncate">{{ customer.firstName }} {{ customer.lastName }}</span>
-              <span class="font-bold text-sm text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(customer.totalAmount)) }}</span>
+              <span class="font-bold text-sm text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(customer.totalAmount) }}</span>
             </div>
             <p class="text-xs text-muted truncate mt-0.5">{{ customer.email }}</p>
             <div class="flex items-center gap-2 mt-1.5 text-xs">
-              <span
-                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium"
-                :class="customer.preferredOrderType === 'DELIVERY'
-                  ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
-                  : 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]'
-                "
+              <UBadge
+                color="neutral"
+                variant="solid"
+                size="sm"
+                :icon="customer.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                :ui="{ base: 'rounded-[5px] font-bold text-xs' }"
               >
-                <UIcon
-                  :name="customer.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                  class="size-3"
-                />
                 {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
-              </span>
-              <span class="text-muted tabular-nums">{{ customer.totalOrders }} {{ t('orders.items') }}</span>
-              <span class="text-muted truncate">· {{ formatDate(customer.lastOrderDate) }}</span>
+              </UBadge>
+              <span class="text-muted font-mono tabular-nums">{{ customer.totalOrders }} {{ t('orders.items') }}</span>
+              <span class="text-muted truncate font-mono tabular-nums">· {{ formatDate(customer.lastOrderDate) }}</span>
             </div>
           </div>
 
@@ -160,15 +153,15 @@
     </div>
 
     <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
-    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <div class="hidden md:block rounded-[14px] border border-default overflow-hidden bg-elevated">
       <UTable
         v-if="!pending && filteredCustomers.length > 0"
         :columns="columns"
         :data="paginatedCustomers"
         :ui="{
-          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          th: 'font-mono text-xs font-medium uppercase tracking-wider text-muted py-3 px-4',
           td: 'py-3 px-4',
-          tr: 'cursor-pointer hover:bg-(--ui-bg-elevated) transition-colors'
+          tr: 'cursor-pointer hover:bg-accented transition-colors'
         }"
         @select="(_e: Event, row: any) => openCustomerOrders(row.original)"
       >
@@ -184,44 +177,40 @@
         </template>
 
         <template #totalOrders-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums">{{ row.original.totalOrders }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums">{{ row.original.totalOrders }}</span>
         </template>
 
         <template #totalAmount-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums">{{ belPriceFormat.format(Number(row.original.totalAmount)) }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums">{{ formatPrice(row.original.totalAmount) }}</span>
         </template>
 
         <template #averageOrder-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">{{ belPriceFormat.format(Number(row.original.averageOrderAmount)) }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{ formatPrice(row.original.averageOrderAmount) }}</span>
         </template>
 
         <template #lastOrder-cell="{ row }">
-          <span class="text-sm text-muted">{{ formatDate(row.original.lastOrderDate) }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{ formatDate(row.original.lastOrderDate) }}</span>
         </template>
 
         <template #preferredType-cell="{ row }">
-          <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-            :class="row.original.preferredOrderType === 'DELIVERY'
-              ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
-              : 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]'
-            "
+          <UBadge
+            color="neutral"
+            variant="solid"
+            size="sm"
+            :icon="row.original.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+            :ui="{ base: 'rounded-[5px] font-bold text-xs' }"
           >
-            <UIcon
-              :name="row.original.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-              class="size-3"
-            />
             {{ row.original.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
-          </span>
+          </UBadge>
         </template>
 
         <template #registeredAt-cell="{ row }">
-          <span class="text-sm text-muted">{{ formatDate(row.original.registeredAt) }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{ formatDate(row.original.registeredAt) }}</span>
         </template>
       </UTable>
 
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="divide-y divide-(--ui-border)">
+      <div v-if="pending" class="divide-y divide-default">
         <div v-for="i in 10" :key="i" class="flex items-center gap-4 px-4 py-3">
           <div class="flex-1 space-y-1.5">
             <USkeleton class="h-3.5 w-32" />
@@ -231,7 +220,7 @@
           <USkeleton class="h-3.5 w-16 hidden sm:block" />
           <USkeleton class="h-3.5 w-16 hidden md:block" />
           <USkeleton class="h-3.5 w-20 hidden md:block" />
-          <USkeleton class="h-5 w-16 rounded-full hidden xl:block" />
+          <USkeleton class="h-5 w-16 rounded-[5px] hidden xl:block" />
         </div>
       </div>
 
@@ -267,23 +256,23 @@
             </h2>
             <div class="space-y-1 mt-1 text-sm text-muted">
               <p>{{ selectedCustomer.email }}</p>
-              <p v-if="selectedCustomer.phoneNumber">{{ selectedCustomer.phoneNumber }}</p>
-              <p>{{ t('customers.memberSince') }}: {{ formatDate(selectedCustomer.registeredAt) }}</p>
+              <p v-if="selectedCustomer.phoneNumber" class="font-mono tabular-nums">{{ selectedCustomer.phoneNumber }}</p>
+              <p>{{ t('customers.memberSince') }}: <span class="font-mono tabular-nums">{{ formatDate(selectedCustomer.registeredAt) }}</span></p>
             </div>
           </div>
 
           <!-- Stats -->
           <div class="grid grid-cols-3 gap-3">
-            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
-              <p class="text-lg font-bold text-highlighted tabular-nums">{{ selectedCustomer.totalOrders }}</p>
+            <div class="rounded-[14px] bg-accented p-3 text-center">
+              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ selectedCustomer.totalOrders }}</p>
               <p class="text-xs text-muted">{{ t('customers.totalOrders') }}</p>
             </div>
-            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
-              <p class="text-lg font-bold text-highlighted tabular-nums">{{ belPriceFormat.format(Number(selectedCustomer.totalAmount)) }}</p>
+            <div class="rounded-[14px] bg-accented p-3 text-center">
+              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedCustomer.totalAmount) }}</p>
               <p class="text-xs text-muted">{{ t('customers.totalAmount') }}</p>
             </div>
-            <div class="rounded-lg bg-(--ui-bg-accented) p-3 text-center">
-              <p class="text-lg font-bold text-highlighted tabular-nums">{{ belPriceFormat.format(Number(selectedCustomer.averageOrderAmount)) }}</p>
+            <div class="rounded-[14px] bg-accented p-3 text-center">
+              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedCustomer.averageOrderAmount) }}</p>
               <p class="text-xs text-muted">{{ t('customers.averageOrder') }}</p>
             </div>
           </div>
@@ -293,7 +282,7 @@
             <h3 class="text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
 
             <div v-if="loadingOrders" class="space-y-2">
-              <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-lg bg-(--ui-bg) border border-(--ui-border)">
+              <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
                 <USkeleton class="size-5 rounded shrink-0" />
                 <div class="flex-1 space-y-1">
                   <USkeleton class="h-3.5 w-24" />
@@ -307,7 +296,7 @@
               <div
                 v-for="order in customerOrders"
                 :key="order.id"
-                class="flex items-center gap-3 p-3 rounded-lg bg-(--ui-bg) border border-(--ui-border)"
+                class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default"
               >
                 <UIcon
                   :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
@@ -315,14 +304,14 @@
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-highlighted">{{ formatOrderDate(order.createdAt) }}</span>
-                    <span class="text-sm font-bold text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(order.totalPrice)) }}</span>
+                    <span class="text-sm font-medium text-highlighted font-mono tabular-nums">{{ formatOrderDate(order.createdAt) }}</span>
+                    <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
                   </div>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <UBadge :color="getOrderStatusColor(order.status)" variant="soft" size="xs">
+                    <UBadge :color="getOrderStatusColor(order.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
                       {{ order.status }}
                     </UBadge>
-                    <span class="text-xs text-muted">{{ order.items.length }} {{ t('orders.items') }}</span>
+                    <span class="text-xs text-muted font-mono tabular-nums">{{ order.items.length }} {{ t('orders.items') }}</span>
                   </div>
                 </div>
               </div>
@@ -375,13 +364,6 @@ const sheetUi = computed(() =>
     ? { content: 'max-h-[92dvh] rounded-t-2xl' }
     : { content: 'max-w-md' }
 )
-
-const belPriceFormat = new Intl.NumberFormat('fr-BE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-  style: 'currency',
-  currency: 'EUR'
-})
 
 const searchQuery = ref('')
 const page = ref(1)
@@ -520,12 +502,12 @@ const summaryCards = computed(() => [
   },
   {
     label: t('customers.summary.totalRevenue'),
-    value: belPriceFormat.format(Number(summary.value?.totalRevenue ?? 0)),
+    value: formatPrice(Number(summary.value?.totalRevenue ?? 0)),
     icon: 'i-lucide-banknote'
   },
   {
     label: t('customers.summary.averageOrder'),
-    value: belPriceFormat.format(Number(summary.value?.averageOrderValue ?? 0)),
+    value: formatPrice(Number(summary.value?.averageOrderValue ?? 0)),
     icon: 'i-lucide-calculator'
   },
   {
@@ -545,9 +527,9 @@ const summaryCards = computed(() => [
 const columns = computed(() => [
   { accessorKey: 'name', header: t('customers.name') },
   { accessorKey: 'email', header: t('customers.email'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'totalOrders', header: t('customers.totalOrders') },
-  { accessorKey: 'totalAmount', header: t('customers.totalAmount') },
-  { accessorKey: 'averageOrder', header: t('customers.averageOrder'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
+  { accessorKey: 'totalOrders', header: t('customers.totalOrders'), meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'totalAmount', header: t('customers.totalAmount'), meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'averageOrder', header: t('customers.averageOrder'), meta: { class: { td: 'hidden md:table-cell text-right', th: 'hidden md:table-cell text-right' } } },
   { accessorKey: 'lastOrder', header: t('customers.lastOrder'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'preferredType', header: t('customers.preferredType'), meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
   { accessorKey: 'registeredAt', header: t('customers.registeredAt'), meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } }
@@ -640,7 +622,7 @@ const getOrderStatusColor = (status: string): UiColor => {
   const colors: Record<string, UiColor> = {
     PENDING: 'warning',
     CONFIRMED: 'info',
-    PREPARING: 'primary',
+    PREPARING: 'neutral',
     AWAITING_PICK_UP: 'success',
     OUT_FOR_DELIVERY: 'info',
     DELIVERED: 'success',
@@ -652,5 +634,5 @@ const getOrderStatusColor = (status: string): UiColor => {
 }
 
 const formatOrderDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  new Date(dateStr).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 </script>

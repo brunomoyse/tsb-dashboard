@@ -62,7 +62,7 @@ describe('SunmiPrinterWeb (browser stub)', () => {
       printer.printColumnsText({
         columns: [
           { text: '2x Saumon Maki', width: 24, align: 'left' },
-          { text: '17,00€', width: 8, align: 'right' },
+          { text: '17,00\u00a0€', width: 8, align: 'right' },
         ],
       })
     ).resolves.toBeUndefined()

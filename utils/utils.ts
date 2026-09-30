@@ -33,7 +33,8 @@ export const formatDate = (dateString: string, locale = 'fr-BE') =>
         month: "short",
         day: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        hourCycle: "h23"
     }).format(new Date(dateString));
 
 export const formatTimeOnly = (dateString: string, locale = 'fr-BE') => {
@@ -48,7 +49,8 @@ export const formatTimeOnly = (dateString: string, locale = 'fr-BE') => {
 
         return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale === 'nl' ? 'nl-BE' : locale, {
             hour: "2-digit",
-            minute: "2-digit"
+            minute: "2-digit",
+            hourCycle: "h23"
         }).format(date);
     } catch (e) {
         if (import.meta.dev) console.error('Date formatting error:', e)
