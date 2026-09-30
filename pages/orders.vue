@@ -15,7 +15,7 @@
       class="hidden md:flex items-center gap-2 px-4 py-3 mb-6 rounded-lg bg-warning text-inverted text-base font-medium"
     >
       <UIcon name="i-lucide-alert-triangle" class="size-5 shrink-0" />
-      <i18n-t keypath="orders.staleAlert" tag="span" class="flex-1">
+      <i18n-t keypath="orders.staleAlert" :plural="staleOrderCount" tag="span" class="flex-1">
         <template #count>
           <span class="font-mono font-bold tabular-nums">{{ staleOrderCount }}</span>
         </template>
@@ -84,7 +84,7 @@
         class="mx-4 mb-2.5 w-[calc(100%-32px)] min-h-12 py-2.5 px-3.5 rounded-xl bg-warning text-inverted flex items-center gap-2.5 text-left"
         @click="openOrderDetails(oldestLateOrder)"
       >
-        <i18n-t keypath="orders.staleAlert" tag="span" class="flex-1 text-sm font-bold leading-[1.35]">
+        <i18n-t keypath="orders.staleAlert" :plural="staleOrderCount" tag="span" class="flex-1 text-sm font-bold leading-[1.35]">
           <template #count>
             <span class="font-mono tabular-nums text-[17px] font-bold">{{ staleOrderCount }}</span>
           </template>
@@ -293,24 +293,24 @@
                 </p>
 
                 <!-- Row 2: Items + payment icon + time-since -->
-                <div class="flex items-center justify-between text-xs">
+                <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs">
                   <div class="flex items-center gap-2 text-muted">
-                    <span><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
+                    <span class="whitespace-nowrap"><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
                     <UIcon
                       :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
                       :class="['size-3.5', getPaymentIconClass(order)]"
                     />
                   </div>
-                  <div v-if="isActiveStatus(order.status)" class="flex items-center gap-1.5">
-                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="chipClass">{{ t('orders.lateChip') }}</UBadge>
-                    <UBadge v-else-if="order.status === 'PENDING'" color="warning" variant="solid" size="xs" :class="chipClass">
+                  <div v-if="isActiveStatus(order.status)" class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">{{ t('orders.lateChip') }}</UBadge>
+                    <UBadge v-else-if="order.status === 'PENDING'" color="warning" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">
                       {{ t('orders.status.pending') }}
                     </UBadge>
-                    <span :class="['font-bold font-mono tabular-nums', getTimeSince(order.createdAt).color]">
+                    <span :class="['font-bold font-mono tabular-nums whitespace-nowrap shrink-0', getTimeSince(order.createdAt).color]">
                       {{ getTimeSince(order.createdAt).text }}
                     </span>
                   </div>
-                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="solid" size="xs" :class="chipClass">
+                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">
                     {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                   </UBadge>
                 </div>
@@ -318,9 +318,9 @@
                 <!-- Row 3: Estimated time + payment status (only when noteworthy) -->
                 <div
                   v-if="order.estimatedReadyTime || paymentChip(order)"
-                  class="flex items-center justify-between pt-1.5 border-t border-default"
+                  class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1.5 border-t border-default"
                 >
-                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1 font-mono tabular-nums">
+                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1 font-mono tabular-nums whitespace-nowrap">
                     <UIcon name="i-lucide-clock" class="size-3" />
                     {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
                   </span>
@@ -330,7 +330,7 @@
                     :color="paymentChip(order)!.color"
                     variant="solid"
                     size="xs"
-                    :class="chipClass"
+                    :class="[chipClass, 'whitespace-nowrap shrink-0']"
                   >
                     {{ paymentChip(order)!.label }}
                   </UBadge>
