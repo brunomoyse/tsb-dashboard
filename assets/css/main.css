@@ -35,6 +35,10 @@ button, a, [role="button"], [tabindex], .select-none {
   --font-brand: 'Archivo', 'Noto Sans', sans-serif;
   --font-zh: 'Noto Sans SC', 'Noto Sans', sans-serif;
 
+  /* Buttons and inputs (rounded-md) are 10px. Nuxt UI derives the radius scale
+     from --ui-radius, so raising that would turn rounded-xl into 30px. */
+  --radius-md: 0.625rem;
+
   --color-volt-50: #fbffe6;
   --color-volt-100: #f5ffc7;
   --color-volt-200: #ecff96;
@@ -82,7 +86,7 @@ button, a, [role="button"], [tabindex], .select-none {
   --ui-info: #00d4ff;
   --ui-warning: #ffb020;
   --ui-error: #ff4d3d;
-  --ui-radius: 0.625rem;       /* 10px */
+  --ui-radius: 0.25rem;        /* Nuxt UI scale: lg 8px, xl 12px, 2xl 16px */
 
   --pili-pressed: #2b3035;     /* pressed surface, switch track when off */
   color-scheme: dark;
