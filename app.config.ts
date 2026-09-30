@@ -14,6 +14,10 @@ export default defineAppConfig({
         class: 'text-default bg-accented hover:bg-(--pili-pressed) active:bg-(--pili-pressed) disabled:bg-accented aria-disabled:bg-accented'
       }]
     },
+    // A switch that is on is green (OK), never Volt.
+    switch: {
+      defaultVariants: { color: 'success' }
+    },
     badge: {
       compoundVariants: [{
         color: 'neutral',

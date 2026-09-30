@@ -125,6 +125,7 @@
                 v-model="removeBackground"
                 :label="t('products.removeBackground')"
                 size="sm"
+                color="success"
               />
 
               <!-- File input -->
@@ -178,34 +179,76 @@
 
         <!-- Row 3: Toggles -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isVisible"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isVisible = !editedProduct.isVisible"
+          >
             <span class="text-sm">{{ t('common.visible') }}</span>
-            <USwitch v-model="editedProduct.isVisible" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isVisible" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isAvailable"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isAvailable = !editedProduct.isAvailable"
+          >
             <span class="text-sm">{{ t('common.available') }}</span>
-            <USwitch v-model="editedProduct.isAvailable" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isAvailable" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isDiscountable"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isDiscountable = !editedProduct.isDiscountable"
+          >
             <span class="text-sm">{{ t('products.discountable') }}</span>
-            <USwitch v-model="editedProduct.isDiscountable" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isDiscountable" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isHalal"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isHalal = !editedProduct.isHalal"
+          >
             <span class="text-sm">{{ t('products.halal') }}</span>
-            <USwitch v-model="editedProduct.isHalal" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isHalal" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isVegetarian"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isVegetarian = !editedProduct.isVegetarian"
+          >
             <span class="text-sm">{{ t('products.vegetarian') }}</span>
-            <USwitch v-model="editedProduct.isVegetarian" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isVegetarian" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isSpicy"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isSpicy = !editedProduct.isSpicy"
+          >
             <span class="text-sm">{{ t('products.spicy') }}</span>
-            <USwitch v-model="editedProduct.isSpicy" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isSpicy" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isLunchOnly"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isLunchOnly = !editedProduct.isLunchOnly"
+          >
             <span class="text-sm">{{ t('products.lunchOnly') }}</span>
-            <USwitch v-model="editedProduct.isLunchOnly" size="md" class="shrink-0" />
-          </label>
+            <PiliSwitch :model-value="editedProduct.isLunchOnly" size="md" presentational />
+          </button>
         </div>
 
         <!-- Row 4: Product Choice Groups (edit mode only) -->

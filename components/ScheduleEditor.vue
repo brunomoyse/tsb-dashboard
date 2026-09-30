@@ -10,7 +10,7 @@
         type="button"
         role="switch"
         :aria-checked="!!hours[day.key]"
-        class="flex items-center gap-3 min-h-8 text-left cursor-pointer"
+        class="flex items-center gap-3 min-h-11 text-left cursor-pointer"
         @click="emit('toggle-day', day.key, !hours[day.key])"
       >
         <span class="flex-1 text-[15px] font-bold">{{ t(`settings.hours.${day.key}`) }}</span>

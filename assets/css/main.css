@@ -106,7 +106,9 @@ button, a, [role="button"], [tabindex], .select-none {
 
 /* Global minimum touch targets for touch devices */
 @media (pointer: coarse) {
-  button, [role="button"], a[href], [tabindex="0"] {
+  /* Switches are excluded: a 44px min-height stretches the track out of its
+     pill shape. Their tap target comes from the row or wrapper around them. */
+  button:not([role="switch"]), [role="button"], a[href], [tabindex="0"] {
     min-height: 44px;
   }
 }
