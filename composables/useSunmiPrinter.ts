@@ -5,9 +5,9 @@ import { usePlatform } from '~/composables/usePlatform'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
 
-/** Compact price string: "20.50" → "20,50€" */
+/** Receipt price, same format as the POS: "20.50" → "20,50 €" (comma, non-breaking space) */
 function receiptPrice(price: string | number): string {
-  return `${Number(price).toFixed(2).replace('.', ',')}€`
+  return `${Number(price).toFixed(2).replace('.', ',')}\u00a0€`
 }
 
 /** Date + time formatted for a receipt: "28/03/2026 14:30" */
@@ -172,8 +172,8 @@ export const useSunmiPrinter = () => {
         await plugin.printColumnsText({
           columns: [
             { text: `${item.quantity}x`, width: 3, align: 'left' },
-            { text: `${code}${frName(item.product)}${choiceName}`, width: 20, align: 'left' },
-            { text: receiptPrice(item.totalPrice), width: 7, align: 'right' },
+            { text: `${code}${frName(item.product)}${choiceName}`, width: 18, align: 'left' },
+            { text: receiptPrice(item.totalPrice), width: 9, align: 'right' },
           ],
         })
       }
@@ -184,31 +184,31 @@ export const useSunmiPrinter = () => {
     const itemsTotal = order.items.reduce((sum, it) => sum + Number(it.totalPrice), 0)
     await plugin.printColumnsText({
       columns: [
-        { text: 'Sous-total', width: 23, align: 'left' },
-        { text: receiptPrice(itemsTotal), width: 7, align: 'right' },
+        { text: 'Sous-total', width: 21, align: 'left' },
+        { text: receiptPrice(itemsTotal), width: 9, align: 'right' },
       ],
     })
     if (parseFloat(order.discountAmount) > 0) {
       await plugin.printColumnsText({
         columns: [
-          { text: 'Réduction', width: 23, align: 'left' },
-          { text: `-${receiptPrice(order.discountAmount)}`, width: 7, align: 'right' },
+          { text: 'Réduction', width: 21, align: 'left' },
+          { text: `-${receiptPrice(order.discountAmount)}`, width: 9, align: 'right' },
         ],
       })
     }
     if (order.deliveryFee && parseFloat(order.deliveryFee) > 0) {
       await plugin.printColumnsText({
         columns: [
-          { text: 'Livraison', width: 23, align: 'left' },
-          { text: receiptPrice(order.deliveryFee), width: 7, align: 'right' },
+          { text: 'Livraison', width: 21, align: 'left' },
+          { text: receiptPrice(order.deliveryFee), width: 9, align: 'right' },
         ],
       })
     }
     await plugin.setBold({ enabled: true })
     await plugin.printColumnsText({
       columns: [
-        { text: 'TOTAL', width: 23, align: 'left' },
-        { text: receiptPrice(order.totalPrice), width: 7, align: 'right' },
+        { text: 'TOTAL', width: 21, align: 'left' },
+        { text: receiptPrice(order.totalPrice), width: 9, align: 'right' },
       ],
     })
     await plugin.setBold({ enabled: false })

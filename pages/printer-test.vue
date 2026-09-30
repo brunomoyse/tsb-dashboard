@@ -307,10 +307,10 @@ const receiptPreview = computed(() => {
     `Tel: +32 477 00 00 00`,
     sep,
     ...sampleOrder.items.map(item =>
-      `${item.quantity}x ${item.product.name}`.padEnd(25) + `${item.totalPrice}€`.padStart(7)
+      `${item.quantity}x ${item.product.name}`.padEnd(23) + formatPrice(item.totalPrice).padStart(9)
     ),
     sep,
-    'TOTAL'.padEnd(25) + '27,50€'.padStart(7),
+    'TOTAL'.padEnd(23) + formatPrice(27.5).padStart(9),
     sep,
     `Paiement: En ligne`,
     sep,

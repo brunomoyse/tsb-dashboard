@@ -1074,9 +1074,8 @@ const getPaymentIconClass = (order: Order): string => {
 
 // Discount breakdown helpers
 const itemsSubtotal = computed(() => {
-  if (!selectedOrder.value) return '0'
-  const sum = selectedOrder.value.items.reduce((acc, item) => acc + parseFloat(item.totalPrice), 0)
-  return sum.toFixed(2)
+  if (!selectedOrder.value) return 0
+  return selectedOrder.value.items.reduce((acc, item) => acc + parseFloat(item.totalPrice), 0)
 })
 
 const hasBreakdown = computed(() => {
