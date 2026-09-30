@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col">
     <!-- Mobile -->
     <template v-if="isMobile">
-      <PiliSubHeader :title="t('settings.title')" />
+      <PiliSubHeader :title="t('navigation.settings')" />
 
       <div class="px-4 pt-1 pb-5 grid auto-rows-max gap-2.5">
         <!-- Online ordering: the whole card is the toggle -->
@@ -38,11 +38,10 @@
               class="h-14 rounded-xl bg-accented font-mono text-2xl font-bold disabled:opacity-40 active:bg-(--pili-pressed)"
               @click="adjustPreparation(-5)"
             >
-              &minus;
+              −
             </button>
             <span class="text-center font-mono tabular-nums">
-              <span class="text-4xl font-bold">{{ preparationMinutes }}</span>
-              <span class="text-sm text-muted"> {{ t('settings.preparation.unit') }}</span>
+              <span class="text-4xl font-bold leading-none">{{ preparationMinutes }}</span>{{ ' ' }}<span class="text-sm font-normal text-muted">{{ t('settings.preparation.unit') }}</span>
             </span>
             <button
               type="button"

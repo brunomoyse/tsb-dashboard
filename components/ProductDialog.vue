@@ -13,14 +13,14 @@
     }"
   >
     <template #body>
-      <div class="space-y-4 sm:space-y-6">
+      <div class="space-y-4 sm:space-y-6 min-w-0 max-md:overflow-x-hidden max-md:[&_label]:text-sm">
         <!-- Row 1: Two Columns -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <!-- Left Column: Category, Code, Price, Piece Count -->
           <div class="space-y-3 sm:space-y-4">
             <UFormField :label="t('products.category')" name="category" required>
               <USelectMenu
-                :ui="{ ...inputUi, content: 'min-w-[200px]' }"
+                :ui="selectMenuUi"
                 v-model="editedProduct.categoryId"
                 :items="localizedCategories"
                 value-key="id"
@@ -128,12 +128,12 @@
               />
 
               <!-- File input -->
-              <div class="w-full max-w-xs">
+              <div class="w-full max-w-xs max-md:max-w-none">
                 <UFormField :label="t('products.image')" name="image">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
-                    class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accented file:text-highlighted hover:file:bg-(--pili-pressed) cursor-pointer"
+                    class="block w-full text-sm max-md:text-base text-muted max-md:file:h-12 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accented file:text-highlighted hover:file:bg-(--pili-pressed) cursor-pointer"
                     @change="handleFileChange"
                   />
                 </UFormField>
@@ -166,11 +166,11 @@
               :name="`translation-${translation.language}-description`"
             >
               <UTextarea
-                :ui="inputUi"
+                :ui="textareaUi"
                 v-model="translation.description"
                 :placeholder="t('common.description')"
                 :rows="2"
-                class="sm:!min-h-[4.5rem]"
+                :class="isMobile ? '' : 'sm:!min-h-[4.5rem]'"
               />
             </UFormField>
           </div>
@@ -432,12 +432,21 @@ const toast = useToast()
 const languages = ['fr', 'en', 'zh', 'nl']
 
 // Pili inputs: Ardoise fill, 1px border, Brume border on focus, no ring/glow.
-const inputUi = {
-    base: 'bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted'
-}
-const monoInputUi = {
-    base: `${inputUi.base} font-mono tabular-nums`
-}
+// Below md the fields are phone-sized: full width, 48px tall, 16px text (no iOS zoom).
+const fieldBase = 'bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted'
+const inputUi = computed(() => ({
+    root: isMobile.value ? 'w-full' : '',
+    base: isMobile.value ? `${fieldBase} h-12 text-base` : fieldBase
+}))
+const monoInputUi = computed(() => ({
+    root: inputUi.value.root,
+    base: `${inputUi.value.base} font-mono tabular-nums`
+}))
+const textareaUi = computed(() => ({
+    root: isMobile.value ? 'w-full' : '',
+    base: isMobile.value ? `${fieldBase} min-h-24 text-base` : fieldBase
+}))
+const selectMenuUi = computed(() => ({ ...inputUi.value, content: 'min-w-[200px]' }))
 
 // Create a copy of an existing product with exactly the languages we need.
 const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {

@@ -185,15 +185,15 @@
               <span class="font-mono text-sm font-bold tabular-nums">{{ formatShortDate(customer.lastOrderDate) }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 pt-2.5 border-t border-default">
+          <div class="flex items-center gap-2 pt-1.5 border-t border-default">
             <a
               v-if="customer.phoneNumber"
               :href="`tel:${customer.phoneNumber}`"
-              class="font-mono text-[13px] text-muted underline underline-offset-[3px]"
+              class="inline-flex items-center min-h-11 font-mono text-[13px] text-muted underline underline-offset-[3px]"
               @click.stop
             >{{ customer.phoneNumber }}</a>
             <span class="flex-1" />
-            <PiliChip>
+            <PiliChip class="self-center">
               {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
             </PiliChip>
           </div>

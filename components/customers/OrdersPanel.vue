@@ -30,7 +30,7 @@
 
     <!-- Orders List -->
     <div class="space-y-2">
-      <h3 class="text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
+      <h3 class="hidden md:block text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
 
       <div v-if="loading" class="space-y-2">
         <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
@@ -59,10 +59,10 @@
               <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
             </div>
             <div class="flex items-center gap-2 mt-0.5">
-              <UBadge :color="getOrderStatusColor(order.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
-                {{ order.status }}
-              </UBadge>
-              <span class="text-xs text-muted font-mono tabular-nums">{{ order.items.length }} {{ t('orders.items') }}</span>
+              <PiliChip size="sm" :tone="statusTone(order.status)">
+                {{ t(`orders.status.${order.status.toLowerCase()}`) }}
+              </PiliChip>
+              <span class="text-xs text-muted font-mono tabular-nums">{{ order.items.length }} {{ t('orderHistory.itemsShort') }}</span>
             </div>
           </div>
         </div>
@@ -114,21 +114,18 @@ const emit = defineEmits<{ loadMore: [] }>()
 
 const { t } = useI18n()
 
-type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
-
-const getOrderStatusColor = (status: string): UiColor => {
-  const colors: Record<string, UiColor> = {
-    PENDING: 'warning',
-    CONFIRMED: 'info',
-    PREPARING: 'neutral',
-    AWAITING_PICK_UP: 'success',
-    OUT_FOR_DELIVERY: 'info',
-    DELIVERED: 'success',
-    PICKED_UP: 'success',
-    FAILED: 'error',
-    CANCELLED: 'error'
+const statusTone = (status: string): 'warning' | 'danger' | 'success' | 'info' | 'neutral' => {
+  switch (status) {
+    case 'PENDING': return 'warning'
+    case 'CONFIRMED':
+    case 'OUT_FOR_DELIVERY': return 'info'
+    case 'AWAITING_PICK_UP':
+    case 'DELIVERED':
+    case 'PICKED_UP': return 'success'
+    case 'FAILED':
+    case 'CANCELLED': return 'danger'
+    default: return 'neutral'
   }
-  return colors[status] ?? 'neutral'
 }
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()

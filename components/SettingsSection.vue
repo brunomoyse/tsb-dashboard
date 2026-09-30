@@ -17,7 +17,7 @@
           {{ summary || description }}
         </span>
       </span>
-      <span class="font-mono text-lg text-muted shrink-0" aria-hidden="true">{{ open ? '\u2212' : '+' }}</span>
+      <span class="font-mono text-[18px] leading-none text-muted shrink-0" aria-hidden="true">{{ open ? '−' : '+' }}</span>
     </button>
     <div v-show="open" :id="bodyId" class="px-4 pb-2">
       <slot />

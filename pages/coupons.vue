@@ -593,8 +593,8 @@ const defaultForm = () => ({
 const form = ref(defaultForm())
 
 const discountLabel = (coupon: Coupon) => coupon.discountType === 'PERCENTAGE'
-  ? `\u2212${Number(coupon.discountValue).toLocaleString('fr-BE')}\u00a0%`
-  : `\u2212${formatPrice(coupon.discountValue)}`
+  ? `−${Number(coupon.discountValue).toLocaleString('fr-BE')}\u00a0%`
+  : `−${formatPrice(coupon.discountValue)}`
 
 const shortDate = (d: string) => new Date(d).toLocaleDateString('fr-BE', { timeZone: 'Europe/Brussels' })
 

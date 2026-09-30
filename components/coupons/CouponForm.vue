@@ -3,7 +3,7 @@
     <!-- Code -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.code') }}</label>
-      <UInput v-model="form.code" class="w-full" :ui="{ base: 'bg-accented font-mono' }" :placeholder="t('coupons.code')" />
+      <UInput v-model="form.code" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono' }" :placeholder="t('coupons.code')" />
     </div>
 
     <!-- Discount Type -->
@@ -14,50 +14,50 @@
         :items="discountTypeOptions"
         value-key="value"
         class="w-full"
-        :ui="{ base: 'bg-accented' }"
+        :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented' }"
       />
     </div>
 
     <!-- Discount Value -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.value') }}</label>
-      <UInput v-model="form.discountValue" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" />
+      <UInput v-model="form.discountValue" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" />
     </div>
 
     <!-- Min Order Amount -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.minOrder') }}</label>
-      <UInput v-model="form.minOrderAmount" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" placeholder="0.00" />
+      <UInput v-model="form.minOrderAmount" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" placeholder="0.00" />
     </div>
 
     <!-- Max Uses -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.maxUses') }}</label>
-      <UInput v-model="form.maxUses" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
+      <UInput v-model="form.maxUses" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
     </div>
 
     <!-- Max Uses Per User -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.maxUsesPerUser') }}</label>
-      <UInput v-model="form.maxUsesPerUser" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
+      <UInput v-model="form.maxUsesPerUser" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
     </div>
 
     <!-- Active -->
-    <div class="flex items-center gap-2">
-      <UCheckbox v-model="form.isActive" />
-      <label class="text-sm font-medium">{{ t('coupons.active') }}</label>
+    <div class="flex items-center justify-between gap-3 min-h-12">
+      <span class="text-sm font-medium">{{ t('coupons.active') }}</span>
+      <PiliSwitch v-model="form.isActive" size="md" :label="t('coupons.active')" />
     </div>
 
     <!-- Valid From -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.validFrom') }}</label>
-      <UInput v-model="form.validFrom" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="datetime-local" />
+      <UInput v-model="form.validFrom" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="datetime-local" />
     </div>
 
     <!-- Valid Until -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.validUntil') }}</label>
-      <UInput v-model="form.validUntil" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="datetime-local" />
+      <UInput v-model="form.validUntil" class="w-full" :ui="{ base: 'h-12 text-base md:h-8 md:text-sm bg-accented font-mono tabular-nums' }" type="datetime-local" />
     </div>
 
     <!-- Validation error -->
