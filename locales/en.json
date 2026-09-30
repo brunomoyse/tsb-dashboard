@@ -15,7 +15,9 @@
     "available": "Available",
     "unavailable": "Unavailable",
     "availability": "Availability",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "back": "Back",
+    "filters": "Filters"
   },
 
   "products": {
@@ -283,7 +285,8 @@
     "coupons": "Coupons",
     "booking": "Booking",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "more": "More"
   },
 
   "settings": {
@@ -395,5 +398,12 @@
     "productCreated": "Product created successfully",
     "productUpdated": "Product updated successfully",
     "orderUpdated": "Order status updated"
+  },
+
+  "more": {
+    "language": "Language",
+    "activeCoupons": "{count} active | {count} active",
+    "online": "online",
+    "paused": "paused"
   }
 }

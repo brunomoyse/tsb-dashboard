@@ -16,7 +16,9 @@
     "available": "Disponible",
     "unavailable": "Indisponible",
     "availability": "Disponibilité",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "back": "Retour",
+    "filters": "Filtres"
   },
 
   "products": {
@@ -284,7 +286,8 @@
     "coupons": "Coupons",
     "booking": "Réservation",
     "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "more": "Plus"
   },
 
   "settings": {
@@ -396,5 +399,12 @@
     "productCreated": "Produit créé avec succès",
     "productUpdated": "Produit mis à jour avec succès",
     "orderUpdated": "Statut de commande mis à jour"
+  },
+
+  "more": {
+    "language": "Langue",
+    "activeCoupons": "{count} actif | {count} actifs",
+    "online": "en ligne",
+    "paused": "en pause"
   }
 }

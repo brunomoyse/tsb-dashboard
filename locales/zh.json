@@ -16,7 +16,9 @@
     "available": "可用",
     "unavailable": "不可用",
     "availability": "可用性",
-    "loadMore": "加载更多"
+    "loadMore": "加载更多",
+    "back": "返回",
+    "filters": "筛选"
   },
 
   "products": {
@@ -282,7 +284,8 @@
     "coupons": "优惠券",
     "booking": "预订",
     "settings": "设置",
-    "logout": "登出"
+    "logout": "登出",
+    "more": "更多"
   },
 
   "settings": {
@@ -394,5 +397,12 @@
     "productCreated": "产品创建成功",
     "productUpdated": "产品更新成功",
     "orderUpdated": "订单状态已更新"
+  },
+
+  "more": {
+    "language": "语言",
+    "activeCoupons": "{count} 个有效 | {count} 个有效",
+    "online": "营业中",
+    "paused": "已暂停"
   }
 }

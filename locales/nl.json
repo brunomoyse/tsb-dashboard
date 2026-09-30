@@ -16,7 +16,9 @@
     "available": "Beschikbaar",
     "unavailable": "Niet beschikbaar",
     "availability": "Beschikbaarheid",
-    "loadMore": "Meer laden"
+    "loadMore": "Meer laden",
+    "back": "Terug",
+    "filters": "Filters"
   },
 
   "products": {
@@ -276,7 +278,8 @@
     "coupons": "Kortingscodes",
     "booking": "Reservering",
     "settings": "Instellingen",
-    "logout": "Uitloggen"
+    "logout": "Uitloggen",
+    "more": "Meer"
   },
 
   "settings": {
@@ -381,5 +384,12 @@
     "productCreated": "Product succesvol aangemaakt",
     "productUpdated": "Product succesvol bijgewerkt",
     "orderUpdated": "Bestelstatus bijgewerkt"
+  },
+
+  "more": {
+    "language": "Taal",
+    "activeCoupons": "{count} actief | {count} actief",
+    "online": "online",
+    "paused": "gepauzeerd"
   }
 }
