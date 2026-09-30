@@ -7,7 +7,7 @@
     <UDashboardSidebar
       collapsible
       collapsed
-      class="hidden md:flex"
+      class="hidden md:flex bg-elevated border-r border-default"
       :ui="{
         footer: 'border-t border-default flex flex-col gap-4',
         body: 'flex flex-col gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
@@ -58,11 +58,12 @@
         <UButton
           :label="(isCollapsed && !isMobile) ? undefined : t('navigation.logout')"
           icon="i-lucide-log-out"
-          color="error"
+          color="neutral"
           variant="ghost"
           size="lg"
           block
           :square="isCollapsed && !isMobile"
+          :ui="{ leadingIcon: 'text-error' }"
           @click="handleLogout"
         />
 
@@ -71,7 +72,7 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel :ui="{ body: 'bg-(--ui-bg-accented)' }">
+    <UDashboardPanel :ui="{ body: 'bg-default' }">
       <template #header>
         <UDashboardNavbar :toggle="false" class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <!-- Mobile header: hamburger + logo -->
@@ -152,10 +153,11 @@
         <UButton
           :label="t('navigation.logout')"
           icon="i-lucide-log-out"
-          color="error"
+          color="neutral"
           variant="ghost"
           size="lg"
           block
+          :ui="{ leadingIcon: 'text-error' }"
           @click="handleLogout"
         />
       </template>
@@ -206,47 +208,37 @@ const languageItems = computed(() =>
   }))
 )
 
-const navigationItems = computed<NavigationMenuItem[][]>(() => [[
-  {
-    label: t('navigation.products'),
-    icon: 'i-lucide-package',
-    to: `/${locale.value}/products`,
-    active: route.path.includes('/products')
-  },
-  {
-    label: t('navigation.orders'),
-    icon: 'i-lucide-shopping-bag',
-    to: `/${locale.value}/orders`,
-    active: route.path.includes('/orders'),
-    badge: ordersStore.unacknowledgedPendingCount > 0
-      ? { label: String(ordersStore.unacknowledgedPendingCount), color: 'error' as const }
-      : undefined
-  },
-  {
-    label: t('navigation.orderHistory'),
-    icon: 'i-lucide-history',
-    to: `/${locale.value}/order-history`,
-    active: route.path.includes('/order-history')
-  },
-  {
-    label: t('navigation.customers'),
-    icon: 'i-lucide-users',
-    to: `/${locale.value}/customers`,
-    active: route.path.includes('/customers')
-  },
-  {
-    label: t('navigation.coupons'),
-    icon: 'i-lucide-ticket',
-    to: `/${locale.value}/coupons`,
-    active: route.path.includes('/coupons')
-  },
-  {
-    label: t('navigation.settings'),
-    icon: 'i-lucide-settings',
-    to: `/${locale.value}/settings`,
-    active: route.path.includes('/settings')
+// Pili: the active item is a Brume fill with Encre text and icon, never Volt.
+const navItemUi = (active: boolean) => active
+  ? {
+      link: 'text-inverted hover:text-inverted before:bg-inverted hover:before:bg-inverted',
+      linkLeadingIcon: 'text-inverted group-hover:text-inverted'
+    }
+  : {
+      link: 'text-muted hover:before:bg-accented',
+      linkLeadingIcon: 'text-muted'
+    }
+
+const navigationItems = computed<NavigationMenuItem[][]>(() => {
+  const item = (label: string, icon: string, path: string): NavigationMenuItem => {
+    const active = route.path.includes(`/${path}`)
+    return { label, icon, to: `/${locale.value}/${path}`, active, ui: navItemUi(active) }
   }
-]])
+  return [[
+    item(t('navigation.products'), 'i-lucide-package', 'products'),
+    {
+      ...item(t('navigation.orders'), 'i-lucide-shopping-bag', 'orders'),
+      // Unacknowledged orders are waiting, not an error: amber, in mono.
+      badge: ordersStore.unacknowledgedPendingCount > 0
+        ? { label: String(ordersStore.unacknowledgedPendingCount), color: 'warning' as const, variant: 'solid' as const, class: 'font-mono tabular-nums font-bold' }
+        : undefined
+    },
+    item(t('navigation.orderHistory'), 'i-lucide-history', 'order-history'),
+    item(t('navigation.customers'), 'i-lucide-users', 'customers'),
+    item(t('navigation.coupons'), 'i-lucide-ticket', 'coupons'),
+    item(t('navigation.settings'), 'i-lucide-settings', 'settings')
+  ]]
+})
 
 const onLanguageChange = (newLocale: 'fr' | 'en' | 'nl' | 'zh') => {
   const newPath = switchLocalePath(newLocale)
