@@ -1,6 +1,25 @@
 export default defineAppConfig({
   ui: {
-    primary: 'red',
-    neutral: 'neutral'
-  } as Record<string, string>
+    colors: {
+      primary: 'volt',
+      secondary: 'brume',
+      neutral: 'neutral'
+    },
+    // Pili: a neutral solid button or chip is Ardoise. Brume is kept for
+    // selection (color="secondary"), Volt for the main action of a screen.
+    button: {
+      compoundVariants: [{
+        color: 'neutral',
+        variant: 'solid',
+        class: 'text-default bg-accented hover:bg-(--pili-pressed) active:bg-(--pili-pressed) disabled:bg-accented aria-disabled:bg-accented'
+      }]
+    },
+    badge: {
+      compoundVariants: [{
+        color: 'neutral',
+        variant: 'solid',
+        class: 'text-default bg-accented'
+      }]
+    }
+  }
 })

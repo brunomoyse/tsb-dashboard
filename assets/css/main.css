@@ -25,48 +25,79 @@ button, a, [role="button"], [tabindex], .select-none {
   opacity: 0;
 }
 
-/* Light Theme — moyun: cream surfaces, crimson accents */
-:root {
-  --ui-bg: theme('colors.white');
-  --ui-bg-elevated: #faf6ef;
-  --ui-bg-accented: #f4ede3;
-  --ui-border: #e8ddcc;
-  --ui-border-accented: #d4bfa8;
+/* Pili tokens (source of truth: moyun-pos/ui/src/styles/tokens.css).
+   Dark only. Volt is the single accent, for the main action of a screen.
+   Selection is Brume. Amber = waiting, red = error / cancel, green = OK / paid,
+   cyan = information / online. */
+@theme {
+  --font-sans: 'Noto Sans', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Noto Sans Mono', monospace;
+  --font-brand: 'Archivo', 'Noto Sans', sans-serif;
+  --font-zh: 'Noto Sans SC', 'Noto Sans', sans-serif;
 
-  /* Text colors */
-  --ui-text: #2a1117;
-  --ui-text-highlighted: #160a0e;
-  --ui-text-muted: #8a6a72;
+  --color-volt-50: #fbffe6;
+  --color-volt-100: #f5ffc7;
+  --color-volt-200: #ecff96;
+  --color-volt-300: #e1ff66;
+  --color-volt-400: #d7ff3a;
+  --color-volt-500: #c4ec1f;
+  --color-volt-600: #9cc20f;
+  --color-volt-700: #759309;
+  --color-volt-800: #5c730f;
+  --color-volt-900: #4d6112;
+  --color-volt-950: #283604;
 
-  /* Actions — moyun crimson */
-  --ui-primary: #a70e1e;
-  --ui-primary-highlighted: #860b18;
-
-  /* Neutral — terracotta */
-  --ui-neutral: #d4bfa8;
-  --ui-neutral-highlighted: #c4a98c;
+  --color-brume-50: #fafbfa;
+  --color-brume-100: #f7f8f7;
+  --color-brume-200: #f5f6f5;
+  --color-brume-300: #f3f5f3;
+  --color-brume-400: #f2f4f2;
+  --color-brume-500: #dfe3df;
+  --color-brume-600: #c9cfd2;
+  --color-brume-700: #9aa3a8;
+  --color-brume-800: #5a6166;
+  --color-brume-900: #2b3035;
+  --color-brume-950: #15181a;
 }
 
-/* Dark Theme — moyun: burgundy-black surfaces, lifted crimson */
-.dark {
-  --ui-bg: #241217;
-  --ui-bg-elevated: #301920;
-  --ui-bg-accented: #44252d;
-  --ui-border: #5a3138;
-  --ui-border-accented: #6e3c44;
+:root, .dark {
+  --ui-bg: #0b0d0e;            /* Encre */
+  --ui-bg-muted: #15181a;      /* Graphite */
+  --ui-bg-elevated: #15181a;   /* Graphite: cards, sidebar, modals */
+  --ui-bg-accented: #1f2327;   /* Ardoise: secondary buttons, inputs */
+  --ui-bg-inverted: #f2f4f2;   /* Brume: selection */
+  --ui-border: #2b3035;
+  --ui-border-muted: #1f2327;
+  --ui-border-accented: #2b3035;
+  --ui-border-inverted: #f2f4f2;
+  --ui-text: #f2f4f2;
+  --ui-text-highlighted: #f2f4f2;
+  --ui-text-toned: #c9cfd2;
+  --ui-text-muted: #9aa3a8;
+  --ui-text-dimmed: #9aa3a8;
+  --ui-text-inverted: #0b0d0e;
+  --ui-primary: #d7ff3a;       /* Volt */
+  --ui-secondary: #f2f4f2;
+  --ui-success: #22c55e;
+  --ui-info: #00d4ff;
+  --ui-warning: #ffb020;
+  --ui-error: #ff4d3d;
+  --ui-radius: 0.625rem;       /* 10px */
 
-  /* Text colors */
-  --ui-text: #f4f0e7;
-  --ui-text-highlighted: #ffffff;
-  --ui-text-muted: #c79aa3;
+  --pili-pressed: #2b3035;     /* pressed surface, switch track when off */
+  color-scheme: dark;
+}
 
-  /* Actions — moyun crimson, lifted for dark surfaces */
-  --ui-primary: #c71f30;
-  --ui-primary-highlighted: #de3e4e;
+/* Every figure (price, time, count, code) is set in mono with tabular digits */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 
-  /* Neutral — terracotta */
-  --ui-neutral: #a26f59;
-  --ui-neutral-highlighted: #b88670;
+/* Focus ring: 2px Brume outline on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--ui-border-inverted);
+  outline-offset: 2px;
 }
 
 /* Global minimum touch targets for touch devices */
@@ -106,18 +137,10 @@ button, a, [role="button"], [tabindex], .select-none {
   padding: 0.75rem;
 }
 
-/* Status accent classes — kept as no-ops so column config can keep referencing them
-   while the rebrand drops decorative stripes in favour of icon-led differentiation. */
-.kanban-accent-warning,
-.kanban-accent-info,
-.kanban-accent-primary,
-.kanban-accent-success { /* intentionally empty */ }
-
 /* Kanban drag-and-drop feedback */
 .kanban-drop-target {
-  outline: 2px dashed var(--ui-primary);
+  outline: 2px dashed var(--ui-border-inverted);
   outline-offset: -2px;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 85%, var(--ui-primary));
 }
 
 .kanban-drag-source {

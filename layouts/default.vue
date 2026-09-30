@@ -52,17 +52,6 @@
           />
         </UDropdownMenu>
 
-        <!-- Theme Toggle -->
-        <UButton
-          :label="(isCollapsed && !isMobile) ? undefined : (colorMode.value === 'dark' ? t('theme.dark') : t('theme.light'))"
-          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          block
-          :square="isCollapsed && !isMobile"
-          @click="toggleTheme"
-        />
 
         <!-- Logout Button -->
         <div class="h-px bg-(--ui-border)" />
@@ -157,15 +146,6 @@
           />
         </UDropdownMenu>
 
-        <UButton
-          :label="colorMode.value === 'dark' ? t('theme.dark') : t('theme.light')"
-          :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          block
-          @click="toggleTheme"
-        />
 
         <div class="h-px bg-(--ui-border)" />
 
@@ -189,7 +169,6 @@ import type { NavigationMenuItem } from '#ui/types'
 const { locale, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const route = useRoute()
-const colorMode = useColorMode()
 const ordersStore = useOrdersStore()
 
 const drawerOpen = ref(false)
@@ -281,9 +260,6 @@ const handleLogout = async () => {
   await authStore.logout()
 }
 
-const toggleTheme = () => {
-  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
-}
 </script>
 
 <style>

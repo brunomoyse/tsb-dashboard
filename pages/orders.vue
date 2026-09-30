@@ -186,7 +186,6 @@
           :data-column-key="column.key"
           class="kanban-column flex-1 min-w-0 flex flex-col transition-all duration-200"
           :class="[
-            column.accentClass,
             dragOverColumnKey === column.key ? 'kanban-drop-target' : '',
             draggedOrder && column.statuses.includes(draggedOrder.status) ? 'kanban-drag-source' : ''
           ]"
@@ -690,16 +689,15 @@ interface KanbanColumnDef {
   dropStatus: OrderStatus | null
   icon: string
   iconBgClass: string
-  accentClass: string
   badgeColor: UiColor
 }
 
 const kanbanColumnDefs: KanbanColumnDef[] = [
-  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-warning', badgeColor: 'warning' },
-  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-primary', badgeColor: 'primary' },
-  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-success', badgeColor: 'success' },
-  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-info', badgeColor: 'info' },
-  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', accentClass: 'kanban-accent-success', badgeColor: 'success' }
+  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'warning' },
+  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'primary' },
+  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'success' },
+  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'info' },
+  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'success' }
 ]
 
 // Completed-column filter anchored to Europe/Brussels (UTC slicing would list yesterday's orders just past Brussels midnight).

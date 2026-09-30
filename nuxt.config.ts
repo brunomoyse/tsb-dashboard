@@ -42,6 +42,14 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // Pili is dark only. A dedicated storage key ignores any "light" preference
+  // saved by the old theme toggle.
+  colorMode: {
+    preference: 'dark',
+    fallback: 'dark',
+    storageKey: 'pili-color-mode',
+  },
+
   runtimeConfig: {
     public: {
       dashboardBaseUrl: process.env.DASHBOARD_BASE_URL,
@@ -66,12 +74,17 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        { name: 'theme-color', content: '#241217' },
+        { name: 'theme-color', content: '#0b0d0e' },
         { name: 'color-scheme', content: 'dark' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-      ]
+      ],
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@700;800&display=swap' },
+      ],
     },
     pageTransition: { name: 'page', mode: 'out-in' },
   },

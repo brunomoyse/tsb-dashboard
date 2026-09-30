@@ -335,10 +335,6 @@
     }
   },
 
-  "theme": {
-    "light": "Lichte modus",
-    "dark": "Donkere modus"
-  },
 
   "login": {
     "title": "Welkom",

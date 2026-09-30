@@ -346,10 +346,6 @@
     }
   },
 
-  "theme": {
-    "light": "Mode Clair",
-    "dark": "Mode Sombre"
-  },
 
   "login": {
     "title": "Bienvenue",
