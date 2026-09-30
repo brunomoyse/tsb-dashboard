@@ -1,5 +1,150 @@
 <template>
-  <div class="p-3 sm:p-4 md:p-6 max-w-4xl mx-auto space-y-3 sm:space-y-4">
+  <div class="flex-1 flex flex-col">
+    <!-- Mobile -->
+    <template v-if="isMobile">
+      <PiliSubHeader :title="t('settings.title')" />
+
+      <div class="px-4 pt-1 pb-5 grid auto-rows-max gap-2.5">
+        <!-- Online ordering: the whole card is the toggle -->
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="orderingEnabled"
+          :disabled="updatingOrdering"
+          class="p-4 rounded-[14px] bg-elevated border border-default flex items-center gap-3.5 text-left cursor-pointer"
+          @click="toggleOrdering(!orderingEnabled)"
+        >
+          <span class="flex-1 min-w-0 flex flex-col gap-1">
+            <span class="text-base font-bold">{{ t('settings.ordering.title') }}</span>
+            <span class="text-[13px] text-muted leading-snug">{{ t('settings.ordering.description') }}</span>
+          </span>
+          <PiliSwitch :model-value="orderingEnabled" size="lg" :loading="updatingOrdering" presentational />
+        </button>
+
+        <!-- Preparation time -->
+        <div class="p-4 rounded-[14px] bg-elevated border border-default flex flex-col gap-3.5">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-base font-bold">{{ t('settings.preparation.title') }}</span>
+              <PiliChip v-if="preparationDirty" tone="warning" size="sm">{{ t('settings.unsaved') }}</PiliChip>
+            </div>
+            <span class="text-[13px] text-muted leading-snug">{{ t('settings.preparation.description') }}</span>
+          </div>
+          <div class="grid grid-cols-[56px_1fr_56px] items-center gap-2">
+            <button
+              type="button"
+              :disabled="preparationMinutes <= 15"
+              :aria-label="t('settings.preparation.label')"
+              class="h-14 rounded-xl bg-accented font-mono text-2xl font-bold disabled:opacity-40 active:bg-(--pili-pressed)"
+              @click="adjustPreparation(-5)"
+            >
+              &minus;
+            </button>
+            <span class="text-center font-mono tabular-nums">
+              <span class="text-4xl font-bold">{{ preparationMinutes }}</span>
+              <span class="text-sm text-muted"> {{ t('settings.preparation.unit') }}</span>
+            </span>
+            <button
+              type="button"
+              :disabled="preparationMinutes >= 240"
+              :aria-label="t('settings.preparation.label')"
+              class="h-14 rounded-xl bg-accented font-mono text-2xl font-bold disabled:opacity-40 active:bg-(--pili-pressed)"
+              @click="adjustPreparation(5)"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <!-- Opening hours -->
+        <SettingsSection
+          v-model:open="openingHoursOpen"
+          :title="t('settings.hours.title')"
+          :summary="hoursSummary(localHours)"
+          :dirty="openingHoursDirty"
+        >
+          <ScheduleEditor :hours="localHours" :days="days" @toggle-day="toggleDay" />
+        </SettingsSection>
+
+        <!-- Ordering hours -->
+        <SettingsSection
+          v-model:open="orderingHoursOpen"
+          :title="t('settings.orderingHours.title')"
+          :summary="hasOrderingHours ? hoursSummary(localOrderingHours) : t('settings.orderingHours.fallbackNotice')"
+          :dirty="orderingHoursDirty"
+        >
+          <div class="border-t border-default py-3 flex items-center justify-between gap-4">
+            <span class="text-sm leading-snug">{{ t('settings.orderingHours.customHoursSwitch') }}</span>
+            <PiliSwitch
+              :model-value="hasOrderingHours"
+              size="md"
+              :label="t('settings.orderingHours.customHoursSwitch')"
+              @update:model-value="toggleCustomOrderingHours"
+            />
+          </div>
+          <ScheduleEditor
+            v-if="hasOrderingHours"
+            :hours="localOrderingHours"
+            :days="days"
+            @toggle-day="toggleOrderingDay"
+          />
+        </SettingsSection>
+
+        <!-- Schedule overrides -->
+        <div class="rounded-[14px] bg-elevated border border-default overflow-hidden">
+          <div class="min-h-16 py-3 pl-4 pr-3 flex items-center gap-3">
+            <span class="flex-1 min-w-0 flex flex-col gap-1">
+              <span class="text-base font-bold">{{ t('settings.overrides.title') }}</span>
+              <span class="text-[13px] text-muted leading-snug">{{ t('settings.overrides.description') }}</span>
+            </span>
+            <button
+              type="button"
+              :aria-label="t('settings.overrides.addButton')"
+              class="size-11 rounded-[10px] bg-accented flex items-center justify-center shrink-0"
+              @click="openAddOverride"
+            >
+              <UIcon name="i-lucide-plus" class="size-5" />
+            </button>
+          </div>
+          <p v-if="overrides.length === 0" class="px-4 py-4 border-t border-default text-[13px] text-muted">
+            {{ t('settings.overrides.empty') }}
+          </p>
+          <div
+            v-for="ov in overrides"
+            :key="ov.date"
+            role="button"
+            tabindex="0"
+            class="pl-4 pr-2 py-3 border-t border-default flex items-center gap-2 cursor-pointer active:bg-accented"
+            @click="openEditOverride(ov)"
+            @keydown.enter.prevent="openEditOverride(ov)"
+            @keydown.space.prevent="openEditOverride(ov)"
+          >
+            <div class="flex-1 min-w-0 flex flex-col gap-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[15px] font-bold">{{ formatOverrideDate(ov.date) }}</span>
+                <PiliChip :tone="ov.closed ? 'danger' : 'warning'" size="sm">
+                  {{ ov.closed ? t('settings.overrides.labelClosed') : t('settings.overrides.labelSpecialHours') }}
+                </PiliChip>
+              </div>
+              <span v-if="overrideDetail(ov)" class="text-[13px] text-muted">{{ overrideDetail(ov) }}</span>
+            </div>
+            <UDropdownMenu :items="overrideMenuItems(ov)" :content="{ align: 'end' }">
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                variant="ghost"
+                color="neutral"
+                square
+                :aria-label="t('common.actions')"
+                @click.stop
+              />
+            </UDropdownMenu>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Desktop -->
+    <div v-else class="p-3 sm:p-4 md:p-6 max-w-4xl mx-auto space-y-3 sm:space-y-4 w-full">
     <h1 class="text-lg sm:text-2xl font-bold">{{ t('settings.title') }}</h1>
 
     <!-- Online ordering toggle -->
@@ -232,8 +377,9 @@
         </li>
       </ul>
     </SettingsSection>
+    </div>
 
-    <!-- Override editor: bottom sheet on mobile, side panel on desktop -->
+    <!-- Override editor: restyled bottom sheet on mobile, side panel on desktop -->
     <USlideover
       v-model:open="modalOpen"
       :side="sheetSide"
@@ -352,24 +498,46 @@
             :label="t('settings.overrides.cancel')"
             variant="solid"
             color="neutral"
-            class="flex-1 justify-center"
+            class="flex-1 justify-center max-md:h-[52px]"
             @click.prevent="modalOpen = false"
           />
           <UButton
             :label="t('settings.overrides.save')"
             icon="i-lucide-save"
             :loading="savingOverride"
-            class="flex-1 justify-center"
+            class="flex-1 justify-center max-md:h-[52px]"
             @click.prevent="saveOverride"
           />
         </div>
       </template>
     </USlideover>
+
+    <!-- Mobile: one save bar while any section is dirty -->
+    <PiliStickyBar v-if="isMobile && isAnyDirty">
+      <div class="grid grid-cols-[1fr_2fr] gap-2">
+        <button
+          type="button"
+          :disabled="savingAll"
+          class="h-[52px] rounded-xl bg-accented text-[15px] font-bold disabled:opacity-60"
+          @click="cancelAll"
+        >
+          {{ t('settings.overrides.cancel') }}
+        </button>
+        <button
+          type="button"
+          :disabled="savingAll"
+          class="h-[52px] rounded-xl bg-primary text-inverted text-base font-bold disabled:opacity-60"
+          @click="saveAll"
+        >
+          {{ t('common.save') }}
+        </button>
+      </div>
+    </PiliStickyBar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useGqlSubscription, useNuxtApp } from '#imports'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
@@ -381,6 +549,10 @@ import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
 const { $gqlFetch } = useNuxtApp()
+const isMobile = useIsMobile()
+const { hide: hideTabBar, show: showTabBar } = useTabBar()
+// Shared online-ordering flag (mobile orders header, Plus page): kept in sync below
+const { enabled: sharedOrdering } = useOrderingStatus()
 
 interface DaySchedule {
   open: string
@@ -457,12 +629,14 @@ const hasOrderingHours = computed(() =>
   days.some(d => localOrderingHours[d.key] !== null)
 )
 
-// Mobile detection for slideover side
-const isMobile = ref(false)
+// Mobile: bottom sheet restyled like PiliBottomSheet; desktop: side panel
 const sheetSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
 const sheetUi = computed(() =>
   isMobile.value
-    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
+    ? {
+        overlay: 'bg-black/70',
+        content: 'max-h-[92dvh] bg-elevated border-t border-default rounded-t-[20px] ring-0 shadow-none before:content-[\'\'] before:block before:shrink-0 before:w-10 before:h-1 before:rounded-sm before:bg-(--pili-pressed) before:mx-auto before:mt-2.5',
+      }
     : { content: 'max-w-md' }
 )
 
@@ -544,6 +718,7 @@ const loadConfig = async () => {
   if (data) {
     syncing = true
     orderingEnabled.value = data.restaurantConfig.orderingEnabled
+    sharedOrdering.value = data.restaurantConfig.orderingEnabled
     preparationMinutes.value = data.restaurantConfig.preparationMinutes
     for (const day of days) {
       localHours[day.key] = parseSchedule(data.restaurantConfig.openingHours[day.key])
@@ -573,6 +748,7 @@ const toggleOrdering = async (enabled: boolean) => {
   try {
     await $gqlFetch(print(UPDATE_ORDERING), { variables: { enabled } })
     orderingEnabled.value = enabled
+    sharedOrdering.value = enabled
   } finally {
     updatingOrdering.value = false
   }
@@ -662,6 +838,57 @@ watch(preparationMinutes, (val, old) => {
 // Watch deep into localHours / localOrderingHours so per-day time edits flag dirty
 watch(localHours, () => { if (!syncing) openingHoursDirty.value = true }, { deep: true })
 watch(localOrderingHours, () => { if (!syncing) orderingHoursDirty.value = true }, { deep: true })
+
+// Mobile save bar: saves every dirty section in sequence, cancel reloads the server values
+const savingAll = ref(false)
+
+const saveAll = async () => {
+  savingAll.value = true
+  try {
+    if (preparationDirty.value) await savePreparation()
+    if (openingHoursDirty.value) await saveOpeningHours()
+    if (orderingHoursDirty.value) await saveOrderingHours()
+  } finally {
+    savingAll.value = false
+  }
+}
+
+const cancelAll = () => loadConfig()
+
+// The save bar replaces the tab bar while something is unsaved
+watch([isMobile, isAnyDirty], ([mobile, dirty]) => {
+  if (mobile && dirty) hideTabBar()
+  else showTabBar()
+}, { immediate: true })
+onBeforeUnmount(showTabBar)
+
+// "6 jours ouverts · 11:30-14:00 · 17:30-22:00": open-day count + most common lunch / dinner ranges
+const hoursSummary = (hours: OpeningHoursMap) => {
+  const open = days.map(d => hours[d.key]).filter((h): h is DaySchedule => !!h)
+  const mostCommon = (values: string[]) => {
+    const counts = new Map<string, number>()
+    for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+  }
+  const parts = [t('settings.mobile.daysOpen', { count: open.length }, open.length)]
+  const lunch = mostCommon(open.filter(h => h.open && h.close).map(h => `${h.open}-${h.close}`))
+  const dinner = mostCommon(open.filter(h => h.dinnerOpen && h.dinnerClose).map(h => `${h.dinnerOpen}-${h.dinnerClose}`))
+  if (lunch) parts.push(lunch)
+  if (dinner) parts.push(dinner)
+  return parts.join(' \u00b7 ')
+}
+
+// Note and/or hours line of an override row
+const overrideDetail = (ov: ScheduleOverride) => {
+  const parts: string[] = []
+  if (!ov.closed && ov.schedule) {
+    parts.push(ov.schedule.dinnerOpen && ov.schedule.dinnerClose
+      ? `${ov.schedule.open}-${ov.schedule.close} \u00b7 ${ov.schedule.dinnerOpen}-${ov.schedule.dinnerClose}`
+      : `${ov.schedule.open}-${ov.schedule.close}`)
+  }
+  if (ov.note) parts.push(ov.note)
+  return parts.join(' \u00b7 ')
+}
 
 onBeforeRouteLeave(() => {
   if (isAnyDirty.value) {
@@ -817,6 +1044,7 @@ watch(liveConfig, async (val) => {
   const cfg = val.restaurantConfigUpdated
   syncing = true
   orderingEnabled.value = cfg.orderingEnabled
+  sharedOrdering.value = cfg.orderingEnabled
   preparationMinutes.value = cfg.preparationMinutes
   if (cfg.openingHours) {
     for (const day of days) {
@@ -845,9 +1073,5 @@ watch(liveOverrides, (val) => {
 onMounted(() => {
   loadConfig()
   loadOverrides()
-
-  const mql = window.matchMedia('(max-width: 767px)')
-  isMobile.value = mql.matches
-  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
 })
 </script>

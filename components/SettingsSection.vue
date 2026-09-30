@@ -1,5 +1,29 @@
 <template>
-  <div class="bg-elevated border border-default rounded-[14px]">
+  <!-- Mobile: 64px accordion header with a summary line and a mono +/- chevron -->
+  <div v-if="isMobile" class="bg-elevated border border-default rounded-[14px] overflow-hidden">
+    <button
+      type="button"
+      class="w-full min-h-16 px-4 py-3 flex items-center gap-3 text-left cursor-pointer"
+      :aria-expanded="open"
+      :aria-controls="bodyId"
+      @click="emit('update:open', !open)"
+    >
+      <span class="flex-1 min-w-0 flex flex-col gap-1">
+        <span class="flex items-center gap-2 flex-wrap text-base font-bold">
+          {{ title }}
+          <PiliChip v-if="dirty" tone="warning" size="sm">{{ t('settings.unsaved') }}</PiliChip>
+        </span>
+        <span v-if="summary || description" class="text-[13px] leading-snug text-muted font-normal">
+          {{ summary || description }}
+        </span>
+      </span>
+      <span class="font-mono text-lg text-muted shrink-0" aria-hidden="true">{{ open ? '\u2212' : '+' }}</span>
+    </button>
+    <div v-show="open" :id="bodyId" class="px-4 pb-2">
+      <slot />
+    </div>
+  </div>
+  <div v-else class="bg-elevated border border-default rounded-[14px]">
     <button
       type="button"
       class="w-full flex items-center gap-3 px-4 py-4 sm:px-5 text-left min-h-[56px] cursor-pointer"
@@ -54,11 +78,13 @@ import { useI18n } from 'vue-i18n'
 import { useId } from 'vue'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { open, title, description, dirty } = defineProps<{
+const { open, title, description, dirty, summary } = defineProps<{
   open: boolean
   title: string
   description?: string
   dirty?: boolean
+  /** Mobile only: one-line summary under the title */
+  summary?: string
 }>()
 
 const emit = defineEmits<{
@@ -66,5 +92,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const isMobile = useIsMobile()
 const bodyId = `settings-section-${useId()}`
 </script>
