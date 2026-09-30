@@ -179,7 +179,9 @@
       "invalidTransition": "Cette transition de statut n'est pas autorisée pour cette commande",
       "printFailed": "Échec de l'impression",
       "paymentUpdateFailed": "Échec de la mise à jour du paiement"
-    }
+    },
+    "lateChip": "EN RETARD",
+    "toCollect": "À ENCAISSER"
   },
 
   "orderHistory": {
@@ -345,7 +347,6 @@
       "cancel": "Annuler"
     }
   },
-
 
   "login": {
     "title": "Bienvenue",

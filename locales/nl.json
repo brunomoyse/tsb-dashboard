@@ -171,7 +171,9 @@
       "invalidTransition": "Deze statusovergang is niet toegestaan voor deze bestelling",
       "printFailed": "Afdrukken mislukt",
       "paymentUpdateFailed": "Betalingsstatus bijwerken mislukt"
-    }
+    },
+    "lateChip": "TE LAAT",
+    "toCollect": "TE INNEN"
   },
 
   "orderHistory": {
@@ -334,7 +336,6 @@
       "cancel": "Annuleren"
     }
   },
-
 
   "login": {
     "title": "Welkom",

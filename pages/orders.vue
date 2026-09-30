@@ -9,15 +9,19 @@
     <!-- Stale order alert banner (Phase 8) -->
     <div
       v-if="staleOrderCount > 0"
-      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-[#D08A2E]/10 border border-[#D08A2E]/25 text-sm sm:text-base text-[#D08A2E]"
+      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-warning text-inverted text-sm sm:text-base font-medium"
     >
       <UIcon name="i-lucide-alert-triangle" class="size-4 sm:size-5 shrink-0" />
-      <span class="flex-1">{{ t('orders.staleAlert', { count: staleOrderCount }) }}</span>
+      <i18n-t keypath="orders.staleAlert" tag="span" class="flex-1">
+        <template #count>
+          <span class="font-mono font-bold tabular-nums">{{ staleOrderCount }}</span>
+        </template>
+      </i18n-t>
       <UButton
         v-if="firstStaleOrder"
         size="xs"
-        variant="soft"
-        color="warning"
+        variant="solid"
+        color="neutral"
         :label="t('orders.orderDetails')"
         @click="openOrderDetails(firstStaleOrder)"
       />
@@ -32,32 +36,31 @@
           :key="chip.value"
           class="relative flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl transition-all"
           :class="selectedTab === chip.value
-            ? 'bg-(--ui-primary) text-white shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border border-(--ui-border) active:scale-95'
+            ? 'bg-inverted text-inverted'
+            : 'bg-elevated text-muted border border-default active:scale-95'
           "
           @click="selectedTab = chip.value"
         >
           <UIcon :name="chip.icon" class="size-6 sm:size-7" />
           <span
-            class="text-sm sm:text-base font-bold tabular-nums"
-            :class="selectedTab === chip.value ? 'text-white/80' : ''"
+            class="text-sm sm:text-base font-bold font-mono tabular-nums"
           >
             {{ chip.count }}
           </span>
-          <span class="text-xs leading-none" :class="selectedTab === chip.value ? 'text-white/70' : 'text-muted'">
+          <span class="text-xs leading-none">
             {{ chip.label }}
           </span>
           <!-- Unacknowledged pulse dot -->
           <span
             v-if="chip.value === 0 && ordersStore.unacknowledgedPendingCount > 0"
-            class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-500 animate-pulse"
+            class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-error animate-pulse"
           />
         </button>
       </div>
 
       <!-- Skeleton Loading -->
       <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-elevated border border-default">
           <USkeleton class="size-5 rounded shrink-0" />
           <div class="flex-1 space-y-1.5">
             <div class="flex justify-between">
@@ -77,8 +80,7 @@
         <div
           v-for="order in filteredOrders"
           :key="order.id"
-          class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-(--ui-bg) border border-(--ui-border) cursor-pointer active:scale-[0.98] transition-all"
-          :class="isActiveStatus(order.status) ? getTimeSince(order.createdAt).cardClass : ''"
+          class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-elevated border border-default cursor-pointer active:scale-[0.98] transition-all"
           @click="openOrderDetails(order)"
         >
           <!-- Type icon -->
@@ -91,24 +93,24 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
-              <span class="font-bold text-sm sm:text-base text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
+              <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
             </div>
             <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
               <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted">
-                <span>{{ order.items.length }} {{ t('orders.items') }}</span>
+                <span><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
                 <UIcon
                   :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
                   :class="['size-3.5 sm:size-4', getPaymentIconClass(order)]"
                 />
                 <span
                   v-if="isActiveStatus(order.status)"
-                  :class="['font-bold', getTimeSince(order.createdAt).color]"
+                  :class="['font-bold font-mono tabular-nums', getTimeSince(order.createdAt).color]"
                 >
                   {{ getTimeSince(order.createdAt).text }}
                 </span>
-                <UBadge v-if="isActiveStatus(order.status) && getTimeSince(order.createdAt).isStale" color="error" variant="soft" size="xs">!</UBadge>
+                <UBadge v-if="isActiveStatus(order.status) && getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="chipClass">{{ t('orders.lateChip') }}</UBadge>
               </div>
-              <UBadge :color="getStatusColor(order.status)" variant="soft" size="xs">
+              <UBadge :color="getStatusColor(order.status)" variant="solid" size="xs" :class="chipClass">
                 {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
               </UBadge>
             </div>
@@ -197,29 +199,14 @@
           <div class="kanban-column-header">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
-                <div
-                  class="size-8 rounded-lg flex items-center justify-center"
-                  :class="column.iconBgClass"
-                >
-                  <UIcon :name="column.icon" class="size-4.5" />
-                </div>
-                <div>
-                  <h3 class="font-semibold text-sm text-highlighted leading-tight">
-                    {{ column.label }}
-                  </h3>
-                  <p class="text-xs text-muted">
-                    {{ column.orders.length }} {{ t('orders.items') }}
-                  </p>
-                </div>
+                <UIcon :name="column.icon" class="size-4.5 text-muted" />
+                <h3 class="font-mono uppercase text-sm font-bold text-highlighted leading-tight">
+                  {{ column.label }}
+                </h3>
               </div>
-              <UBadge
-                :color="column.badgeColor"
-                variant="soft"
-                size="md"
-                class="tabular-nums font-bold"
-              >
+              <span class="font-mono tabular-nums text-sm font-bold text-muted">
                 {{ column.orders.length }}
-              </UBadge>
+              </span>
             </div>
 
             <!-- Date filter for completed column -->
@@ -258,10 +245,9 @@
               :key="order.id"
               :draggable="column.key !== 'COMPLETED' ? 'true' : 'false'"
               :class="[
-                'cursor-pointer hover:shadow-md hover:border-(--ui-border-accented) transition-all',
+                'bg-elevated ring-0 border border-default cursor-pointer hover:border-accented transition-all',
                 column.key !== 'COMPLETED' ? 'kanban-touch-draggable' : '',
-                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : '',
-                isActiveStatus(order.status) ? getTimeSince(order.createdAt).cardClass : ''
+                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''
               ]"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
               @dragend="onDragEnd"
@@ -276,7 +262,7 @@
                     class="size-4 shrink-0 text-muted"
                   />
                   <span class="font-bold text-sm text-highlighted truncate flex-1">{{ order.displayCustomerName }}</span>
-                  <span class="font-bold text-sm text-highlighted shrink-0">{{ formatPrice(order.totalPrice) }}</span>
+                  <span class="font-bold text-sm text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
                 </div>
 
                 <!-- Address (delivery only) -->
@@ -287,40 +273,44 @@
                 <!-- Row 2: Items + payment icon + time-since -->
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-center gap-2 text-muted">
-                    <span>{{ order.items.length }} {{ t('orders.items') }}</span>
+                    <span><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
                     <UIcon
                       :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
                       :class="['size-3.5', getPaymentIconClass(order)]"
                     />
                   </div>
-                  <div v-if="isActiveStatus(order.status)" class="flex items-center gap-1">
-                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="soft" size="xs">!</UBadge>
-                    <span :class="['font-bold', getTimeSince(order.createdAt).color]">
+                  <div v-if="isActiveStatus(order.status)" class="flex items-center gap-1.5">
+                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="chipClass">{{ t('orders.lateChip') }}</UBadge>
+                    <UBadge v-else-if="order.status === 'PENDING'" color="warning" variant="solid" size="xs" :class="chipClass">
+                      {{ t('orders.status.pending') }}
+                    </UBadge>
+                    <span :class="['font-bold font-mono tabular-nums', getTimeSince(order.createdAt).color]">
                       {{ getTimeSince(order.createdAt).text }}
                     </span>
                   </div>
-                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="soft" size="xs">
+                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="solid" size="xs" :class="chipClass">
                     {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                   </UBadge>
                 </div>
 
                 <!-- Row 3: Estimated time + payment status (only when noteworthy) -->
                 <div
-                  v-if="order.estimatedReadyTime || order.payment?.status?.toLowerCase() !== 'paid'"
+                  v-if="order.estimatedReadyTime || paymentChip(order)"
                   class="flex items-center justify-between pt-1.5 border-t border-default"
                 >
-                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1">
+                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1 font-mono tabular-nums">
                     <UIcon name="i-lucide-clock" class="size-3" />
                     {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
                   </span>
                   <span v-else />
                   <UBadge
-                    v-if="order.payment?.status?.toLowerCase() !== 'paid'"
-                    :color="getPaymentStatusColor(order.payment?.status)"
-                    variant="soft"
+                    v-if="paymentChip(order)"
+                    :color="paymentChip(order)!.color"
+                    variant="solid"
                     size="xs"
+                    :class="chipClass"
                   >
-                    {{ t(`orders.payment.status.${order.payment?.status ? order.payment.status.toLowerCase() : 'notPaid'}`) }}
+                    {{ paymentChip(order)!.label }}
                   </UBadge>
                 </div>
               </div>
@@ -359,8 +349,8 @@
                 </h2>
               </div>
               <div class="flex items-center gap-2 text-sm text-muted">
-                <span>{{ formatDate(selectedOrder.createdAt, locale) }}</span>
-                <UBadge :color="getStatusColor(selectedOrder.status)" variant="soft" size="xs">
+                <span class="font-mono tabular-nums">{{ formatDate(selectedOrder.createdAt, locale) }}</span>
+                <UBadge :color="getStatusColor(selectedOrder.status)" variant="solid" size="xs" :class="chipClass">
                   {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
                 </UBadge>
               </div>
@@ -369,7 +359,7 @@
               <UButton
                 icon="i-lucide-printer"
                 :label="t('orders.print.label')"
-                color="primary"
+                color="neutral"
                 size="lg"
                 class="rounded-r-none"
                 @click="printBoth"
@@ -377,9 +367,9 @@
               <UDropdownMenu :items="printMenuItems">
                 <UButton
                   icon="i-lucide-chevron-down"
-                  color="primary"
+                  color="neutral"
                   size="lg"
-                  class="rounded-l-none border-l border-primary-400/30"
+                  class="rounded-l-none border-l border-default"
                   square
                 />
               </UDropdownMenu>
@@ -389,20 +379,24 @@
           <!-- 2. Stale order alert (Phase 8) -->
           <div
             v-if="isActiveStatus(selectedOrder.status) && getTimeSince(selectedOrder.createdAt).isStale"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-error"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-error text-inverted text-sm font-medium"
           >
             <UIcon name="i-lucide-alert-triangle" class="size-4 shrink-0" />
-            <span>{{ t('orders.staleDetailAlert', { hours: Math.floor((now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000) }) }}</span>
+            <i18n-t keypath="orders.staleDetailAlert" tag="span">
+              <template #hours>
+                <span class="font-mono font-bold tabular-nums">{{ Math.floor((now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000) }}</span>
+              </template>
+            </i18n-t>
           </div>
 
           <!-- 3. Primary Quick Actions -->
           <div v-if="primaryStatuses.length" class="grid gap-2" :class="primaryStatuses.length > 1 ? 'grid-cols-2' : ''">
             <UButton
-              v-for="status in primaryStatuses"
+              v-for="(status, idx) in primaryStatuses"
               :key="status"
               size="xl"
               block
-              :color="getStatusColor(status)"
+              :color="idx === 0 ? 'primary' : 'neutral'"
               :loading="quickActionLoading"
               @click="quickStatusAdvance(status)"
             >
@@ -412,7 +406,7 @@
           </div>
 
           <!-- 4. Order Items with discount breakdown -->
-          <div class="border border-default rounded-lg overflow-hidden">
+          <div class="border border-default rounded-lg overflow-hidden bg-elevated">
             <div class="divide-y divide-default">
               <div
                 v-for="(item, idx) in selectedOrder.items"
@@ -420,33 +414,39 @@
                 class="flex items-center justify-between px-3 py-2"
               >
                 <div class="flex items-center gap-2 min-w-0 flex-1">
-                  <span class="text-sm font-bold text-highlighted shrink-0">{{ item.quantity }}x</span>
-                  <span class="text-sm truncate">
-                    {{ item.product.code ? `${item.product.code} -` : '' }} {{ item.product.name }}
-                    <span v-if="item.choice" class="text-muted">({{ item.choice.name }})</span>
-                  </span>
+                  <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ item.quantity }}x</span>
+                  <div class="min-w-0">
+                    <p class="text-sm truncate">
+                      <span v-if="item.product.code" class="font-mono tabular-nums">{{ item.product.code }} -</span>
+                      {{ itemNames(item).main }}
+                      <span v-if="item.choice" class="text-muted">({{ item.choice.name }})</span>
+                    </p>
+                    <p v-if="itemNames(item).zh" class="text-sm text-muted truncate font-(family-name:--font-zh)">
+                      {{ itemNames(item).zh }}
+                    </p>
+                  </div>
                 </div>
-                <span class="text-sm font-medium text-highlighted shrink-0 ml-2">{{ formatPrice(item.totalPrice) }}</span>
+                <span class="text-sm font-medium text-highlighted shrink-0 ml-2 font-mono tabular-nums">{{ formatPrice(item.totalPrice) }}</span>
               </div>
             </div>
             <!-- Subtotal / Discount / Delivery fee breakdown -->
             <template v-if="hasBreakdown">
               <div class="flex items-center justify-between px-3 py-1.5 border-t border-default text-sm text-muted">
                 <span>{{ t('orders.subtotal') }}</span>
-                <span>{{ formatPrice(itemsSubtotal) }}</span>
+                <span class="font-mono tabular-nums">{{ formatPrice(itemsSubtotal) }}</span>
               </div>
               <div v-if="parseFloat(selectedOrder.discountAmount) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-success">
                 <span>{{ t('orders.discount') }}{{ selectedOrder.couponCode ? ` (${selectedOrder.couponCode})` : '' }}</span>
-                <span>-{{ formatPrice(selectedOrder.discountAmount) }}</span>
+                <span class="font-mono tabular-nums">-{{ formatPrice(selectedOrder.discountAmount) }}</span>
               </div>
               <div v-if="selectedOrder.deliveryFee && parseFloat(selectedOrder.deliveryFee) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-muted">
                 <span>{{ t('orders.deliveryFeeLabel') }}</span>
-                <span>{{ formatPrice(selectedOrder.deliveryFee) }}</span>
+                <span class="font-mono tabular-nums">{{ formatPrice(selectedOrder.deliveryFee) }}</span>
               </div>
             </template>
-            <div class="flex items-center justify-between px-3 py-2.5 bg-(--ui-bg-accented) border-t border-default">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-accented border-t border-default">
               <span class="text-sm font-bold text-highlighted">{{ t('orders.total') }}</span>
-              <span class="text-base font-bold text-highlighted">{{ formatPrice(selectedOrder.totalPrice) }}</span>
+              <span class="text-xl font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedOrder.totalPrice) }}</span>
             </div>
           </div>
 
@@ -458,7 +458,7 @@
               class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
             >
               <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
-              <span class="underline underline-offset-2">{{ selectedOrder.customer.phoneNumber }}</span>
+              <span class="underline underline-offset-2 font-mono tabular-nums">{{ selectedOrder.customer.phoneNumber }}</span>
             </a>
             <div v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress" class="flex items-center gap-2">
               <a
@@ -472,8 +472,9 @@
               <UBadge
                 v-if="selectedOrder.isManualAddress && selectedOrder.status === 'PENDING'"
                 color="warning"
-                variant="soft"
+                variant="solid"
                 size="xs"
+                :class="chipClass"
               >
                 {{ t('orders.manualAddress') }}
               </UBadge>
@@ -485,11 +486,12 @@
               />
               <span>{{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}</span>
               <UBadge
-                :color="getPaymentStatusColor(selectedOrder.payment?.status)"
-                variant="soft"
+                :color="paymentChip(selectedOrder, true)!.color"
+                variant="solid"
                 size="xs"
+                :class="chipClass"
               >
-                {{ t(`orders.payment.status.${selectedOrder.payment?.status ? selectedOrder.payment.status.toLowerCase() : 'notPaid'}`) }}
+                {{ paymentChip(selectedOrder, true)!.label }}
               </UBadge>
             </div>
             <div v-if="selectedOrder.orderNote" class="flex items-start gap-2 text-muted">
@@ -515,13 +517,13 @@
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span class="text-sm text-muted">
                 {{ t('orders.preferredTime') }}:
-                <span class="font-medium text-highlighted">
+                <span class="font-medium text-highlighted font-mono tabular-nums">
                   {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime, locale) : t('orders.asap') }}
                 </span>
               </span>
               <span v-if="selectedOrder.estimatedReadyTime" class="text-sm text-muted">
                 {{ t('orders.currentEstimate') }}:
-                <span class="font-bold text-primary">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
+                <span class="font-bold text-highlighted font-mono tabular-nums">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
               </span>
             </div>
 
@@ -530,8 +532,9 @@
                 v-for="minutes in [15, 30, 45, 60]"
                 :key="minutes"
                 size="sm"
+                class="font-mono tabular-nums"
                 :variant="sliderDeltaMinutes === minutes ? 'solid' : 'outline'"
-                :color="sliderDeltaMinutes === minutes ? 'primary' : 'neutral'"
+                :color="sliderDeltaMinutes === minutes ? 'secondary' : 'neutral'"
                 @click="sliderDeltaMinutes = sliderDeltaMinutes === minutes ? 0 : minutes"
               >
                 +{{ minutes }}m
@@ -540,7 +543,7 @@
 
             <div v-if="newEstimatedTime" class="text-sm text-center">
               <span class="text-muted">{{ t('orders.newEstimatedTime') }}: </span>
-              <span class="font-bold text-primary text-base">{{ newEstimatedTime }}</span>
+              <span class="font-bold text-highlighted text-base font-mono tabular-nums">{{ newEstimatedTime }}</span>
             </div>
           </div>
 
@@ -555,8 +558,8 @@
                 v-for="status in secondaryStatuses"
                 :key="status"
                 size="md"
-                :variant="stagedStatus === status ? 'solid' : 'outline'"
-                :color="stagedStatus === status ? getStatusColor(status) : 'neutral'"
+                :variant="status === 'CANCELLED' || stagedStatus !== status ? 'outline' : 'solid'"
+                :color="status === 'CANCELLED' || stagedStatus === status ? 'error' : 'neutral'"
                 :class="status === 'CANCELLED' ? 'col-span-2' : ''"
                 @click="handleStatusButton(status)"
               >
@@ -572,7 +575,7 @@
         <div class="flex flex-col sm:flex-row gap-2 pb-[env(safe-area-inset-bottom)]">
           <UButton
             color="neutral"
-            variant="outline"
+            variant="solid"
             block
             size="lg"
             @click="showOrderDetails = false"
@@ -583,6 +586,7 @@
             v-if="canSave"
             block
             size="lg"
+            :color="primaryStatuses.length ? 'neutral' : 'primary'"
             @click="updateOrder(stagedStatus)"
           >
             <UIcon name="i-lucide-save" class="mr-2" />
@@ -616,7 +620,7 @@
       <template #footer>
         <UButton
           color="neutral"
-          variant="outline"
+          variant="solid"
           @click="cancelCancellation"
         >
           {{ t('orders.back') }}
@@ -642,7 +646,7 @@
       <template #footer>
         <UButton
           color="neutral"
-          variant="outline"
+          variant="solid"
           @click="cancelContinueClientPrint"
         >
           {{ t('orders.back') }}
@@ -668,6 +672,9 @@ import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
+
+// Pili chip: solid, 5px radius, 12px bold
+const chipClass = 'rounded-[5px] font-bold text-xs uppercase'
 const toast = useToast()
 const ordersStore = useOrdersStore()
 // Tab state - start as null for SSR, set on client
@@ -688,16 +695,14 @@ interface KanbanColumnDef {
   statuses: OrderStatus[]
   dropStatus: OrderStatus | null
   icon: string
-  iconBgClass: string
-  badgeColor: UiColor
 }
 
 const kanbanColumnDefs: KanbanColumnDef[] = [
-  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'warning' },
-  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'primary' },
-  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'success' },
-  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'info' },
-  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big', iconBgClass: 'bg-(--ui-bg-accented) text-(--ui-text)', badgeColor: 'success' }
+  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox' },
+  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat' },
+  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass' },
+  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike' },
+  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big' }
 ]
 
 // Completed-column filter anchored to Europe/Brussels (UTC slicing would list yesterday's orders just past Brussels midnight).
@@ -896,7 +901,7 @@ const isActiveStatus = (status: OrderStatus): boolean =>
 const hasNextStatus = (order: Order): boolean =>
   getAllowedStatuses(order.status, order.type).some(s => s !== 'CANCELLED' && s !== 'FAILED')
 
-const getTimeSince = (createdAt: string): { text: string; color: string; cardClass: string; isStale: boolean } => {
+const getTimeSince = (createdAt: string): { text: string; color: string; isStale: boolean } => {
   const created = new Date(createdAt)
   const diffMs = now.value.getTime() - created.getTime()
   const diffMin = Math.max(0, Math.floor(diffMs / 60000))
@@ -910,23 +915,17 @@ const getTimeSince = (createdAt: string): { text: string; color: string; cardCla
   }
 
   let color: string
-  let cardClass = ''
   const isStale = diffMin >= 1440 // 24h
 
   if (diffMin < 5) {
     color = 'text-success'
   } else if (diffMin < 15) {
     color = 'text-warning'
-    cardClass = 'border-l-3 border-l-[#D08A2E]'
-  } else if (diffMin < 60) {
-    color = 'text-error'
-    cardClass = 'border-l-3 border-l-red-500'
   } else {
     color = 'text-error'
-    cardClass = 'border-l-3 border-l-red-500 bg-red-500/5'
   }
 
-  return { text, color, cardClass, isStale }
+  return { text, color, isStale }
 }
 
 // Cancellation dialog state
@@ -1067,8 +1066,8 @@ const quickAdvanceStatus = async (order: Order) => {
 
 // Payment icon class based on status
 const getPaymentIconClass = (order: Order): string => {
-  if (order.payment?.status?.toLowerCase() === 'failed') return 'text-red-500'
-  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-[#D08A2E]'
+  if (order.payment?.status?.toLowerCase() === 'failed') return 'text-error'
+  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-warning'
   return ''
 }
 
@@ -1117,7 +1116,7 @@ const getStatusColor = (status: OrderStatus): UiColor => {
   const colors: Record<string, UiColor> = {
     PENDING: 'warning',
     CONFIRMED: 'info',
-    PREPARING: 'primary',
+    PREPARING: 'neutral',
     AWAITING_PICK_UP: 'success',
     OUT_FOR_DELIVERY: 'info',
     DELIVERED: 'success',
@@ -1140,6 +1139,32 @@ const getPaymentStatusColor = (status: string | undefined): UiColor => {
     paid: 'success'
   }
   return colors[status.toLowerCase()] || 'neutral'
+}
+
+// Payment chip: unpaid cash = amber "to collect", paid online = green.
+// `detail` also returns a chip for paid cash and for every other payment state.
+const paymentChip = (order: Order, detail = false): { color: UiColor, label: string } | null => {
+  const status = order.payment?.status?.toLowerCase()
+  if (status === 'paid') {
+    return detail || order.isOnlinePayment
+      ? { color: 'success', label: t('orders.payment.status.paid') }
+      : null
+  }
+  if (!order.isOnlinePayment && (!status || status === 'open' || status === 'pending')) {
+    return { color: 'warning', label: t('orders.toCollect') }
+  }
+  return {
+    color: getPaymentStatusColor(order.payment?.status),
+    label: t(`orders.payment.status.${status ?? 'notPaid'}`)
+  }
+}
+
+// Item names: French first, Chinese translation below when it exists
+const itemNames = (item: Order['items'][number]) => {
+  const translations = item.product.translations ?? []
+  const main = translations.find(tr => tr.language === 'fr')?.name || item.product.name
+  const zh = translations.find(tr => tr.language === 'zh')?.name
+  return { main, zh: zh && zh !== main ? zh : '' }
 }
 
 const newEstimatedTime = computed(() => {
@@ -1598,7 +1623,7 @@ const cancelContinueClientPrint = () => {
   printContinueOrderId.value = null
 }
 
-// Single AudioContext reused across chimes — creating one per call leaks on
+// Single AudioContext reused across chimes, creating one per call leaks on
 // Android WebView, where Chromium caps the number of live contexts per page.
 let sharedAudioCtx: AudioContext | null = null
 
@@ -1616,7 +1641,7 @@ const getAudioCtx = (): AudioContext | null => {
 const notificationSound = () => {
   const audioCtx = getAudioCtx()
   if (!audioCtx) return
-  // WebViews suspend the context until a user gesture — resume each time.
+  // WebViews suspend the context until a user gesture, resume each time.
   const play = () => {
     const t0 = audioCtx.currentTime
     const frequencies = [523.25, 659.25]
