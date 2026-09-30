@@ -17,7 +17,8 @@
     "availability": "Availability",
     "loadMore": "Load more",
     "back": "Back",
-    "filters": "Filters"
+    "filters": "Filters",
+    "done": "Done"
   },
 
   "products": {
@@ -71,7 +72,10 @@
         "zeroRated": "Zero-rated (0%)",
         "outOfScope": "Out of scope"
       }
-    }
+    },
+    "itemsCount": "items",
+    "addShort": "Add",
+    "piecesShort": "pcs"
   },
 
   "orders": {
@@ -179,10 +183,45 @@
       "updateFailed": "Failed to update order",
       "invalidTransition": "This status transition is not allowed for this order",
       "printFailed": "Print failed",
-      "paymentUpdateFailed": "Failed to update payment status"
+      "paymentUpdateFailed": "Failed to update payment status",
+      "orderingUpdateFailed": "Could not change the online ordering state"
     },
     "lateChip": "LATE",
-    "toCollect": "TO COLLECT"
+    "toCollect": "TO COLLECT",
+    "detailTitle": "Order",
+    "notFound": "Order not found",
+    "nextAction": {
+      "confirmed": "Confirm",
+      "preparing": "Start preparing",
+      "awaiting_pick_up": "Mark ready",
+      "out_for_delivery": "Out for delivery",
+      "picked_up": "Mark picked up",
+      "delivered": "Mark delivered"
+    },
+    "tabs": {
+      "new": "New",
+      "kitchen": "Kitchen",
+      "out": "Out",
+      "done": "Done"
+    },
+    "paused": "Online orders are paused. Customers cannot order.",
+    "resume": "Resume",
+    "online": "ONLINE",
+    "onPause": "PAUSED",
+    "pauseConfirmTitle": "Pause online orders?",
+    "pauseConfirmMessage": "Customers will not be able to order online until you resume.",
+    "pauseConfirm": "Pause orders",
+    "call": "Call",
+    "directions": "Directions",
+    "customerNote": "Customer note",
+    "receivedAt": "Received at {time}",
+    "readyAround": "ready around {time}",
+    "wantedAt": "wanted {time}",
+    "inProgress": "{count} in progress",
+    "articles": "{count} item | {count} items",
+    "cancelOrder": "Cancel order",
+    "markPaid": "Mark paid",
+    "estimateSaved": "Estimate saved"
   },
 
   "orderHistory": {
@@ -203,7 +242,19 @@
     "items": "Items",
     "scrollForMore": "Scroll to load more",
     "startDate": "Start date",
-    "endDate": "End date"
+    "endDate": "End date",
+    "periods": {
+      "label": "Period",
+      "today": "Today",
+      "days7": "7 days",
+      "days30": "30 days",
+      "dates": "Dates…"
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "itemsShort": "items"
   },
 
   "coupons": {
@@ -235,7 +286,12 @@
     "errors": {
       "saveFailed": "Failed to save coupon. Please try again.",
       "percentageMax": "A percentage discount cannot exceed 100%."
-    }
+    },
+    "addShort": "Add",
+    "perUser": "Per customer",
+    "fromTo": "From {from} to {to}",
+    "until": "Until {date}",
+    "noEnd": "No end date"
   },
 
   "customers": {
@@ -269,11 +325,13 @@
       "thisMonth": "This Month",
       "thisYear": "This Year",
       "allTypes": "All",
-      "minOrders": "Min. orders"
+      "minOrders": "Min. orders",
+      "orderType": "Order type"
     },
     "orderHistory": "Order History",
     "noOrdersFound": "No orders found",
-    "memberSince": "Member since"
+    "memberSince": "Member since",
+    "last": "Last order"
   },
 
   "navigation": {
@@ -347,6 +405,9 @@
       "typeSpecial": "Special hours",
       "save": "Save",
       "cancel": "Cancel"
+    },
+    "mobile": {
+      "daysOpen": "No days open | 1 day open | {count} days open"
     }
   },
 

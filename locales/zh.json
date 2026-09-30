@@ -18,7 +18,8 @@
     "availability": "可用性",
     "loadMore": "加载更多",
     "back": "返回",
-    "filters": "筛选"
+    "filters": "筛选",
+    "done": "完成"
   },
 
   "products": {
@@ -72,7 +73,10 @@
         "zeroRated": "零税率（0%）",
         "outOfScope": "不适用"
       }
-    }
+    },
+    "itemsCount": "件商品",
+    "addShort": "添加",
+    "piecesShort": "件"
   },
 
   "orders": {
@@ -180,10 +184,45 @@
       "updateFailed": "更新订单失败",
       "invalidTransition": "此订单不允许该状态转换",
       "printFailed": "打印失败",
-      "paymentUpdateFailed": "更新支付状态失败"
+      "paymentUpdateFailed": "更新支付状态失败",
+      "orderingUpdateFailed": "无法更改在线订单状态"
     },
     "lateChip": "已超时",
-    "toCollect": "待收款"
+    "toCollect": "待收款",
+    "detailTitle": "订单",
+    "notFound": "未找到订单",
+    "nextAction": {
+      "confirmed": "确认",
+      "preparing": "开始制作",
+      "awaiting_pick_up": "标记已备好",
+      "out_for_delivery": "已出发配送",
+      "picked_up": "标记已取餐",
+      "delivered": "标记已送达"
+    },
+    "tabs": {
+      "new": "新订单",
+      "kitchen": "厨房",
+      "out": "待出发",
+      "done": "已完成"
+    },
+    "paused": "在线订单已暂停，顾客无法下单。",
+    "resume": "恢复",
+    "online": "在线",
+    "onPause": "已暂停",
+    "pauseConfirmTitle": "暂停在线订单？",
+    "pauseConfirmMessage": "恢复之前，顾客无法在线下单。",
+    "pauseConfirm": "暂停",
+    "call": "拨打电话",
+    "directions": "导航",
+    "customerNote": "顾客备注",
+    "receivedAt": "{time} 收到",
+    "readyAround": "约 {time} 备好",
+    "wantedAt": "期望 {time}",
+    "inProgress": "{count} 个进行中",
+    "articles": "{count} 件商品",
+    "cancelOrder": "取消订单",
+    "markPaid": "标记已付款",
+    "estimateSaved": "预计时间已保存"
   },
 
   "orderHistory": {
@@ -202,7 +241,21 @@
     "type": "类型",
     "total": "总计",
     "items": "商品",
-    "scrollForMore": "滚动加载更多"
+    "scrollForMore": "滚动加载更多",
+    "periods": {
+      "label": "时间段",
+      "today": "今天",
+      "days7": "7天",
+      "days30": "30天",
+      "dates": "日期…"
+    },
+    "groups": {
+      "today": "今天",
+      "yesterday": "昨天"
+    },
+    "itemsShort": "件",
+    "startDate": "开始日期",
+    "endDate": "结束日期"
   },
 
   "coupons": {
@@ -234,7 +287,12 @@
     "errors": {
       "saveFailed": "保存优惠券失败，请重试。",
       "percentageMax": "百分比折扣不能超过 100%。"
-    }
+    },
+    "addShort": "添加",
+    "perUser": "每位客户",
+    "fromTo": "从 {from} 至 {to}",
+    "until": "截至 {date}",
+    "noEnd": "无截止日期"
   },
 
   "customers": {
@@ -268,11 +326,13 @@
       "thisMonth": "本月",
       "thisYear": "今年",
       "allTypes": "全部",
-      "minOrders": "最少订单数"
+      "minOrders": "最少订单数",
+      "orderType": "订单类型"
     },
     "orderHistory": "订单历史",
     "noOrdersFound": "未找到订单",
-    "memberSince": "注册日期"
+    "memberSince": "注册日期",
+    "last": "最近"
   },
 
   "navigation": {
@@ -346,6 +406,9 @@
       "typeSpecial": "特殊时间",
       "save": "保存",
       "cancel": "取消"
+    },
+    "mobile": {
+      "daysOpen": "无营业日 | 营业 1 天 | 营业 {count} 天"
     }
   },
 

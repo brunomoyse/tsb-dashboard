@@ -18,7 +18,8 @@
     "availability": "Beschikbaarheid",
     "loadMore": "Meer laden",
     "back": "Terug",
-    "filters": "Filters"
+    "filters": "Filters",
+    "done": "Klaar"
   },
 
   "products": {
@@ -64,7 +65,10 @@
         "zeroRated": "Nultarief (0%)",
         "outOfScope": "Buiten toepassingsgebied"
       }
-    }
+    },
+    "itemsCount": "artikelen",
+    "addShort": "Toevoegen",
+    "piecesShort": "st."
   },
 
   "orders": {
@@ -172,10 +176,45 @@
       "updateFailed": "Bestelling bijwerken mislukt",
       "invalidTransition": "Deze statusovergang is niet toegestaan voor deze bestelling",
       "printFailed": "Afdrukken mislukt",
-      "paymentUpdateFailed": "Betalingsstatus bijwerken mislukt"
+      "paymentUpdateFailed": "Betalingsstatus bijwerken mislukt",
+      "orderingUpdateFailed": "De status van online bestellingen kon niet worden gewijzigd"
     },
     "lateChip": "TE LAAT",
-    "toCollect": "TE INNEN"
+    "toCollect": "TE INNEN",
+    "detailTitle": "Bestelling",
+    "notFound": "Bestelling niet gevonden",
+    "nextAction": {
+      "confirmed": "Bevestigen",
+      "preparing": "Bereiding starten",
+      "awaiting_pick_up": "Markeer als klaar",
+      "out_for_delivery": "Onderweg",
+      "picked_up": "Markeer als afgehaald",
+      "delivered": "Markeer als geleverd"
+    },
+    "tabs": {
+      "new": "Nieuw",
+      "kitchen": "Keuken",
+      "out": "Vertrek",
+      "done": "Afgerond"
+    },
+    "paused": "Online bestellingen zijn gepauzeerd. Klanten kunnen niet bestellen.",
+    "resume": "Hervatten",
+    "online": "ONLINE",
+    "onPause": "GEPAUZEERD",
+    "pauseConfirmTitle": "Online bestellingen pauzeren?",
+    "pauseConfirmMessage": "Klanten kunnen niet online bestellen tot u hervat.",
+    "pauseConfirm": "Pauzeren",
+    "call": "Bellen",
+    "directions": "Route",
+    "customerNote": "Opmerking van de klant",
+    "receivedAt": "Ontvangen om {time}",
+    "readyAround": "klaar rond {time}",
+    "wantedAt": "gewenst {time}",
+    "inProgress": "{count} bezig",
+    "articles": "{count} artikel | {count} artikelen",
+    "cancelOrder": "Bestelling annuleren",
+    "markPaid": "Markeer als betaald",
+    "estimateSaved": "Schatting opgeslagen"
   },
 
   "orderHistory": {
@@ -196,7 +235,19 @@
     "items": "Artikelen",
     "scrollForMore": "Scroll om meer te laden",
     "startDate": "Startdatum",
-    "endDate": "Einddatum"
+    "endDate": "Einddatum",
+    "periods": {
+      "label": "Periode",
+      "today": "Vandaag",
+      "days7": "7 dagen",
+      "days30": "30 dagen",
+      "dates": "Data…"
+    },
+    "groups": {
+      "today": "Vandaag",
+      "yesterday": "Gisteren"
+    },
+    "itemsShort": "art."
   },
 
   "coupons": {
@@ -228,7 +279,12 @@
     "errors": {
       "saveFailed": "Kortingscode opslaan mislukt. Probeer het opnieuw.",
       "percentageMax": "Een procentuele korting mag niet hoger zijn dan 100%."
-    }
+    },
+    "addShort": "Toevoegen",
+    "perUser": "Per klant",
+    "fromTo": "Van {from} tot {to}",
+    "until": "Tot {date}",
+    "noEnd": "Geen einddatum"
   },
 
   "customers": {
@@ -262,11 +318,13 @@
       "thisMonth": "Deze maand",
       "thisYear": "Dit jaar",
       "allTypes": "Alle",
-      "minOrders": "Min. bestellingen"
+      "minOrders": "Min. bestellingen",
+      "orderType": "Type bestelling"
     },
     "orderHistory": "Bestelgeschiedenis",
     "noOrdersFound": "Geen bestellingen gevonden",
-    "memberSince": "Klant sinds"
+    "memberSince": "Klant sinds",
+    "last": "Laatste"
   },
 
   "navigation": {
@@ -337,6 +395,9 @@
       "typeSpecial": "Speciale uren",
       "save": "Opslaan",
       "cancel": "Annuleren"
+    },
+    "mobile": {
+      "daysOpen": "Geen dagen open | 1 dag open | {count} dagen open"
     }
   },
 
