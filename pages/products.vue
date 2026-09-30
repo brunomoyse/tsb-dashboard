@@ -1,53 +1,142 @@
 <template>
   <div>
-    <!-- Page Header (mobile gets its own padding, desktop inherits the wrapper) -->
-    <div class="px-3 pt-3 pb-3 sm:hidden flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <h1 class="text-lg font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
-        <p class="text-xs text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
-      </div>
-      <UButton
-        icon="i-lucide-plus"
-        size="md"
-        class="shrink-0"
-        :aria-label="t('products.add')"
-        @click="openCreateDialog"
-      />
-    </div>
-
-    <!-- Toolbar: Search + Category Chips (sticky on mobile, sibling of wrapper so it pins flush) -->
-    <div class="sticky top-0 z-30 px-3 pb-3 pt-1 bg-default sm:hidden">
-      <UInput
-        v-model="searchQuery"
-        name="search-products-mobile"
-        icon="i-lucide-search"
-        :placeholder="t('products.search')"
-        size="lg"
-        class="w-full"
-        :ui="{ base: 'h-12 text-base bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted' }"
-      />
-
-      <!-- Category chips (horizontal scroll on mobile) -->
-      <div class="mt-2 -mx-3 px-3 flex gap-2 overflow-x-auto scrollbar-hide">
-        <button
-          v-for="cat in categoryFilterItems"
-          :key="cat.id ?? 'all'"
-          type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
-          :class="selectedCategoryId === cat.id
-            ? 'bg-inverted text-inverted border-inverted'
-            : 'bg-transparent text-muted border-default'
-          "
-          @click="selectedCategoryId = cat.id"
+    <!-- ========== MOBILE VIEW (< md) ========== -->
+    <div class="md:hidden">
+      <!-- Header -->
+      <div class="px-4 pt-4 pb-1 flex items-center justify-between gap-3">
+        <div class="min-w-0 flex flex-col gap-0.5">
+          <h1 class="text-[26px] leading-[1.1] font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
+          <span class="font-mono tabular-nums text-[13px] text-muted">{{ filteredProducts.length }} {{ t('products.itemsCount') }}</span>
+        </div>
+        <UButton
+          icon="i-lucide-plus"
+          size="lg"
+          class="shrink-0 h-11 px-4 text-[15px] font-bold rounded-[10px]"
+          @click="openCreateDialog"
         >
-          {{ cat.name }}
-        </button>
+          {{ t('products.addShort') }}
+        </UButton>
+      </div>
+
+      <!-- Sticky toolbar: search + category rail -->
+      <div class="sticky top-0 z-30 bg-default py-3 flex flex-col gap-2.5">
+        <div class="px-4">
+          <UInput
+            v-model="searchQuery"
+            name="search-products-mobile"
+            :placeholder="t('products.search')"
+            class="w-full"
+            :ui="{ base: 'h-12 px-4 rounded-xl text-base bg-elevated ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted' }"
+          />
+        </div>
+        <PiliChipRail v-model="selectedCategoryId" :options="categoryRailOptions" :label="t('products.category')" />
+      </div>
+
+      <div class="px-4 pb-5 flex flex-col gap-2.5">
+        <!-- Skeleton Loading -->
+        <template v-if="pending">
+          <div v-for="i in 6" :key="i" class="rounded-[14px] bg-elevated border border-default overflow-hidden">
+            <div class="flex items-center gap-3 p-3">
+              <USkeleton class="size-[60px] rounded-[10px] shrink-0" />
+              <div class="flex-1 space-y-1.5">
+                <USkeleton class="h-4 w-32" />
+                <USkeleton class="h-3 w-20" />
+                <USkeleton class="h-3 w-16" />
+              </div>
+            </div>
+            <USkeleton class="h-[52px] rounded-none border-t border-default" />
+          </div>
+        </template>
+
+        <!-- Empty State -->
+        <p
+          v-else-if="filteredProducts.length === 0"
+          class="py-12 px-4 text-center text-[15px] text-muted"
+        >
+          {{ (searchQuery || selectedCategoryId) ? t('products.noProductsFiltered') : t('products.noProducts') }}
+        </p>
+
+        <!-- Product cards -->
+        <template v-else>
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+            class="rounded-[14px] bg-elevated border border-default overflow-hidden"
+          >
+            <button
+              type="button"
+              class="w-full p-3 grid grid-cols-[60px_1fr_auto] gap-3 items-center text-left active:bg-accented transition-colors"
+              @click="openEditDialog(product)"
+            >
+              <span class="relative size-[60px] rounded-[10px] bg-accented overflow-hidden flex items-center justify-center font-mono tabular-nums text-sm font-bold text-muted">
+                {{ product.code }}
+                <img
+                  v-if="getProductImageUrl(product)"
+                  :src="getProductImageUrl(product) ?? undefined"
+                  :alt="product.name"
+                  class="absolute inset-0 size-full object-cover bg-accented"
+                  @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')"
+                />
+              </span>
+
+              <span class="min-w-0 flex flex-col gap-[3px]">
+                <span class="flex items-center gap-1.5 min-w-0">
+                  <span
+                    class="text-base font-bold leading-tight truncate"
+                    :class="product.isAvailable && product.isVisible ? 'text-default' : 'text-muted'"
+                  >{{ product.name }}</span>
+                  <UIcon
+                    v-if="hasMissingTranslations(product)"
+                    name="i-lucide-languages"
+                    class="size-4 text-warning shrink-0"
+                    :title="t('products.translations')"
+                  />
+                </span>
+                <span v-if="getZhName(product)" class="text-[13px] text-muted font-(family-name:--font-zh) truncate">{{ getZhName(product) }}</span>
+                <span class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono tabular-nums text-[15px] font-bold" data-allow-mismatch="text">{{ formatPrice(product.price) }}</span>
+                  <span class="text-[13px] text-muted">{{ productMeta(product) }}</span>
+                </span>
+              </span>
+
+              <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
+            </button>
+
+            <!-- Availability first, then visibility -->
+            <div class="grid grid-cols-2 border-t border-default">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="product.isAvailable"
+                class="h-[52px] flex items-center justify-center gap-2.5 text-sm font-bold border-r border-default"
+                :class="product.isAvailable ? 'text-default' : 'text-warning'"
+                :disabled="togglingField === `${product.id}-isAvailable`"
+                @click="toggleProductField(product, 'isAvailable', !product.isAvailable)"
+              >
+                <PiliSwitch presentational size="sm" :model-value="product.isAvailable" :loading="togglingField === `${product.id}-isAvailable`" />
+                {{ product.isAvailable ? t('common.available') : t('common.unavailable') }}
+              </button>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="product.isVisible"
+                class="h-[52px] flex items-center justify-center gap-2.5 text-sm font-bold"
+                :class="product.isVisible ? 'text-default' : 'text-muted'"
+                :disabled="togglingField === `${product.id}-isVisible`"
+                @click="toggleProductField(product, 'isVisible', !product.isVisible)"
+              >
+                <PiliSwitch presentational size="sm" :model-value="product.isVisible" :loading="togglingField === `${product.id}-isVisible`" />
+                {{ product.isVisible ? t('common.visible') : t('common.invisible') }}
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
-  <div class="p-3 sm:p-4 md:p-6">
-    <!-- Page Header (desktop only) -->
-    <div class="mb-6 hidden sm:flex items-center justify-between gap-3">
+  <div class="hidden md:block md:p-6">
+    <!-- Page Header (md+) -->
+    <div class="mb-6 flex items-center justify-between gap-3">
       <div class="min-w-0">
         <h1 class="text-2xl font-bold text-highlighted truncate">{{ t('navigation.products') }}</h1>
         <p class="text-sm text-muted mt-0.5">{{ filteredProducts.length }} {{ t('orders.items') }}</p>
@@ -60,8 +149,8 @@
       </UButton>
     </div>
 
-    <!-- Toolbar (desktop only, in normal flow inside wrapper) -->
-    <div class="hidden sm:block pb-4">
+    <!-- Toolbar (md+, in normal flow inside wrapper) -->
+    <div class="pb-4">
       <UInput
         v-model="searchQuery"
         name="search-products"
@@ -86,140 +175,6 @@
         >
           {{ cat.name }}
         </button>
-      </div>
-    </div>
-
-    <!-- ========== MOBILE VIEW: Cards (< md) ========== -->
-    <div class="md:hidden">
-      <!-- Skeleton Loading -->
-      <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex flex-col rounded-[14px] bg-elevated border border-default overflow-hidden">
-          <div class="flex items-center gap-3 p-3">
-            <USkeleton class="size-16 rounded-lg shrink-0" />
-            <div class="flex-1 space-y-1.5">
-              <USkeleton class="h-4 w-32" />
-              <USkeleton class="h-3 w-20" />
-              <USkeleton class="h-3 w-16" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 border-t border-default">
-            <USkeleton class="h-11 rounded-none" />
-            <USkeleton class="h-11 rounded-none" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div
-        v-else-if="filteredProducts.length === 0"
-        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
-      >
-        <UIcon name="i-lucide-package-x" class="size-14 mb-3 text-muted" />
-        <p class="text-muted text-sm">{{ (searchQuery || selectedCategoryId) ? t('products.noProductsFiltered') : t('products.noProducts') }}</p>
-      </div>
-
-      <!-- Product cards -->
-      <div v-else class="space-y-2">
-        <div
-          v-for="product in filteredProducts"
-          :key="product.id"
-          class="flex flex-col rounded-[14px] bg-elevated border border-default overflow-hidden"
-        >
-          <!-- Top: tap to edit -->
-          <button
-            type="button"
-            class="flex items-center gap-3 p-3 text-left active:bg-accented transition-colors min-h-16"
-            @click="openEditDialog(product)"
-          >
-            <div
-              class="size-16 rounded-lg border border-default bg-accented overflow-hidden shrink-0 flex items-center justify-center"
-            >
-              <img
-                v-if="getProductImageUrl(product)"
-                :src="getProductImageUrl(product) ?? undefined"
-                :alt="product.name"
-                class="size-full object-cover"
-                @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')"
-              />
-              <UIcon v-else name="i-lucide-image-off" class="size-5 text-muted" />
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <div class="flex items-baseline gap-2">
-                <span v-if="product.code" class="text-xs font-mono tabular-nums font-semibold text-muted shrink-0">{{ product.code }}</span>
-                <span class="font-semibold text-sm text-highlighted truncate">{{ product.name }}</span>
-              </div>
-              <div class="flex items-center gap-2 mt-1 text-xs text-muted">
-                <span class="truncate">{{ product.category.name }}</span>
-                <span v-if="product.pieceCount" class="shrink-0 font-mono tabular-nums">· {{ product.pieceCount }} pcs</span>
-              </div>
-              <div class="flex items-center gap-2 mt-1.5">
-                <span class="font-bold text-sm text-highlighted font-mono tabular-nums" data-allow-mismatch="text">
-                  {{ formatPrice(product.price) }}
-                </span>
-                <!-- Dietary dots -->
-                <UBadge v-if="product.isHalal" color="neutral" variant="solid" size="xs">{{ t('products.halal') }}</UBadge>
-                <UBadge v-if="product.isVegetarian" color="neutral" variant="solid" size="xs">{{ t('products.vegetarian') }}</UBadge>
-                <UBadge v-if="product.isSpicy" color="neutral" variant="solid" size="xs">
-                  <UIcon name="i-lucide-flame" class="size-3 text-error" />
-                  {{ t('products.spicy') }}
-                </UBadge>
-                <!-- Missing translations warning -->
-                <UIcon
-                  v-if="hasMissingTranslations(product)"
-                  name="i-lucide-languages"
-                  class="size-3.5 text-warning"
-                  :title="t('products.translations')"
-                />
-              </div>
-            </div>
-
-            <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
-          </button>
-
-          <!-- Bottom: dual toggles (50/50 full-width touch targets) -->
-          <div class="grid grid-cols-2 border-t border-default divide-x divide-default">
-            <button
-              type="button"
-              class="flex items-center justify-center gap-1.5 h-12 text-sm font-medium transition-colors active:scale-[0.98]"
-              :class="product.isVisible
-                ? 'text-success'
-                : 'text-muted'
-              "
-              :disabled="togglingField === `${product.id}-isVisible`"
-              :aria-pressed="product.isVisible"
-              :aria-label="t('common.visibility')"
-              @click="toggleProductField(product, 'isVisible', !product.isVisible)"
-            >
-              <UIcon
-                :name="togglingField === `${product.id}-isVisible` ? 'i-lucide-loader-2' : (product.isVisible ? 'i-lucide-eye' : 'i-lucide-eye-off')"
-                class="size-4"
-                :class="{ 'animate-spin': togglingField === `${product.id}-isVisible` }"
-              />
-              {{ product.isVisible ? t('common.visible') : t('common.invisible') }}
-            </button>
-
-            <button
-              type="button"
-              class="flex items-center justify-center gap-1.5 h-12 text-sm font-medium transition-colors active:scale-[0.98]"
-              :class="product.isAvailable
-                ? 'text-success'
-                : 'text-warning'
-              "
-              :disabled="togglingField === `${product.id}-isAvailable`"
-              :aria-pressed="product.isAvailable"
-              :aria-label="t('common.availability')"
-              @click="toggleProductField(product, 'isAvailable', !product.isAvailable)"
-            >
-              <UIcon
-                :name="togglingField === `${product.id}-isAvailable` ? 'i-lucide-loader-2' : (product.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x')"
-                class="size-4"
-                :class="{ 'animate-spin': togglingField === `${product.id}-isAvailable` }"
-              />
-              {{ product.isAvailable ? t('common.available') : t('common.unavailable') }}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -696,6 +651,25 @@ const categoryFilterItems = computed(() => {
     .map(c => ({ id: c.id, name: c.name }))
   return [all, ...cats]
 })
+
+// Category rail options for the mobile chip rail
+const categoryRailOptions = computed(() =>
+  categoryFilterItems.value.map(c => ({ value: c.id, label: c.name }))
+)
+
+// Chinese name shown under the French name on mobile cards
+const getZhName = (product: Product) =>
+  product.translations.find(tr => tr.language === 'zh')?.name?.trim() || ''
+
+// Plain-text meta line: category, pieces, dietary flags
+const productMeta = (product: Product) =>
+  [
+    product.category.name,
+    product.pieceCount ? `${product.pieceCount} ${t('products.piecesShort')}` : '',
+    product.isHalal ? t('products.halal') : '',
+    product.isVegetarian ? t('products.vegetarian') : '',
+    product.isSpicy ? t('products.spicy') : ''
+  ].filter(Boolean).join(' · ')
 
 // Filter and sort products (same order as /menu: category order, then product code)
 const filteredProducts = computed(() => {

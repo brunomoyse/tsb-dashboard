@@ -4,11 +4,12 @@
     :title="dialogTitle"
     description=" "
     :overlay="true"
+    :fullscreen="isMobile"
     :ui="{
       content: 'max-lg:h-full max-lg:max-h-full max-lg:rounded-none lg:max-w-4xl',
       overlay: 'bg-default',
       body: 'max-lg:p-4 max-lg:overflow-y-auto',
-      footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end'
+      footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end max-md:!flex-row max-md:gap-3 max-md:p-4 max-md:pb-[calc(env(safe-area-inset-bottom)+1rem)] max-md:bg-default max-md:border-t max-md:border-default'
     }"
   >
     <template #body>
@@ -367,16 +368,16 @@
 
     <template #footer>
       <UButton
-        variant="ghost"
+        :variant="isMobile ? 'solid' : 'ghost'"
         color="neutral"
-        class="max-sm:w-full"
+        class="max-md:flex-1 max-md:h-14 max-md:justify-center max-md:text-base max-md:font-bold"
         @click="closeDialog"
       >
         {{ t('common.cancel') }}
       </UButton>
       <UButton
         color="primary"
-        class="max-sm:w-full"
+        class="max-md:flex-[2] max-md:h-14 max-md:justify-center max-md:text-base max-md:font-bold"
         @click="saveChanges"
       >
         {{ saveLabel }}
@@ -424,6 +425,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const isMobile = useIsMobile()
 const toast = useToast()
 
 // Languages used for translations.
