@@ -1,17 +1,20 @@
 <template>
-  <div class="p-3 sm:p-4 md:p-6">
+  <div class="md:p-6 max-md:flex-1 max-md:flex max-md:flex-col">
+    <!-- Order detail page (mobile only): the list below stays mounted and is just hidden -->
+    <NuxtPage />
+
     <!-- Page Header -->
-    <div class="mb-3 sm:mb-6">
-      <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('navigation.orders') }}</h1>
-      <p class="hidden sm:block text-muted">{{ t('orders.subtitle') }}</p>
+    <div class="hidden md:block mb-6">
+      <h1 class="text-2xl font-bold text-highlighted">{{ t('navigation.orders') }}</h1>
+      <p class="text-muted">{{ t('orders.subtitle') }}</p>
     </div>
 
     <!-- Stale order alert banner (Phase 8) -->
     <div
       v-if="staleOrderCount > 0"
-      class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-6 rounded-lg bg-warning text-inverted text-sm sm:text-base font-medium"
+      class="hidden md:flex items-center gap-2 px-4 py-3 mb-6 rounded-lg bg-warning text-inverted text-base font-medium"
     >
-      <UIcon name="i-lucide-alert-triangle" class="size-4 sm:size-5 shrink-0" />
+      <UIcon name="i-lucide-alert-triangle" class="size-5 shrink-0" />
       <i18n-t keypath="orders.staleAlert" tag="span" class="flex-1">
         <template #count>
           <span class="font-mono font-bold tabular-nums">{{ staleOrderCount }}</span>
@@ -27,119 +30,138 @@
       />
     </div>
 
-    <!-- ========== MOBILE VIEW: Tab-based (< md) ========== -->
-    <div class="md:hidden">
-      <!-- Filter Icons (fixed row, no scrolling) -->
-      <div class="flex gap-2 mb-3">
+    <!-- ========== MOBILE VIEW (< md) ========== -->
+    <div v-show="!route.params.id" class="md:hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between gap-3 px-4 pt-4 pb-1">
+        <h1 class="text-[26px] font-bold leading-[1.1]">{{ t('navigation.orders') }}</h1>
         <button
-          v-for="chip in mobileChips"
-          :key="chip.value"
-          class="relative flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl transition-all"
-          :class="selectedTab === chip.value
-            ? 'bg-inverted text-inverted'
-            : 'bg-elevated text-muted border border-default active:scale-95'
-          "
-          @click="selectedTab = chip.value"
+          v-if="orderingEnabled !== null"
+          type="button"
+          class="h-9 px-3.5 rounded-full border border-default flex items-center gap-2 font-mono text-xs font-bold tracking-[0.05em] disabled:opacity-60"
+          :disabled="orderingUpdating"
+          :aria-label="orderingEnabled ? t('orders.online') : t('orders.onPause')"
+          @click="toggleOrdering"
         >
-          <UIcon :name="chip.icon" class="size-6 sm:size-7" />
-          <span
-            class="text-sm sm:text-base font-bold font-mono tabular-nums"
-          >
-            {{ chip.count }}
-          </span>
-          <span class="text-xs leading-none">
-            {{ chip.label }}
-          </span>
-          <!-- Unacknowledged pulse dot -->
-          <span
-            v-if="chip.value === 0 && ordersStore.unacknowledgedPendingCount > 0"
-            class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-error animate-pulse"
-          />
+          <span class="size-2 rounded-full" :class="orderingEnabled ? 'bg-success' : 'bg-error'" />
+          {{ orderingEnabled ? t('orders.online') : t('orders.onPause') }}
+        </button>
+      </div>
+      <p class="px-4 font-mono tabular-nums text-[13px] text-muted">
+        {{ nowLabel }} &middot; {{ t('orders.inProgress', { count: ordersInProgress }) }}
+      </p>
+
+      <!-- Sticky tabs -->
+      <div class="sticky top-0 z-20 bg-default px-4 py-3">
+        <PiliSegmented
+          v-model="mobileTab"
+          :options="mobileTabOptions"
+          :height="56"
+          :label="t('navigation.orders')"
+        />
+      </div>
+
+      <!-- Paused banner -->
+      <div
+        v-if="orderingEnabled === false"
+        class="mx-4 mb-2.5 py-2.5 pr-2.5 pl-3.5 rounded-xl bg-error text-inverted flex items-center gap-2.5"
+      >
+        <span class="flex-1 text-sm font-bold leading-[1.35]">{{ t('orders.paused') }}</span>
+        <button
+          type="button"
+          class="h-10 px-3.5 rounded-lg bg-default text-default text-sm font-bold disabled:opacity-60"
+          :disabled="orderingUpdating"
+          @click="applyOrdering(true)"
+        >
+          {{ t('orders.resume') }}
         </button>
       </div>
 
+      <!-- Late orders banner -->
+      <button
+        v-if="staleOrderCount > 0 && oldestLateOrder"
+        type="button"
+        class="mx-4 mb-2.5 w-[calc(100%-32px)] min-h-12 py-2.5 px-3.5 rounded-xl bg-warning text-inverted flex items-center gap-2.5 text-left"
+        @click="openOrderDetails(oldestLateOrder)"
+      >
+        <i18n-t keypath="orders.staleAlert" tag="span" class="flex-1 text-sm font-bold leading-[1.35]">
+          <template #count>
+            <span class="font-mono tabular-nums text-[17px] font-bold">{{ staleOrderCount }}</span>
+          </template>
+        </i18n-t>
+        <span class="font-mono font-bold" aria-hidden="true">&rarr;</span>
+      </button>
+
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-elevated border border-default">
-          <USkeleton class="size-5 rounded shrink-0" />
-          <div class="flex-1 space-y-1.5">
-            <div class="flex justify-between">
-              <USkeleton class="h-4 w-28" />
-              <USkeleton class="h-4 w-14" />
-            </div>
-            <div class="flex justify-between">
-              <USkeleton class="h-3 w-20" />
-              <USkeleton class="h-5 w-16 rounded-full" />
-            </div>
+      <div v-if="pending" class="px-4 pb-5 flex flex-col gap-2.5">
+        <div v-for="i in 4" :key="i" class="p-3.5 rounded-[14px] bg-elevated border border-default space-y-2">
+          <div class="flex justify-between">
+            <USkeleton class="h-5 w-32" />
+            <USkeleton class="h-5 w-16" />
           </div>
+          <USkeleton class="h-[22px] w-24" />
+          <USkeleton class="h-4 w-48" />
         </div>
       </div>
 
-      <!-- Orders List -->
-      <div v-else-if="filteredOrders.length" class="space-y-2">
+      <!-- Orders list -->
+      <div v-else class="px-4 pb-5 flex flex-col gap-2.5">
         <div
-          v-for="order in filteredOrders"
+          v-for="order in mobileCards"
           :key="order.id"
-          class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-elevated border border-default cursor-pointer active:scale-[0.98] transition-all"
-          @click="openOrderDetails(order)"
+          class="bg-elevated border rounded-[14px] overflow-hidden"
+          :class="isLateOrder(order) ? 'border-error' : 'border-default'"
         >
-          <!-- Type icon -->
-          <UIcon
-            :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-            class="size-5 sm:size-6 shrink-0 text-muted"
-          />
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
-              <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
+          <button
+            type="button"
+            class="w-full p-3.5 flex flex-col gap-2 text-left"
+            @click="openOrderDetails(order)"
+          >
+            <div class="w-full flex items-baseline gap-2.5">
+              <span class="flex-1 min-w-0 text-[17px] font-bold truncate">{{ order.displayCustomerName }}</span>
+              <span class="font-mono tabular-nums text-[17px] font-bold">{{ formatPrice(order.totalPrice) }}</span>
             </div>
-            <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
-              <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted">
-                <span><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
-                <UIcon
-                  :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
-                  :class="['size-3.5 sm:size-4', getPaymentIconClass(order)]"
-                />
-                <span
-                  v-if="isActiveStatus(order.status)"
-                  :class="['font-bold font-mono tabular-nums', getTimeSince(order.createdAt).color]"
-                >
-                  {{ getTimeSince(order.createdAt).text }}
-                </span>
-                <UBadge v-if="isActiveStatus(order.status) && getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="chipClass">{{ t('orders.lateChip') }}</UBadge>
-              </div>
-              <UBadge :color="getStatusColor(order.status)" variant="solid" size="xs" :class="chipClass">
-                {{ t(`orders.status.${order.status?.toLowerCase()}`) }}
-              </UBadge>
+            <div class="flex items-center gap-2 flex-wrap">
+              <PiliChip tone="outline" class="uppercase">
+                {{ order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup') }}
+              </PiliChip>
+              <span
+                v-if="isActiveStatus(order.status)"
+                class="font-mono tabular-nums text-sm font-bold"
+                :class="getTimeSince(order.createdAt).color"
+              >
+                {{ getTimeSince(order.createdAt).text }}
+              </span>
+              <PiliChip
+                v-if="!isActiveStatus(order.status) || order.status === 'CONFIRMED'"
+                :tone="ORDER_STATUS_CHIP_TONE[order.status] ?? 'neutral'"
+              >
+                {{ t(`orders.status.${order.status.toLowerCase()}`) }}
+              </PiliChip>
+              <PiliChip v-if="isLateOrder(order)" tone="danger" mono class="uppercase">
+                {{ t('orders.lateChip') }}
+              </PiliChip>
+              <PiliChip v-if="isUnpaidCash(order)" tone="warning">
+                {{ t('orders.payment.status.notPaid') }}
+              </PiliChip>
             </div>
-            <p v-if="order.type === 'DELIVERY' && order.address" class="text-xs sm:text-sm text-muted truncate mt-0.5">
-              <UIcon name="i-lucide-map-pin" class="size-3 sm:size-3.5 inline-block align-text-bottom" />
-              {{ order.address.streetName }} {{ order.address.houseNumber }}
-            </p>
-          </div>
-
-          <!-- Quick action button (Phase 7) -->
-          <UButton
-            v-if="hasNextStatus(order)"
-            icon="i-lucide-arrow-right-circle"
-            size="md"
-            variant="ghost"
-            color="primary"
-            square
-            class="shrink-0"
-            :aria-label="t('orders.advanceStatus')"
-            @click.stop="quickAdvanceStatus(order)"
-          />
+            <span class="text-sm text-muted leading-[1.4]">{{ cardMeta(order) }}</span>
+          </button>
+          <button
+            v-if="nextActionOf(order)"
+            type="button"
+            class="w-full h-[52px] border-t border-default bg-accented active:bg-(--pili-pressed) text-[15px] font-bold flex items-center justify-center gap-2"
+            @click="quickAdvanceStatus(order)"
+          >
+            {{ t(`orders.nextAction.${nextActionOf(order)!.toLowerCase()}`) }}
+            <span class="font-mono" aria-hidden="true">&rarr;</span>
+          </button>
         </div>
-      </div>
 
-      <!-- Empty State -->
-      <UCard v-else class="text-center py-12">
-        <UIcon name="i-lucide-package-x" class="size-16 mx-auto mb-4 text-muted" />
-        <p class="text-lg text-muted">{{ t('orders.noOrders') }}</p>
-      </UCard>
+        <p v-if="!mobileCards.length" class="py-14 px-4 text-center text-[15px] text-muted">
+          {{ t('orders.noOrders') }}
+        </p>
+      </div>
     </div>
 
     <!-- ========== TABLET+ VIEW: Kanban board (md:) ========== -->
@@ -331,7 +353,7 @@
       v-model:open="showOrderDetails"
       :title="t('orders.orderDetails')"
       :description="t('orders.orderDetailsDescription')"
-      :side="slideoverSide"
+      side="right"
       :ui="slideoverUi"
     >
       <template v-if="selectedOrder" #body>
@@ -635,6 +657,31 @@
       </template>
     </UModal>
 
+    <!-- Pause confirmation (mobile) -->
+    <PiliBottomSheet
+      v-model:open="showPauseConfirm"
+      :title="t('orders.pauseConfirmTitle')"
+    >
+      <p class="text-[15px] text-muted leading-[1.45]">{{ t('orders.pauseConfirmMessage') }}</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          class="h-14 rounded-xl bg-accented active:bg-(--pili-pressed) text-base font-bold"
+          @click="showPauseConfirm = false"
+        >
+          {{ t('orders.back') }}
+        </button>
+        <button
+          type="button"
+          class="h-14 rounded-xl bg-error text-inverted text-base font-bold disabled:opacity-60"
+          :disabled="orderingUpdating"
+          @click="applyOrdering(false)"
+        >
+          {{ t('orders.pauseConfirm') }}
+        </button>
+      </div>
+    </PiliBottomSheet>
+
     <!-- Two-step print: tear kitchen ticket, then continue to client ticket -->
     <UModal
       v-model:open="showPrintContinueDialog"
@@ -664,9 +711,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Order, OrderStatus, OrderType } from '~/types'
+import type { Order, OrderStatus } from '~/types'
+import { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, hasNextStatus, isActiveStatus, useOrderActions } from '~/composables/useOrderActions'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { brusselsDateISO, formatDate, formatPrice, formatTimeOnly, shiftBrusselsDate, timeToRFC3339 } from '~/utils/utils'
+import { brusselsDateISO, formatDate, formatPrice, formatTimeOnly, shiftBrusselsDate } from '~/utils/utils'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -677,17 +725,44 @@ const { t, locale } = useI18n()
 const chipClass = 'rounded-[5px] font-bold text-xs uppercase'
 const toast = useToast()
 const ordersStore = useOrdersStore()
-// Tab state - start as null for SSR, set on client
-const selectedTab = ref<number | null>(null)
+const route = useRoute()
+const localePath = useLocalePath()
+const isMobile = useIsMobile()
 
-// Mobile detection for slideover direction (bottom sheet on phones)
-const isMobile = ref(false)
-const slideoverSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
-const slideoverUi = computed(() =>
-  isMobile.value
-    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
-    : { content: 'min-h-full' }
-)
+// The order details slideover is desktop/tablet only; phones use the /orders/:id page
+const slideoverUi = { content: 'min-h-full' }
+
+// Actions shared with the mobile detail page (pages/orders/[id].vue)
+const {
+  selectedOrder,
+  sliderDeltaMinutes,
+  stagedStatus,
+  isUpdatingPayment,
+  quickActionLoading,
+  primaryStatuses,
+  secondaryStatuses,
+  handleStatusButton,
+  selectOrder,
+  newEstimatedTime,
+  canSave,
+  quickStatusAdvance,
+  quickAdvanceStatus,
+  dropOrderStatus,
+  updateOrder,
+  markAsPaid,
+  showCancelDialog,
+  cancelDelay,
+  confirmDisabled,
+  confirmCancellation,
+  cancelCancellation,
+  printBoth,
+  showPrintContinueDialog,
+  continueToClientPrint,
+  cancelContinueClientPrint,
+  printMenuItems
+} = useOrderActions({
+  onDone: () => { showOrderDetails.value = false }
+})
 
 // Kanban column definitions
 interface KanbanColumnDef {
@@ -741,24 +816,7 @@ const performDrop = async (order: Order, column: KanbanColumnDef) => {
     return
   }
 
-  const previousStatus = order.status
-  const previousUpdatedAt = order.updatedAt
-
-  // Optimistic update (include updatedAt for COMPLETED column date filter)
-  ordersStore.updateOrder({ id: order.id, status: targetStatus, updatedAt: new Date().toISOString() })
-
-  try {
-    const res = await mutationUpdateOrder({
-      id: order.id,
-      input: { status: targetStatus }
-    })
-    // Apply server response (authoritative updatedAt)
-    ordersStore.updateOrder(res.updateOrder)
-  } catch {
-    // Revert on failure
-    ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
-  }
+  await dropOrderStatus(order, targetStatus)
 }
 
 // HTML5 Drag & Drop handlers (desktop)
@@ -861,29 +919,16 @@ const onCardTouchStart = (_e: TouchEvent, order: Order, column: KanbanColumnDef)
 }
 
 // Order details state
-const selectedOrder = ref<Order | null>(null)
 const showOrderDetails = ref(false)
-const sliderDeltaMinutes = ref<number>(0)
-const initialSliderValue = ref<number>(0)
-const baseEstimatedTime = ref<Date | null>(null)
-const stagedStatus = ref<OrderStatus | undefined>(undefined)
-const isUpdatingPayment = ref(false)
 
 // Time-since tracking (updates every 30s)
 const now = ref(new Date())
 let nowInterval: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
-  selectedTab.value = 0
   nowInterval = setInterval(() => {
     now.value = new Date()
   }, 30000)
-
-  // Detect phone-sized screens for bottom sheet slideover
-  const mql = window.matchMedia('(max-width: 767px)')
-  isMobile.value = mql.matches
-  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
-
 })
 
 onUnmounted(() => {
@@ -893,13 +938,6 @@ onUnmounted(() => {
   document.removeEventListener('touchend', onDocTouchEnd)
   document.removeEventListener('touchcancel', onDocTouchEnd)
 })
-
-const isActiveStatus = (status: OrderStatus): boolean =>
-  ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
-
-// Whether an order has a non-cancel/non-fail next status (for quick-action button)
-const hasNextStatus = (order: Order): boolean =>
-  getAllowedStatuses(order.status, order.type).some(s => s !== 'CANCELLED' && s !== 'FAILED')
 
 const getTimeSince = (createdAt: string): { text: string; color: string; isStale: boolean } => {
   const created = new Date(createdAt)
@@ -926,142 +964,6 @@ const getTimeSince = (createdAt: string): { text: string; color: string; isStale
   }
 
   return { text, color, isStale }
-}
-
-// Cancellation dialog state
-const showCancelDialog = ref(false)
-const cancelDelay = ref(5)
-const confirmDisabled = computed(() => cancelDelay.value > 0)
-let cancelTimer: number | undefined = undefined
-
-// Print menu items
-const printMenuItems = computed(() => [[
-  {
-    label: t('orders.print.both'),
-    icon: 'i-lucide-printer',
-    click: () => printBoth()
-  },
-  {
-    label: t('orders.print.delivery'),
-    icon: 'i-lucide-truck',
-    click: () => printDelivery()
-  },
-  {
-    label: t('orders.print.kitchen'),
-    icon: 'i-lucide-chef-hat',
-    click: () => printKitchen()
-  }
-]])
-
-// Define allowed transitions based on current status and delivery option
-const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): OrderStatus[] => {
-  let allowed: OrderStatus[] = []
-  switch (current) {
-    case 'PENDING':
-      allowed = ['CONFIRMED', 'PREPARING']
-      break
-    case 'CONFIRMED':
-      allowed = ['PREPARING']
-      break
-    case 'PREPARING':
-      allowed = ['AWAITING_PICK_UP']
-      break
-    case 'AWAITING_PICK_UP':
-      if (deliveryOption === 'DELIVERY') {
-        allowed = ['OUT_FOR_DELIVERY']
-      } else if (deliveryOption === 'PICKUP') {
-        allowed = ['PICKED_UP', 'FAILED']
-      }
-      break
-    case 'OUT_FOR_DELIVERY':
-      allowed = ['DELIVERED', 'FAILED']
-      break
-    default:
-      allowed = []
-      break
-  }
-  if (current !== 'CANCELLED') {
-    allowed.push('CANCELLED')
-  }
-  return allowed
-}
-
-const availableStatuses = computed(() => {
-  if (!selectedOrder.value) return []
-  return getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
-})
-
-// Primary statuses = the 1-2 most logical next actions (NOT cancel)
-const primaryStatuses = computed<OrderStatus[]>(() => {
-  if (!selectedOrder.value) return []
-  const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
-  return allowed.filter(s => s !== 'CANCELLED' && s !== 'FAILED')
-})
-
-// Secondary statuses = everything else (cancel, failed, edge cases)
-const secondaryStatuses = computed<OrderStatus[]>(() => {
-  if (!selectedOrder.value) return []
-  const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
-  return allowed.filter(s => s === 'CANCELLED' || s === 'FAILED')
-})
-
-// Quick action loading state
-const quickActionLoading = ref(false)
-
-// Quick status advance from slideover primary buttons (immediate save)
-const quickStatusAdvance = async (newStatus: OrderStatus) => {
-  if (!selectedOrder.value || quickActionLoading.value) return
-
-  if (newStatus === 'CANCELLED') {
-    openCancelDialog()
-    return
-  }
-
-  quickActionLoading.value = true
-
-  // Also send time estimation if changed
-  let estimatedReadyTime: string | undefined
-  if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
-    const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
-    const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
-    estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString(), locale.value))
-  }
-
-  try {
-    const res = await mutationUpdateOrder({
-      id: selectedOrder.value.id,
-      input: { status: newStatus, estimatedReadyTime }
-    })
-    ordersStore.updateOrder(res.updateOrder)
-    showOrderDetails.value = false
-    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-  } catch {
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
-  } finally {
-    quickActionLoading.value = false
-  }
-}
-
-// Quick advance from card list (one-tap, picks best next status)
-const quickAdvanceStatus = async (order: Order) => {
-  const allowed = getAllowedStatuses(order.status, order.type)
-  const target = allowed.find(s => s !== 'CANCELLED' && s !== 'FAILED')
-  if (!target) return
-
-  const previousStatus = order.status
-  const previousUpdatedAt = order.updatedAt
-
-  // Optimistic update
-  ordersStore.updateOrder({ id: order.id, status: target, updatedAt: new Date().toISOString() })
-
-  try {
-    const res = await mutationUpdateOrder({ id: order.id, input: { status: target } })
-    ordersStore.updateOrder(res.updateOrder)
-    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-  } catch {
-    ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
-  }
 }
 
 // Payment icon class based on status
@@ -1167,17 +1069,6 @@ const itemNames = (item: Order['items'][number]) => {
   return { main, zh: zh && zh !== main ? zh : '' }
 }
 
-const newEstimatedTime = computed(() => {
-  if (!baseEstimatedTime.value) return ''
-  const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
-  const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
-  return formatTimeOnly(newTime.toISOString(), locale.value)
-})
-
-const canSave = computed(() =>
-  stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value
-)
-
 // GraphQL Queries and Mutations
 const ORDERS_QUERY = gql`
   query {
@@ -1248,29 +1139,6 @@ const ORDERS_QUERY = gql`
   }
 `
 
-const UPDATE_ORDER_MUTATION = gql`
-  mutation ($id: ID!, $input: UpdateOrderInput!) {
-    updateOrder(id: $id, input: $input) {
-      id
-      status
-      updatedAt
-      estimatedReadyTime
-    }
-  }
-`
-
-const UPDATE_PAYMENT_STATUS_MUTATION = gql`
-  mutation ($orderId: ID!, $status: String!) {
-    updatePaymentStatus(orderId: $orderId, status: $status) {
-      id
-      status
-    }
-  }
-`
-
-const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
-const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
-
 const { data: dataOrders, pending } = await useGqlQuery<{ orders: Order[] }>(
   ORDERS_QUERY,
   {},
@@ -1303,61 +1171,6 @@ const kanbanColumns = computed(() =>
     }
   })
 )
-
-// Mobile filter chips
-const mobileChips = computed(() => [
-  {
-    label: t('orders.statusShort.new'),
-    icon: 'i-lucide-inbox',
-    value: 0,
-    count: orders.value.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).length
-  },
-  {
-    label: t('orders.statusShort.preparing'),
-    icon: 'i-lucide-chef-hat',
-    value: 1,
-    count: orders.value.filter(o => o.status === 'PREPARING').length
-  },
-  {
-    label: t('orders.statusShort.awaiting_pick_up'),
-    icon: 'i-lucide-hourglass',
-    value: 2,
-    count: orders.value.filter(o => o.status === 'AWAITING_PICK_UP').length
-  },
-  {
-    label: t('orders.statusShort.out_for_delivery'),
-    icon: 'i-lucide-bike',
-    value: 3,
-    count: orders.value.filter(o => o.status === 'OUT_FOR_DELIVERY').length
-  },
-  {
-    label: t('orders.statusShort.completed'),
-    icon: 'i-lucide-circle-check-big',
-    value: 4,
-    count: orders.value.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status)).length
-  }
-])
-
-const filteredOrders = computed(() => {
-  const ordersList = orders.value
-  if (selectedTab.value === null) {
-    return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
-  }
-  switch (selectedTab.value) {
-    case 0:
-      return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
-    case 1:
-      return ordersList.filter(o => o.status === 'PREPARING')
-    case 2:
-      return ordersList.filter(o => o.status === 'AWAITING_PICK_UP')
-    case 3:
-      return ordersList.filter(o => o.status === 'OUT_FOR_DELIVERY')
-    case 4:
-      return ordersList.filter(o => ['DELIVERED', 'PICKED_UP', 'CANCELLED', 'FAILED'].includes(o.status))
-    default:
-      return ordersList.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status))
-  }
-})
 
 // Watch for data changes and update store
 watch(dataOrders, (newData) => {
@@ -1478,150 +1291,113 @@ watch(orderCreated, (val) => {
 const openOrderDetails = (order: Order) => {
   // Skip if a touch drag just ended (prevent accidental opening)
   if (touchDragJustEnded.value) return
-  ordersStore.acknowledgeOrder(order.id)
-  selectedOrder.value = order
-  stagedStatus.value = undefined
-
-  try {
-    const currentNow = new Date()
-
-    if (order.status === 'PENDING') {
-      baseEstimatedTime.value = currentNow
-      sliderDeltaMinutes.value = 30
-      initialSliderValue.value = 0
-    } else if (order.estimatedReadyTime) {
-      const estimatedDate = new Date(order.estimatedReadyTime)
-
-      if (isNaN(estimatedDate.getTime())) {
-        throw new Error('Invalid date format')
-      }
-
-      baseEstimatedTime.value = estimatedDate
-      const diffMs = estimatedDate.getTime() - currentNow.getTime()
-      const diffMinutes = Math.max(0, Math.round(diffMs / 60000))
-      const roundedMinutes = Math.round(diffMinutes / 5) * 5
-      sliderDeltaMinutes.value = roundedMinutes
-      initialSliderValue.value = roundedMinutes
-    } else {
-      baseEstimatedTime.value = currentNow
-      sliderDeltaMinutes.value = 0
-      initialSliderValue.value = 0
-    }
-  } catch (e) {
-    if (import.meta.dev) console.error('Error initializing time:', e)
-    baseEstimatedTime.value = new Date()
-    sliderDeltaMinutes.value = 0
-    initialSliderValue.value = 0
+  if (isMobile.value) {
+    ordersStore.acknowledgeOrder(order.id)
+    navigateTo(localePath(`/orders/${order.id}`))
+    return
   }
-
+  selectOrder(order)
   showOrderDetails.value = true
 }
 
-const handleStatusButton = (newStatus: OrderStatus) => {
-  if (stagedStatus.value === newStatus) {
-    stagedStatus.value = undefined
-  } else {
-    stagedStatus.value = newStatus
-  }
+// /orders/:id opened on a wide screen: the detail page redirects here and asks for the slideover
+const openRequest = useState<string>('orders-open-request', () => '')
+watch([openRequest, orders], ([id]) => {
+  if (!id || isMobile.value) return
+  const order = orders.value.find(o => o.id === id)
+  if (!order) return
+  openRequest.value = ''
+  openOrderDetails(order)
+}, { immediate: true })
+
+// ===== Mobile list (< md) =====
+type MobileTab = 'new' | 'kitchen' | 'out' | 'done'
+
+const MOBILE_TABS: { key: MobileTab, statuses: OrderStatus[] }[] = [
+  { key: 'new', statuses: ['PENDING', 'CONFIRMED'] },
+  { key: 'kitchen', statuses: ['PREPARING'] },
+  { key: 'out', statuses: ['AWAITING_PICK_UP', 'OUT_FOR_DELIVERY'] },
+  { key: 'done', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'] }
+]
+
+const mobileTab = ref<MobileTab>('new')
+
+const mobileTabOrders = (key: MobileTab): Order[] => {
+  const tab = MOBILE_TABS.find(x => x.key === key)!
+  const list = orders.value.filter(o => tab.statuses.includes(o.status))
+  return key === 'done'
+    ? list.filter(o => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value)
+    : list
 }
 
-const updateOrder = async (newStatus?: OrderStatus) => {
-  if (!selectedOrder.value) return
+const mobileTabOptions = computed(() => MOBILE_TABS.map(tab => ({
+  value: tab.key,
+  label: t(`orders.tabs.${tab.key}`),
+  count: mobileTabOrders(tab.key).length,
+  countTone: tab.key === 'new' ? ('warning' as const) : undefined
+})))
 
-  if (newStatus === 'CANCELLED') {
-    openCancelDialog()
-    return
-  }
+// Oldest first in the active tabs, newest first in "done"
+const mobileCards = computed(() => {
+  const list = [...mobileTabOrders(mobileTab.value)]
+  const byDate = (o: Order) => new Date(o.createdAt).getTime()
+  return list.sort((a, b) => mobileTab.value === 'done' ? byDate(b) - byDate(a) : byDate(a) - byDate(b))
+})
 
-  const status = newStatus
-  let estimatedReadyTime: string | undefined
+const ordersInProgress = computed(() => orders.value.filter(o => isActiveStatus(o.status)).length)
+const nowLabel = computed(() => formatTimeOnly(now.value.toISOString(), locale.value))
 
-  if (baseEstimatedTime.value && sliderDeltaMinutes.value !== initialSliderValue.value) {
-    const adjustment = sliderDeltaMinutes.value - initialSliderValue.value
-    const newTime = new Date(baseEstimatedTime.value.getTime() + adjustment * 60000)
-    estimatedReadyTime = timeToRFC3339(formatTimeOnly(newTime.toISOString(), locale.value))
-  }
+// Late = active order waiting for more than 2 hours
+const isLateOrder = (order: Order): boolean =>
+  isActiveStatus(order.status) && (now.value.getTime() - new Date(order.createdAt).getTime()) > 7200000
 
+const oldestLateOrder = computed(() =>
+  [...staleOrders.value].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0] ?? null
+)
+
+// Unpaid cash order still to collect
+const isUnpaidCash = (order: Order): boolean =>
+  !order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid' && order.status !== 'CANCELLED'
+
+const nextActionOf = (order: Order): OrderStatus | undefined =>
+  getAllowedStatuses(order.status, order.type).find(s => s !== 'CANCELLED' && s !== 'FAILED')
+
+const cardMeta = (order: Order): string => {
+  const readyAt = order.estimatedReadyTime
+    ? t('orders.readyAround', { time: formatTimeOnly(order.estimatedReadyTime, locale.value) })
+    : order.preferredReadyTime
+      ? t('orders.wantedAt', { time: formatTimeOnly(order.preferredReadyTime, locale.value) })
+      : ''
+  const street = order.type === 'DELIVERY'
+    ? (order.address ? `${order.address.streetName} ${order.address.houseNumber}`.trim() : (order.displayAddress ?? '').split(',')[0] ?? '')
+    : ''
+  return [t('orders.articles', { count: order.items.length }, order.items.length), readyAt, street].filter(Boolean).join(' \u00b7 ')
+}
+
+// Online ordering open / paused
+const { enabled: orderingEnabled, updating: orderingUpdating, setEnabled: setOrderingEnabled } = useOrderingStatus()
+const showPauseConfirm = ref(false)
+
+const applyOrdering = async (value: boolean) => {
   try {
-    const res = await mutationUpdateOrder({
-      id: selectedOrder.value.id,
-      input: {
-        status,
-        estimatedReadyTime
-      }
-    })
+    await setOrderingEnabled(value)
+  } catch {
+    toast.add({ title: t('orders.errors.orderingUpdateFailed'), color: 'error' })
+  }
+  showPauseConfirm.value = false
+}
 
-    ordersStore.updateOrder(res.updateOrder)
-    showOrderDetails.value = false
-  } catch (error) {
-    if (import.meta.dev) console.error('Update failed:', error)
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+// Pausing asks for confirmation, resuming does not
+const toggleOrdering = () => {
+  if (orderingEnabled.value) {
+    showPauseConfirm.value = true
+  } else {
+    applyOrdering(true)
   }
 }
 
 const formatOrderSummary = (order: Order) =>
   order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')
-
-const { printDelivery: sunmiPrintDelivery, printKitchen: sunmiPrintKitchen } = useSunmiPrinter()
-
-const printDelivery = async () => {
-  if (!selectedOrder.value) return
-  try {
-    await sunmiPrintDelivery(selectedOrder.value)
-  } catch (error) {
-    if (import.meta.dev) console.error('Print failed:', error)
-    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
-  }
-}
-
-const printKitchen = async () => {
-  if (!selectedOrder.value) return
-  try {
-    await sunmiPrintKitchen(selectedOrder.value)
-  } catch (error) {
-    if (import.meta.dev) console.error('Kitchen print failed:', error)
-    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
-  }
-}
-
-// Two-step print flow: kitchen → confirm → client. Required on devices
-// Without an auto-cutter (Sunmi V3H) so the operator can tear the kitchen
-// Ticket before the client ticket prints and the two sheets are not stuck
-// Together.
-const showPrintContinueDialog = ref(false)
-const printContinueOrderId = ref<string | null>(null)
-
-const printBoth = async () => {
-  if (!selectedOrder.value) return
-  try {
-    await sunmiPrintKitchen(selectedOrder.value)
-    printContinueOrderId.value = selectedOrder.value.id
-    showPrintContinueDialog.value = true
-  } catch (error) {
-    if (import.meta.dev) console.error('Kitchen print failed:', error)
-    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
-  }
-}
-
-const continueToClientPrint = async () => {
-  showPrintContinueDialog.value = false
-  const orderId = printContinueOrderId.value
-  printContinueOrderId.value = null
-  if (!orderId) return
-  const order = ordersStore.orders.find(o => o.id === orderId) ?? selectedOrder.value
-  if (!order) return
-  try {
-    await sunmiPrintDelivery(order)
-  } catch (error) {
-    if (import.meta.dev) console.error('Client print failed:', error)
-    toast.add({ title: t('orders.errors.printFailed'), color: 'error' })
-  }
-}
-
-const cancelContinueClientPrint = () => {
-  showPrintContinueDialog.value = false
-  printContinueOrderId.value = null
-}
 
 // Single AudioContext reused across chimes, creating one per call leaks on
 // Android WebView, where Chromium caps the number of live contexts per page.
@@ -1713,71 +1489,4 @@ onUnmounted(() => {
   }
 })
 
-// Cancellation confirmation dialog
-const openCancelDialog = () => {
-  cancelDelay.value = 3
-  showCancelDialog.value = true
-  cancelTimer = window.setInterval(() => {
-    if (cancelDelay.value > 0) {
-      cancelDelay.value -= 1
-    } else {
-      clearInterval(cancelTimer)
-      cancelTimer = undefined
-    }
-  }, 1000)
-}
-
-const confirmCancellation = async () => {
-  if (!selectedOrder.value) return
-  try {
-    const res = await mutationUpdateOrder({
-      id: selectedOrder.value.id,
-      input: { status: 'CANCELLED' as OrderStatus }
-    })
-    ordersStore.updateOrder(res.updateOrder)
-    showCancelDialog.value = false
-    showOrderDetails.value = false
-    toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-  } catch {
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
-  }
-}
-
-const cancelCancellation = () => {
-  showCancelDialog.value = false
-  if (cancelTimer) {
-    clearInterval(cancelTimer)
-    cancelTimer = undefined
-  }
-}
-
-// Mark payment as paid
-const markAsPaid = async () => {
-  if (!selectedOrder.value) return
-
-  isUpdatingPayment.value = true
-
-  try {
-    const res = await mutationUpdatePaymentStatus({
-      orderId: selectedOrder.value.id,
-      status: 'paid'
-    })
-
-    if (selectedOrder.value.payment) {
-      selectedOrder.value.payment.status = res.updatePaymentStatus.status
-    }
-
-    ordersStore.updateOrder({
-      id: selectedOrder.value.id,
-      payment: selectedOrder.value.payment
-        ? { ...selectedOrder.value.payment, status: res.updatePaymentStatus.status }
-        : null
-    })
-  } catch (error) {
-    if (import.meta.dev) console.error('Failed to update payment status:', error)
-    toast.add({ title: t('orders.errors.paymentUpdateFailed'), color: 'error' })
-  } finally {
-    isUpdatingPayment.value = false
-  }
-}
 </script>
