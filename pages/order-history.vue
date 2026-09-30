@@ -1,7 +1,9 @@
 <template>
-  <div class="p-3 sm:p-4 md:p-6">
+  <div class="md:p-6">
+    <!-- Desktop: header, summary and filters (>= md) -->
+    <div class="hidden md:block">
     <!-- Page Header -->
-    <div class="mb-3 sm:mb-6">
+    <div class="mb-6">
       <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('orderHistory.title') }}</h1>
       <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('orderHistory.subtitle') }}</p>
     </div>
@@ -90,6 +92,8 @@
       </div>
     </div>
 
+    </div>
+
     <!-- Desktop: Table view (>= md) -->
     <div class="hidden md:block rounded-[14px] border border-default overflow-hidden bg-elevated">
       <UTable
@@ -135,48 +139,146 @@
       </UTable>
     </div>
 
-    <!-- Mobile: Card list (< md) -->
-    <div class="md:hidden space-y-2">
-      <div
-        v-for="order in historyOrders"
-        :key="order.id"
-        class="flex items-center gap-3 p-3 sm:p-4 rounded-[14px] bg-elevated border border-default"
-      >
-        <UIcon
-          :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-          class="size-5 sm:size-6 shrink-0 text-muted"
+    <!-- Mobile (< md) -->
+    <div class="md:hidden">
+      <div class="px-4 pt-4 pb-3">
+        <h1 class="text-[26px] font-bold leading-[1.1]">{{ t('navigation.orderHistory') }}</h1>
+      </div>
+
+      <div class="px-4 grid grid-cols-3 gap-2">
+        <PiliStatCard
+          v-for="card in summaryCards"
+          :key="card.label"
+          :label="card.label"
+          :value="initialLoading ? '-' : card.value"
         />
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
-            <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
-          </div>
-          <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
-            <span class="text-xs sm:text-sm text-muted font-mono tabular-nums">{{ formatOrderDate(order.createdAt) }}</span>
-            <UBadge :color="getStatusColor(order.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
-              {{ t(`orders.status.${order.status.toLowerCase()}`) }}
-            </UBadge>
-          </div>
+      </div>
+
+      <!-- Sticky filters -->
+      <div class="sticky top-0 z-20 bg-default py-3 flex flex-col gap-2.5">
+        <div class="px-4">
+          <UInput
+            v-model="searchQuery"
+            icon="i-lucide-search"
+            :placeholder="t('orderHistory.search')"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'h-12 text-base bg-elevated rounded-xl' }"
+          />
+        </div>
+        <PiliChipRail
+          :model-value="histPeriod"
+          :options="periodOptions"
+          :label="t('orderHistory.periods.label')"
+          @update:model-value="selectPeriod"
+        />
+        <div class="px-4">
+          <PiliSegmented
+            :model-value="selectedType"
+            :options="mobileTypeOptions"
+            :height="40"
+            muted
+            :label="t('orderHistory.type')"
+            @update:model-value="selectedType = $event ?? ''"
+          />
         </div>
       </div>
-    </div>
 
-    <!-- Loading skeleton -->
-    <div v-if="initialLoading" class="space-y-2 md:hidden">
-      <div v-for="i in 8" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
-        <USkeleton class="size-5 rounded shrink-0" />
-        <div class="flex-1 space-y-1.5">
-          <div class="flex justify-between">
+      <!-- Skeleton -->
+      <div v-if="initialLoading" class="px-4 pb-5 flex flex-col gap-2">
+        <div v-for="i in 8" :key="i" class="flex items-center gap-3 min-h-16 px-3.5 py-3 rounded-[14px] bg-elevated border border-default">
+          <div class="flex-1 space-y-2">
             <USkeleton class="h-4 w-28" />
-            <USkeleton class="h-4 w-14" />
+            <USkeleton class="h-3 w-36" />
           </div>
-          <div class="flex justify-between">
-            <USkeleton class="h-3 w-24" />
+          <div class="flex flex-col items-end gap-1.5">
+            <USkeleton class="h-4 w-14" />
             <USkeleton class="h-5 w-16 rounded-[5px]" />
           </div>
         </div>
       </div>
+
+      <!-- Empty -->
+      <div
+        v-else-if="historyOrders.length === 0"
+        class="mx-4 flex flex-col items-center justify-center py-16 rounded-[14px] border border-default bg-elevated"
+      >
+        <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
+        <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
+      </div>
+
+      <!-- Groups by Brussels day -->
+      <div v-else class="px-4 pb-5 flex flex-col gap-4">
+        <section v-for="group in historyGroups" :key="group.day" class="flex flex-col gap-2">
+          <div class="flex justify-between gap-3 font-mono text-xs font-bold tracking-[0.06em] text-muted">
+            <span>{{ group.label }}</span>
+            <span class="tabular-nums">{{ group.sum }}</span>
+          </div>
+          <div class="rounded-[14px] bg-elevated border border-default overflow-hidden divide-y divide-default">
+            <div
+              v-for="order in group.orders"
+              :key="order.id"
+              class="min-h-16 px-3.5 py-3 flex items-center gap-3"
+            >
+              <div class="flex-1 min-w-0 flex flex-col gap-[3px]">
+                <span class="text-[15px] font-bold truncate">{{ order.displayCustomerName }}</span>
+                <span class="font-mono text-xs text-muted tabular-nums truncate">{{ orderMeta(order) }}</span>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="font-mono text-[15px] font-bold tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
+                <PiliChip size="sm" :tone="statusTone(order.status)">
+                  {{ t(`orders.status.${order.status.toLowerCase()}`) }}
+                </PiliChip>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Dates and filters sheet -->
+      <PiliBottomSheet v-model:open="showFilters" :title="t('common.filters')">
+        <div class="flex flex-col gap-2">
+          <label for="m-start-date" class="text-sm font-bold">{{ t('orderHistory.startDate') }}</label>
+          <UInput
+            id="m-start-date"
+            v-model="startDate"
+            type="date"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'h-12 text-base font-mono tabular-nums bg-accented rounded-xl' }"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="m-end-date" class="text-sm font-bold">{{ t('orderHistory.endDate') }}</label>
+          <UInput
+            id="m-end-date"
+            v-model="endDate"
+            type="date"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'h-12 text-base font-mono tabular-nums bg-accented rounded-xl' }"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-bold">{{ t('orderHistory.status') }}</span>
+          <USelectMenu
+            v-model="selectedStatus"
+            :items="statusOptions"
+            value-key="value"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'h-12 text-base bg-accented rounded-xl' }"
+          />
+        </div>
+        <template #footer>
+          <UButton color="neutral" variant="solid" size="xl" block @click="showFilters = false">
+            {{ t('common.done') }}
+          </UButton>
+        </template>
+      </PiliBottomSheet>
     </div>
+
+    <!-- Desktop loading skeleton -->
     <div v-if="initialLoading" class="hidden md:block divide-y divide-default rounded-[14px] border border-default bg-elevated">
       <div v-for="i in 10" :key="i" class="flex items-center gap-4 px-4 py-3">
         <USkeleton class="h-3.5 w-32" />
@@ -188,7 +290,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!initialLoading && historyOrders.length === 0" class="flex flex-col items-center justify-center py-16 rounded-[14px] border border-default bg-elevated">
+    <div v-if="!initialLoading && historyOrders.length === 0" class="hidden md:flex flex-col items-center justify-center py-16 rounded-[14px] border border-default bg-elevated">
       <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
       <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
     </div>
@@ -210,8 +312,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
+import { brusselsDateISO, brusselsDateTimeLocalToISO, shiftBrusselsDate } from '~/utils/utils'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const isMobile = useIsMobile()
 const { $gqlFetch } = useNuxtApp()
 
 // --- State ---
@@ -264,6 +368,40 @@ const typeOptions = computed(() => [
   { value: 'PICKUP', label: t('orders.pickup'), icon: 'i-lucide-shopping-bag' }
 ])
 
+// --- Mobile: period presets (Brussels dates), day groups ---
+type HistPeriod = 'today' | '7' | '30' | 'custom'
+const histPeriod = ref<HistPeriod>('today')
+const showFilters = ref(false)
+
+const periodOptions = computed(() => [
+  { value: 'today' as HistPeriod, label: t('orderHistory.periods.today') },
+  { value: '7' as HistPeriod, label: t('orderHistory.periods.days7') },
+  { value: '30' as HistPeriod, label: t('orderHistory.periods.days30') },
+  { value: 'custom' as HistPeriod, label: t('orderHistory.periods.dates') }
+])
+
+const mobileTypeOptions = computed(() => [
+  { value: '', label: t('orderHistory.allTypes') },
+  { value: 'DELIVERY', label: t('orders.delivery') },
+  { value: 'PICKUP', label: t('orders.pickup') }
+])
+
+const applyPreset = (period: Exclude<HistPeriod, 'custom'>) => {
+  const today = brusselsDateISO()
+  endDate.value = today
+  startDate.value = period === 'today' ? today : shiftBrusselsDate(today, period === '7' ? -6 : -29)
+}
+
+const selectPeriod = (period: HistPeriod | null) => {
+  if (!period) return
+  histPeriod.value = period
+  if (period === 'custom') showFilters.value = true
+  else applyPreset(period)
+}
+
+// The phone layout opens on today; the desktop keeps loading everything.
+if (isMobile.value) applyPreset('today')
+
 // --- GraphQL ---
 const ORDER_HISTORY_QUERY = print(gql`
   query OrderHistory($input: OrderHistoryInput) {
@@ -293,8 +431,11 @@ const buildInput = (page: number): Record<string, unknown> => {
     first: pageSize,
     page
   }
-  if (startDate.value) input.startDate = new Date(`${startDate.value}T00:00:00`).toISOString()
-  if (endDate.value) input.endDate = new Date(`${endDate.value}T23:59:59`).toISOString()
+  if (startDate.value) input.startDate = brusselsDateTimeLocalToISO(`${startDate.value}T00:00`)
+  if (endDate.value) {
+    const end = brusselsDateTimeLocalToISO(`${endDate.value}T23:59`)
+    if (end) input.endDate = new Date(new Date(end).getTime() + 59_000).toISOString()
+  }
   if (selectedStatus.value) input.status = selectedStatus.value
   if (selectedType.value) input.orderType = selectedType.value
   if (searchQuery.value) input.search = searchQuery.value
@@ -424,4 +565,56 @@ const getStatusColor = (status: string): UiColor => {
 
 const formatOrderDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+
+const statusTone = (status: string): 'warning' | 'danger' | 'success' | 'info' | 'neutral' => {
+  const color = getStatusColor(status)
+  if (color === 'error') return 'danger'
+  if (color === 'warning' || color === 'success' || color === 'info') return color
+  return 'neutral'
+}
+
+const dayFormatter = computed(() => new Intl.DateTimeFormat(locale.value, {
+  timeZone: 'Europe/Brussels', weekday: 'short', day: 'numeric', month: 'short'
+}))
+const dayYearFormatter = computed(() => new Intl.DateTimeFormat(locale.value, {
+  timeZone: 'Europe/Brussels', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+}))
+const timeFormatter = new Intl.DateTimeFormat('fr-BE', {
+  timeZone: 'Europe/Brussels', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+})
+
+const dayLabel = (day: string, sample: Date) => {
+  const today = brusselsDateISO()
+  const upper = (v: string) => v.toUpperCase()
+  if (day === today) return `${upper(t('orderHistory.groups.today'))} · ${upper(dayFormatter.value.format(sample))}`
+  if (day === shiftBrusselsDate(today, -1)) return `${upper(t('orderHistory.groups.yesterday'))} · ${upper(dayFormatter.value.format(sample))}`
+  return upper(dayYearFormatter.value.format(sample))
+}
+
+// Orders arrive newest first; consecutive orders of the same Brussels day share a group, across pages.
+const historyGroups = computed(() => {
+  const groups: { day: string; label: string; sum: string; orders: HistoryOrder[] }[] = []
+  const totals = new Map<string, number>()
+  for (const order of historyOrders.value) {
+    const date = new Date(order.createdAt)
+    const day = brusselsDateISO(date)
+    let group = groups[groups.length - 1]
+    if (!group || group.day !== day) {
+      group = { day, label: dayLabel(day, date), sum: '', orders: [] }
+      groups.push(group)
+    }
+    group.orders.push(order)
+    if (order.status !== 'CANCELLED' && order.status !== 'FAILED') {
+      totals.set(day, (totals.get(day) ?? 0) + Number(order.totalPrice))
+    }
+  }
+  for (const group of groups) group.sum = formatPrice(totals.get(group.day) ?? 0)
+  return groups
+})
+
+const orderMeta = (order: HistoryOrder) => {
+  const count = order.items.reduce((acc, item) => acc + item.quantity, 0)
+  const type = (order.type === 'DELIVERY' ? t('orders.delivery') : t('orders.pickup')).toUpperCase()
+  return `${timeFormatter.format(new Date(order.createdAt))} · ${type} · ${count} ${t('orderHistory.itemsShort')}`
+}
 </script>
