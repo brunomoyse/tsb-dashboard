@@ -20,7 +20,7 @@
           <!-- Main branding -->
           <div class="login-brand-content">
             <div class="login-brand-icon">
-              <img src="/moyun-logo.svg" alt="moyun" class="size-9 object-contain" />
+              <img src="/pili-mark.svg" alt="Pili" class="size-9 object-contain" />
             </div>
             <h1 class="login-brand-name">moyun</h1>
             <div class="login-brand-divider" />

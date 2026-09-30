@@ -17,10 +17,10 @@
       <template #header="{ collapsed }">
         <div class="flex items-center justify-center py-6 w-full">
           <img
-            src="/moyun-logo.svg"
-            alt="moyun"
-            class="w-auto object-contain transition-all duration-300"
-            :class="collapsed ? 'h-10' : 'h-14'"
+            :src="collapsed ? '/pili-mark.svg' : '/pili-wordmark.svg'"
+            alt="Pili"
+            class="w-auto object-contain"
+            :class="collapsed ? 'h-8' : 'h-7'"
           />
         </div>
       </template>
@@ -86,9 +86,9 @@
                 @click="drawerOpen = true"
               />
               <img
-                src="/moyun-logo.svg"
-                alt="moyun"
-                class="h-8 w-auto"
+                src="/pili-wordmark.svg"
+                alt="Pili"
+                class="h-7 w-auto"
               />
             </div>
           </template>
@@ -117,9 +117,9 @@
       <template #header>
         <div class="flex items-center justify-center py-2 w-full">
           <img
-            src="/moyun-logo.svg"
-            alt="moyun"
-            class="h-12 w-auto"
+            src="/pili-wordmark.svg"
+            alt="Pili"
+            class="h-8 w-auto"
           />
         </div>
       </template>

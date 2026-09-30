@@ -1,13 +1,13 @@
 {
-  "name": "moyun – Dashboard",
-  "short_name": "moyun",
-  "description": "Restaurant order management dashboard for moyun",
+  "name": "Pili Dashboard",
+  "short_name": "Pili",
+  "description": "Restaurant order management dashboard",
   "start_url": "/fr/orders",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#241217",
-  "background_color": "#241217",
+  "theme_color": "#0b0d0e",
+  "background_color": "#0b0d0e",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
