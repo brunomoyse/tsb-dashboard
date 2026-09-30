@@ -11,15 +11,13 @@
       <div
         v-for="card in summaryCards"
         :key="card.label"
-        class="rounded-xl border border-(--ui-border) bg-(--ui-bg) p-3 sm:p-4"
+        class="rounded-[14px] border border-default bg-elevated p-3 sm:p-4"
       >
         <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center size-10 rounded-lg bg-(--ui-bg-accented) shrink-0">
-            <UIcon :name="card.icon" class="size-5 text-muted" />
-          </div>
+          <UIcon :name="card.icon" class="size-5 text-muted shrink-0" />
           <div class="min-w-0">
             <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
-            <div class="text-base sm:text-lg font-bold text-highlighted tabular-nums truncate">
+            <div class="text-base sm:text-lg font-bold text-highlighted font-mono tabular-nums truncate">
               <USkeleton v-if="initialLoading" class="h-5 w-14 mt-1" />
               <template v-else>{{ card.value }}</template>
             </div>
@@ -29,7 +27,7 @@
     </div>
 
     <!-- Filters Bar (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
       <!-- Search -->
       <UInput
         v-model="searchQuery"
@@ -37,7 +35,7 @@
         :placeholder="t('orderHistory.search')"
         size="lg"
         class="w-full sm:w-56 sm:order-3"
-        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm' }"
+        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm bg-accented' }"
       />
 
       <!-- Date Range -->
@@ -49,7 +47,7 @@
           type="date"
           size="lg"
           class="flex-1 sm:w-40 sm:flex-none"
-          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm tabular-nums' }"
+          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm font-mono tabular-nums bg-accented' }"
         />
         <span class="text-muted text-sm" aria-hidden="true">–</span>
         <label for="end-date" class="sr-only">{{ t('orderHistory.endDate') }}</label>
@@ -59,7 +57,7 @@
           type="date"
           size="lg"
           class="flex-1 sm:w-40 sm:flex-none"
-          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm tabular-nums' }"
+          :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm font-mono tabular-nums bg-accented' }"
         />
       </div>
 
@@ -70,7 +68,7 @@
         value-key="value"
         size="lg"
         class="w-full sm:w-auto sm:min-w-44 sm:order-2"
-        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm' }"
+        :ui="{ base: 'h-12 text-base sm:h-10 sm:text-sm bg-accented' }"
       />
 
       <!-- Type chip rail (horizontal scroll on mobile) -->
@@ -79,28 +77,27 @@
           v-for="opt in typeOptions"
           :key="opt.value"
           type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="selectedType === opt.value
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-transparent'
+            : 'bg-accented text-muted border-default hover:text-default'
           "
           @click="selectedType = opt.value"
         >
           <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
           <span>{{ opt.label }}</span>
         </button>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 
     <!-- Desktop: Table view (>= md) -->
-    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <div class="hidden md:block rounded-[14px] border border-default overflow-hidden bg-elevated">
       <UTable
         v-if="historyOrders.length > 0"
         :columns="columns"
         :data="historyOrders"
         :ui="{
-          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          th: 'font-mono text-xs font-medium uppercase tracking-wider text-muted py-3 px-4',
           td: 'py-3 px-4'
         }"
       >
@@ -109,11 +106,11 @@
         </template>
 
         <template #date-cell="{ row }">
-          <span class="text-sm text-muted">{{ formatOrderDate(row.original.createdAt) }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{ formatOrderDate(row.original.createdAt) }}</span>
         </template>
 
         <template #status-cell="{ row }">
-          <UBadge :color="getStatusColor(row.original.status)" variant="soft" size="xs">
+          <UBadge :color="getStatusColor(row.original.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
             {{ t(`orders.status.${row.original.status.toLowerCase()}`) }}
           </UBadge>
         </template>
@@ -129,11 +126,11 @@
         </template>
 
         <template #total-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums">{{ belPriceFormat.format(Number(row.original.totalPrice)) }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums">{{ formatPrice(row.original.totalPrice) }}</span>
         </template>
 
         <template #items-cell="{ row }">
-          <span class="text-sm text-muted tabular-nums">{{ row.original.items.length }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{ row.original.items.length }}</span>
         </template>
       </UTable>
     </div>
@@ -143,7 +140,7 @@
       <div
         v-for="order in historyOrders"
         :key="order.id"
-        class="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+        class="flex items-center gap-3 p-3 sm:p-4 rounded-[14px] bg-elevated border border-default"
       >
         <UIcon
           :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
@@ -152,11 +149,11 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between gap-2">
             <span class="font-bold text-sm sm:text-base text-highlighted truncate">{{ order.displayCustomerName }}</span>
-            <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 tabular-nums">{{ belPriceFormat.format(Number(order.totalPrice)) }}</span>
+            <span class="font-bold text-sm sm:text-base text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
           </div>
           <div class="flex items-center justify-between gap-2 mt-0.5 sm:mt-1">
-            <span class="text-xs sm:text-sm text-muted">{{ formatOrderDate(order.createdAt) }}</span>
-            <UBadge :color="getStatusColor(order.status)" variant="soft" size="xs">
+            <span class="text-xs sm:text-sm text-muted font-mono tabular-nums">{{ formatOrderDate(order.createdAt) }}</span>
+            <UBadge :color="getStatusColor(order.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
               {{ t(`orders.status.${order.status.toLowerCase()}`) }}
             </UBadge>
           </div>
@@ -166,7 +163,7 @@
 
     <!-- Loading skeleton -->
     <div v-if="initialLoading" class="space-y-2 md:hidden">
-      <div v-for="i in 8" :key="i" class="flex items-center gap-3 p-3 rounded-xl bg-(--ui-bg) border border-(--ui-border)">
+      <div v-for="i in 8" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
         <USkeleton class="size-5 rounded shrink-0" />
         <div class="flex-1 space-y-1.5">
           <div class="flex justify-between">
@@ -175,23 +172,23 @@
           </div>
           <div class="flex justify-between">
             <USkeleton class="h-3 w-24" />
-            <USkeleton class="h-5 w-16 rounded-full" />
+            <USkeleton class="h-5 w-16 rounded-[5px]" />
           </div>
         </div>
       </div>
     </div>
-    <div v-if="initialLoading" class="hidden md:block divide-y divide-(--ui-border) rounded-xl border border-(--ui-border) bg-(--ui-bg)">
+    <div v-if="initialLoading" class="hidden md:block divide-y divide-default rounded-[14px] border border-default bg-elevated">
       <div v-for="i in 10" :key="i" class="flex items-center gap-4 px-4 py-3">
         <USkeleton class="h-3.5 w-32" />
         <USkeleton class="h-3.5 w-20" />
-        <USkeleton class="h-5 w-16 rounded-full" />
+        <USkeleton class="h-5 w-16 rounded-[5px]" />
         <USkeleton class="h-3.5 w-16" />
         <USkeleton class="h-3.5 w-14" />
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-if="!initialLoading && historyOrders.length === 0" class="flex flex-col items-center justify-center py-16 rounded-xl border border-(--ui-border) bg-(--ui-bg)">
+    <div v-if="!initialLoading && historyOrders.length === 0" class="flex flex-col items-center justify-center py-16 rounded-[14px] border border-default bg-elevated">
       <UIcon name="i-lucide-package-x" class="size-12 mb-3 text-muted" />
       <p class="text-muted text-sm">{{ t('orderHistory.noResults') }}</p>
     </div>
@@ -216,13 +213,6 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { $gqlFetch } = useNuxtApp()
-
-const belPriceFormat = new Intl.NumberFormat('fr-BE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-  style: 'currency',
-  currency: 'EUR'
-})
 
 // --- State ---
 const currentPage = ref(1)
@@ -395,12 +385,12 @@ const summaryCards = computed(() => [
   },
   {
     label: t('orderHistory.totalRevenue'),
-    value: belPriceFormat.format(Number(summary.value?.totalRevenue ?? 0)),
+    value: formatPrice(Number(summary.value?.totalRevenue ?? 0)),
     icon: 'i-lucide-banknote'
   },
   {
     label: t('orderHistory.averageOrder'),
-    value: belPriceFormat.format(Number(summary.value?.averageOrder ?? 0)),
+    value: formatPrice(Number(summary.value?.averageOrder ?? 0)),
     icon: 'i-lucide-calculator'
   }
 ])
@@ -411,8 +401,8 @@ const columns = computed(() => [
   { accessorKey: 'date', header: t('orderHistory.date') },
   { accessorKey: 'status', header: t('orderHistory.status') },
   { accessorKey: 'type', header: t('orderHistory.type') },
-  { accessorKey: 'total', header: t('orderHistory.total') },
-  { accessorKey: 'items', header: t('orderHistory.items') }
+  { accessorKey: 'total', header: t('orderHistory.total'), meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'items', header: t('orderHistory.items'), meta: { class: { th: 'text-right', td: 'text-right' } } }
 ])
 
 type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
@@ -421,7 +411,7 @@ const getStatusColor = (status: string): UiColor => {
   const colors: Record<string, UiColor> = {
     PENDING: 'warning',
     CONFIRMED: 'info',
-    PREPARING: 'primary',
+    PREPARING: 'neutral',
     AWAITING_PICK_UP: 'success',
     OUT_FOR_DELIVERY: 'info',
     DELIVERED: 'success',
@@ -433,5 +423,5 @@ const getStatusColor = (status: string): UiColor => {
 }
 
 const formatOrderDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  new Date(dateStr).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 </script>

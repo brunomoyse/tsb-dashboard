@@ -4,10 +4,11 @@
     <div class="mb-3 sm:mb-6 flex items-center justify-between gap-3">
       <div class="min-w-0">
         <h1 class="text-lg sm:text-2xl font-bold text-highlighted truncate">{{ t('coupons.title') }}</h1>
-        <p class="text-xs sm:text-sm text-muted mt-0.5">{{ filteredCoupons.length }} {{ t('coupons.title').toLowerCase() }}</p>
+        <p class="text-xs sm:text-sm text-muted mt-0.5"><span class="font-mono tabular-nums">{{ filteredCoupons.length }}</span> {{ t('coupons.title').toLowerCase() }}</p>
       </div>
       <UButton
         icon="i-lucide-plus"
+        color="primary"
         size="md"
         class="sm:hidden shrink-0"
         :aria-label="t('coupons.add')"
@@ -15,6 +16,7 @@
       />
       <UButton
         icon="i-lucide-plus"
+        color="primary"
         class="hidden sm:inline-flex"
         @click="openCreateDialog"
       >
@@ -23,14 +25,14 @@
     </div>
 
     <!-- Filters Bar (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-(--ui-bg-accented) sm:static sm:bg-transparent">
+    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('coupons.search')"
         size="lg"
         class="w-full"
-        :ui="{ base: 'h-12 text-base' }"
+        :ui="{ base: 'h-12 text-base bg-accented' }"
       />
 
       <!-- Combined chip rail: status + type -->
@@ -39,10 +41,10 @@
           v-for="opt in statusFilterOptions"
           :key="`s-${opt.value}`"
           type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="filterStatus === opt.value
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-transparent'
+            : 'bg-accented text-muted border-default hover:text-default'
           "
           @click="filterStatus = opt.value as typeof filterStatus"
         >
@@ -55,16 +57,15 @@
           v-for="opt in typeFilterOptions"
           :key="`t-${opt.value}`"
           type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="filterType === opt.value
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-transparent'
+            : 'bg-accented text-muted border-default hover:text-default'
           "
           @click="filterType = opt.value as typeof filterType"
         >
           {{ opt.label }}
         </button>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent sm:hidden" aria-hidden="true" />
       </div>
     </div>
 
@@ -72,20 +73,20 @@
     <div class="md:hidden">
       <!-- Skeleton -->
       <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden">
+        <div v-for="i in 6" :key="i" class="rounded-[14px] bg-elevated border border-default overflow-hidden">
           <div class="p-3 space-y-2">
             <USkeleton class="h-4 w-24" />
             <USkeleton class="h-3 w-40" />
             <USkeleton class="h-3 w-32" />
           </div>
-          <USkeleton class="h-11 rounded-none border-t border-(--ui-border)" />
+          <USkeleton class="h-11 rounded-none border-t border-default" />
         </div>
       </div>
 
       <!-- Empty -->
       <div
         v-else-if="filteredCoupons.length === 0"
-        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
       >
         <UIcon name="i-lucide-ticket" class="size-14 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('coupons.noResults') }}</p>
@@ -96,20 +97,20 @@
         <div
           v-for="coupon in filteredCoupons"
           :key="coupon.id"
-          class="rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden"
+          class="rounded-[14px] bg-elevated border border-default overflow-hidden"
         >
           <button
             type="button"
-            class="w-full p-3 text-left active:bg-(--ui-bg-elevated) transition-colors"
+            class="w-full p-3 text-left active:bg-accented transition-colors"
             @click="openEditDialog(coupon)"
           >
             <!-- Top row: code + discount -->
             <div class="flex items-center justify-between gap-3">
               <span class="font-mono text-sm font-bold text-highlighted truncate">{{ coupon.code }}</span>
-              <span class="font-bold text-base text-(--ui-primary) shrink-0 tabular-nums">
+              <span class="font-bold text-base text-highlighted shrink-0 font-mono tabular-nums">
                 {{ coupon.discountType === 'PERCENTAGE'
                   ? `-${coupon.discountValue}%`
-                  : `-${belPriceFormat.format(Number(coupon.discountValue))}`
+                  : `-${formatPrice(coupon.discountValue)}`
                 }}
               </span>
             </div>
@@ -118,25 +119,25 @@
             <div class="mt-1.5 flex items-center gap-3 text-xs text-muted">
               <span class="inline-flex items-center gap-1">
                 <UIcon name="i-lucide-users" class="size-3.5" />
-                <span class="tabular-nums">{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</span>
+                <span class="font-mono tabular-nums">{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</span>
               </span>
               <span v-if="coupon.minOrderAmount" class="inline-flex items-center gap-1">
                 <UIcon name="i-lucide-shopping-cart" class="size-3.5" />
-                <span class="tabular-nums">{{ belPriceFormat.format(Number(coupon.minOrderAmount)) }}</span>
+                <span class="font-mono tabular-nums">{{ formatPrice(coupon.minOrderAmount) }}</span>
               </span>
             </div>
 
             <!-- Validity row -->
             <div class="mt-1.5 flex items-center gap-2 text-xs">
               <UIcon name="i-lucide-calendar" class="size-3.5 text-muted" />
-              <span class="text-muted truncate">{{ formatDateRange(coupon.validFrom, coupon.validUntil) }}</span>
+              <span class="text-muted truncate font-mono tabular-nums">{{ formatDateRange(coupon.validFrom, coupon.validUntil) }}</span>
             </div>
           </button>
 
           <!-- Status pill (clickable when admin can toggle, read-only otherwise) -->
           <button
             type="button"
-            class="w-full flex items-center justify-center gap-1.5 h-12 text-sm font-medium border-t border-(--ui-border) transition-colors active:scale-[0.99] disabled:cursor-not-allowed"
+            class="w-full flex items-center justify-center gap-1.5 h-12 text-sm font-bold border-t border-default transition-colors active:scale-[0.99] disabled:cursor-not-allowed"
             :class="statusMeta(coupon.status).tone"
             :disabled="togglingId === coupon.id || (coupon.status !== 'ACTIVE' && coupon.status !== 'INACTIVE')"
             :aria-pressed="coupon.status === 'ACTIVE'"
@@ -154,19 +155,19 @@
     </div>
 
     <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
-    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <div class="hidden md:block rounded-[14px] border border-default overflow-hidden bg-elevated">
       <UTable
         v-if="!pending && filteredCoupons.length > 0"
         :columns="columns"
         :data="paginatedCoupons"
         :ui="{
-          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          th: 'font-mono text-xs font-medium uppercase tracking-wider text-muted py-3 px-4',
           td: 'py-3 px-4'
         }"
         @select="(_e: Event, row: any) => openEditDialog(row.original)"
       >
         <template #code-cell="{ row }">
-          <span class="font-mono font-medium">{{ row.original.code }}</span>
+          <span class="font-mono font-medium text-highlighted">{{ row.original.code }}</span>
         </template>
 
         <template #discountType-cell="{ row }">
@@ -174,37 +175,37 @@
         </template>
 
         <template #discountValue-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums">
+          <span class="text-sm font-semibold font-mono tabular-nums">
             {{ row.original.discountType === 'PERCENTAGE'
               ? `${row.original.discountValue}%`
-              : belPriceFormat.format(Number(row.original.discountValue))
+              : formatPrice(row.original.discountValue)
             }}
           </span>
         </template>
 
         <template #minOrderAmount-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">
+          <span class="text-sm font-mono tabular-nums text-muted">
             {{ row.original.minOrderAmount
-              ? belPriceFormat.format(Number(row.original.minOrderAmount))
+              ? formatPrice(row.original.minOrderAmount)
               : '-'
             }}
           </span>
         </template>
 
         <template #maxUses-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">
+          <span class="text-sm font-mono tabular-nums text-muted">
             {{ row.original.usedCount }} / {{ row.original.maxUses ?? t('coupons.unlimited') }}
           </span>
         </template>
 
         <template #maxUsesPerUser-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">{{ row.original.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{ row.original.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
         </template>
 
         <template #isActive-cell="{ row }">
           <button
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer disabled:cursor-not-allowed"
-            :class="[statusMeta(row.original.status).tone, 'border-transparent']"
+            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+            :class="statusMeta(row.original.status).tone"
             :disabled="togglingId === row.original.id || (row.original.status !== 'ACTIVE' && row.original.status !== 'INACTIVE')"
             @click.stop="toggleActive(row.original)"
           >
@@ -218,7 +219,7 @@
         </template>
 
         <template #validPeriod-cell="{ row }">
-          <span class="text-sm text-muted">
+          <span class="text-sm text-muted font-mono tabular-nums">
             {{ formatDateRange(row.original.validFrom, row.original.validUntil) }}
           </span>
         </template>
@@ -237,14 +238,14 @@
       </UTable>
 
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="divide-y divide-(--ui-border)">
+      <div v-if="pending" class="divide-y divide-default">
         <div v-for="i in 8" :key="i" class="flex items-center gap-4 px-4 py-3">
           <div class="flex-1 space-y-1.5">
             <USkeleton class="h-3.5 w-24" />
           </div>
           <USkeleton class="h-3.5 w-16 hidden sm:block" />
           <USkeleton class="h-3.5 w-16 hidden sm:block" />
-          <USkeleton class="h-6 w-20 rounded-full hidden md:block" />
+          <USkeleton class="h-6 w-20 rounded-[5px] hidden md:block" />
           <USkeleton class="h-3.5 w-24 hidden lg:block" />
         </div>
       </div>
@@ -256,7 +257,7 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center py-4 border-t border-(--ui-border)">
+      <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center py-4 border-t border-default">
         <UPagination
           v-model:page="page"
           :total="filteredCoupons.length"
@@ -278,7 +279,7 @@
             <!-- Code -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.code') }}</label>
-              <UInput v-model="form.code" :placeholder="t('coupons.code')" />
+              <UInput v-model="form.code" class="w-full" :ui="{ base: 'bg-accented font-mono' }" :placeholder="t('coupons.code')" />
             </div>
 
             <!-- Discount Type -->
@@ -288,31 +289,33 @@
                 v-model="form.discountType"
                 :items="discountTypeOptions"
                 value-key="value"
+                class="w-full"
+                :ui="{ base: 'bg-accented' }"
               />
             </div>
 
             <!-- Discount Value -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.value') }}</label>
-              <UInput v-model="form.discountValue" type="number" step="0.01" min="0" />
+              <UInput v-model="form.discountValue" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" />
             </div>
 
             <!-- Min Order Amount -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.minOrder') }}</label>
-              <UInput v-model="form.minOrderAmount" type="number" step="0.01" min="0" placeholder="0.00" />
+              <UInput v-model="form.minOrderAmount" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" step="0.01" min="0" placeholder="0.00" />
             </div>
 
             <!-- Max Uses -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.maxUses') }}</label>
-              <UInput v-model="form.maxUses" type="number" min="0" :placeholder="t('coupons.unlimited')" />
+              <UInput v-model="form.maxUses" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
             </div>
 
             <!-- Max Uses Per User -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.maxUsesPerUser') }}</label>
-              <UInput v-model="form.maxUsesPerUser" type="number" min="0" :placeholder="t('coupons.unlimited')" />
+              <UInput v-model="form.maxUsesPerUser" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="number" min="0" :placeholder="t('coupons.unlimited')" />
             </div>
 
             <!-- Active -->
@@ -324,25 +327,25 @@
             <!-- Valid From -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.validFrom') }}</label>
-              <UInput v-model="form.validFrom" type="datetime-local" />
+              <UInput v-model="form.validFrom" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="datetime-local" />
             </div>
 
             <!-- Valid Until -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('coupons.validUntil') }}</label>
-              <UInput v-model="form.validUntil" type="datetime-local" />
+              <UInput v-model="form.validUntil" class="w-full" :ui="{ base: 'bg-accented font-mono tabular-nums' }" type="datetime-local" />
             </div>
           </div>
 
           <!-- Validation error -->
-          <p v-if="validationError" class="text-sm text-red-500">{{ validationError }}</p>
+          <p v-if="validationError" class="text-sm text-error">{{ validationError }}</p>
 
           <!-- Actions -->
           <div class="flex justify-end gap-2 pt-4">
             <UButton color="neutral" variant="ghost" @click="showDialog = false">
               {{ t('common.cancel') }}
             </UButton>
-            <UButton @click="handleSubmit" :loading="isSaving">
+            <UButton color="primary" :loading="isSaving" @click="handleSubmit">
               {{ isEditing ? t('common.save') : t('common.create') }}
             </UButton>
           </div>
@@ -364,13 +367,6 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const toast = useToast()
 
-const belPriceFormat = new Intl.NumberFormat('fr-BE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-  style: 'currency',
-  currency: 'EUR'
-})
-
 const searchQuery = ref('')
 const filterStatus = ref<'all' | 'active' | 'inactive'>('all')
 const filterType = ref<'all' | 'PERCENTAGE' | 'FIXED'>('all')
@@ -381,10 +377,10 @@ const pageSize = ref(10)
 const columns = computed(() => [
   { accessorKey: 'code', header: t('coupons.code') },
   { accessorKey: 'discountType', header: t('coupons.type'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
-  { accessorKey: 'discountValue', header: t('coupons.value') },
-  { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'maxUses', header: `${t('coupons.used')} / ${t('coupons.maxUses')}`, meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'maxUsesPerUser', header: t('coupons.maxUsesPerUser'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'discountValue', header: t('coupons.value'), meta: { class: { td: 'text-right', th: 'text-right' } } },
+  { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
+  { accessorKey: 'maxUses', header: `${t('coupons.used')} / ${t('coupons.maxUses')}`, meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
+  { accessorKey: 'maxUsesPerUser', header: t('coupons.maxUsesPerUser'), meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
   { accessorKey: 'isActive', header: t('coupons.active'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'validPeriod', header: t('coupons.validUntil'), enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
   { accessorKey: 'actions', header: '', enableSorting: false }
@@ -499,15 +495,15 @@ const filteredCoupons = computed(() => coupons.value.filter(c => {
 const statusMeta = (status: Coupon['status']) => {
   switch (status) {
     case 'ACTIVE':
-      return { label: t('coupons.active'), icon: 'i-lucide-circle-check', tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' }
+      return { label: t('coupons.active'), icon: 'i-lucide-circle-check', tone: 'bg-success text-inverted' }
     case 'INACTIVE':
-      return { label: t('coupons.inactive'), icon: 'i-lucide-circle-x', tone: 'text-(--ui-text-muted) opacity-70' }
+      return { label: t('coupons.inactive'), icon: 'i-lucide-circle-x', tone: 'bg-accented text-muted' }
     case 'EXPIRED':
-      return { label: t('coupons.expired'), icon: 'i-lucide-clock-alert', tone: 'bg-red-500/10 text-red-700 dark:text-red-400' }
+      return { label: t('coupons.expired'), icon: 'i-lucide-clock-alert', tone: 'bg-warning text-inverted' }
     case 'SCHEDULED':
-      return { label: t('coupons.scheduled'), icon: 'i-lucide-calendar-clock', tone: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' }
+      return { label: t('coupons.scheduled'), icon: 'i-lucide-calendar-clock', tone: 'bg-info text-inverted' }
     case 'EXHAUSTED':
-      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-[#D08A2E]/10 text-[#D08A2E] dark:text-[#E5A852]' }
+      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-warning text-inverted' }
   }
 }
 
@@ -587,7 +583,7 @@ const openCreateDialog = () => {
 }
 
 const formatDateRange = (from: string | null, until: string | null) => {
-  const fmt = (d: string) => new Date(d).toLocaleDateString()
+  const fmt = (d: string) => new Date(d).toLocaleDateString('fr-BE')
   if (from && until) return `${fmt(from)} - ${fmt(until)}`
   if (from) return `${fmt(from)} -`
   if (until) return `- ${fmt(until)}`

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-default ring ring-default rounded-xl">
+  <div class="bg-elevated border border-default rounded-[14px]">
     <button
       type="button"
       class="w-full flex items-center gap-3 px-4 py-4 sm:px-5 text-left min-h-[56px] cursor-pointer"
@@ -19,8 +19,9 @@
             v-if="dirty"
             :label="t('settings.unsaved')"
             color="warning"
-            variant="subtle"
+            variant="solid"
             size="sm"
+            class="rounded-[5px] text-[11px] font-bold"
           />
         </div>
         <p

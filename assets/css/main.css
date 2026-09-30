@@ -25,7 +25,7 @@ button, a, [role="button"], [tabindex], .select-none {
   opacity: 0;
 }
 
-/* Pili tokens (source of truth: moyun-pos/ui/src/styles/tokens.css).
+/* Pili tokens (source of truth: the POS ui/src/styles/tokens.css).
    Dark only. Volt is the single accent, for the main action of a screen.
    Selection is Brume. Amber = waiting, red = error / cancel, green = OK / paid,
    cyan = information / online. */

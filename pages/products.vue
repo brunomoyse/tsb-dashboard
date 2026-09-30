@@ -16,7 +16,7 @@
     </div>
 
     <!-- Toolbar: Search + Category Chips (sticky on mobile, sibling of wrapper so it pins flush) -->
-    <div class="sticky top-0 z-30 px-3 pb-3 pt-1 bg-(--ui-bg-accented) sm:hidden">
+    <div class="sticky top-0 z-30 px-3 pb-3 pt-1 bg-default sm:hidden">
       <UInput
         v-model="searchQuery"
         name="search-products-mobile"
@@ -24,25 +24,24 @@
         :placeholder="t('products.search')"
         size="lg"
         class="w-full"
-        :ui="{ base: 'h-12 text-base' }"
+        :ui="{ base: 'h-12 text-base bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted' }"
       />
 
       <!-- Category chips (horizontal scroll on mobile) -->
-      <div class="relative mt-2 -mx-3 px-3 flex gap-2 overflow-x-auto scrollbar-hide">
+      <div class="mt-2 -mx-3 px-3 flex gap-2 overflow-x-auto scrollbar-hide">
         <button
           v-for="cat in categoryFilterItems"
           :key="cat.id ?? 'all'"
           type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="selectedCategoryId === cat.id
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-inverted'
+            : 'bg-transparent text-muted border-default'
           "
           @click="selectedCategoryId = cat.id"
         >
           {{ cat.name }}
         </button>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-(--ui-bg-accented) to-transparent" aria-hidden="true" />
       </div>
     </div>
 
@@ -70,18 +69,18 @@
         :placeholder="t('products.search')"
         size="lg"
         class="w-full"
-        :ui="{ base: 'h-12 text-base' }"
+        :ui="{ base: 'h-12 text-base bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted' }"
       />
 
-      <div class="relative mt-3 flex gap-2 flex-wrap">
+      <div class="mt-3 flex gap-2 flex-wrap">
         <button
           v-for="cat in categoryFilterItems"
           :key="`d-${cat.id ?? 'all'}`"
           type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-medium border transition-all active:scale-95"
+          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
           :class="selectedCategoryId === cat.id
-            ? 'bg-(--ui-primary) text-white border-(--ui-primary) shadow-sm'
-            : 'bg-(--ui-bg-elevated) text-(--ui-text-muted) border-(--ui-border)'
+            ? 'bg-inverted text-inverted border-inverted'
+            : 'bg-transparent text-muted border-default'
           "
           @click="selectedCategoryId = cat.id"
         >
@@ -94,7 +93,7 @@
     <div class="md:hidden">
       <!-- Skeleton Loading -->
       <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex flex-col rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden">
+        <div v-for="i in 6" :key="i" class="flex flex-col rounded-[14px] bg-elevated border border-default overflow-hidden">
           <div class="flex items-center gap-3 p-3">
             <USkeleton class="size-16 rounded-lg shrink-0" />
             <div class="flex-1 space-y-1.5">
@@ -103,7 +102,7 @@
               <USkeleton class="h-3 w-16" />
             </div>
           </div>
-          <div class="grid grid-cols-2 border-t border-(--ui-border)">
+          <div class="grid grid-cols-2 border-t border-default">
             <USkeleton class="h-11 rounded-none" />
             <USkeleton class="h-11 rounded-none" />
           </div>
@@ -113,7 +112,7 @@
       <!-- Empty State -->
       <div
         v-else-if="filteredProducts.length === 0"
-        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-xl bg-(--ui-bg) border border-(--ui-border)"
+        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
       >
         <UIcon name="i-lucide-package-x" class="size-14 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ (searchQuery || selectedCategoryId) ? t('products.noProductsFiltered') : t('products.noProducts') }}</p>
@@ -124,16 +123,16 @@
         <div
           v-for="product in filteredProducts"
           :key="product.id"
-          class="flex flex-col rounded-xl bg-(--ui-bg) border border-(--ui-border) overflow-hidden"
+          class="flex flex-col rounded-[14px] bg-elevated border border-default overflow-hidden"
         >
           <!-- Top: tap to edit -->
           <button
             type="button"
-            class="flex items-center gap-3 p-3 text-left active:bg-(--ui-bg-elevated) transition-colors min-h-16"
+            class="flex items-center gap-3 p-3 text-left active:bg-accented transition-colors min-h-16"
             @click="openEditDialog(product)"
           >
             <div
-              class="size-16 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) overflow-hidden shrink-0 flex items-center justify-center"
+              class="size-16 rounded-lg border border-default bg-accented overflow-hidden shrink-0 flex items-center justify-center"
             >
               <img
                 v-if="getProductImageUrl(product)"
@@ -147,26 +146,29 @@
 
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2">
-                <span v-if="product.code" class="text-xs font-mono font-semibold text-(--ui-primary) shrink-0">{{ product.code }}</span>
+                <span v-if="product.code" class="text-xs font-mono tabular-nums font-semibold text-muted shrink-0">{{ product.code }}</span>
                 <span class="font-semibold text-sm text-highlighted truncate">{{ product.name }}</span>
               </div>
               <div class="flex items-center gap-2 mt-1 text-xs text-muted">
                 <span class="truncate">{{ product.category.name }}</span>
-                <span v-if="product.pieceCount" class="shrink-0">· {{ product.pieceCount }} pcs</span>
+                <span v-if="product.pieceCount" class="shrink-0 font-mono tabular-nums">· {{ product.pieceCount }} pcs</span>
               </div>
               <div class="flex items-center gap-2 mt-1.5">
-                <span class="font-bold text-sm text-highlighted tabular-nums" data-allow-mismatch="text">
-                  {{ belPriceFormat.format(Number(product.price)) }}
+                <span class="font-bold text-sm text-highlighted font-mono tabular-nums" data-allow-mismatch="text">
+                  {{ formatPrice(product.price) }}
                 </span>
                 <!-- Dietary dots -->
-                <span v-if="product.isHalal" class="size-1.5 rounded-full bg-emerald-500" :title="t('products.halal')" />
-                <span v-if="product.isVegetarian" class="size-1.5 rounded-full bg-emerald-500" :title="t('products.vegetarian')" />
-                <span v-if="product.isSpicy" class="size-1.5 rounded-full bg-red-500" :title="t('products.spicy')" />
+                <UBadge v-if="product.isHalal" color="neutral" variant="solid" size="xs">{{ t('products.halal') }}</UBadge>
+                <UBadge v-if="product.isVegetarian" color="neutral" variant="solid" size="xs">{{ t('products.vegetarian') }}</UBadge>
+                <UBadge v-if="product.isSpicy" color="neutral" variant="solid" size="xs">
+                  <UIcon name="i-lucide-flame" class="size-3 text-error" />
+                  {{ t('products.spicy') }}
+                </UBadge>
                 <!-- Missing translations warning -->
                 <UIcon
                   v-if="hasMissingTranslations(product)"
                   name="i-lucide-languages"
-                  class="size-3.5 text-[#D08A2E]"
+                  class="size-3.5 text-warning"
                   :title="t('products.translations')"
                 />
               </div>
@@ -176,13 +178,13 @@
           </button>
 
           <!-- Bottom: dual toggles (50/50 full-width touch targets) -->
-          <div class="grid grid-cols-2 border-t border-(--ui-border) divide-x divide-(--ui-border)">
+          <div class="grid grid-cols-2 border-t border-default divide-x divide-default">
             <button
               type="button"
               class="flex items-center justify-center gap-1.5 h-12 text-sm font-medium transition-colors active:scale-[0.98]"
               :class="product.isVisible
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                : 'text-(--ui-text-muted) opacity-70'
+                ? 'text-success'
+                : 'text-muted'
               "
               :disabled="togglingField === `${product.id}-isVisible`"
               :aria-pressed="product.isVisible"
@@ -201,8 +203,8 @@
               type="button"
               class="flex items-center justify-center gap-1.5 h-12 text-sm font-medium transition-colors active:scale-[0.98]"
               :class="product.isAvailable
-                ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
-                : 'text-(--ui-text-muted) opacity-70'
+                ? 'text-success'
+                : 'text-warning'
               "
               :disabled="togglingField === `${product.id}-isAvailable`"
               :aria-pressed="product.isAvailable"
@@ -222,16 +224,16 @@
     </div>
 
     <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
-    <div class="hidden md:block rounded-xl border border-(--ui-border) overflow-hidden bg-(--ui-bg)">
+    <div class="hidden md:block rounded-[14px] border border-default overflow-hidden bg-elevated">
       <UTable
         v-if="!pending && filteredProducts.length > 0"
         :data="paginatedProducts"
         :columns="columns"
         :loading="pending"
         :ui="{
-          th: 'text-xs font-semibold uppercase tracking-wider text-(--ui-text-muted) py-3 px-4',
+          th: 'font-mono text-xs font-normal uppercase tracking-wider text-muted py-3 px-4',
           td: 'py-3 px-4',
-          tr: 'cursor-pointer hover:bg-(--ui-bg-elevated) transition-colors'
+          tr: 'cursor-pointer hover:bg-accented transition-colors'
         }"
         @select="onRowSelect"
       >
@@ -239,7 +241,7 @@
         <template #name-cell="{ row }">
           <div class="flex items-center gap-3">
             <div
-              class="size-9 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) overflow-hidden shrink-0 flex items-center justify-center"
+              class="size-9 rounded-lg border border-default bg-accented overflow-hidden shrink-0 flex items-center justify-center"
             >
               <img
                 v-if="getProductImageUrl(row.original)"
@@ -256,7 +258,7 @@
 
         <!-- Code -->
         <template #code-cell="{ row }">
-          <span class="text-sm font-mono text-muted">{{ row.original.code ?? '-' }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{ row.original.code ?? '-' }}</span>
         </template>
 
         <!-- Category -->
@@ -266,22 +268,19 @@
 
         <!-- Price -->
         <template #price-cell="{ row }">
-          <span class="text-sm font-semibold tabular-nums" data-allow-mismatch="text">{{ belPriceFormat.format(Number(row.original.price)) }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums" data-allow-mismatch="text">{{ formatPrice(row.original.price) }}</span>
         </template>
 
         <!-- Pieces -->
         <template #pieceCount-cell="{ row }">
-          <span class="text-sm tabular-nums text-muted">{{ row.original.pieceCount ?? '-' }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{ row.original.pieceCount ?? '-' }}</span>
         </template>
 
         <!-- Visibility toggle -->
         <template #isVisible-cell="{ row }">
           <button
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
-            :class="row.original.isVisible
-              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20'
-              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
-            "
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border border-default bg-transparent active:scale-95 cursor-pointer"
+            :class="row.original.isVisible ? 'text-success' : 'text-muted'"
             :disabled="togglingField === `${row.original.id}-isVisible`"
             @click.stop="toggleProductField(row.original, 'isVisible', !row.original.isVisible)"
           >
@@ -297,11 +296,8 @@
         <!-- Availability toggle -->
         <template #isAvailable-cell="{ row }">
           <button
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border active:scale-95 cursor-pointer"
-            :class="row.original.isAvailable
-              ? 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400 dark:border-blue-400/20'
-              : 'bg-(--ui-bg-accented) text-(--ui-text-muted) border-(--ui-border) opacity-60'
-            "
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border border-default bg-transparent active:scale-95 cursor-pointer"
+            :class="row.original.isAvailable ? 'text-success' : 'text-warning'"
             :disabled="togglingField === `${row.original.id}-isAvailable`"
             @click.stop="toggleProductField(row.original, 'isAvailable', !row.original.isAvailable)"
           >
@@ -317,13 +313,14 @@
         <!-- Dietary badges -->
         <template #tags-cell="{ row }">
           <div class="flex gap-1">
-            <UBadge v-if="row.original.isHalal" color="success" variant="subtle" size="xs">
+            <UBadge v-if="row.original.isHalal" color="neutral" variant="solid" size="xs">
               {{ t('products.halal') }}
             </UBadge>
-            <UBadge v-if="row.original.isVegetarian" color="success" variant="subtle" size="xs">
+            <UBadge v-if="row.original.isVegetarian" color="neutral" variant="solid" size="xs">
               {{ t('products.vegetarian') }}
             </UBadge>
-            <UBadge v-if="row.original.isSpicy" color="success" variant="subtle" size="xs">
+            <UBadge v-if="row.original.isSpicy" color="neutral" variant="solid" size="xs">
+              <UIcon name="i-lucide-flame" class="size-3 text-error" />
               {{ t('products.spicy') }}
             </UBadge>
           </div>
@@ -336,7 +333,7 @@
               v-for="lang in availableLocales"
               :key="lang"
               :color="hasTranslation(row.original, lang) ? 'success' : 'error'"
-              variant="soft"
+              variant="solid"
               size="xs"
             >
               {{ lang.toUpperCase() }}
@@ -359,7 +356,7 @@
       </UTable>
 
       <!-- Skeleton Loading -->
-      <div v-if="pending" class="divide-y divide-(--ui-border)">
+      <div v-if="pending" class="divide-y divide-default">
         <div v-for="i in 8" :key="i" class="flex items-center gap-4 px-4 py-3">
           <USkeleton class="size-9 rounded-lg" />
           <div class="flex-1 space-y-1.5">
@@ -381,7 +378,7 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="!pending && filteredProducts.length > pageSize" class="flex justify-center py-4 border-t border-(--ui-border)">
+      <div v-if="!pending && filteredProducts.length > pageSize" class="flex justify-center py-4 border-t border-default">
         <UPagination
           v-model:page="page"
           :total="filteredProducts.length"
@@ -463,13 +460,6 @@ const getProductImageUrl = (product: Product) => {
   return `${s3bucketUrl}/images/thumbnails/${product.id}.png${bust ? `?v=${bust}` : ''}`
 }
 
-const belPriceFormat = new Intl.NumberFormat('fr-BE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-  style: 'currency',
-  currency: 'EUR'
-})
-
 const searchQuery = ref('')
 const selectedCategoryId = ref<string | null>(null)
 
@@ -482,8 +472,8 @@ const columns = computed(() => [
   { accessorKey: 'code', header: t('products.code') },
   { accessorKey: 'category', header: t('products.category') },
   { accessorKey: 'name', header: t('common.name') },
-  { accessorKey: 'price', header: t('common.price'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
-  { accessorKey: 'pieceCount', header: t('products.pieceCount'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
+  { accessorKey: 'price', header: t('common.price'), meta: { class: { td: 'hidden sm:table-cell text-right', th: 'hidden sm:table-cell text-right' } } },
+  { accessorKey: 'pieceCount', header: t('products.pieceCount'), meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
   { accessorKey: 'isVisible', header: t('common.visibility'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'isAvailable', header: t('common.availability'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
   { accessorKey: 'tags', header: '', enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
@@ -776,7 +766,7 @@ const toggleProductField = async (product: Product, field: 'isAvailable' | 'isVi
       input: { [field]: value }
     })
 
-    // Update local data — reassign dataProducts.value because useAsyncData uses shallowRef
+    // Update local data: reassign dataProducts.value because useAsyncData uses shallowRef
     if (dataProducts.value?.products) {
       const idx = dataProducts.value.products.findIndex(p => p.id === product.id)
       if (idx !== -1) {
