@@ -335,23 +335,34 @@ const verifyCode = async () => {
 
 .login-container {
   display: flex;
+  flex-direction: column;
   min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+@media (min-width: 1024px) {
+  .login-container {
+    flex-direction: row;
+    padding: 0;
+  }
 }
 
 /* Brand panel */
 .login-brand {
-  display: none;
-  width: 42%;
-  min-height: 100dvh;
+  display: flex;
+  flex: 1;
+  min-height: 280px;
+  align-items: center;
+  justify-content: center;
   background: var(--ui-bg);
-  border-right: 1px solid var(--ui-border);
 }
 
 @media (min-width: 1024px) {
   .login-brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex: none;
+    width: 42%;
+    min-height: 100dvh;
+    border-right: 1px solid var(--ui-border);
   }
 }
 
@@ -359,12 +370,25 @@ const verifyCode = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 18px;
+}
+
+@media (min-width: 1024px) {
+  .login-brand-inner {
+    gap: 1.25rem;
+  }
 }
 
 .login-brand-wordmark {
-  height: 96px;
+  height: 84px;
   width: auto;
+  max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .login-brand-wordmark {
+    height: 96px;
+  }
 }
 
 .login-brand-zh {
@@ -375,19 +399,32 @@ const verifyCode = async () => {
 }
 
 .login-brand-tagline {
+  display: none;
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
   color: var(--ui-text-muted);
 }
 
+@media (min-width: 1024px) {
+  .login-brand-tagline {
+    display: block;
+  }
+}
+
 /* Form panel */
 .login-form-panel {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: 0 24px 24px;
+}
+
+@media (min-width: 1024px) {
+  .login-form-panel {
+    flex: 1;
+    padding: 2rem 1.5rem;
+  }
 }
 
 .login-form-wrapper {
@@ -396,32 +433,56 @@ const verifyCode = async () => {
 }
 
 .login-form-header {
-  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 1024px) {
+  .login-form-header {
+    display: block;
+    margin-bottom: 2.5rem;
+  }
 }
 
 .login-form-title {
   font-family: var(--font-brand);
-  font-size: 2rem;
+  font-size: 32px;
   font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--ui-text);
-  margin-bottom: 0.5rem;
 }
 
 @media (min-width: 1024px) {
   .login-form-title {
     font-size: 1.75rem;
+    letter-spacing: normal;
+    margin-bottom: 0.5rem;
   }
 }
 
 .login-form-subtitle {
-  font-size: 0.875rem;
+  font-size: 15px;
   color: var(--ui-text-muted);
+}
+
+@media (min-width: 1024px) {
+  .login-form-subtitle {
+    font-size: 0.875rem;
+  }
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .login-form {
+    gap: 1.5rem;
+  }
 }
 
 .login-field {
@@ -431,9 +492,10 @@ const verifyCode = async () => {
 }
 
 .login-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ui-text-muted);
 }
@@ -461,15 +523,22 @@ const verifyCode = async () => {
 
 .login-input {
   width: 100%;
-  height: 3.25rem;
+  height: 56px;
   padding: 0 1rem 0 2.75rem;
   border: 1px solid var(--ui-border);
-  border-radius: 0.75rem;
-  background: var(--ui-bg-accented);
+  border-radius: 12px;
+  background: var(--ui-bg-elevated);
   color: var(--ui-text);
-  font-size: 0.9375rem;
+  font-size: 17px;
   outline: none;
   transition: border-color 0.2s ease;
+}
+
+@media (min-width: 1024px) {
+  .login-input {
+    background: var(--ui-bg-accented);
+    font-size: 0.9375rem;
+  }
 }
 
 .login-input::placeholder {
@@ -562,14 +631,13 @@ const verifyCode = async () => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 3.25rem;
-  margin-top: 0.5rem;
+  height: 56px;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 12px;
   background: var(--ui-primary);
   color: var(--ui-text-inverted);
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease;
 }
@@ -601,13 +669,19 @@ const verifyCode = async () => {
 
 /* Footer */
 .login-footer-text {
-  margin-top: 3rem;
+  margin-top: 20px;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ui-text-muted);
+}
+
+@media (min-width: 1024px) {
+  .login-footer-text {
+    margin-top: 3rem;
+  }
 }
 
 @keyframes login-spin {
