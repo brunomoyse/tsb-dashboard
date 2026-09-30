@@ -72,96 +72,28 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel :ui="{ body: 'bg-default' }">
-      <template #header>
-        <UDashboardNavbar :toggle="false" class="md:hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-          <!-- Mobile header: hamburger + logo -->
-          <template #left>
-            <div class="flex items-center gap-2">
-              <UButton
-                icon="i-lucide-menu"
-                color="neutral"
-                variant="ghost"
-                size="md"
-                :aria-label="t('navigation.menu')"
-                @click="drawerOpen = true"
-              />
-              <img
-                src="/pili-wordmark.svg"
-                alt="Pili"
-                class="h-7 w-auto"
-              />
-            </div>
-          </template>
-        </UDashboardNavbar>
-      </template>
-
+    <UDashboardPanel
+      :ui="{
+        root: 'max-md:pt-[env(safe-area-inset-top)]',
+        body: 'bg-default p-0 sm:p-0 md:p-6 gap-0 sm:gap-0 md:gap-6'
+      }"
+    >
       <template #body>
-        <div id="main-content">
+        <!-- Below md the pages own their padding; the tab bar height is reserved here. -->
+        <div
+          id="main-content"
+          class="flex-1 flex flex-col pb-(--pili-tabbar-h)"
+          :style="{
+            '--pili-tabbar-h': tabBarVisible ? 'calc(72px + env(safe-area-inset-bottom))' : '0px',
+            '--pili-safe-bottom': tabBarVisible ? '0px' : 'env(safe-area-inset-bottom)'
+          }"
+        >
           <slot />
         </div>
       </template>
     </UDashboardPanel>
 
-    <!-- Mobile Navigation Drawer -->
-    <USlideover
-      v-model:open="drawerOpen"
-      side="left"
-      :title="t('navigation.menu')"
-      :ui="{
-        content: 'max-w-xs',
-        header: 'border-b border-default',
-        body: 'p-0',
-        footer: 'border-t border-default flex flex-col gap-3 pb-[calc(env(safe-area-inset-bottom)+1rem)]'
-      }"
-    >
-      <template #header>
-        <div class="flex items-center justify-center py-2 w-full">
-          <img
-            src="/pili-wordmark.svg"
-            alt="Pili"
-            class="h-8 w-auto"
-          />
-        </div>
-      </template>
-
-      <template #body>
-        <UNavigationMenu
-          :items="navigationItems"
-          orientation="vertical"
-          size="lg"
-          class="flex-1"
-          :ui="{ link: 'py-4 px-4 text-base w-full' }"
-        />
-      </template>
-
-      <template #footer>
-        <UDropdownMenu :items="languageItems">
-          <UButton
-            :label="currentLocaleLabel"
-            :icon="currentLocaleIcon"
-            color="neutral"
-            variant="ghost"
-            size="lg"
-            block
-          />
-        </UDropdownMenu>
-
-
-        <div class="h-px bg-(--ui-border)" />
-
-        <UButton
-          :label="t('navigation.logout')"
-          icon="i-lucide-log-out"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          block
-          :ui="{ leadingIcon: 'text-error' }"
-          @click="handleLogout"
-        />
-      </template>
-    </USlideover>
+    <MobileTabBar v-if="tabBarVisible" />
   </UDashboardGroup>
 </template>
 
@@ -169,31 +101,12 @@
 import type { NavigationMenuItem } from '#ui/types'
 
 const { locale, t } = useI18n()
-const switchLocalePath = useSwitchLocalePath()
 const route = useRoute()
 const ordersStore = useOrdersStore()
 
-const drawerOpen = ref(false)
-
-// Auto-close drawer on navigation
-watch(() => route.fullPath, () => {
-  drawerOpen.value = false
-})
-
-const isMobile = ref(false)
-onMounted(() => {
-  const mql = window.matchMedia('(max-width: 767px)')
-  isMobile.value = mql.matches
-  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
-})
-
-type AppLocale = 'fr' | 'en' | 'nl' | 'zh'
-const languages: { value: AppLocale; label: string }[] = [
-  { value: 'fr', label: 'Français' },
-  { value: 'en', label: 'English' },
-  { value: 'nl', label: 'Nederlands' },
-  { value: 'zh', label: '中文' }
-]
+const isMobile = useIsMobile()
+const { visible: tabBarVisible } = useTabBar()
+const { languages, onLanguageChange } = useLocaleSwitch()
 
 const currentLocaleLabel = computed(() =>
   languages.find(l => l.value === locale.value)?.label || '🌐'
@@ -239,13 +152,6 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
     item(t('navigation.settings'), 'i-lucide-settings', 'settings')
   ]]
 })
-
-const onLanguageChange = (newLocale: 'fr' | 'en' | 'nl' | 'zh') => {
-  const newPath = switchLocalePath(newLocale)
-  if (newPath) {
-    navigateTo(newPath)
-  }
-}
 
 const handleLogout = async () => {
   const authStore = useAuthStore()
