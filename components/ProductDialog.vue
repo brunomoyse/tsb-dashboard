@@ -4,22 +4,23 @@
     :title="dialogTitle"
     description=" "
     :overlay="true"
+    :fullscreen="isMobile"
     :ui="{
       content: 'max-lg:h-full max-lg:max-h-full max-lg:rounded-none lg:max-w-4xl',
       overlay: 'bg-default',
       body: 'max-lg:p-4 max-lg:overflow-y-auto',
-      footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end'
+      footer: 'max-lg:flex-col max-lg:gap-2 max-lg:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:justify-end max-md:!flex-row max-md:gap-3 max-md:p-4 max-md:pb-[calc(env(safe-area-inset-bottom)+1rem)] max-md:bg-default max-md:border-t max-md:border-default'
     }"
   >
     <template #body>
-      <div class="space-y-4 sm:space-y-6">
+      <div class="space-y-4 sm:space-y-6 min-w-0 max-md:overflow-x-hidden max-md:[&_label]:text-sm">
         <!-- Row 1: Two Columns -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <!-- Left Column: Category, Code, Price, Piece Count -->
           <div class="space-y-3 sm:space-y-4">
             <UFormField :label="t('products.category')" name="category" required>
               <USelectMenu
-                :ui="{ ...inputUi, content: 'min-w-[200px]' }"
+                :ui="selectMenuUi"
                 v-model="editedProduct.categoryId"
                 :items="localizedCategories"
                 value-key="id"
@@ -124,15 +125,16 @@
                 v-model="removeBackground"
                 :label="t('products.removeBackground')"
                 size="sm"
+                color="success"
               />
 
               <!-- File input -->
-              <div class="w-full max-w-xs">
+              <div class="w-full max-w-xs max-md:max-w-none">
                 <UFormField :label="t('products.image')" name="image">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
-                    class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accented file:text-highlighted hover:file:bg-(--pili-pressed) cursor-pointer"
+                    class="block w-full text-sm max-md:text-base text-muted max-md:file:h-12 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accented file:text-highlighted hover:file:bg-(--pili-pressed) cursor-pointer"
                     @change="handleFileChange"
                   />
                 </UFormField>
@@ -165,11 +167,11 @@
               :name="`translation-${translation.language}-description`"
             >
               <UTextarea
-                :ui="inputUi"
+                :ui="textareaUi"
                 v-model="translation.description"
                 :placeholder="t('common.description')"
                 :rows="2"
-                class="sm:!min-h-[4.5rem]"
+                :class="isMobile ? '' : 'sm:!min-h-[4.5rem]'"
               />
             </UFormField>
           </div>
@@ -177,34 +179,76 @@
 
         <!-- Row 3: Toggles -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isVisible"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isVisible = !editedProduct.isVisible"
+          >
             <span class="text-sm">{{ t('common.visible') }}</span>
-            <USwitch v-model="editedProduct.isVisible" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isVisible" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isAvailable"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isAvailable = !editedProduct.isAvailable"
+          >
             <span class="text-sm">{{ t('common.available') }}</span>
-            <USwitch v-model="editedProduct.isAvailable" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isAvailable" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isDiscountable"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isDiscountable = !editedProduct.isDiscountable"
+          >
             <span class="text-sm">{{ t('products.discountable') }}</span>
-            <USwitch v-model="editedProduct.isDiscountable" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isDiscountable" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isHalal"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isHalal = !editedProduct.isHalal"
+          >
             <span class="text-sm">{{ t('products.halal') }}</span>
-            <USwitch v-model="editedProduct.isHalal" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isHalal" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isVegetarian"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isVegetarian = !editedProduct.isVegetarian"
+          >
             <span class="text-sm">{{ t('products.vegetarian') }}</span>
-            <USwitch v-model="editedProduct.isVegetarian" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isVegetarian" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isSpicy"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isSpicy = !editedProduct.isSpicy"
+          >
             <span class="text-sm">{{ t('products.spicy') }}</span>
-            <USwitch v-model="editedProduct.isSpicy" size="md" class="shrink-0" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors">
+            <PiliSwitch :model-value="editedProduct.isSpicy" size="md" presentational />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="editedProduct.isLunchOnly"
+            class="flex items-center justify-between gap-3 rounded-lg border border-default bg-elevated px-3 py-2 cursor-pointer hover:bg-accented transition-colors w-full min-h-12 text-left"
+            @click="editedProduct.isLunchOnly = !editedProduct.isLunchOnly"
+          >
             <span class="text-sm">{{ t('products.lunchOnly') }}</span>
-            <USwitch v-model="editedProduct.isLunchOnly" size="md" class="shrink-0" />
-          </label>
+            <PiliSwitch :model-value="editedProduct.isLunchOnly" size="md" presentational />
+          </button>
         </div>
 
         <!-- Row 4: Product Choice Groups (edit mode only) -->
@@ -367,16 +411,16 @@
 
     <template #footer>
       <UButton
-        variant="ghost"
+        :variant="isMobile ? 'solid' : 'ghost'"
         color="neutral"
-        class="max-sm:w-full"
+        class="max-md:flex-1 max-md:h-14 max-md:justify-center max-md:text-base max-md:font-bold"
         @click="closeDialog"
       >
         {{ t('common.cancel') }}
       </UButton>
       <UButton
         color="primary"
-        class="max-sm:w-full"
+        class="max-md:flex-[2] max-md:h-14 max-md:justify-center max-md:text-base max-md:font-bold"
         @click="saveChanges"
       >
         {{ saveLabel }}
@@ -424,18 +468,28 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const isMobile = useIsMobile()
 const toast = useToast()
 
 // Languages used for translations.
 const languages = ['fr', 'en', 'zh', 'nl']
 
 // Pili inputs: Ardoise fill, 1px border, Brume border on focus, no ring/glow.
-const inputUi = {
-    base: 'bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted'
-}
-const monoInputUi = {
-    base: `${inputUi.base} font-mono tabular-nums`
-}
+// Below md the fields are phone-sized: full width, 48px tall, 16px text (no iOS zoom).
+const fieldBase = 'bg-accented ring-0 border border-default focus-visible:ring-0 focus-visible:border-inverted'
+const inputUi = computed(() => ({
+    root: isMobile.value ? 'w-full' : '',
+    base: isMobile.value ? `${fieldBase} h-12 text-base` : fieldBase
+}))
+const monoInputUi = computed(() => ({
+    root: inputUi.value.root,
+    base: `${inputUi.value.base} font-mono tabular-nums`
+}))
+const textareaUi = computed(() => ({
+    root: isMobile.value ? 'w-full' : '',
+    base: isMobile.value ? `${fieldBase} min-h-24 text-base` : fieldBase
+}))
+const selectMenuUi = computed(() => ({ ...inputUi.value, content: 'min-w-[200px]' }))
 
 // Create a copy of an existing product with exactly the languages we need.
 const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {

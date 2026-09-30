@@ -16,7 +16,10 @@
     "available": "Disponible",
     "unavailable": "Indisponible",
     "availability": "Disponibilité",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "back": "Retour",
+    "filters": "Filtres",
+    "done": "Terminé"
   },
 
   "products": {
@@ -70,7 +73,10 @@
         "zeroRated": "Taux zéro (0%)",
         "outOfScope": "Hors champ"
       }
-    }
+    },
+    "itemsCount": "articles",
+    "addShort": "Ajouter",
+    "piecesShort": "pcs"
   },
 
   "orders": {
@@ -170,7 +176,7 @@
     "discount": "Remise",
     "deliveryFeeLabel": "Frais de livraison",
     "newEstimatedTime": "Nouvelle estimation",
-    "staleAlert": "{count} commande(s) en attente depuis plus de 2h",
+    "staleAlert": "{count} commande en attente depuis plus de 2h | {count} commandes en attente depuis plus de 2h",
     "staleDetailAlert": "Cette commande est en attente depuis {hours}h. Envisagez de contacter le client ou d'annuler.",
     "advanceStatus": "Avancer le statut",
     "statusAdvanced": "Statut mis à jour",
@@ -178,10 +184,45 @@
       "updateFailed": "Échec de la mise à jour de la commande",
       "invalidTransition": "Cette transition de statut n'est pas autorisée pour cette commande",
       "printFailed": "Échec de l'impression",
-      "paymentUpdateFailed": "Échec de la mise à jour du paiement"
+      "paymentUpdateFailed": "Échec de la mise à jour du paiement",
+      "orderingUpdateFailed": "Impossible de modifier l'état des commandes en ligne"
     },
     "lateChip": "EN RETARD",
-    "toCollect": "À ENCAISSER"
+    "toCollect": "À ENCAISSER",
+    "detailTitle": "Commande",
+    "notFound": "Commande introuvable",
+    "nextAction": {
+      "confirmed": "Confirmer",
+      "preparing": "Lancer la préparation",
+      "awaiting_pick_up": "Marquer prête",
+      "out_for_delivery": "Partie en livraison",
+      "picked_up": "Marquer retirée",
+      "delivered": "Marquer livrée"
+    },
+    "tabs": {
+      "new": "Nouvelles",
+      "kitchen": "Cuisine",
+      "out": "Départ",
+      "done": "Terminées"
+    },
+    "paused": "Commandes en ligne en pause. Les clients ne peuvent pas commander.",
+    "resume": "Reprendre",
+    "online": "EN LIGNE",
+    "onPause": "EN PAUSE",
+    "pauseConfirmTitle": "Mettre les commandes en pause ?",
+    "pauseConfirmMessage": "Les clients ne pourront plus commander en ligne tant que vous n'aurez pas repris.",
+    "pauseConfirm": "Mettre en pause",
+    "call": "Appeler",
+    "directions": "Itinéraire",
+    "customerNote": "Note du client",
+    "receivedAt": "Reçue à {time}",
+    "readyAround": "prête vers {time}",
+    "wantedAt": "souhaitée {time}",
+    "inProgress": "{count} en cours",
+    "articles": "{count} article | {count} articles",
+    "cancelOrder": "Annuler la commande",
+    "markPaid": "Marquer payé",
+    "estimateSaved": "Estimation enregistrée"
   },
 
   "orderHistory": {
@@ -202,7 +243,19 @@
     "items": "Articles",
     "scrollForMore": "Faites defiler pour charger plus",
     "startDate": "Date de début",
-    "endDate": "Date de fin"
+    "endDate": "Date de fin",
+    "periods": {
+      "label": "Période",
+      "today": "Aujourd'hui",
+      "days7": "7 jours",
+      "days30": "30 jours",
+      "dates": "Dates…"
+    },
+    "groups": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "itemsShort": "art."
   },
 
   "coupons": {
@@ -234,7 +287,12 @@
     "errors": {
       "saveFailed": "Échec de l'enregistrement du coupon. Veuillez réessayer.",
       "percentageMax": "Une remise en pourcentage ne peut pas dépasser 100 %."
-    }
+    },
+    "addShort": "Ajouter",
+    "perUser": "Par client",
+    "fromTo": "Du {from} au {to}",
+    "until": "Jusqu'au {date}",
+    "noEnd": "Sans date de fin"
   },
 
   "customers": {
@@ -268,11 +326,13 @@
       "thisMonth": "Ce mois",
       "thisYear": "Cette année",
       "allTypes": "Tous",
-      "minOrders": "Min. commandes"
+      "minOrders": "Min. commandes",
+      "orderType": "Type de commande"
     },
     "orderHistory": "Historique des commandes",
     "noOrdersFound": "Aucune commande trouvée",
-    "memberSince": "Client depuis"
+    "memberSince": "Client depuis",
+    "last": "Dernière"
   },
 
   "navigation": {
@@ -284,7 +344,8 @@
     "coupons": "Coupons",
     "booking": "Réservation",
     "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "more": "Plus"
   },
 
   "settings": {
@@ -345,6 +406,9 @@
       "typeSpecial": "Horaires spéciaux",
       "save": "Enregistrer",
       "cancel": "Annuler"
+    },
+    "mobile": {
+      "daysOpen": "Aucun jour ouvert | 1 jour ouvert | {count} jours ouverts"
     }
   },
 
@@ -396,5 +460,12 @@
     "productCreated": "Produit créé avec succès",
     "productUpdated": "Produit mis à jour avec succès",
     "orderUpdated": "Statut de commande mis à jour"
+  },
+
+  "more": {
+    "language": "Langue",
+    "activeCoupons": "{count} actif | {count} actifs",
+    "online": "en ligne",
+    "paused": "en pause"
   }
 }

@@ -1,7 +1,9 @@
 <template>
-  <div class="p-3 sm:p-4 md:p-6">
+  <div class="md:p-6">
+    <!-- Desktop: header, summary and filters (>= md) -->
+    <div class="hidden md:block">
     <!-- Page Header -->
-    <div class="mb-3 sm:mb-6">
+    <div class="mb-6">
       <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('customers.title') }}</h1>
       <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
     </div>
@@ -87,69 +89,147 @@
       </div>
     </div>
 
-    <!-- ========== MOBILE VIEW: Cards (< md) ========== -->
+    </div>
+
+    <!-- ========== MOBILE VIEW (< md) ========== -->
     <div class="md:hidden">
+      <PiliSubHeader :title="t('navigation.customers')" />
+
+      <div class="px-4 pt-1 grid grid-cols-2 gap-2">
+        <PiliStatCard
+          v-for="card in summaryCards.slice(0, 4)"
+          :key="card.label"
+          size="lg"
+          :label="card.label"
+          :value="pending ? '-' : card.value"
+        />
+      </div>
+
+      <!-- Sticky search and period chips -->
+      <div class="sticky top-[60px] z-20 bg-default py-3 flex flex-col gap-2.5">
+        <div class="px-4 flex items-center gap-2">
+          <UInput
+            v-model="searchQuery"
+            icon="i-lucide-search"
+            :placeholder="t('customers.search')"
+            size="lg"
+            class="flex-1"
+            :ui="{ base: 'h-12 text-base bg-elevated rounded-xl' }"
+          />
+          <button
+            type="button"
+            class="shrink-0 h-12 px-4 rounded-xl border text-sm font-bold inline-flex items-center gap-2"
+            :class="activeFilterCount > 0 ? 'bg-inverted text-inverted border-inverted' : 'bg-elevated border-default'"
+            @click="showFilters = true"
+          >
+            <UIcon name="i-lucide-sliders-horizontal" class="size-4" />
+            {{ t('common.filters') }}
+            <span v-if="activeFilterCount > 0" class="font-mono tabular-nums">{{ activeFilterCount }}</span>
+          </button>
+        </div>
+        <PiliChipRail
+          :model-value="selectedPeriod"
+          :options="mobilePeriodOptions"
+          :label="t('customers.filters.allTime')"
+          @update:model-value="selectPeriod"
+        />
+      </div>
+
       <!-- Skeleton -->
-      <div v-if="pending" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
-          <USkeleton class="size-10 rounded-full shrink-0" />
-          <div class="flex-1 space-y-1.5">
-            <div class="flex justify-between">
-              <USkeleton class="h-4 w-32" />
-              <USkeleton class="h-4 w-16" />
-            </div>
-            <USkeleton class="h-3 w-40" />
-            <USkeleton class="h-3 w-28" />
+      <div v-if="pending" class="px-4 pb-5 flex flex-col gap-2.5">
+        <div v-for="i in 5" :key="i" class="p-3.5 rounded-[14px] bg-elevated border border-default flex flex-col gap-2.5">
+          <div class="flex justify-between gap-3">
+            <USkeleton class="h-4 w-32" />
+            <USkeleton class="h-4 w-16" />
           </div>
+          <USkeleton class="h-8 w-full" />
+          <USkeleton class="h-4 w-40" />
         </div>
       </div>
 
       <!-- Empty -->
       <div
         v-else-if="filteredCustomers.length === 0"
-        class="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
+        class="mx-4 flex flex-col items-center justify-center py-16 px-6 text-center rounded-[14px] bg-elevated border border-default"
       >
         <UIcon name="i-lucide-users" class="size-14 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('customers.noResults') }}</p>
       </div>
 
       <!-- Cards -->
-      <div v-else class="space-y-2">
-        <button
+      <div v-else class="px-4 pb-5 flex flex-col gap-2.5">
+        <div
           v-for="customer in paginatedCustomers"
           :key="customer.userId"
-          type="button"
-          class="w-full flex items-start gap-3 p-3 rounded-[14px] bg-elevated border border-default text-left active:bg-accented transition-colors"
+          role="button"
+          tabindex="0"
+          class="p-3.5 rounded-[14px] bg-elevated border border-default flex flex-col gap-2.5 cursor-pointer active:bg-accented transition-colors"
           @click="openCustomerOrders(customer)"
+          @keydown.enter.self="openCustomerOrders(customer)"
         >
-          <div class="size-10 rounded-full bg-accented flex items-center justify-center shrink-0 text-sm font-semibold text-muted">
-            {{ getInitials(customer.firstName, customer.lastName) }}
+          <div class="flex items-baseline gap-2.5">
+            <span class="flex-1 min-w-0 text-base font-bold truncate">{{ customer.firstName }} {{ customer.lastName }}</span>
+            <span class="font-mono text-base font-bold tabular-nums">{{ formatPrice(customer.totalAmount) }}</span>
           </div>
-
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-semibold text-sm text-highlighted truncate">{{ customer.firstName }} {{ customer.lastName }}</span>
-              <span class="font-bold text-sm text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(customer.totalAmount) }}</span>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="min-w-0 flex flex-col gap-0.5">
+              <span class="text-[11px] text-muted truncate">{{ t('customers.totalOrders') }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{ customer.totalOrders }}</span>
             </div>
-            <p class="text-xs text-muted truncate mt-0.5">{{ customer.email }}</p>
-            <div class="flex items-center gap-2 mt-1.5 text-xs">
-              <UBadge
-                color="neutral"
-                variant="solid"
-                size="sm"
-                :icon="customer.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                :ui="{ base: 'rounded-[5px] font-bold text-xs' }"
-              >
-                {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
-              </UBadge>
-              <span class="text-muted font-mono tabular-nums">{{ customer.totalOrders }} {{ t('orders.items') }}</span>
-              <span class="text-muted truncate font-mono tabular-nums">· {{ formatDate(customer.lastOrderDate) }}</span>
+            <div class="min-w-0 flex flex-col gap-0.5">
+              <span class="text-[11px] text-muted truncate">{{ t('customers.averageOrder') }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{ formatPrice(customer.averageOrderAmount) }}</span>
+            </div>
+            <div class="min-w-0 flex flex-col gap-0.5">
+              <span class="text-[11px] text-muted truncate">{{ t('customers.last') }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{ formatShortDate(customer.lastOrderDate) }}</span>
             </div>
           </div>
-
-          <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0 mt-1" />
-        </button>
+          <div class="flex items-center gap-2 pt-1.5 border-t border-default">
+            <a
+              v-if="customer.phoneNumber"
+              :href="`tel:${customer.phoneNumber}`"
+              class="inline-flex items-center min-h-11 font-mono text-[13px] text-muted underline underline-offset-[3px]"
+              @click.stop
+            >{{ customer.phoneNumber }}</a>
+            <span class="flex-1" />
+            <PiliChip class="self-center">
+              {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
+            </PiliChip>
+          </div>
+        </div>
       </div>
+
+      <!-- Filters sheet -->
+      <PiliBottomSheet v-model:open="showFilters" :title="t('common.filters')">
+        <div class="flex flex-col gap-2">
+          <label for="m-min-orders" class="text-sm font-bold">{{ t('customers.filters.minOrders') }}</label>
+          <UInput
+            id="m-min-orders"
+            v-model.number="minOrders"
+            type="number"
+            :min="1"
+            size="lg"
+            class="w-full"
+            :ui="{ base: 'h-12 text-base font-mono tabular-nums bg-accented rounded-xl' }"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-bold">{{ t('customers.filters.orderType') }}</span>
+          <PiliSegmented
+            :model-value="selectedOrderType"
+            :options="orderTypeOptions"
+            surface="ardoise"
+            :label="t('customers.filters.orderType')"
+            @update:model-value="selectedOrderType = $event ?? ''"
+          />
+        </div>
+        <template #footer>
+          <UButton color="neutral" variant="solid" size="xl" block @click="showFilters = false">
+            {{ t('common.done') }}
+          </UButton>
+        </template>
+      </PiliBottomSheet>
     </div>
 
     <!-- ========== TABLET+ VIEW: Table (md+) ========== -->
@@ -232,7 +312,7 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="!pending && filteredCustomers.length > pageSize" class="flex justify-center mt-6">
+    <div v-if="!pending && filteredCustomers.length > pageSize" class="flex justify-center mt-2 md:mt-6 px-4 pb-5 md:px-0 md:pb-0">
       <UPagination
         v-model:page="page"
         :total="filteredCustomers.length"
@@ -240,102 +320,38 @@
         show-edges
       />
     </div>
-    <!-- Customer Order History Slideover (bottom sheet on mobile, side panel on desktop) -->
-    <USlideover
+    <!-- Customer order history: full-height bottom sheet on phones, side panel from md -->
+    <PiliBottomSheet
+      v-if="isMobile"
       v-model:open="showOrderHistory"
       :title="t('customers.orderHistory')"
-      :side="sheetSide"
-      :ui="sheetUi"
+      full
+    >
+      <CustomersOrdersPanel
+        :customer="selectedCustomer"
+        :orders="customerOrders"
+        :loading="loadingOrders"
+        :loading-more="loadingMoreOrders"
+        :page-size="ordersPageSize"
+        @load-more="loadMoreOrders"
+      />
+    </PiliBottomSheet>
+    <USlideover
+      v-else
+      v-model:open="showOrderHistory"
+      :title="t('customers.orderHistory')"
+      side="right"
+      :ui="{ content: 'max-w-md' }"
     >
       <template v-if="selectedCustomer" #body>
-        <div class="space-y-5">
-          <!-- Customer Header -->
-          <div>
-            <h2 class="text-lg font-bold text-highlighted">
-              {{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}
-            </h2>
-            <div class="space-y-1 mt-1 text-sm text-muted">
-              <p>{{ selectedCustomer.email }}</p>
-              <p v-if="selectedCustomer.phoneNumber" class="font-mono tabular-nums">{{ selectedCustomer.phoneNumber }}</p>
-              <p>{{ t('customers.memberSince') }}: <span class="font-mono tabular-nums">{{ formatDate(selectedCustomer.registeredAt) }}</span></p>
-            </div>
-          </div>
-
-          <!-- Stats -->
-          <div class="grid grid-cols-3 gap-3">
-            <div class="rounded-[14px] bg-accented p-3 text-center">
-              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ selectedCustomer.totalOrders }}</p>
-              <p class="text-xs text-muted">{{ t('customers.totalOrders') }}</p>
-            </div>
-            <div class="rounded-[14px] bg-accented p-3 text-center">
-              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedCustomer.totalAmount) }}</p>
-              <p class="text-xs text-muted">{{ t('customers.totalAmount') }}</p>
-            </div>
-            <div class="rounded-[14px] bg-accented p-3 text-center">
-              <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedCustomer.averageOrderAmount) }}</p>
-              <p class="text-xs text-muted">{{ t('customers.averageOrder') }}</p>
-            </div>
-          </div>
-
-          <!-- Orders List -->
-          <div class="space-y-2">
-            <h3 class="text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
-
-            <div v-if="loadingOrders" class="space-y-2">
-              <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
-                <USkeleton class="size-5 rounded shrink-0" />
-                <div class="flex-1 space-y-1">
-                  <USkeleton class="h-3.5 w-24" />
-                  <USkeleton class="h-3 w-16" />
-                </div>
-                <USkeleton class="h-4 w-14" />
-              </div>
-            </div>
-
-            <template v-else-if="customerOrders.length">
-              <div
-                v-for="order in customerOrders"
-                :key="order.id"
-                class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default"
-              >
-                <UIcon
-                  :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
-                  class="size-5 shrink-0 text-muted"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-highlighted font-mono tabular-nums">{{ formatOrderDate(order.createdAt) }}</span>
-                    <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
-                  </div>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <UBadge :color="getOrderStatusColor(order.status)" variant="solid" size="sm" :ui="{ base: 'rounded-[5px] font-bold text-xs' }">
-                      {{ order.status }}
-                    </UBadge>
-                    <span class="text-xs text-muted font-mono tabular-nums">{{ order.items.length }} {{ t('orders.items') }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Load More -->
-              <UButton
-                v-if="customerOrders.length >= ordersPageSize"
-                variant="ghost"
-                color="neutral"
-                block
-                size="sm"
-                :loading="loadingMoreOrders"
-                @click="loadMoreOrders"
-              >
-                {{ t('common.loadMore') }}
-              </UButton>
-            </template>
-
-            <div v-else class="text-center py-8">
-              <UIcon name="i-lucide-package-x" class="size-10 mx-auto mb-2 text-muted" />
-              <p class="text-sm text-muted">{{ t('customers.noOrdersFound') }}</p>
-            </div>
-          </div>
-        </div>
+        <CustomersOrdersPanel
+          :customer="selectedCustomer"
+          :orders="customerOrders"
+          :loading="loadingOrders"
+          :loading-more="loadingMoreOrders"
+          :page-size="ordersPageSize"
+          @load-more="loadMoreOrders"
+        />
       </template>
     </USlideover>
   </div>
@@ -343,7 +359,7 @@
 
 <script lang="ts" setup>
 import type { CustomerStats, CustomerStatsResponse } from '~/types'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useGqlQuery } from '#imports'
@@ -351,19 +367,8 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-// Mobile detection for slideover side (bottom sheet on phone, right panel on desktop)
-const isMobile = ref(false)
-onMounted(() => {
-  const mql = window.matchMedia('(max-width: 767px)')
-  isMobile.value = mql.matches
-  mql.addEventListener('change', (e) => { isMobile.value = e.matches })
-})
-const sheetSide = computed<'right' | 'bottom'>(() => isMobile.value ? 'bottom' : 'right')
-const sheetUi = computed(() =>
-  isMobile.value
-    ? { content: 'max-h-[92dvh] rounded-t-2xl' }
-    : { content: 'max-w-md' }
-)
+const isMobile = useIsMobile()
+const showFilters = ref(false)
 
 const searchQuery = ref('')
 const page = ref(1)
@@ -418,9 +423,15 @@ function getDateRange(period: PeriodKey): { startDate?: string; endDate?: string
   }
 }
 
-function selectPeriod(key: PeriodKey) {
-  selectedPeriod.value = key
+function selectPeriod(key: PeriodKey | null) {
+  if (key) selectedPeriod.value = key
 }
+
+const mobilePeriodOptions = computed(() => periodPresets.value.map(p => ({ value: p.key, label: p.label })))
+
+const activeFilterCount = computed(() =>
+  (minOrders.value && minOrders.value > 1 ? 1 : 0) + (selectedOrderType.value ? 1 : 0)
+)
 
 const queryVariables = computed(() => {
   const { startDate, endDate } = getDateRange(selectedPeriod.value)
@@ -537,19 +548,15 @@ const columns = computed(() => [
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
 
+const formatShortDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('fr-BE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Brussels' })
+
 const getInitials = (firstName: string, lastName: string) =>
   `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
 
 // --- Customer Order History ---
 
-interface CustomerOrder {
-  id: string
-  createdAt: string
-  status: string
-  type: string
-  totalPrice: string
-  items: { quantity: number; product: { name: string } }[]
-}
+import type { CustomerOrder } from '~/components/customers/OrdersPanel.vue'
 
 const selectedCustomer = ref<CustomerStats | null>(null)
 const showOrderHistory = ref(false)
@@ -615,24 +622,4 @@ const loadMoreOrders = async () => {
     loadingMoreOrders.value = false
   }
 }
-
-type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
-
-const getOrderStatusColor = (status: string): UiColor => {
-  const colors: Record<string, UiColor> = {
-    PENDING: 'warning',
-    CONFIRMED: 'info',
-    PREPARING: 'neutral',
-    AWAITING_PICK_UP: 'success',
-    OUT_FOR_DELIVERY: 'info',
-    DELIVERED: 'success',
-    PICKED_UP: 'success',
-    FAILED: 'error',
-    CANCELLED: 'error'
-  }
-  return colors[status] ?? 'neutral'
-}
-
-const formatOrderDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 </script>
