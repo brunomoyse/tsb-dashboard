@@ -337,7 +337,8 @@
     "booking": "Reservering",
     "settings": "Instellingen",
     "logout": "Uitloggen",
-    "more": "Meer"
+    "more": "Meer",
+    "assistant": "WeChat-assistent"
   },
 
   "settings": {
@@ -481,5 +482,57 @@
     "activeCoupons": "{count} actief | {count} actief",
     "online": "online",
     "paused": "gepauzeerd"
+  },
+
+  "assistant": {
+    "title": "WeChat-assistent",
+    "description": "De eigenaar beheert het restaurant door in WeChat met de assistent te chatten: bestellingen, uitverkochte producten, prijzen, openingsuren. Belangrijke wijzigingen worden pas toegepast nadat de eigenaar in WeChat \"确认\" antwoordt. De assistent antwoordt alleen op de WeChat van de eigenaar.",
+    "connection": "WeChat-verbinding",
+    "connect": "WeChat verbinden",
+    "reconnect": "Opnieuw verbinden",
+    "disconnect": "Verbreken",
+    "disconnectConfirm": "Verbreken bevestigen",
+    "newQr": "Nieuwe QR-code",
+    "since": "Verbonden sinds {time}",
+    "expiredSince": "De sessie is verlopen op {time}. Verbind opnieuw.",
+    "unavailableHint": "De assistent-dienst antwoordt momenteel niet. Probeer het later opnieuw.",
+    "notConfiguredHint": "Er is geen WeChat-assistent ingesteld op deze server.",
+    "state": {
+      "loading": "Laden",
+      "notConfigured": "Niet ingesteld",
+      "connected": "Verbonden",
+      "disconnected": "Niet verbonden",
+      "expired": "Verlopen",
+      "unavailable": "Niet beschikbaar"
+    },
+    "login": {
+      "wait": "Scan met de WeChat van de eigenaar",
+      "scanned": "Gescand, bevestig op de telefoon",
+      "confirmed": "Verbonden",
+      "expired": "QR-code verlopen",
+      "refused": "Dit is niet de WeChat van de eigenaar",
+      "refusedHint": "De assistent hoort bij het WeChat-account dat hem als eerste verbond. Vink de optie hieronder aan en scan opnieuw om hem aan het account te geven dat net scande.",
+      "replaceOwner": "Maak het nieuwe account eigenaar",
+      "failed": "Verbinden mislukt, probeer opnieuw",
+      "cancelled": "Geannuleerd"
+    },
+    "qr": {
+      "alt": "WeChat-login QR-code",
+      "scanHint": "Pagina op een ander scherm: open in WeChat 扫一扫 (Scan), scan deze QR-code en bevestig op de telefoon.",
+      "saveHint": "Maar één telefoon: houd de afbeelding ingedrukt om ze te bewaren, kies ze dan in WeChat > 扫一扫 > album (rechtsboven).",
+      "linkHint": "Of kopieer de link, stuur hem in een WeChat-chat (bijvoorbeeld 文件传输助手) en tik erop.",
+      "copyLink": "Link kopiëren",
+      "copied": "Gekopieerd",
+      "openInWeChat": "Openen in WeChat"
+    },
+    "banner": {
+      "text": "De WeChat-assistent is niet meer verbonden: hij ontvangt de berichten van de eigenaar niet meer.",
+      "action": "Opnieuw verbinden"
+    },
+    "errors": {
+      "start": "Geen QR-code ontvangen, probeer later opnieuw.",
+      "copy": "Kopiëren mislukt, bewaar de QR-code-afbeelding.",
+      "disconnect": "Verbreken mislukt, probeer opnieuw."
+    }
   }
 }

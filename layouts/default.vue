@@ -93,6 +93,7 @@
             '--pili-safe-bottom': tabBarVisible ? '0px' : 'env(safe-area-inset-bottom)',
           }"
         >
+          <AssistantBanner />
           <slot />
         </div>
       </template>
@@ -163,6 +164,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
       item(t('navigation.customers'), 'i-lucide-users', 'customers'),
       item(t('navigation.coupons'), 'i-lucide-ticket', 'coupons'),
       item(t('navigation.settings'), 'i-lucide-settings', 'settings'),
+      item(t('navigation.assistant'), 'i-lucide-message-circle', 'assistant'),
     ],
   ]
 })

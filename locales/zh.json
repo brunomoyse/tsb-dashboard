@@ -345,7 +345,8 @@
     "booking": "预订",
     "settings": "设置",
     "logout": "登出",
-    "more": "更多"
+    "more": "更多",
+    "assistant": "微信助手"
   },
 
   "settings": {
@@ -496,5 +497,57 @@
     "activeCoupons": "{count} 个有效 | {count} 个有效",
     "online": "营业中",
     "paused": "已暂停"
+  },
+
+  "assistant": {
+    "title": "微信助手",
+    "description": "店主可以在微信里和助手聊天来管理餐厅：查订单、设置售罄、改价格、调整营业时间等。重要的修改需要在微信里回复「确认」才会执行。助手只回复店主的微信。",
+    "connection": "微信连接",
+    "connect": "连接微信",
+    "reconnect": "重新连接",
+    "disconnect": "断开",
+    "disconnectConfirm": "确认断开",
+    "newQr": "重新生成二维码",
+    "since": "自 {time} 起已连接",
+    "expiredSince": "登录已于 {time} 失效，请重新连接。",
+    "unavailableHint": "助手服务暂时没有响应，请稍后再试。",
+    "notConfiguredHint": "这个服务器没有配置微信助手。",
+    "state": {
+      "loading": "加载中",
+      "notConfigured": "未配置",
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "expired": "已失效",
+      "unavailable": "暂不可用"
+    },
+    "login": {
+      "wait": "请用店主的微信扫码",
+      "scanned": "已扫码，请在手机上确认",
+      "confirmed": "连接成功",
+      "expired": "二维码已过期",
+      "refused": "扫码的不是店主的微信",
+      "refusedHint": "这个助手只属于第一次连接它的微信号。如果要换成刚才扫码的微信号，请勾选下面的选项，再重新扫码。",
+      "replaceOwner": "让新扫码的微信号成为店主",
+      "failed": "连接失败，请重试",
+      "cancelled": "已取消"
+    },
+    "qr": {
+      "alt": "微信登录二维码",
+      "scanHint": "用另一部手机或电脑屏幕显示这个页面时：打开微信 > 扫一扫，扫描上面的二维码，然后在手机上确认。",
+      "saveHint": "只有一部手机时：长按二维码图片保存到相册，然后打开微信 > 扫一扫 > 右上角的相册，选择这张图片。",
+      "linkHint": "也可以复制链接，粘贴到微信里任意聊天（例如文件传输助手）发送，然后点击这个链接。",
+      "copyLink": "复制链接",
+      "copied": "已复制",
+      "openInWeChat": "在微信中打开"
+    },
+    "banner": {
+      "text": "微信助手已断开，店主的微信消息暂时收不到。",
+      "action": "重新连接"
+    },
+    "errors": {
+      "start": "无法获取二维码，请稍后再试。",
+      "copy": "无法复制，请长按二维码图片保存。",
+      "disconnect": "断开失败，请重试。"
+    }
   }
 }

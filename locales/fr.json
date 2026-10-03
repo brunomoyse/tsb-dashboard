@@ -345,7 +345,8 @@
     "booking": "Réservation",
     "settings": "Paramètres",
     "logout": "Déconnexion",
-    "more": "Plus"
+    "more": "Plus",
+    "assistant": "Assistant WeChat"
   },
 
   "settings": {
@@ -496,5 +497,57 @@
     "activeCoupons": "{count} actif | {count} actifs",
     "online": "en ligne",
     "paused": "en pause"
+  },
+
+  "assistant": {
+    "title": "Assistant WeChat",
+    "description": "Le gérant peut piloter le restaurant en discutant avec l'assistant dans WeChat : commandes, ruptures de stock, prix, horaires. Les changements importants ne s'appliquent qu'après sa réponse « 确认 » dans WeChat. L'assistant ne répond qu'au WeChat du gérant.",
+    "connection": "Connexion WeChat",
+    "connect": "Connecter WeChat",
+    "reconnect": "Reconnecter",
+    "disconnect": "Déconnecter",
+    "disconnectConfirm": "Confirmer la déconnexion",
+    "newQr": "Nouveau QR code",
+    "since": "Connecté depuis le {time}",
+    "expiredSince": "La session a expiré le {time}. Reconnectez-la.",
+    "unavailableHint": "Le service de l'assistant ne répond pas pour le moment. Réessayez plus tard.",
+    "notConfiguredHint": "Aucun assistant WeChat n'est configuré sur ce serveur.",
+    "state": {
+      "loading": "Chargement",
+      "notConfigured": "Non configuré",
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "expired": "Expiré",
+      "unavailable": "Indisponible"
+    },
+    "login": {
+      "wait": "Scannez avec le WeChat du gérant",
+      "scanned": "Scanné, confirmez sur le téléphone",
+      "confirmed": "Connecté",
+      "expired": "QR code expiré",
+      "refused": "Ce n'est pas le WeChat du gérant",
+      "refusedHint": "L'assistant appartient au compte WeChat qui l'a connecté en premier. Pour le confier au compte qui vient de scanner, cochez l'option ci-dessous et scannez à nouveau.",
+      "replaceOwner": "Faire du nouveau compte le gérant",
+      "failed": "La connexion a échoué, réessayez",
+      "cancelled": "Annulé"
+    },
+    "qr": {
+      "alt": "QR code de connexion WeChat",
+      "scanHint": "Page affichée sur un autre écran : dans WeChat, ouvrez 扫一扫 (Scan), scannez ce QR code puis confirmez sur le téléphone.",
+      "saveHint": "Un seul téléphone : appui long sur l'image pour l'enregistrer, puis dans WeChat > 扫一扫 > album (en haut à droite), choisissez l'image.",
+      "linkHint": "Ou copiez le lien, envoyez-le dans n'importe quelle discussion WeChat (par exemple 文件传输助手) et touchez-le.",
+      "copyLink": "Copier le lien",
+      "copied": "Copié",
+      "openInWeChat": "Ouvrir dans WeChat"
+    },
+    "banner": {
+      "text": "L'assistant WeChat est déconnecté : il ne reçoit plus les messages du gérant.",
+      "action": "Reconnecter"
+    },
+    "errors": {
+      "start": "Impossible d'obtenir un QR code, réessayez plus tard.",
+      "copy": "Copie impossible, enregistrez l'image du QR code.",
+      "disconnect": "La déconnexion a échoué, réessayez."
+    }
   }
 }

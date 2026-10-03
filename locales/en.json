@@ -344,7 +344,8 @@
     "booking": "Booking",
     "settings": "Settings",
     "logout": "Logout",
-    "more": "More"
+    "more": "More",
+    "assistant": "WeChat assistant"
   },
 
   "settings": {
@@ -495,5 +496,57 @@
     "activeCoupons": "{count} active | {count} active",
     "online": "online",
     "paused": "paused"
+  },
+
+  "assistant": {
+    "title": "WeChat assistant",
+    "description": "The owner runs the restaurant by chatting with the assistant in WeChat: orders, sold-out items, prices, opening hours. Important changes are only applied after the owner replies \"确认\" in WeChat. The assistant only answers the owner's WeChat.",
+    "connection": "WeChat connection",
+    "connect": "Connect WeChat",
+    "reconnect": "Reconnect",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Confirm disconnect",
+    "newQr": "New QR code",
+    "since": "Connected since {time}",
+    "expiredSince": "The session expired on {time}. Reconnect it.",
+    "unavailableHint": "The assistant service is not answering right now. Try again later.",
+    "notConfiguredHint": "No WeChat assistant is configured on this server.",
+    "state": {
+      "loading": "Loading",
+      "notConfigured": "Not configured",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "expired": "Expired",
+      "unavailable": "Unavailable"
+    },
+    "login": {
+      "wait": "Scan with the owner's WeChat",
+      "scanned": "Scanned, confirm on the phone",
+      "confirmed": "Connected",
+      "expired": "QR code expired",
+      "refused": "This is not the owner's WeChat",
+      "refusedHint": "The assistant belongs to the WeChat account that connected it first. To hand it to the account that just scanned, tick the option below and scan again.",
+      "replaceOwner": "Make the new account the owner",
+      "failed": "Connection failed, try again",
+      "cancelled": "Cancelled"
+    },
+    "qr": {
+      "alt": "WeChat login QR code",
+      "scanHint": "Page shown on another screen: in WeChat, open 扫一扫 (Scan), scan this QR code and confirm on the phone.",
+      "saveHint": "Only one phone: long-press the image to save it, then in WeChat > 扫一扫 > album (top right), pick the image.",
+      "linkHint": "Or copy the link, send it in any WeChat chat (for example 文件传输助手) and tap it.",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "openInWeChat": "Open in WeChat"
+    },
+    "banner": {
+      "text": "The WeChat assistant is disconnected: it no longer receives the owner's messages.",
+      "action": "Reconnect"
+    },
+    "errors": {
+      "start": "Could not get a QR code, try again later.",
+      "copy": "Could not copy, save the QR code image instead.",
+      "disconnect": "Disconnect failed, try again."
+    }
   }
 }

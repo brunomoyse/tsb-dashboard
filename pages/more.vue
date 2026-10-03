@@ -55,6 +55,7 @@
 import type { AppLocale } from '~/composables/useLocaleSwitch'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
+import { stateKey } from '~/utils/assistant'
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
@@ -63,6 +64,7 @@ const isMobile = useIsMobile()
 const { $gqlFetch } = useNuxtApp()
 const { languages, onLanguageChange } = useLocaleSwitch()
 const { enabled: orderingEnabled } = useOrderingStatus()
+const { connection: assistant } = useAssistantStatus()
 
 const restaurantName = useRuntimeConfig().public.restaurantName as string
 
@@ -124,6 +126,11 @@ const items = computed(() => [
         : orderingEnabled.value
           ? t('more.online')
           : t('more.paused'),
+  },
+  {
+    to: '/assistant',
+    label: t('navigation.assistant'),
+    hint: assistant.value?.enabled ? t(stateKey(assistant.value)) : '',
   },
 ])
 

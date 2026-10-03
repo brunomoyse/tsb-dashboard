@@ -34,7 +34,7 @@ const localePath = useLocalePath()
 const ordersStore = useOrdersStore()
 
 // Pages reached from the Plus tab keep it active.
-const MORE_SECTIONS = ['/more', '/customers', '/coupons', '/settings']
+const MORE_SECTIONS = ['/more', '/customers', '/coupons', '/settings', '/assistant']
 
 const tabs = computed(() => {
   const path = route.path
