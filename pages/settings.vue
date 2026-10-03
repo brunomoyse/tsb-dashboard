@@ -548,6 +548,13 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
 import SecuritySettings from '~/components/SecuritySettings.vue'
 import SettingsSection from '~/components/SettingsSection.vue'
+import {
+  defaultOverrideDate,
+  formatOverrideDate as formatOverrideDateIn,
+  overrideDateKey,
+  overrideDateRange,
+  overrideDateToGql,
+} from '~/utils/scheduleOverride'
 import gql from 'graphql-tag'
 import { onBeforeRouteLeave } from 'vue-router'
 import { print } from 'graphql'
@@ -928,16 +935,14 @@ const resetForm = () => {
 
 const openAddOverride = () => {
   resetForm()
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  form.date = d.toISOString().slice(0, 10)
+  form.date = defaultOverrideDate()
   modalOpen.value = true
 }
 
 const openEditOverride = (ov: ScheduleOverride) => {
   resetForm()
   editingDate.value = ov.date
-  form.date = ov.date.slice(0, 10)
+  form.date = overrideDateKey(ov.date)
   form.closed = ov.closed
   form.note = ov.note ?? ''
   if (ov.schedule) {
@@ -949,23 +954,11 @@ const openEditOverride = (ov: ScheduleOverride) => {
   modalOpen.value = true
 }
 
-// Inclusive list of local dates from start to end (end empty or before start → start only)
-const rangeDates = (start: string, end: string): Date[] => {
-  const from = new Date(`${start}T00:00:00`)
-  const to = end ? new Date(`${end}T00:00:00`) : from
-  const dayCount = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1)
-  return Array.from({ length: dayCount }, (_, i) => {
-    const d = new Date(from)
-    d.setDate(d.getDate() + i)
-    return d
-  })
-}
-
 const saveOverride = async () => {
   if (!form.date) return
   const dates = editingDate.value
-    ? [new Date(`${form.date}T00:00:00`)]
-    : rangeDates(form.date, form.dateEnd)
+    ? [form.date]
+    : overrideDateRange(form.date, form.dateEnd)
   if (dates.length > 7 && !confirm(t('settings.overrides.confirmRange', { count: dates.length }))) return
   savingOverride.value = true
   try {
@@ -983,7 +976,7 @@ const saveOverride = async () => {
     }
     for (const date of dates) {
       await $gqlFetch(print(UPSERT_OVERRIDE), {
-        variables: { input: { ...base, date: date.toISOString() } },
+        variables: { input: { ...base, date: overrideDateToGql(date) } },
       })
     }
     modalOpen.value = false
@@ -1015,12 +1008,7 @@ const overrideMenuItems = (ov: ScheduleOverride): DropdownMenuItem[][] => [
   ],
 ]
 
-const formatOverrideDate = (iso: string) => {
-  const d = new Date(iso)
-  return new Intl.DateTimeFormat(locale.value, {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-  }).format(d)
-}
+const formatOverrideDate = (iso: string) => formatOverrideDateIn(iso, locale.value)
 
 const SUB_CONFIG_UPDATED = gql`
   subscription RestaurantConfigUpdated {
