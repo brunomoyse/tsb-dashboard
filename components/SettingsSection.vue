@@ -17,7 +17,9 @@
           {{ summary || description }}
         </span>
       </span>
-      <span class="font-mono text-[18px] leading-none text-muted shrink-0" aria-hidden="true">{{ open ? '−' : '+' }}</span>
+      <span class="font-mono text-[18px] leading-none text-muted shrink-0" aria-hidden="true">{{
+        open ? '−' : '+'
+      }}</span>
     </button>
     <div v-show="open" :id="bodyId" class="px-4 pb-2">
       <slot />
@@ -48,26 +50,15 @@
             class="rounded-[5px] text-[11px] font-bold"
           />
         </div>
-        <p
-          v-if="description"
-          class="text-xs sm:text-sm text-muted mt-1 leading-snug"
-        >
+        <p v-if="description" class="text-xs sm:text-sm text-muted mt-1 leading-snug">
           {{ description }}
         </p>
       </div>
-      <div
-        v-if="$slots.actions"
-        class="shrink-0"
-        @click.stop
-      >
+      <div v-if="$slots.actions" class="shrink-0" @click.stop>
         <slot name="actions" />
       </div>
     </button>
-    <div
-      v-show="open"
-      :id="bodyId"
-      class="px-4 sm:px-5 pb-4 sm:pb-5 pt-1"
-    >
+    <div v-show="open" :id="bodyId" class="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
       <slot />
     </div>
   </div>

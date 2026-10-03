@@ -6,7 +6,10 @@ declare module '#app' {
   interface NuxtApp {
     $apiBaseUrl: () => string
     $api: <T = unknown>(request: string, options?: Record<string, unknown>) => Promise<T>
-    $gqlFetch: <T = unknown>(query: string | DocumentNode, options?: { variables?: Record<string, unknown>; signal?: AbortSignal }) => Promise<T>
+    $gqlFetch: <T = unknown>(
+      query: string | DocumentNode,
+      options?: { variables?: Record<string, unknown>; signal?: AbortSignal },
+    ) => Promise<T>
     $router: Router
     $localePath: (path: string) => string
   }

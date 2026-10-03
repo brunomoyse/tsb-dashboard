@@ -2,15 +2,15 @@
 import { Capacitor } from '@capacitor/core'
 
 export default defineNuxtPlugin(async () => {
-    if (!Capacitor.isNativePlatform()) return
+  if (!Capacitor.isNativePlatform()) return
 
-    const { useAuthStore } = await import('~/stores/auth')
-    const authStore = useAuthStore()
+  const { useAuthStore } = await import('~/stores/auth')
+  const authStore = useAuthStore()
 
-    // Only register if user is authenticated
-    if (!authStore.user) return
+  // Only register if user is authenticated
+  if (!authStore.user) return
 
-    const { usePushNotifications } = await import('~/composables/usePushNotifications')
-    const { register } = usePushNotifications()
-    await register()
+  const { usePushNotifications } = await import('~/composables/usePushNotifications')
+  const { register } = usePushNotifications()
+  await register()
 })

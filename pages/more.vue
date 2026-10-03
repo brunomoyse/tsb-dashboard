@@ -5,12 +5,16 @@
       <span class="w-px h-7 bg-(--ui-border) shrink-0" aria-hidden="true" />
       <span class="min-w-0 flex flex-col">
         <span class="text-[15px] font-bold truncate">{{ restaurantName }}</span>
-        <span v-if="authStore.user?.email" class="font-mono text-xs text-muted truncate">{{ authStore.user.email }}</span>
+        <span v-if="authStore.user?.email" class="font-mono text-xs text-muted truncate">{{
+          authStore.user.email
+        }}</span>
       </span>
     </div>
 
     <div class="px-4 pb-5 flex flex-col gap-4">
-      <div class="rounded-[14px] bg-elevated border border-default overflow-hidden divide-y divide-default">
+      <div
+        class="rounded-[14px] bg-elevated border border-default overflow-hidden divide-y divide-default"
+      >
         <NuxtLink
           v-for="item in items"
           :key="item.to"
@@ -24,9 +28,11 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <span class="font-mono text-xs font-bold tracking-[0.06em] uppercase text-muted">{{ t('more.language') }}</span>
+        <span class="font-mono text-xs font-bold tracking-[0.06em] uppercase text-muted">{{
+          t('more.language')
+        }}</span>
         <PiliSegmented
-          :model-value="(locale as AppLocale)"
+          :model-value="locale as AppLocale"
           :options="languageOptions"
           :label="t('more.language')"
           @update:model-value="(value) => value && onLanguageChange(value)"
@@ -61,14 +67,24 @@ const { enabled: orderingEnabled } = useOrderingStatus()
 const restaurantName = useRuntimeConfig().public.restaurantName as string
 
 // Plus only exists on phones: tablet and desktop have everything in the sidebar.
-watch(isMobile, (mobile) => {
-  if (!mobile) navigateTo(localePath('/orders'), { replace: true })
-}, { immediate: true })
+watch(
+  isMobile,
+  (mobile) => {
+    if (!mobile) navigateTo(localePath('/orders'), { replace: true })
+  },
+  { immediate: true },
+)
 
 const MORE_COUNTS = print(gql`
   query MoreCounts {
-    customerStats { summary { totalCustomers } }
-    coupons { status }
+    customerStats {
+      summary {
+        totalCustomers
+      }
+    }
+    coupons {
+      status
+    }
   }
 `)
 
@@ -82,7 +98,7 @@ onMounted(async () => {
   }>(MORE_COUNTS)
   if (!data) return
   customerCount.value = data.customerStats.summary.totalCustomers
-  activeCoupons.value = data.coupons.filter(c => c.status === 'ACTIVE').length
+  activeCoupons.value = data.coupons.filter((c) => c.status === 'ACTIVE').length
 })
 
 const items = computed(() => [
@@ -94,16 +110,24 @@ const items = computed(() => [
   {
     to: '/coupons',
     label: t('navigation.coupons'),
-    hint: activeCoupons.value === null ? '' : t('more.activeCoupons', { count: activeCoupons.value }, activeCoupons.value),
+    hint:
+      activeCoupons.value === null
+        ? ''
+        : t('more.activeCoupons', { count: activeCoupons.value }, activeCoupons.value),
   },
   {
     to: '/settings',
     label: t('navigation.settings'),
-    hint: orderingEnabled.value === null ? '' : (orderingEnabled.value ? t('more.online') : t('more.paused')),
+    hint:
+      orderingEnabled.value === null
+        ? ''
+        : orderingEnabled.value
+          ? t('more.online')
+          : t('more.paused'),
   },
 ])
 
 const languageOptions = computed(() =>
-  languages.map(lang => ({ value: lang.value as AppLocale, label: lang.short }))
+  languages.map((lang) => ({ value: lang.value as AppLocale, label: lang.short })),
 )
 </script>

@@ -1,37 +1,37 @@
 import type { User } from '@/types'
 import { defineStore } from 'pinia'
 
-export const useAuthStore = defineStore("auth", {
-    state: () => ({
-        user: null as User | null,
-    }),
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    user: null as User | null,
+  }),
 
-    actions: {
-        setUser(user: User) {
-            this.user = user
-        },
-        updateUser(user: Partial<User>) {
-            if (this.user) {
-                Object.assign(this.user, user)
-            }
-        },
-        clearUser() {
-            this.user = null
-        },
-        async logout() {
-            // Clear state BEFORE the redirect (signOut triggers window.location change)
-            this.user = null
-            if (import.meta.client) {
-                localStorage.removeItem('auth')
-            }
-            try {
-                const { useOidc } = await import('~/composables/useOidc')
-                const { signOut } = useOidc()
-                await signOut()
-            } catch (error) {
-                if (import.meta.dev) console.error('Logout error:', error)
-            }
-        }
+  actions: {
+    setUser(user: User) {
+      this.user = user
     },
-    persist: true,
-});
+    updateUser(user: Partial<User>) {
+      if (this.user) {
+        Object.assign(this.user, user)
+      }
+    },
+    clearUser() {
+      this.user = null
+    },
+    async logout() {
+      // Clear state BEFORE the redirect (signOut triggers window.location change)
+      this.user = null
+      if (import.meta.client) {
+        localStorage.removeItem('auth')
+      }
+      try {
+        const { useOidc } = await import('~/composables/useOidc')
+        const { signOut } = useOidc()
+        await signOut()
+      } catch (error) {
+        if (import.meta.dev) console.error('Logout error:', error)
+      }
+    },
+  },
+  persist: true,
+})

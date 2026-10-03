@@ -6,46 +6,45 @@ import { hash } from 'ohash'
 
 type Vars = Record<string, unknown> | (() => Record<string, unknown>)
 interface Options {
-    immediate?: boolean
-    cache?: boolean
-    server?: boolean
+  immediate?: boolean
+  cache?: boolean
+  server?: boolean
 }
 
 interface GqlQueryResult<T> {
-    data: Ref<T | undefined>
-    pending: Ref<boolean>
-    error: Ref<unknown>
-    refresh: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
-    refetch: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
+  data: Ref<T | undefined>
+  pending: Ref<boolean>
+  error: Ref<unknown>
+  refresh: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
+  refetch: (opts?: { dedupe?: 'cancel' | 'defer' }) => Promise<void>
 }
 
 export const useGqlQuery = async <T>(
-    rawQuery: string | DocumentNode,
-    variables: Vars = {},
-    opts: Options = { immediate: true, cache: false },   // ⬅ default cache:false
+  rawQuery: string | DocumentNode,
+  variables: Vars = {},
+  opts: Options = { immediate: true, cache: false }, // ⬅ default cache:false
 ): Promise<GqlQueryResult<T>> => {
-    const { $gqlFetch } = useNuxtApp()
-    const getVars = () => (typeof variables === 'function' ? variables() : variables)
-    const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
+  const { $gqlFetch } = useNuxtApp()
+  const getVars = () => (typeof variables === 'function' ? variables() : variables)
+  const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
 
-    // Choose overload: with key (cache) or without key (no cache)
-    const asyncOpts = { immediate: opts.immediate, server: opts.server }
-    const asyncData = opts.cache
-        ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, asyncOpts)
-        : await useAsyncData<T>(handler, asyncOpts)
+  // Choose overload: with key (cache) or without key (no cache)
+  const asyncOpts = { immediate: opts.immediate, server: opts.server }
+  const asyncData = opts.cache
+    ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, asyncOpts)
+    : await useAsyncData<T>(handler, asyncOpts)
 
-    if (typeof variables === 'function') {
-        watch(
-            () => variables(),
-            () => asyncData.refresh({ dedupe: 'cancel' }),
-            { deep: true },
-        )
-    }
+  if (typeof variables === 'function') {
+    watch(
+      () => variables(),
+      () => asyncData.refresh({ dedupe: 'cancel' }),
+      { deep: true },
+    )
+  }
 
-    const result = asyncData as unknown as GqlQueryResult<T>
-    result.refetch = asyncData.refresh
-    return result
+  const result = asyncData as unknown as GqlQueryResult<T>
+  result.refetch = asyncData.refresh
+  return result
 }
 
-const printIfAst = (q: string | DocumentNode): string =>
-    typeof q === 'string' ? q : print(q)
+const printIfAst = (q: string | DocumentNode): string => (typeof q === 'string' ? q : print(q))

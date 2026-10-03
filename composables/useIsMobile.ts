@@ -16,7 +16,9 @@ export function useIsMobile(): Ref<boolean> {
     bound = true
     const mql = window.matchMedia(MOBILE_QUERY)
     isMobile.value = mql.matches
-    mql.addEventListener('change', (e) => { isMobile.value = e.matches })
+    mql.addEventListener('change', (e) => {
+      isMobile.value = e.matches
+    })
   }
   return isMobile
 }

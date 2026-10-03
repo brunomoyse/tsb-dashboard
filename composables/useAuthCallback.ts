@@ -6,24 +6,24 @@ import { useAuthStore } from '@/stores/auth'
 import { useOidc } from '~/composables/useOidc'
 
 const ME = gql`
-    query {
-        me {
-            id
-            email
-            firstName
-            lastName
-            phoneNumber
-            isAdmin
-            address {
-                id
-                streetName
-                houseNumber
-                municipalityName
-                postcode
-                distance
-            }
-        }
+  query {
+    me {
+      id
+      email
+      firstName
+      lastName
+      phoneNumber
+      isAdmin
+      address {
+        id
+        streetName
+        houseNumber
+        municipalityName
+        postcode
+        distance
+      }
     }
+  }
 `
 
 /**
@@ -33,31 +33,31 @@ const ME = gql`
  * to the dashboard home.
  */
 export function useAuthCallback() {
-    const authStore = useAuthStore()
-    const localePath = useLocalePath()
-    const { $gqlFetch } = useNuxtApp() as unknown as {
-        $gqlFetch: <T>(query: string) => Promise<T>
+  const authStore = useAuthStore()
+  const localePath = useLocalePath()
+  const { $gqlFetch } = useNuxtApp() as unknown as {
+    $gqlFetch: <T>(query: string) => Promise<T>
+  }
+
+  async function processCallback(): Promise<{ ok: boolean; reason?: 'not_admin' }> {
+    // Ensure the access token is loaded before hitting the API
+    const { getAccessToken } = useOidc()
+    await getAccessToken()
+
+    const data = await $gqlFetch<{ me: User }>(print(ME))
+    if (!data?.me) {
+      return { ok: false }
     }
 
-    async function processCallback(): Promise<{ ok: boolean; reason?: 'not_admin' }> {
-        // Ensure the access token is loaded before hitting the API
-        const { getAccessToken } = useOidc()
-        await getAccessToken()
-
-        const data = await $gqlFetch<{ me: User }>(print(ME))
-        if (!data?.me) {
-            return { ok: false }
-        }
-
-        if (!data.me.isAdmin) {
-            authStore.clearUser()
-            return { ok: false, reason: 'not_admin' }
-        }
-
-        authStore.setUser(data.me)
-        await navigateTo(localePath('orders'))
-        return { ok: true }
+    if (!data.me.isAdmin) {
+      authStore.clearUser()
+      return { ok: false, reason: 'not_admin' }
     }
 
-    return { processCallback }
+    authStore.setUser(data.me)
+    await navigateTo(localePath('orders'))
+    return { ok: true }
+  }
+
+  return { processCallback }
 }

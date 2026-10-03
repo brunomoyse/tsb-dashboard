@@ -1,7 +1,11 @@
 <template>
   <span
     class="inline-flex items-center shrink-0 rounded-[5px] font-bold whitespace-nowrap"
-    :class="[sizeClass, toneClass, mono || tone === 'outline' ? 'font-mono text-[11px] tracking-[0.05em]' : '']"
+    :class="[
+      sizeClass,
+      toneClass,
+      mono || tone === 'outline' ? 'font-mono text-[11px] tracking-[0.05em]' : '',
+    ]"
   >
     <slot />
   </span>
@@ -12,17 +16,20 @@ import { computed } from 'vue'
 
 export type PiliChipTone = 'warning' | 'danger' | 'success' | 'info' | 'neutral' | 'outline'
 
-const props = withDefaults(defineProps<{
-  tone?: PiliChipTone
-  /** sm 20px, md 22px, lg 24px */
-  size?: 'sm' | 'md' | 'lg'
-  /** Mono uppercase label (EN RETARD, LIVRAISON) */
-  mono?: boolean
-}>(), {
-  tone: 'neutral',
-  size: 'md',
-  mono: false,
-})
+const props = withDefaults(
+  defineProps<{
+    tone?: PiliChipTone
+    /** sm 20px, md 22px, lg 24px */
+    size?: 'sm' | 'md' | 'lg'
+    /** Mono uppercase label (EN RETARD, LIVRAISON) */
+    mono?: boolean
+  }>(),
+  {
+    tone: 'neutral',
+    size: 'md',
+    mono: false,
+  },
+)
 
 // Solid colour with Encre text. Neutral is Ardoise with Brume text.
 const TONES: Record<PiliChipTone, string> = {

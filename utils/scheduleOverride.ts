@@ -32,5 +32,9 @@ export const overrideDateRange = (start: string, end?: string | null): string[] 
 /** Long, localised label of an override date, independent of the browser timezone. */
 export const formatOverrideDate = (iso: string, locale: string): string =>
   new Intl.DateTimeFormat(locale, {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC',
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
   }).format(new Date(overrideDateToGql(overrideDateKey(iso))))

@@ -1,14 +1,19 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 /* Native app feel — eliminate web browser artifacts */
-html, body {
+html,
+body {
   overscroll-behavior: none; /* No pull-to-refresh or elastic overscroll */
   -webkit-tap-highlight-color: transparent; /* No gray flash on tap */
 }
 
 /* Prevent long-press context menu and text selection on interactive elements */
-button, a, [role="button"], [tabindex], .select-none {
+button,
+a,
+[role='button'],
+[tabindex],
+.select-none {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -64,12 +69,13 @@ button, a, [role="button"], [tabindex], .select-none {
   --color-brume-950: #15181a;
 }
 
-:root, .dark {
-  --ui-bg: #0b0d0e;            /* Encre */
-  --ui-bg-muted: #15181a;      /* Graphite */
-  --ui-bg-elevated: #15181a;   /* Graphite: cards, sidebar, modals */
-  --ui-bg-accented: #1f2327;   /* Ardoise: secondary buttons, inputs */
-  --ui-bg-inverted: #f2f4f2;   /* Brume: selection */
+:root,
+.dark {
+  --ui-bg: #0b0d0e; /* Encre */
+  --ui-bg-muted: #15181a; /* Graphite */
+  --ui-bg-elevated: #15181a; /* Graphite: cards, sidebar, modals */
+  --ui-bg-accented: #1f2327; /* Ardoise: secondary buttons, inputs */
+  --ui-bg-inverted: #f2f4f2; /* Brume: selection */
   --ui-border: #2b3035;
   --ui-border-muted: #1f2327;
   --ui-border-accented: #2b3035;
@@ -80,15 +86,15 @@ button, a, [role="button"], [tabindex], .select-none {
   --ui-text-muted: #9aa3a8;
   --ui-text-dimmed: #9aa3a8;
   --ui-text-inverted: #0b0d0e;
-  --ui-primary: #d7ff3a;       /* Volt */
+  --ui-primary: #d7ff3a; /* Volt */
   --ui-secondary: #f2f4f2;
   --ui-success: #22c55e;
   --ui-info: #00d4ff;
   --ui-warning: #ffb020;
   --ui-error: #ff4d3d;
-  --ui-radius: 0.25rem;        /* Nuxt UI scale: lg 8px, xl 12px, 2xl 16px */
+  --ui-radius: 0.25rem; /* Nuxt UI scale: lg 8px, xl 12px, 2xl 16px */
 
-  --pili-pressed: #2b3035;     /* pressed surface, switch track when off */
+  --pili-pressed: #2b3035; /* pressed surface, switch track when off */
   color-scheme: dark;
 }
 
@@ -108,7 +114,10 @@ button, a, [role="button"], [tabindex], .select-none {
 @media (pointer: coarse) {
   /* Switches are excluded: a 44px min-height stretches the track out of its
      pill shape. Their tap target comes from the row or wrapper around them. */
-  button:not([role="switch"]), [role="button"], a[href], [tabindex="0"] {
+  button:not([role='switch']),
+  [role='button'],
+  a[href],
+  [tabindex='0'] {
     min-height: 44px;
   }
 }
@@ -153,11 +162,11 @@ button, a, [role="button"], [tabindex], .select-none {
   opacity: 0.6;
 }
 
-[draggable="true"] {
+[draggable='true'] {
   cursor: grab;
 }
 
-[draggable="true"]:active {
+[draggable='true']:active {
   cursor: grabbing;
 }
 
@@ -169,4 +178,3 @@ button, a, [role="button"], [tabindex], .select-none {
     user-select: none;
   }
 }
-

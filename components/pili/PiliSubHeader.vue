@@ -16,12 +16,15 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  title: string
-  backTo?: string
-}>(), {
-  backTo: '/more',
-})
+withDefaults(
+  defineProps<{
+    title: string
+    backTo?: string
+  }>(),
+  {
+    backTo: '/more',
+  },
+)
 
 const { t } = useI18n()
 const localePath = useLocalePath()

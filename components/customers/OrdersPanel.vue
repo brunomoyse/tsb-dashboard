@@ -8,32 +8,47 @@
       <div class="space-y-1 mt-1 text-sm text-muted">
         <p>{{ customer.email }}</p>
         <p v-if="customer.phoneNumber" class="font-mono tabular-nums">{{ customer.phoneNumber }}</p>
-        <p>{{ t('customers.memberSince') }}: <span class="font-mono tabular-nums">{{ formatDate(customer.registeredAt) }}</span></p>
+        <p>
+          {{ t('customers.memberSince') }}:
+          <span class="font-mono tabular-nums">{{ formatDate(customer.registeredAt) }}</span>
+        </p>
       </div>
     </div>
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-3">
       <div class="rounded-[14px] bg-accented p-3 text-center">
-        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ customer.totalOrders }}</p>
+        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">
+          {{ customer.totalOrders }}
+        </p>
         <p class="text-xs text-muted">{{ t('customers.totalOrders') }}</p>
       </div>
       <div class="rounded-[14px] bg-accented p-3 text-center">
-        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(customer.totalAmount) }}</p>
+        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">
+          {{ formatPrice(customer.totalAmount) }}
+        </p>
         <p class="text-xs text-muted">{{ t('customers.totalAmount') }}</p>
       </div>
       <div class="rounded-[14px] bg-accented p-3 text-center">
-        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(customer.averageOrderAmount) }}</p>
+        <p class="text-lg font-bold text-highlighted font-mono tabular-nums">
+          {{ formatPrice(customer.averageOrderAmount) }}
+        </p>
         <p class="text-xs text-muted">{{ t('customers.averageOrder') }}</p>
       </div>
     </div>
 
     <!-- Orders List -->
     <div class="space-y-2">
-      <h3 class="hidden md:block text-sm font-medium text-muted">{{ t('customers.orderHistory') }}</h3>
+      <h3 class="hidden md:block text-sm font-medium text-muted">
+        {{ t('customers.orderHistory') }}
+      </h3>
 
       <div v-if="loading" class="space-y-2">
-        <div v-for="i in 5" :key="i" class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default">
+        <div
+          v-for="i in 5"
+          :key="i"
+          class="flex items-center gap-3 p-3 rounded-[14px] bg-elevated border border-default"
+        >
           <USkeleton class="size-5 rounded shrink-0" />
           <div class="flex-1 space-y-1">
             <USkeleton class="h-3.5 w-24" />
@@ -55,14 +70,20 @@
           />
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-sm font-medium text-highlighted font-mono tabular-nums">{{ formatOrderDate(order.createdAt) }}</span>
-              <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
+              <span class="text-sm font-medium text-highlighted font-mono tabular-nums">{{
+                formatOrderDate(order.createdAt)
+              }}</span>
+              <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{
+                formatPrice(order.totalPrice)
+              }}</span>
             </div>
             <div class="flex items-center gap-2 mt-0.5">
               <PiliChip size="sm" :tone="statusTone(order.status)">
                 {{ t(`orders.status.${order.status.toLowerCase()}`) }}
               </PiliChip>
-              <span class="text-xs text-muted font-mono tabular-nums">{{ order.items.length }} {{ t('orderHistory.itemsShort') }}</span>
+              <span class="text-xs text-muted font-mono tabular-nums"
+                >{{ order.items.length }} {{ t('orderHistory.itemsShort') }}</span
+              >
             </div>
           </div>
         </div>
@@ -116,20 +137,32 @@ const { t } = useI18n()
 
 const statusTone = (status: string): 'warning' | 'danger' | 'success' | 'info' | 'neutral' => {
   switch (status) {
-    case 'PENDING': return 'warning'
+    case 'PENDING':
+      return 'warning'
     case 'CONFIRMED':
-    case 'OUT_FOR_DELIVERY': return 'info'
+    case 'OUT_FOR_DELIVERY':
+      return 'info'
     case 'AWAITING_PICK_UP':
     case 'DELIVERED':
-    case 'PICKED_UP': return 'success'
+    case 'PICKED_UP':
+      return 'success'
     case 'FAILED':
-    case 'CANCELLED': return 'danger'
-    default: return 'neutral'
+    case 'CANCELLED':
+      return 'danger'
+    default:
+      return 'neutral'
   }
 }
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
 
 const formatOrderDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+  new Date(dateStr).toLocaleDateString('fr-BE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
 </script>

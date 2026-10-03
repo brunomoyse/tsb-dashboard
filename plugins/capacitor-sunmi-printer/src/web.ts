@@ -58,17 +58,20 @@ export class SunmiPrinterWeb extends WebPlugin implements SunmiPrinterPlugin {
   }
 
   printQRCode(options: { content: string; size: number }): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] printQRCode():', options.content, 'size:', options.size)
+    if (import.meta.env.DEV)
+      console.info('[SunmiPrinter] printQRCode():', options.content, 'size:', options.size)
     return Promise.resolve()
   }
 
   printImage(options: { base64: string }): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] printImage() — base64 length:', options.base64.length)
+    if (import.meta.env.DEV)
+      console.info('[SunmiPrinter] printImage() — base64 length:', options.base64.length)
     return Promise.resolve()
   }
 
   printBarcode(options: { content: string; symbology: string }): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] printBarcode():', options.content, options.symbology)
+    if (import.meta.env.DEV)
+      console.info('[SunmiPrinter] printBarcode():', options.content, options.symbology)
     return Promise.resolve()
   }
 

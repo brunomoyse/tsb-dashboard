@@ -37,8 +37,11 @@ function categoryBanner(name: string): string {
  * Return the French name for a translatable object. Falls back to the default
  * `name` if no French translation is stored (e.g. legacy data).
  */
-function frName(obj: { name: string; translations?: { language: string; name: string }[] }): string {
-  const fr = obj.translations?.find(t => t.language === 'fr')?.name
+function frName(obj: {
+  name: string
+  translations?: { language: string; name: string }[]
+}): string {
+  const fr = obj.translations?.find((t) => t.language === 'fr')?.name
   return fr?.trim() || obj.name
 }
 
@@ -290,7 +293,9 @@ export const useSunmiPrinter = () => {
         const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
         await plugin.setBold({ enabled: true })
         await plugin.setFontSize({ size: 28 })
-        await plugin.printText({ text: `${item.quantity}x ${code}${frName(item.product)}${choiceName}\n` })
+        await plugin.printText({
+          text: `${item.quantity}x ${code}${frName(item.product)}${choiceName}\n`,
+        })
         await plugin.setFontSize({ size: 24 })
         await plugin.setBold({ enabled: false })
       }
@@ -322,7 +327,8 @@ export const useSunmiPrinter = () => {
   /** Print a full delivery receipt (customer, address, items, payment). */
   const printDelivery = async (order: Order): Promise<void> => {
     if (!isNative()) {
-      if (import.meta.dev) console.warn('[SunmiPrinter] Not on a Sunmi device — delivery print skipped')
+      if (import.meta.dev)
+        console.warn('[SunmiPrinter] Not on a Sunmi device — delivery print skipped')
       return
     }
     const plugin = getPlugin()
@@ -332,7 +338,8 @@ export const useSunmiPrinter = () => {
   /** Print a kitchen copy (items + notes only). */
   const printKitchen = async (order: Order): Promise<void> => {
     if (!isNative()) {
-      if (import.meta.dev) console.warn('[SunmiPrinter] Not on a Sunmi device — kitchen print skipped')
+      if (import.meta.dev)
+        console.warn('[SunmiPrinter] Not on a Sunmi device — kitchen print skipped')
       return
     }
     const plugin = getPlugin()

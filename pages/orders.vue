@@ -84,7 +84,12 @@
         class="mx-4 mb-2.5 w-[calc(100%-32px)] min-h-12 py-2.5 px-3.5 rounded-xl bg-warning text-inverted flex items-center gap-2.5 text-left"
         @click="openOrderDetails(oldestLateOrder)"
       >
-        <i18n-t keypath="orders.staleAlert" :plural="staleOrderCount" tag="span" class="flex-1 text-sm font-bold leading-[1.35]">
+        <i18n-t
+          keypath="orders.staleAlert"
+          :plural="staleOrderCount"
+          tag="span"
+          class="flex-1 text-sm font-bold leading-[1.35]"
+        >
           <template #count>
             <span class="font-mono tabular-nums text-[17px] font-bold">{{ staleOrderCount }}</span>
           </template>
@@ -94,7 +99,11 @@
 
       <!-- Skeleton Loading -->
       <div v-if="pending" class="px-4 pb-5 flex flex-col gap-2.5">
-        <div v-for="i in 4" :key="i" class="p-3.5 rounded-[14px] bg-elevated border border-default space-y-2">
+        <div
+          v-for="i in 4"
+          :key="i"
+          class="p-3.5 rounded-[14px] bg-elevated border border-default space-y-2"
+        >
           <div class="flex justify-between">
             <USkeleton class="h-5 w-32" />
             <USkeleton class="h-5 w-16" />
@@ -118,8 +127,12 @@
             @click="openOrderDetails(order)"
           >
             <div class="w-full flex items-baseline gap-2.5">
-              <span class="flex-1 min-w-0 text-[17px] font-bold truncate">{{ order.displayCustomerName }}</span>
-              <span class="font-mono tabular-nums text-[17px] font-bold">{{ formatPrice(order.totalPrice) }}</span>
+              <span class="flex-1 min-w-0 text-[17px] font-bold truncate">{{
+                order.displayCustomerName
+              }}</span>
+              <span class="font-mono tabular-nums text-[17px] font-bold">{{
+                formatPrice(order.totalPrice)
+              }}</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
               <PiliChip tone="outline" class="uppercase">
@@ -211,7 +224,9 @@
           class="kanban-column flex-1 min-w-0 flex flex-col transition-all duration-200"
           :class="[
             dragOverColumnKey === column.key ? 'kanban-drop-target' : '',
-            draggedOrder && column.statuses.includes(draggedOrder.status) ? 'kanban-drag-source' : ''
+            draggedOrder && column.statuses.includes(draggedOrder.status)
+              ? 'kanban-drag-source'
+              : '',
           ]"
           @dragover="(e: DragEvent) => onColumnDragOver(e, column)"
           @dragleave="onColumnDragLeave"
@@ -232,7 +247,10 @@
             </div>
 
             <!-- Date filter for completed column -->
-            <div v-if="column.key === 'COMPLETED'" class="flex items-center justify-between mt-2 pt-2 border-t border-default">
+            <div
+              v-if="column.key === 'COMPLETED'"
+              class="flex items-center justify-between mt-2 pt-2 border-t border-default"
+            >
               <UButton
                 icon="i-lucide-chevron-left"
                 size="xs"
@@ -269,7 +287,7 @@
               :class="[
                 'bg-elevated ring-0 border border-default cursor-pointer hover:border-accented transition-all',
                 column.key !== 'COMPLETED' ? 'kanban-touch-draggable' : '',
-                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : ''
+                draggedOrder?.id === order.id ? 'opacity-40 scale-95' : '',
               ]"
               @dragstart="(e: DragEvent) => onDragStart(e, order)"
               @dragend="onDragEnd"
@@ -283,34 +301,72 @@
                     :name="order.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
                     class="size-4 shrink-0 text-muted"
                   />
-                  <span class="font-bold text-sm text-highlighted truncate flex-1">{{ order.displayCustomerName }}</span>
-                  <span class="font-bold text-sm text-highlighted shrink-0 font-mono tabular-nums">{{ formatPrice(order.totalPrice) }}</span>
+                  <span class="font-bold text-sm text-highlighted truncate flex-1">{{
+                    order.displayCustomerName
+                  }}</span>
+                  <span
+                    class="font-bold text-sm text-highlighted shrink-0 font-mono tabular-nums"
+                    >{{ formatPrice(order.totalPrice) }}</span
+                  >
                 </div>
 
                 <!-- Address (delivery only) -->
-                <p v-if="order.type === 'DELIVERY' && order.displayAddress" class="text-xs text-muted truncate">
+                <p
+                  v-if="order.type === 'DELIVERY' && order.displayAddress"
+                  class="text-xs text-muted truncate"
+                >
                   {{ order.displayAddress }}
                 </p>
 
                 <!-- Row 2: Items + payment icon + time-since -->
                 <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs">
                   <div class="flex items-center gap-2 text-muted">
-                    <span class="whitespace-nowrap"><span class="font-mono tabular-nums">{{ order.items.length }}</span> {{ t('orders.items') }}</span>
+                    <span class="whitespace-nowrap"
+                      ><span class="font-mono tabular-nums">{{ order.items.length }}</span>
+                      {{ t('orders.items') }}</span
+                    >
                     <UIcon
                       :name="order.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
                       :class="['size-3.5', getPaymentIconClass(order)]"
                     />
                   </div>
-                  <div v-if="isActiveStatus(order.status)" class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <UBadge v-if="getTimeSince(order.createdAt).isStale" color="error" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">{{ t('orders.lateChip') }}</UBadge>
-                    <UBadge v-else-if="order.status === 'PENDING'" color="warning" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">
+                  <div
+                    v-if="isActiveStatus(order.status)"
+                    class="flex flex-wrap items-center gap-x-1.5 gap-y-1"
+                  >
+                    <UBadge
+                      v-if="getTimeSince(order.createdAt).isStale"
+                      color="error"
+                      variant="solid"
+                      size="xs"
+                      :class="[chipClass, 'whitespace-nowrap shrink-0']"
+                      >{{ t('orders.lateChip') }}</UBadge
+                    >
+                    <UBadge
+                      v-else-if="order.status === 'PENDING'"
+                      color="warning"
+                      variant="solid"
+                      size="xs"
+                      :class="[chipClass, 'whitespace-nowrap shrink-0']"
+                    >
                       {{ t('orders.status.pending') }}
                     </UBadge>
-                    <span :class="['font-bold font-mono tabular-nums whitespace-nowrap shrink-0', getTimeSince(order.createdAt).color]">
+                    <span
+                      :class="[
+                        'font-bold font-mono tabular-nums whitespace-nowrap shrink-0',
+                        getTimeSince(order.createdAt).color,
+                      ]"
+                    >
                       {{ getTimeSince(order.createdAt).text }}
                     </span>
                   </div>
-                  <UBadge v-else-if="column.statuses.length > 1" :color="getStatusColor(order.status)" variant="solid" size="xs" :class="[chipClass, 'whitespace-nowrap shrink-0']">
+                  <UBadge
+                    v-else-if="column.statuses.length > 1"
+                    :color="getStatusColor(order.status)"
+                    variant="solid"
+                    size="xs"
+                    :class="[chipClass, 'whitespace-nowrap shrink-0']"
+                  >
                     {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                   </UBadge>
                 </div>
@@ -320,7 +376,10 @@
                   v-if="order.estimatedReadyTime || paymentChip(order)"
                   class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1.5 border-t border-default"
                 >
-                  <span v-if="order.estimatedReadyTime" class="text-xs text-muted flex items-center gap-1 font-mono tabular-nums whitespace-nowrap">
+                  <span
+                    v-if="order.estimatedReadyTime"
+                    class="text-xs text-muted flex items-center gap-1 font-mono tabular-nums whitespace-nowrap"
+                  >
                     <UIcon name="i-lucide-clock" class="size-3" />
                     {{ formatTimeOnly(order.estimatedReadyTime, locale) }}
                   </span>
@@ -363,7 +422,9 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <UIcon
-                  :name="selectedOrder.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+                  :name="
+                    selectedOrder.type === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'
+                  "
                   class="size-5 shrink-0 text-muted"
                 />
                 <h2 class="text-lg font-bold text-highlighted truncate">
@@ -371,8 +432,15 @@
                 </h2>
               </div>
               <div class="flex items-center gap-2 text-sm text-muted">
-                <span class="font-mono tabular-nums">{{ formatDate(selectedOrder.createdAt, locale) }}</span>
-                <UBadge :color="getStatusColor(selectedOrder.status)" variant="solid" size="xs" :class="chipClass">
+                <span class="font-mono tabular-nums">{{
+                  formatDate(selectedOrder.createdAt, locale)
+                }}</span>
+                <UBadge
+                  :color="getStatusColor(selectedOrder.status)"
+                  variant="solid"
+                  size="xs"
+                  :class="chipClass"
+                >
                   {{ t(`orders.status.${selectedOrder.status?.toLowerCase()}`) }}
                 </UBadge>
               </div>
@@ -400,19 +468,29 @@
 
           <!-- 2. Stale order alert (Phase 8) -->
           <div
-            v-if="isActiveStatus(selectedOrder.status) && getTimeSince(selectedOrder.createdAt).isStale"
+            v-if="
+              isActiveStatus(selectedOrder.status) && getTimeSince(selectedOrder.createdAt).isStale
+            "
             class="flex items-center gap-2 px-3 py-2 rounded-lg bg-error text-inverted text-sm font-medium"
           >
             <UIcon name="i-lucide-alert-triangle" class="size-4 shrink-0" />
             <i18n-t keypath="orders.staleDetailAlert" tag="span">
               <template #hours>
-                <span class="font-mono font-bold tabular-nums">{{ Math.floor((now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000) }}</span>
+                <span class="font-mono font-bold tabular-nums">{{
+                  Math.floor(
+                    (now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000,
+                  )
+                }}</span>
               </template>
             </i18n-t>
           </div>
 
           <!-- 3. Primary Quick Actions -->
-          <div v-if="primaryStatuses.length" class="grid gap-2" :class="primaryStatuses.length > 1 ? 'grid-cols-2' : ''">
+          <div
+            v-if="primaryStatuses.length"
+            class="grid gap-2"
+            :class="primaryStatuses.length > 1 ? 'grid-cols-2' : ''"
+          >
             <UButton
               v-for="(status, idx) in primaryStatuses"
               :key="status"
@@ -436,39 +514,68 @@
                 class="flex items-center justify-between px-3 py-2"
               >
                 <div class="flex items-center gap-2 min-w-0 flex-1">
-                  <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums">{{ item.quantity }}x</span>
+                  <span class="text-sm font-bold text-highlighted shrink-0 font-mono tabular-nums"
+                    >{{ item.quantity }}x</span
+                  >
                   <div class="min-w-0">
                     <p class="text-sm truncate">
-                      <span v-if="item.product.code" class="font-mono tabular-nums">{{ item.product.code }} -</span>
+                      <span v-if="item.product.code" class="font-mono tabular-nums"
+                        >{{ item.product.code }} -</span
+                      >
                       {{ itemNames(item).main }}
                       <span v-if="item.choice" class="text-muted">({{ item.choice.name }})</span>
                     </p>
-                    <p v-if="itemNames(item).zh" class="text-sm text-muted truncate font-(family-name:--font-zh)">
+                    <p
+                      v-if="itemNames(item).zh"
+                      class="text-sm text-muted truncate font-(family-name:--font-zh)"
+                    >
                       {{ itemNames(item).zh }}
                     </p>
                   </div>
                 </div>
-                <span class="text-sm font-medium text-highlighted shrink-0 ml-2 font-mono tabular-nums">{{ formatPrice(item.totalPrice) }}</span>
+                <span
+                  class="text-sm font-medium text-highlighted shrink-0 ml-2 font-mono tabular-nums"
+                  >{{ formatPrice(item.totalPrice) }}</span
+                >
               </div>
             </div>
             <!-- Subtotal / Discount / Delivery fee breakdown -->
             <template v-if="hasBreakdown">
-              <div class="flex items-center justify-between px-3 py-1.5 border-t border-default text-sm text-muted">
+              <div
+                class="flex items-center justify-between px-3 py-1.5 border-t border-default text-sm text-muted"
+              >
                 <span>{{ t('orders.subtotal') }}</span>
                 <span class="font-mono tabular-nums">{{ formatPrice(itemsSubtotal) }}</span>
               </div>
-              <div v-if="parseFloat(selectedOrder.discountAmount) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-success">
-                <span>{{ t('orders.discount') }}{{ selectedOrder.couponCode ? ` (${selectedOrder.couponCode})` : '' }}</span>
-                <span class="font-mono tabular-nums">-{{ formatPrice(selectedOrder.discountAmount) }}</span>
+              <div
+                v-if="parseFloat(selectedOrder.discountAmount) > 0"
+                class="flex items-center justify-between px-3 py-1.5 text-sm text-success"
+              >
+                <span
+                  >{{ t('orders.discount')
+                  }}{{ selectedOrder.couponCode ? ` (${selectedOrder.couponCode})` : '' }}</span
+                >
+                <span class="font-mono tabular-nums"
+                  >-{{ formatPrice(selectedOrder.discountAmount) }}</span
+                >
               </div>
-              <div v-if="selectedOrder.deliveryFee && parseFloat(selectedOrder.deliveryFee) > 0" class="flex items-center justify-between px-3 py-1.5 text-sm text-muted">
+              <div
+                v-if="selectedOrder.deliveryFee && parseFloat(selectedOrder.deliveryFee) > 0"
+                class="flex items-center justify-between px-3 py-1.5 text-sm text-muted"
+              >
                 <span>{{ t('orders.deliveryFeeLabel') }}</span>
-                <span class="font-mono tabular-nums">{{ formatPrice(selectedOrder.deliveryFee) }}</span>
+                <span class="font-mono tabular-nums">{{
+                  formatPrice(selectedOrder.deliveryFee)
+                }}</span>
               </div>
             </template>
-            <div class="flex items-center justify-between px-3 py-2.5 bg-accented border-t border-default">
+            <div
+              class="flex items-center justify-between px-3 py-2.5 bg-accented border-t border-default"
+            >
               <span class="text-sm font-bold text-highlighted">{{ t('orders.total') }}</span>
-              <span class="text-xl font-bold text-highlighted font-mono tabular-nums">{{ formatPrice(selectedOrder.totalPrice) }}</span>
+              <span class="text-xl font-bold text-highlighted font-mono tabular-nums">{{
+                formatPrice(selectedOrder.totalPrice)
+              }}</span>
             </div>
           </div>
 
@@ -480,9 +587,14 @@
               class="flex items-center gap-2 text-muted hover:text-highlighted transition-colors"
             >
               <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
-              <span class="underline underline-offset-2 font-mono tabular-nums">{{ selectedOrder.customer.phoneNumber }}</span>
+              <span class="underline underline-offset-2 font-mono tabular-nums">{{
+                selectedOrder.customer.phoneNumber
+              }}</span>
             </a>
-            <div v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress" class="flex items-center gap-2">
+            <div
+              v-if="selectedOrder.type === 'DELIVERY' && selectedOrder.displayAddress"
+              class="flex items-center gap-2"
+            >
               <a
                 :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrder.displayAddress)}`"
                 target="_blank"
@@ -506,7 +618,11 @@
                 :name="selectedOrder.isOnlinePayment ? 'i-lucide-credit-card' : 'i-lucide-banknote'"
                 class="size-4 shrink-0"
               />
-              <span>{{ selectedOrder.isOnlinePayment ? t('orders.paymentMethod.online') : t('orders.paymentMethod.cash') }}</span>
+              <span>{{
+                selectedOrder.isOnlinePayment
+                  ? t('orders.paymentMethod.online')
+                  : t('orders.paymentMethod.cash')
+              }}</span>
               <UBadge
                 :color="paymentChip(selectedOrder, true)!.color"
                 variant="solid"
@@ -540,12 +656,18 @@
               <span class="text-sm text-muted">
                 {{ t('orders.preferredTime') }}:
                 <span class="font-medium text-highlighted font-mono tabular-nums">
-                  {{ selectedOrder.preferredReadyTime ? formatTimeOnly(selectedOrder.preferredReadyTime, locale) : t('orders.asap') }}
+                  {{
+                    selectedOrder.preferredReadyTime
+                      ? formatTimeOnly(selectedOrder.preferredReadyTime, locale)
+                      : t('orders.asap')
+                  }}
                 </span>
               </span>
               <span v-if="selectedOrder.estimatedReadyTime" class="text-sm text-muted">
                 {{ t('orders.currentEstimate') }}:
-                <span class="font-bold text-highlighted font-mono tabular-nums">{{ formatTimeOnly(selectedOrder.estimatedReadyTime, locale) }}</span>
+                <span class="font-bold text-highlighted font-mono tabular-nums">{{
+                  formatTimeOnly(selectedOrder.estimatedReadyTime, locale)
+                }}</span>
               </span>
             </div>
 
@@ -565,14 +687,21 @@
 
             <div v-if="newEstimatedTime" class="text-sm text-center">
               <span class="text-muted">{{ t('orders.newEstimatedTime') }}: </span>
-              <span class="font-bold text-highlighted text-base font-mono tabular-nums">{{ newEstimatedTime }}</span>
+              <span class="font-bold text-highlighted text-base font-mono tabular-nums">{{
+                newEstimatedTime
+              }}</span>
             </div>
           </div>
 
           <!-- 7. Other Actions (collapsible) -->
           <details v-if="secondaryStatuses.length" class="group">
-            <summary class="text-sm font-medium text-muted cursor-pointer select-none flex items-center gap-1 hover:text-highlighted transition-colors">
-              <UIcon name="i-lucide-chevron-right" class="size-4 transition-transform group-open:rotate-90" />
+            <summary
+              class="text-sm font-medium text-muted cursor-pointer select-none flex items-center gap-1 hover:text-highlighted transition-colors"
+            >
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="size-4 transition-transform group-open:rotate-90"
+              />
               {{ t('orders.otherActions') }}
             </summary>
             <div class="grid grid-cols-2 gap-2 mt-2">
@@ -628,7 +757,8 @@
       <template #body>
         <div class="space-y-3">
           <p v-if="selectedOrder" class="text-sm text-muted">
-            {{ formatDate(selectedOrder.createdAt, locale) }} - {{ formatOrderSummary(selectedOrder) }}
+            {{ formatDate(selectedOrder.createdAt, locale) }} -
+            {{ formatOrderSummary(selectedOrder) }}
           </p>
           <p v-if="selectedOrder?.isOnlinePayment" class="text-error">
             {{ t('orders.refundNotice') }}
@@ -640,28 +770,17 @@
       </template>
 
       <template #footer>
-        <UButton
-          color="neutral"
-          variant="solid"
-          @click="cancelCancellation"
-        >
+        <UButton color="neutral" variant="solid" @click="cancelCancellation">
           {{ t('orders.back') }}
         </UButton>
-        <UButton
-          color="error"
-          :disabled="confirmDisabled"
-          @click="confirmCancellation"
-        >
+        <UButton color="error" :disabled="confirmDisabled" @click="confirmCancellation">
           {{ t('orders.confirm') }}
         </UButton>
       </template>
     </UModal>
 
     <!-- Pause confirmation (mobile) -->
-    <PiliBottomSheet
-      v-model:open="showPauseConfirm"
-      :title="t('orders.pauseConfirmTitle')"
-    >
+    <PiliBottomSheet v-model:open="showPauseConfirm" :title="t('orders.pauseConfirmTitle')">
       <p class="text-[15px] text-muted leading-[1.45]">{{ t('orders.pauseConfirmMessage') }}</p>
       <div class="grid grid-cols-2 gap-2">
         <button
@@ -691,18 +810,10 @@
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #footer>
-        <UButton
-          color="neutral"
-          variant="solid"
-          @click="cancelContinueClientPrint"
-        >
+        <UButton color="neutral" variant="solid" @click="cancelContinueClientPrint">
           {{ t('orders.back') }}
         </UButton>
-        <UButton
-          color="primary"
-          icon="i-lucide-printer"
-          @click="continueToClientPrint"
-        >
+        <UButton color="primary" icon="i-lucide-printer" @click="continueToClientPrint">
           {{ t('orders.printContinueCta') }}
         </UButton>
       </template>
@@ -712,9 +823,21 @@
 
 <script setup lang="ts">
 import type { Order, OrderStatus } from '~/types'
-import { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, hasNextStatus, isActiveStatus, useOrderActions } from '~/composables/useOrderActions'
+import {
+  ORDER_STATUS_CHIP_TONE,
+  getAllowedStatuses,
+  hasNextStatus,
+  isActiveStatus,
+  useOrderActions,
+} from '~/composables/useOrderActions'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { brusselsDateISO, formatDate, formatPrice, formatTimeOnly, shiftBrusselsDate } from '~/utils/utils'
+import {
+  brusselsDateISO,
+  formatDate,
+  formatPrice,
+  formatTimeOnly,
+  shiftBrusselsDate,
+} from '~/utils/utils'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
@@ -759,9 +882,11 @@ const {
   showPrintContinueDialog,
   continueToClientPrint,
   cancelContinueClientPrint,
-  printMenuItems
+  printMenuItems,
 } = useOrderActions({
-  onDone: () => { showOrderDetails.value = false }
+  onDone: () => {
+    showOrderDetails.value = false
+  },
 })
 
 // Kanban column definitions
@@ -775,9 +900,24 @@ interface KanbanColumnDef {
 const kanbanColumnDefs: KanbanColumnDef[] = [
   { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox' },
   { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat' },
-  { key: 'AWAITING_PICK_UP', statuses: ['AWAITING_PICK_UP'], dropStatus: 'AWAITING_PICK_UP', icon: 'i-lucide-hourglass' },
-  { key: 'OUT_FOR_DELIVERY', statuses: ['OUT_FOR_DELIVERY'], dropStatus: 'OUT_FOR_DELIVERY', icon: 'i-lucide-bike' },
-  { key: 'COMPLETED', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'], dropStatus: 'DELIVERED', icon: 'i-lucide-circle-check-big' }
+  {
+    key: 'AWAITING_PICK_UP',
+    statuses: ['AWAITING_PICK_UP'],
+    dropStatus: 'AWAITING_PICK_UP',
+    icon: 'i-lucide-hourglass',
+  },
+  {
+    key: 'OUT_FOR_DELIVERY',
+    statuses: ['OUT_FOR_DELIVERY'],
+    dropStatus: 'OUT_FOR_DELIVERY',
+    icon: 'i-lucide-bike',
+  },
+  {
+    key: 'COMPLETED',
+    statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'],
+    dropStatus: 'DELIVERED',
+    icon: 'i-lucide-circle-check-big',
+  },
 ]
 
 // Completed-column filter anchored to Europe/Brussels (UTC slicing would list yesterday's orders just past Brussels midnight).
@@ -786,9 +926,16 @@ const completedFilterDate = ref<string>(brusselsDateISO())
 const completedFilterLabel = computed(() => {
   const date = new Date(`${completedFilterDate.value}T12:00:00Z`)
   if (completedFilterDate.value === brusselsDateISO()) {
-    return new Intl.DateTimeFormat(locale.value, { weekday: 'short', timeZone: 'Europe/Brussels' }).format(date)
+    return new Intl.DateTimeFormat(locale.value, {
+      weekday: 'short',
+      timeZone: 'Europe/Brussels',
+    }).format(date)
   }
-  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short', timeZone: 'Europe/Brussels' }).format(date)
+  return new Intl.DateTimeFormat(locale.value, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Europe/Brussels',
+  }).format(date)
 })
 
 const isCompletedFilterToday = computed(() => completedFilterDate.value === brusselsDateISO())
@@ -832,7 +979,12 @@ const onDragEnd = () => {
 }
 
 const onColumnDragOver = (e: DragEvent, column: KanbanColumnDef) => {
-  if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
+  if (
+    !draggedOrder.value ||
+    !column.dropStatus ||
+    column.statuses.includes(draggedOrder.value.status)
+  )
+    return
   e.preventDefault()
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
   dragOverColumnKey.value = column.key
@@ -845,7 +997,12 @@ const onColumnDragLeave = () => {
 const onColumnDrop = (e: DragEvent, column: KanbanColumnDef) => {
   e.preventDefault()
   dragOverColumnKey.value = null
-  if (!draggedOrder.value || !column.dropStatus || column.statuses.includes(draggedOrder.value.status)) return
+  if (
+    !draggedOrder.value ||
+    !column.dropStatus ||
+    column.statuses.includes(draggedOrder.value.status)
+  )
+    return
 
   const order = draggedOrder.value
   draggedOrder.value = null
@@ -866,8 +1023,13 @@ const onDocTouchMove = (e: TouchEvent) => {
   const columnEl = el?.closest('[data-column-key]') as HTMLElement | null
   if (columnEl) {
     const key = columnEl.dataset.columnKey!
-    const column = kanbanColumnDefs.find(c => c.key === key)
-    if (column && column.dropStatus && draggedOrder.value && !column.statuses.includes(draggedOrder.value.status)) {
+    const column = kanbanColumnDefs.find((c) => c.key === key)
+    if (
+      column &&
+      column.dropStatus &&
+      draggedOrder.value &&
+      !column.statuses.includes(draggedOrder.value.status)
+    ) {
       dragOverColumnKey.value = key
     } else {
       dragOverColumnKey.value = null
@@ -892,7 +1054,7 @@ const onDocTouchEnd = (e: TouchEvent) => {
 
   if (columnEl) {
     const key = columnEl.dataset.columnKey!
-    const column = kanbanColumnDefs.find(c => c.key === key)
+    const column = kanbanColumnDefs.find((c) => c.key === key)
     if (column && column.dropStatus && !column.statuses.includes(draggedOrder.value.status)) {
       performDrop(draggedOrder.value, column)
     }
@@ -904,7 +1066,9 @@ const onDocTouchEnd = (e: TouchEvent) => {
 
   // Prevent the subsequent click event from opening order details
   touchDragJustEnded.value = true
-  setTimeout(() => { touchDragJustEnded.value = false }, 50)
+  setTimeout(() => {
+    touchDragJustEnded.value = false
+  }, 50)
 }
 
 const onCardTouchStart = (_e: TouchEvent, order: Order, column: KanbanColumnDef) => {
@@ -969,7 +1133,8 @@ const getTimeSince = (createdAt: string): { text: string; color: string; isStale
 // Payment icon class based on status
 const getPaymentIconClass = (order: Order): string => {
   if (order.payment?.status?.toLowerCase() === 'failed') return 'text-error'
-  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid') return 'text-warning'
+  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid')
+    return 'text-warning'
   return ''
 }
 
@@ -981,16 +1146,18 @@ const itemsSubtotal = computed(() => {
 
 const hasBreakdown = computed(() => {
   if (!selectedOrder.value) return false
-  return parseFloat(selectedOrder.value.discountAmount) > 0
-    || (selectedOrder.value.deliveryFee && parseFloat(selectedOrder.value.deliveryFee) > 0)
+  return (
+    parseFloat(selectedOrder.value.discountAmount) > 0 ||
+    (selectedOrder.value.deliveryFee && parseFloat(selectedOrder.value.deliveryFee) > 0)
+  )
 })
 
 // Stale orders count (for banner)
 const staleOrders = computed(() =>
-  orders.value.filter(o =>
-    isActiveStatus(o.status)
-    && (now.value.getTime() - new Date(o.createdAt).getTime()) > 7200000 // 2h
-  )
+  orders.value.filter(
+    (o) =>
+      isActiveStatus(o.status) && now.value.getTime() - new Date(o.createdAt).getTime() > 7200000, // 2h
+  ),
 )
 const staleOrderCount = computed(() => staleOrders.value.length)
 const firstStaleOrder = computed(() => staleOrders.value[0] ?? null)
@@ -1006,7 +1173,7 @@ const getStatusIcon = (status: OrderStatus): string => {
     DELIVERED: 'i-lucide-package-check',
     PICKED_UP: 'i-lucide-circle-check-big',
     FAILED: 'i-lucide-circle-alert',
-    CANCELLED: 'i-lucide-circle-x'
+    CANCELLED: 'i-lucide-circle-x',
   }
   return statusIcons[status] || 'i-lucide-circle-help'
 }
@@ -1024,7 +1191,7 @@ const getStatusColor = (status: OrderStatus): UiColor => {
     DELIVERED: 'success',
     PICKED_UP: 'success',
     FAILED: 'error',
-    CANCELLED: 'error'
+    CANCELLED: 'error',
   }
   return colors[status] || 'neutral'
 }
@@ -1038,14 +1205,14 @@ const getPaymentStatusColor = (status: string | undefined): UiColor => {
     pending: 'neutral',
     expired: 'neutral',
     failed: 'error',
-    paid: 'success'
+    paid: 'success',
   }
   return colors[status.toLowerCase()] || 'neutral'
 }
 
 // Payment chip: unpaid cash = amber "to collect", paid online = green.
 // `detail` also returns a chip for paid cash and for every other payment state.
-const paymentChip = (order: Order, detail = false): { color: UiColor, label: string } | null => {
+const paymentChip = (order: Order, detail = false): { color: UiColor; label: string } | null => {
   const status = order.payment?.status?.toLowerCase()
   if (status === 'paid') {
     return detail || order.isOnlinePayment
@@ -1057,15 +1224,15 @@ const paymentChip = (order: Order, detail = false): { color: UiColor, label: str
   }
   return {
     color: getPaymentStatusColor(order.payment?.status),
-    label: t(`orders.payment.status.${status ?? 'notPaid'}`)
+    label: t(`orders.payment.status.${status ?? 'notPaid'}`),
   }
 }
 
 // Item names: French first, Chinese translation below when it exists
 const itemNames = (item: Order['items'][number]) => {
   const translations = item.product.translations ?? []
-  const main = translations.find(tr => tr.language === 'fr')?.name || item.product.name
-  const zh = translations.find(tr => tr.language === 'zh')?.name
+  const main = translations.find((tr) => tr.language === 'fr')?.name || item.product.name
+  const zh = translations.find((tr) => tr.language === 'zh')?.name
   return { main, zh: zh && zh !== main ? zh : '' }
 }
 
@@ -1142,7 +1309,7 @@ const ORDERS_QUERY = gql`
 const { data: dataOrders, pending } = await useGqlQuery<{ orders: Order[] }>(
   ORDERS_QUERY,
   {},
-  { immediate: true, cache: true }
+  { immediate: true, cache: true },
 )
 
 // Populate the Pinia store with orders fetched from the server
@@ -1155,29 +1322,36 @@ const orders = computed(() => ordersStore.orders)
 
 // Kanban columns (tablet+ view)
 const kanbanColumns = computed(() =>
-  kanbanColumnDefs.map(def => {
-    let filtered = orders.value.filter(o => def.statuses.includes(o.status))
+  kanbanColumnDefs.map((def) => {
+    let filtered = orders.value.filter((o) => def.statuses.includes(o.status))
     if (def.key === 'COMPLETED') {
-      filtered = filtered.filter(o => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value)
+      filtered = filtered.filter(
+        (o) => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value,
+      )
     }
     return {
       ...def,
-      label: def.key === 'COMPLETED'
-        ? t('orders.statusShort.completed')
-        : def.key === 'NEW'
-          ? t('orders.statusShort.new')
-          : t(`orders.status.${def.key.toLowerCase()}`),
-      orders: filtered
+      label:
+        def.key === 'COMPLETED'
+          ? t('orders.statusShort.completed')
+          : def.key === 'NEW'
+            ? t('orders.statusShort.new')
+            : t(`orders.status.${def.key.toLowerCase()}`),
+      orders: filtered,
     }
-  })
+  }),
 )
 
 // Watch for data changes and update store
-watch(dataOrders, (newData) => {
-  if (newData?.orders) {
-    ordersStore.setOrders(newData.orders)
-  }
-}, { deep: true })
+watch(
+  dataOrders,
+  (newData) => {
+    if (newData?.orders) {
+      ordersStore.setOrders(newData.orders)
+    }
+  },
+  { deep: true },
+)
 
 // ORDER UPDATED SUBSCRIPTION
 const { data: orderUpdated } = useGqlSubscription<{
@@ -1196,7 +1370,7 @@ const { data: orderUpdated } = useGqlSubscription<{
       }
     }
   `),
-  {}
+  {},
 )
 
 watch(orderUpdated, (val) => {
@@ -1277,7 +1451,7 @@ const { data: orderCreated } = useGqlSubscription<{
       }
     }
   `),
-  {}
+  {},
 )
 
 watch(orderCreated, (val) => {
@@ -1302,65 +1476,81 @@ const openOrderDetails = (order: Order) => {
 
 // /orders/:id opened on a wide screen: the detail page redirects here and asks for the slideover
 const openRequest = useState<string>('orders-open-request', () => '')
-watch([openRequest, orders], ([id]) => {
-  if (!id || isMobile.value) return
-  const order = orders.value.find(o => o.id === id)
-  if (!order) return
-  openRequest.value = ''
-  openOrderDetails(order)
-}, { immediate: true })
+watch(
+  [openRequest, orders],
+  ([id]) => {
+    if (!id || isMobile.value) return
+    const order = orders.value.find((o) => o.id === id)
+    if (!order) return
+    openRequest.value = ''
+    openOrderDetails(order)
+  },
+  { immediate: true },
+)
 
 // ===== Mobile list (< md) =====
 type MobileTab = 'new' | 'kitchen' | 'out' | 'done'
 
-const MOBILE_TABS: { key: MobileTab, statuses: OrderStatus[] }[] = [
+const MOBILE_TABS: { key: MobileTab; statuses: OrderStatus[] }[] = [
   { key: 'new', statuses: ['PENDING', 'CONFIRMED'] },
   { key: 'kitchen', statuses: ['PREPARING'] },
   { key: 'out', statuses: ['AWAITING_PICK_UP', 'OUT_FOR_DELIVERY'] },
-  { key: 'done', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'] }
+  { key: 'done', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'] },
 ]
 
 const mobileTab = ref<MobileTab>('new')
 
 const mobileTabOrders = (key: MobileTab): Order[] => {
-  const tab = MOBILE_TABS.find(x => x.key === key)!
-  const list = orders.value.filter(o => tab.statuses.includes(o.status))
+  const tab = MOBILE_TABS.find((x) => x.key === key)!
+  const list = orders.value.filter((o) => tab.statuses.includes(o.status))
   return key === 'done'
-    ? list.filter(o => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value)
+    ? list.filter(
+        (o) => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value,
+      )
     : list
 }
 
-const mobileTabOptions = computed(() => MOBILE_TABS.map(tab => ({
-  value: tab.key,
-  label: t(`orders.tabs.${tab.key}`),
-  count: mobileTabOrders(tab.key).length,
-  countTone: tab.key === 'new' ? ('warning' as const) : undefined
-})))
+const mobileTabOptions = computed(() =>
+  MOBILE_TABS.map((tab) => ({
+    value: tab.key,
+    label: t(`orders.tabs.${tab.key}`),
+    count: mobileTabOrders(tab.key).length,
+    countTone: tab.key === 'new' ? ('warning' as const) : undefined,
+  })),
+)
 
 // Oldest first in the active tabs, newest first in "done"
 const mobileCards = computed(() => {
   const list = [...mobileTabOrders(mobileTab.value)]
   const byDate = (o: Order) => new Date(o.createdAt).getTime()
-  return list.sort((a, b) => mobileTab.value === 'done' ? byDate(b) - byDate(a) : byDate(a) - byDate(b))
+  return list.sort((a, b) =>
+    mobileTab.value === 'done' ? byDate(b) - byDate(a) : byDate(a) - byDate(b),
+  )
 })
 
-const ordersInProgress = computed(() => orders.value.filter(o => isActiveStatus(o.status)).length)
+const ordersInProgress = computed(() => orders.value.filter((o) => isActiveStatus(o.status)).length)
 const nowLabel = computed(() => formatTimeOnly(now.value.toISOString(), locale.value))
 
 // Late = active order waiting for more than 2 hours
 const isLateOrder = (order: Order): boolean =>
-  isActiveStatus(order.status) && (now.value.getTime() - new Date(order.createdAt).getTime()) > 7200000
+  isActiveStatus(order.status) &&
+  now.value.getTime() - new Date(order.createdAt).getTime() > 7200000
 
-const oldestLateOrder = computed(() =>
-  [...staleOrders.value].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0] ?? null
+const oldestLateOrder = computed(
+  () =>
+    [...staleOrders.value].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )[0] ?? null,
 )
 
 // Unpaid cash order still to collect
 const isUnpaidCash = (order: Order): boolean =>
-  !order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid' && order.status !== 'CANCELLED'
+  !order.isOnlinePayment &&
+  order.payment?.status?.toLowerCase() !== 'paid' &&
+  order.status !== 'CANCELLED'
 
 const nextActionOf = (order: Order): OrderStatus | undefined =>
-  getAllowedStatuses(order.status, order.type).find(s => s !== 'CANCELLED' && s !== 'FAILED')
+  getAllowedStatuses(order.status, order.type).find((s) => s !== 'CANCELLED' && s !== 'FAILED')
 
 const cardMeta = (order: Order): string => {
   const readyAt = order.estimatedReadyTime
@@ -1368,14 +1558,23 @@ const cardMeta = (order: Order): string => {
     : order.preferredReadyTime
       ? t('orders.wantedAt', { time: formatTimeOnly(order.preferredReadyTime, locale.value) })
       : ''
-  const street = order.type === 'DELIVERY'
-    ? (order.address ? `${order.address.streetName} ${order.address.houseNumber}`.trim() : (order.displayAddress ?? '').split(',')[0] ?? '')
-    : ''
-  return [t('orders.articles', { count: order.items.length }, order.items.length), readyAt, street].filter(Boolean).join(' \u00b7 ')
+  const street =
+    order.type === 'DELIVERY'
+      ? order.address
+        ? `${order.address.streetName} ${order.address.houseNumber}`.trim()
+        : ((order.displayAddress ?? '').split(',')[0] ?? '')
+      : ''
+  return [t('orders.articles', { count: order.items.length }, order.items.length), readyAt, street]
+    .filter(Boolean)
+    .join(' \u00b7 ')
 }
 
 // Online ordering open / paused
-const { enabled: orderingEnabled, updating: orderingUpdating, setEnabled: setOrderingEnabled } = useOrderingStatus()
+const {
+  enabled: orderingEnabled,
+  updating: orderingUpdating,
+  setEnabled: setOrderingEnabled,
+} = useOrderingStatus()
 const showPauseConfirm = ref(false)
 
 const applyOrdering = async (value: boolean) => {
@@ -1406,7 +1605,9 @@ let sharedAudioCtx: AudioContext | null = null
 const getAudioCtx = (): AudioContext | null => {
   if (sharedAudioCtx) return sharedAudioCtx
   try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     sharedAudioCtx = new Ctx()
     return sharedAudioCtx
   } catch {
@@ -1435,7 +1636,12 @@ const notificationSound = () => {
     }
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume().then(play).catch(() => { /* Autoplay blocked */ })
+    audioCtx
+      .resume()
+      .then(play)
+      .catch(() => {
+        /* Autoplay blocked */
+      })
   } else {
     play()
   }
@@ -1448,7 +1654,9 @@ onMounted(() => {
   const unlock = () => {
     const audioCtx = getAudioCtx()
     if (audioCtx?.state === 'suspended') {
-      audioCtx.resume().catch(() => { /* Ignore */ })
+      audioCtx.resume().catch(() => {
+        /* Ignore */
+      })
     }
     window.removeEventListener('pointerdown', unlock)
     window.removeEventListener('keydown', unlock)
@@ -1488,5 +1696,4 @@ onUnmounted(() => {
     pendingChimeTimer = null
   }
 })
-
 </script>

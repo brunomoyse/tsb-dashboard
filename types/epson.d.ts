@@ -16,7 +16,7 @@ interface EpsonDevice {
     deviceId: string,
     deviceType: string,
     options: { crypto: boolean; buffer: boolean },
-    callback: (device: EpsonPrinter | null, errorCode: string) => void
+    callback: (device: EpsonPrinter | null, errorCode: string) => void,
   ): void
 
   discovery(options?: {
@@ -44,7 +44,12 @@ interface EpsonPrinter {
   addTextAlign(align: number): void
   addTextSize(width: number, height: number): void
   addText(text: string): void
-  addTextStyle(reverse: boolean | undefined, ul: boolean | undefined, em: boolean | undefined, color?: number): void
+  addTextStyle(
+    reverse: boolean | undefined,
+    ul: boolean | undefined,
+    em: boolean | undefined,
+    color?: number,
+  ): void
   addTextFont(font: number): void
   addFeedLine(lines: number): void
   addCut(type: number): void

@@ -14,28 +14,27 @@
         @click="emit('toggle-day', day.key, !hours[day.key])"
       >
         <span class="flex-1 text-[15px] font-bold">{{ t(`settings.hours.${day.key}`) }}</span>
-        <span v-if="!hours[day.key]" class="text-[13px] text-muted">{{ t('settings.hours.closed') }}</span>
+        <span v-if="!hours[day.key]" class="text-[13px] text-muted">{{
+          t('settings.hours.closed')
+        }}</span>
         <PiliSwitch :model-value="!!hours[day.key]" size="md" presentational />
       </button>
-      <div
-        v-if="hours[day.key]"
-        class="grid grid-cols-[44px_1fr_1fr] gap-1.5 items-center"
-      >
-        <span class="font-mono text-[11px] font-bold tracking-[0.06em] text-muted uppercase">{{ t('settings.hours.lunch') }}</span>
-        <input v-model="hours[day.key]!.open" type="time" class="time-input">
-        <input v-model="hours[day.key]!.close" type="time" class="time-input">
-        <span class="font-mono text-[11px] font-bold tracking-[0.06em] text-muted uppercase">{{ t('settings.hours.dinner') }}</span>
-        <input v-model="hours[day.key]!.dinnerOpen" type="time" class="time-input">
-        <input v-model="hours[day.key]!.dinnerClose" type="time" class="time-input">
+      <div v-if="hours[day.key]" class="grid grid-cols-[44px_1fr_1fr] gap-1.5 items-center">
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] text-muted uppercase">{{
+          t('settings.hours.lunch')
+        }}</span>
+        <input v-model="hours[day.key]!.open" type="time" class="time-input" />
+        <input v-model="hours[day.key]!.close" type="time" class="time-input" />
+        <span class="font-mono text-[11px] font-bold tracking-[0.06em] text-muted uppercase">{{
+          t('settings.hours.dinner')
+        }}</span>
+        <input v-model="hours[day.key]!.dinnerOpen" type="time" class="time-input" />
+        <input v-model="hours[day.key]!.dinnerClose" type="time" class="time-input" />
       </div>
     </div>
   </div>
   <div v-else class="divide-y divide-default">
-    <div
-      v-for="day in days"
-      :key="day.key"
-      class="py-3 first:pt-0 last:pb-0"
-    >
+    <div v-for="day in days" :key="day.key" class="py-3 first:pt-0 last:pb-0">
       <!-- Header row: day name + toggle (+ inline times on desktop) -->
       <div class="flex items-center gap-3">
         <div class="font-medium text-sm sm:text-base sm:w-28 min-w-0 truncate">
@@ -59,25 +58,25 @@
             v-model="hours[day.key]!.open"
             type="time"
             class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
-          >
+          />
           <span class="text-muted">–</span>
           <input
             v-model="hours[day.key]!.close"
             type="time"
             class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
-          >
+          />
           <span class="text-muted mx-1">|</span>
           <input
             v-model="hours[day.key]!.dinnerOpen"
             type="time"
             class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
-          >
+          />
           <span class="text-muted">–</span>
           <input
             v-model="hours[day.key]!.dinnerClose"
             type="time"
             class="border border-default rounded px-2 py-1 text-sm bg-accented font-mono tabular-nums"
-          >
+          />
         </div>
       </div>
     </div>

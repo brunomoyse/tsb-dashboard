@@ -22,7 +22,7 @@ import { useOidc } from '~/composables/useOidc'
 
 definePageMeta({
   public: true,
-  layout: false
+  layout: false,
 })
 
 const config = useRuntimeConfig()
@@ -43,37 +43,36 @@ const errorMessage = ref('')
 let callbackHandled = false
 
 onMounted(async () => {
-    if (callbackHandled) return
-    callbackHandled = true
-    try {
-        if (isCapacitor) {
-            // Capacitor: extract code from the URL and exchange via backend proxy.
-            // (oidc-client-ts's signinRedirectCallback validates a state cookie
-            // That doesn't survive the Session API + authorize-proxy round-trip.)
-            const url = new URL(window.location.href)
-            const code = url.searchParams.get('code')
-            if (!code) throw new Error('No authorization code in callback URL')
-            await exchangeCodeForTokens(code)
-        } else {
-            await handleCallback()
-        }
-
-        const outcome = await processCallback()
-        if (!outcome.ok) {
-            error.value = true
-            errorMessage.value = outcome.reason === 'not_admin'
-                ? t('login.accessDenied')
-                : t('login.callbackError')
-        }
-    } catch (e: any) {
-        if (import.meta.dev) console.error('OIDC callback error:', e)
-        error.value = true
-        const status = e?.response?.status || e?.statusCode
-        if (status === 429) {
-            errorMessage.value = t('login.tooManyRequests')
-        } else {
-            errorMessage.value = t('login.callbackError')
-        }
+  if (callbackHandled) return
+  callbackHandled = true
+  try {
+    if (isCapacitor) {
+      // Capacitor: extract code from the URL and exchange via backend proxy.
+      // (oidc-client-ts's signinRedirectCallback validates a state cookie
+      // That doesn't survive the Session API + authorize-proxy round-trip.)
+      const url = new URL(window.location.href)
+      const code = url.searchParams.get('code')
+      if (!code) throw new Error('No authorization code in callback URL')
+      await exchangeCodeForTokens(code)
+    } else {
+      await handleCallback()
     }
+
+    const outcome = await processCallback()
+    if (!outcome.ok) {
+      error.value = true
+      errorMessage.value =
+        outcome.reason === 'not_admin' ? t('login.accessDenied') : t('login.callbackError')
+    }
+  } catch (e: any) {
+    if (import.meta.dev) console.error('OIDC callback error:', e)
+    error.value = true
+    const status = e?.response?.status || e?.statusCode
+    if (status === 429) {
+      errorMessage.value = t('login.tooManyRequests')
+    } else {
+      errorMessage.value = t('login.callbackError')
+    }
+  }
 })
 </script>

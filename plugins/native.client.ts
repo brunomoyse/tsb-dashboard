@@ -3,7 +3,8 @@ import { defineNuxtPlugin } from '#imports'
 
 export default defineNuxtPlugin(async () => {
   // Only run inside Capacitor WebView
-  if (typeof window === 'undefined' || !(window as unknown as { Capacitor?: unknown }).Capacitor) return
+  if (typeof window === 'undefined' || !(window as unknown as { Capacitor?: unknown }).Capacitor)
+    return
 
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')

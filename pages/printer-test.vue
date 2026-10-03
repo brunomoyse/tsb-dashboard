@@ -2,7 +2,9 @@
   <div class="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
     <div>
       <h1 class="text-2xl font-bold">Sunmi Printer Test</h1>
-      <p class="text-sm text-muted mt-1">Test the built-in thermal printer on the Sunmi V3H device.</p>
+      <p class="text-sm text-muted mt-1">
+        Test the built-in thermal printer on the Sunmi V3H device.
+      </p>
     </div>
 
     <!-- Status card -->
@@ -38,12 +40,7 @@
 
         <!-- Actions -->
         <div class="flex flex-wrap gap-2 pt-2">
-          <UButton
-            v-if="!isBound"
-            icon="i-lucide-plug"
-            :loading="binding"
-            @click="handleBind"
-          >
+          <UButton v-if="!isBound" icon="i-lucide-plug" :loading="binding" @click="handleBind">
             Bind Service
           </UButton>
           <UButton
@@ -83,7 +80,9 @@
             :class="lastPrintResult === 'ok' ? 'text-success' : 'text-error'"
             class="size-4 shrink-0"
           />
-          <span>{{ lastPrintResult === 'ok' ? 'Print successful' : `Error: ${lastPrintResult}` }}</span>
+          <span>{{
+            lastPrintResult === 'ok' ? 'Print successful' : `Error: ${lastPrintResult}`
+          }}</span>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -104,7 +103,9 @@
       <div class="space-y-3">
         <h2 class="text-lg font-semibold">Receipt Preview</h2>
         <p class="text-sm text-muted">What the receipt will look like (approximate).</p>
-        <pre class="text-xs font-mono bg-accented rounded-lg p-4 overflow-x-auto whitespace-pre leading-relaxed">{{ receiptPreview }}</pre>
+        <pre
+          class="text-xs font-mono bg-accented rounded-lg p-4 overflow-x-auto whitespace-pre leading-relaxed"
+          >{{ receiptPreview }}</pre>
       </div>
     </UPageCard>
   </div>
@@ -114,7 +115,8 @@
 import { computed, ref } from 'vue'
 import type { Order } from '~/types'
 
-const { isBound, status, statusText, bind, unbind, refreshStatus, printReceipt, isNative } = useSunmiPrinter()
+const { isBound, status, statusText, bind, unbind, refreshStatus, printReceipt, isNative } =
+  useSunmiPrinter()
 
 const binding = ref(false)
 const refreshing = ref(false)
@@ -291,7 +293,7 @@ const receiptPreview = computed(() => {
   const thick = '='.repeat(32)
   const orderId = sampleOrder.id.substring(0, 8).toUpperCase()
   const d = new Date(sampleOrder.createdAt)
-  const dt = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+  const dt = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 
   // Restaurant name (white-label), roughly centered in the 32-char receipt.
   const name = (useRuntimeConfig().public.restaurantName as string).toUpperCase()
@@ -306,8 +308,10 @@ const receiptPreview = computed(() => {
     `Client: Jean Dupont`,
     `Tel: +32 477 00 00 00`,
     sep,
-    ...sampleOrder.items.map(item =>
-      `${item.quantity}x ${item.product.name}`.padEnd(23) + formatPrice(item.totalPrice).padStart(9)
+    ...sampleOrder.items.map(
+      (item) =>
+        `${item.quantity}x ${item.product.name}`.padEnd(23) +
+        formatPrice(item.totalPrice).padStart(9),
     ),
     sep,
     'TOTAL'.padEnd(23) + formatPrice(27.5).padStart(9),

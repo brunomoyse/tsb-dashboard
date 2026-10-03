@@ -11,7 +11,9 @@
         {{ t('settings.security.loading') }}
       </div>
 
-      <p v-else-if="statusError" class="text-sm text-error">{{ t('settings.security.loadFailed') }}</p>
+      <p v-else-if="statusError" class="text-sm text-error">
+        {{ t('settings.security.loadFailed') }}
+      </p>
 
       <!-- Enabled -->
       <template v-else-if="enabled">
@@ -41,7 +43,12 @@
               :disabled="code.length < 6"
               :label="t('settings.security.disableConfirm')"
             />
-            <UButton color="neutral" variant="ghost" :label="t('common.cancel')" @click="resetAction" />
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :label="t('common.cancel')"
+              @click="resetAction"
+            />
           </div>
         </form>
         <div v-else>
@@ -72,7 +79,9 @@
           />
           <span class="text-xs text-muted">{{ t('settings.security.manualKey') }}</span>
           <div class="flex items-center gap-2">
-            <code class="font-mono text-sm break-all bg-accented rounded-md px-2 py-1">{{ enrollment.secret }}</code>
+            <code class="font-mono text-sm break-all bg-accented rounded-md px-2 py-1">{{
+              enrollment.secret
+            }}</code>
             <UButton
               icon="i-lucide-copy"
               color="neutral"
@@ -85,7 +94,9 @@
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <label for="totp-enroll-code" class="text-sm font-medium">{{ t('settings.security.codeLabel') }}</label>
+          <label for="totp-enroll-code" class="text-sm font-medium">{{
+            t('settings.security.codeLabel')
+          }}</label>
           <UInput
             id="totp-enroll-code"
             v-model="code"
@@ -99,8 +110,18 @@
         </div>
         <p v-if="actionError" class="text-sm text-error" role="alert">{{ actionError }}</p>
         <div class="flex gap-2 flex-wrap">
-          <UButton type="submit" :loading="busy" :disabled="code.length < 6" :label="t('settings.security.activate')" />
-          <UButton color="neutral" variant="ghost" :label="t('common.cancel')" @click="resetAction" />
+          <UButton
+            type="submit"
+            :loading="busy"
+            :disabled="code.length < 6"
+            :label="t('settings.security.activate')"
+          />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :label="t('common.cancel')"
+            @click="resetAction"
+          />
         </div>
       </form>
 
@@ -148,7 +169,9 @@ const code = ref('')
 const busy = ref(false)
 const actionError = ref('')
 
-const qrSvg = computed(() => (enrollment.value ? renderSVG(enrollment.value.uri, { border: 0 }) : ''))
+const qrSvg = computed(() =>
+  enrollment.value ? renderSVG(enrollment.value.uri, { border: 0 }) : '',
+)
 
 const statusLabel = computed(() => {
   if (loadingStatus.value) return ''

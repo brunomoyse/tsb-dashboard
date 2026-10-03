@@ -64,12 +64,14 @@ describe('SunmiPrinterWeb (browser stub)', () => {
           { text: '2x Saumon Maki', width: 24, align: 'left' },
           { text: '17,00\u00a0€', width: 8, align: 'right' },
         ],
-      })
+      }),
     ).resolves.toBeUndefined()
   })
 
   it('printQRCode resolves without error', async () => {
-    await expect(printer.printQRCode({ content: 'https://example.com', size: 6 })).resolves.toBeUndefined()
+    await expect(
+      printer.printQRCode({ content: 'https://example.com', size: 6 }),
+    ).resolves.toBeUndefined()
   })
 
   it('printImage resolves without error', async () => {
@@ -77,7 +79,9 @@ describe('SunmiPrinterWeb (browser stub)', () => {
   })
 
   it('printBarcode resolves without error', async () => {
-    await expect(printer.printBarcode({ content: '123456789', symbology: 'CODE128' })).resolves.toBeUndefined()
+    await expect(
+      printer.printBarcode({ content: '123456789', symbology: 'CODE128' }),
+    ).resolves.toBeUndefined()
   })
 
   it('lineWrap resolves without error', async () => {

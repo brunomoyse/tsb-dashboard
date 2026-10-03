@@ -2,66 +2,72 @@
   <div class="md:p-6">
     <!-- Desktop: header and filters (>= md) -->
     <div class="hidden md:block">
-    <!-- Page Header -->
-    <div class="mb-6 flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <h1 class="text-lg sm:text-2xl font-bold text-highlighted truncate">{{ t('coupons.title') }}</h1>
-        <p class="text-xs sm:text-sm text-muted mt-0.5"><span class="font-mono tabular-nums">{{ filteredCoupons.length }}</span> {{ t('coupons.title').toLowerCase() }}</p>
+      <!-- Page Header -->
+      <div class="mb-6 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-2xl font-bold text-highlighted truncate">
+            {{ t('coupons.title') }}
+          </h1>
+          <p class="text-xs sm:text-sm text-muted mt-0.5">
+            <span class="font-mono tabular-nums">{{ filteredCoupons.length }}</span>
+            {{ t('coupons.title').toLowerCase() }}
+          </p>
+        </div>
+        <UButton icon="i-lucide-plus" color="primary" @click="openCreateDialog">
+          {{ t('coupons.add') }}
+        </UButton>
       </div>
-      <UButton
-        icon="i-lucide-plus"
-        color="primary"
-        @click="openCreateDialog"
+
+      <!-- Filters Bar (sticky on mobile) -->
+      <div
+        class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent"
       >
-        {{ t('coupons.add') }}
-      </UButton>
-    </div>
+        <UInput
+          v-model="searchQuery"
+          icon="i-lucide-search"
+          :placeholder="t('coupons.search')"
+          size="lg"
+          class="w-full"
+          :ui="{ base: 'h-12 text-base bg-accented' }"
+        />
 
-    <!-- Filters Bar (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent">
-      <UInput
-        v-model="searchQuery"
-        icon="i-lucide-search"
-        :placeholder="t('coupons.search')"
-        size="lg"
-        class="w-full"
-        :ui="{ base: 'h-12 text-base bg-accented' }"
-      />
-
-      <!-- Combined chip rail: status + type -->
-      <div class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
-        <button
-          v-for="opt in statusFilterOptions"
-          :key="`s-${opt.value}`"
-          type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
-          :class="filterStatus === opt.value
-            ? 'bg-inverted text-inverted border-transparent'
-            : 'bg-accented text-muted border-default hover:text-default'
-          "
-          @click="filterStatus = opt.value as typeof filterStatus"
+        <!-- Combined chip rail: status + type -->
+        <div
+          class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide"
         >
-          {{ opt.label }}
-        </button>
+          <button
+            v-for="opt in statusFilterOptions"
+            :key="`s-${opt.value}`"
+            type="button"
+            class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
+            :class="
+              filterStatus === opt.value
+                ? 'bg-inverted text-inverted border-transparent'
+                : 'bg-accented text-muted border-default hover:text-default'
+            "
+            @click="filterStatus = opt.value as typeof filterStatus"
+          >
+            {{ opt.label }}
+          </button>
 
-        <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
+          <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
 
-        <button
-          v-for="opt in typeFilterOptions"
-          :key="`t-${opt.value}`"
-          type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
-          :class="filterType === opt.value
-            ? 'bg-inverted text-inverted border-transparent'
-            : 'bg-accented text-muted border-default hover:text-default'
-          "
-          @click="filterType = opt.value as typeof filterType"
-        >
-          {{ opt.label }}
-        </button>
+          <button
+            v-for="opt in typeFilterOptions"
+            :key="`t-${opt.value}`"
+            type="button"
+            class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
+            :class="
+              filterType === opt.value
+                ? 'bg-inverted text-inverted border-transparent'
+                : 'bg-accented text-muted border-default hover:text-default'
+            "
+            @click="filterType = opt.value as typeof filterType"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
-    </div>
-
     </div>
 
     <!-- ========== MOBILE VIEW (< md) ========== -->
@@ -86,7 +92,11 @@
           <button
             type="button"
             class="shrink-0 h-12 px-4 rounded-xl border text-sm font-bold inline-flex items-center gap-2"
-            :class="filterType !== 'all' ? 'bg-inverted text-inverted border-inverted' : 'bg-elevated border-default'"
+            :class="
+              filterType !== 'all'
+                ? 'bg-inverted text-inverted border-inverted'
+                : 'bg-elevated border-default'
+            "
             @click="showFilters = true"
           >
             <UIcon name="i-lucide-sliders-horizontal" class="size-4" />
@@ -104,7 +114,11 @@
 
       <!-- Skeleton -->
       <div v-if="pending" class="px-4 pb-5 flex flex-col gap-2.5">
-        <div v-for="i in 4" :key="i" class="rounded-[14px] bg-elevated border border-default overflow-hidden">
+        <div
+          v-for="i in 4"
+          :key="i"
+          class="rounded-[14px] bg-elevated border border-default overflow-hidden"
+        >
           <div class="p-3.5 space-y-2.5">
             <USkeleton class="h-5 w-32" />
             <USkeleton class="h-4 w-44" />
@@ -136,25 +150,39 @@
             @click="openEditDialog(coupon)"
           >
             <div class="flex items-center gap-2.5">
-              <span class="flex-1 min-w-0 font-mono text-lg font-bold tracking-[0.04em] truncate">{{ coupon.code }}</span>
-              <span class="font-mono text-xl font-bold tabular-nums">{{ discountLabel(coupon) }}</span>
+              <span class="flex-1 min-w-0 font-mono text-lg font-bold tracking-[0.04em] truncate">{{
+                coupon.code
+              }}</span>
+              <span class="font-mono text-xl font-bold tabular-nums">{{
+                discountLabel(coupon)
+              }}</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <PiliChip :tone="statusMeta(coupon.status).chip">{{ statusMeta(coupon.status).label }}</PiliChip>
-              <span class="text-[13px] text-muted font-mono tabular-nums">{{ periodLabel(coupon) }}</span>
+              <PiliChip :tone="statusMeta(coupon.status).chip">{{
+                statusMeta(coupon.status).label
+              }}</PiliChip>
+              <span class="text-[13px] text-muted font-mono tabular-nums">{{
+                periodLabel(coupon)
+              }}</span>
             </div>
             <div class="grid grid-cols-3 gap-2 w-full">
               <div class="min-w-0 flex flex-col gap-0.5">
                 <span class="text-[11px] text-muted truncate">{{ t('coupons.used') }}</span>
-                <span class="font-mono text-sm font-bold tabular-nums">{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</span>
+                <span class="font-mono text-sm font-bold tabular-nums"
+                  >{{ coupon.usedCount }} / {{ coupon.maxUses ?? '∞' }}</span
+                >
               </div>
               <div class="min-w-0 flex flex-col gap-0.5">
                 <span class="text-[11px] text-muted truncate">{{ t('coupons.minOrder') }}</span>
-                <span class="font-mono text-sm font-bold tabular-nums">{{ coupon.minOrderAmount ? formatPrice(coupon.minOrderAmount) : '-' }}</span>
+                <span class="font-mono text-sm font-bold tabular-nums">{{
+                  coupon.minOrderAmount ? formatPrice(coupon.minOrderAmount) : '-'
+                }}</span>
               </div>
               <div class="min-w-0 flex flex-col gap-0.5">
                 <span class="text-[11px] text-muted truncate">{{ t('coupons.perUser') }}</span>
-                <span class="font-mono text-sm font-bold tabular-nums">{{ coupon.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
+                <span class="font-mono text-sm font-bold tabular-nums">{{
+                  coupon.maxUsesPerUser ?? t('coupons.unlimited')
+                }}</span>
               </div>
             </div>
           </button>
@@ -164,11 +192,18 @@
             role="switch"
             :aria-checked="coupon.isActive"
             class="w-full h-[52px] px-3.5 border-t border-default flex items-center justify-between text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="togglingId === coupon.id || (coupon.status !== 'ACTIVE' && coupon.status !== 'INACTIVE')"
+            :disabled="
+              togglingId === coupon.id ||
+              (coupon.status !== 'ACTIVE' && coupon.status !== 'INACTIVE')
+            "
             @click="toggleActive(coupon)"
           >
             <span>{{ t('coupons.active') }}</span>
-            <PiliSwitch presentational :model-value="coupon.isActive" :loading="togglingId === coupon.id" />
+            <PiliSwitch
+              presentational
+              :model-value="coupon.isActive"
+              :loading="togglingId === coupon.id"
+            />
           </button>
         </div>
       </div>
@@ -201,7 +236,7 @@
         :data="paginatedCoupons"
         :ui="{
           th: 'font-mono text-xs font-medium uppercase tracking-wider text-muted py-3 px-4',
-          td: 'py-3 px-4'
+          td: 'py-3 px-4',
         }"
         @select="(_e: Event, row: any) => openEditDialog(row.original)"
       >
@@ -210,24 +245,26 @@
         </template>
 
         <template #discountType-cell="{ row }">
-          <span class="text-sm">{{ row.original.discountType === 'PERCENTAGE' ? t('coupons.percentage') : t('coupons.fixed') }}</span>
+          <span class="text-sm">{{
+            row.original.discountType === 'PERCENTAGE'
+              ? t('coupons.percentage')
+              : t('coupons.fixed')
+          }}</span>
         </template>
 
         <template #discountValue-cell="{ row }">
           <span class="text-sm font-semibold font-mono tabular-nums">
-            {{ row.original.discountType === 'PERCENTAGE'
-              ? `${row.original.discountValue}%`
-              : formatPrice(row.original.discountValue)
+            {{
+              row.original.discountType === 'PERCENTAGE'
+                ? `${row.original.discountValue}%`
+                : formatPrice(row.original.discountValue)
             }}
           </span>
         </template>
 
         <template #minOrderAmount-cell="{ row }">
           <span class="text-sm font-mono tabular-nums text-muted">
-            {{ row.original.minOrderAmount
-              ? formatPrice(row.original.minOrderAmount)
-              : '-'
-            }}
+            {{ row.original.minOrderAmount ? formatPrice(row.original.minOrderAmount) : '-' }}
           </span>
         </template>
 
@@ -238,18 +275,27 @@
         </template>
 
         <template #maxUsesPerUser-cell="{ row }">
-          <span class="text-sm font-mono tabular-nums text-muted">{{ row.original.maxUsesPerUser ?? t('coupons.unlimited') }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{
+            row.original.maxUsesPerUser ?? t('coupons.unlimited')
+          }}</span>
         </template>
 
         <template #isActive-cell="{ row }">
           <button
             class="inline-flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed"
             :class="statusMeta(row.original.status).tone"
-            :disabled="togglingId === row.original.id || (row.original.status !== 'ACTIVE' && row.original.status !== 'INACTIVE')"
+            :disabled="
+              togglingId === row.original.id ||
+              (row.original.status !== 'ACTIVE' && row.original.status !== 'INACTIVE')
+            "
             @click.stop="toggleActive(row.original)"
           >
             <UIcon
-              :name="togglingId === row.original.id ? 'i-lucide-loader-2' : statusMeta(row.original.status).icon"
+              :name="
+                togglingId === row.original.id
+                  ? 'i-lucide-loader-2'
+                  : statusMeta(row.original.status).icon
+              "
               class="size-3.5"
               :class="{ 'animate-spin': togglingId === row.original.id }"
             />
@@ -290,13 +336,19 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="!pending && filteredCoupons.length === 0" class="flex flex-col items-center justify-center py-16">
+      <div
+        v-if="!pending && filteredCoupons.length === 0"
+        class="flex flex-col items-center justify-center py-16"
+      >
         <UIcon name="i-lucide-ticket" class="size-12 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('coupons.noResults') }}</p>
       </div>
 
       <!-- Pagination -->
-      <div v-if="!pending && filteredCoupons.length > pageSize" class="flex justify-center py-4 border-t border-default">
+      <div
+        v-if="!pending && filteredCoupons.length > pageSize"
+        class="flex justify-center py-4 border-t border-default"
+      >
         <UPagination
           v-model:page="page"
           :total="filteredCoupons.length"
@@ -313,13 +365,29 @@
       :title="isEditing ? t('coupons.editTitle') : t('coupons.createTitle')"
       full
     >
-      <CouponsCouponForm v-model="form" :discount-type-options="discountTypeOptions" :validation-error="validationError" />
+      <CouponsCouponForm
+        v-model="form"
+        :discount-type-options="discountTypeOptions"
+        :validation-error="validationError"
+      />
       <template #footer>
         <div class="flex gap-2">
-          <UButton color="neutral" variant="solid" size="xl" class="flex-1 justify-center" @click="showDialog = false">
+          <UButton
+            color="neutral"
+            variant="solid"
+            size="xl"
+            class="flex-1 justify-center"
+            @click="showDialog = false"
+          >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" size="xl" class="flex-[2] justify-center" :loading="isSaving" @click="handleSubmit">
+          <UButton
+            color="primary"
+            size="xl"
+            class="flex-[2] justify-center"
+            :loading="isSaving"
+            @click="handleSubmit"
+          >
             {{ isEditing ? t('common.save') : t('common.create') }}
           </UButton>
         </div>
@@ -332,7 +400,11 @@
             {{ isEditing ? t('coupons.editTitle') : t('coupons.createTitle') }}
           </h2>
 
-          <CouponsCouponForm v-model="form" :discount-type-options="discountTypeOptions" :validation-error="validationError" />
+          <CouponsCouponForm
+            v-model="form"
+            :discount-type-options="discountTypeOptions"
+            :validation-error="validationError"
+          />
 
           <!-- Actions -->
           <div class="flex justify-end gap-2 pt-4">
@@ -376,14 +448,49 @@ const showFilters = ref(false)
 // Table columns (same pattern as products page)
 const columns = computed(() => [
   { accessorKey: 'code', header: t('coupons.code') },
-  { accessorKey: 'discountType', header: t('coupons.type'), meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } } },
-  { accessorKey: 'discountValue', header: t('coupons.value'), meta: { class: { td: 'text-right', th: 'text-right' } } },
-  { accessorKey: 'minOrderAmount', header: t('coupons.minOrder'), meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
-  { accessorKey: 'maxUses', header: `${t('coupons.used')} / ${t('coupons.maxUses')}`, meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
-  { accessorKey: 'maxUsesPerUser', header: t('coupons.maxUsesPerUser'), meta: { class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' } } },
-  { accessorKey: 'isActive', header: t('coupons.active'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
-  { accessorKey: 'validPeriod', header: t('coupons.validUntil'), enableSorting: false, meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
-  { accessorKey: 'actions', header: '', enableSorting: false }
+  {
+    accessorKey: 'discountType',
+    header: t('coupons.type'),
+    meta: { class: { td: 'hidden sm:table-cell', th: 'hidden sm:table-cell' } },
+  },
+  {
+    accessorKey: 'discountValue',
+    header: t('coupons.value'),
+    meta: { class: { td: 'text-right', th: 'text-right' } },
+  },
+  {
+    accessorKey: 'minOrderAmount',
+    header: t('coupons.minOrder'),
+    meta: {
+      class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' },
+    },
+  },
+  {
+    accessorKey: 'maxUses',
+    header: `${t('coupons.used')} / ${t('coupons.maxUses')}`,
+    meta: {
+      class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' },
+    },
+  },
+  {
+    accessorKey: 'maxUsesPerUser',
+    header: t('coupons.maxUsesPerUser'),
+    meta: {
+      class: { td: 'hidden lg:table-cell text-right', th: 'hidden lg:table-cell text-right' },
+    },
+  },
+  {
+    accessorKey: 'isActive',
+    header: t('coupons.active'),
+    meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } },
+  },
+  {
+    accessorKey: 'validPeriod',
+    header: t('coupons.validUntil'),
+    enableSorting: false,
+    meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } },
+  },
+  { accessorKey: 'actions', header: '', enableSorting: false },
 ])
 
 const COUPONS_QUERY = gql`
@@ -479,35 +586,68 @@ const SUB_COUPON_UPDATED = gql`
 const { data: dataCoupons, pending } = await useGqlQuery<{ coupons: Coupon[] }>(
   print(COUPONS_QUERY),
   {},
-  { immediate: true, cache: true }
+  { immediate: true, cache: true },
 )
 
 const coupons = computed(() => dataCoupons.value?.coupons ?? [])
 
-const filteredCoupons = computed(() => coupons.value.filter(c => {
-  if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
-  if (isMobile.value) {
-    if (mobileStatus.value === 'EXPIRED' ? (c.status !== 'EXPIRED' && c.status !== 'EXHAUSTED') : (mobileStatus.value !== 'all' && c.status !== mobileStatus.value)) return false
-  } else {
-    if (filterStatus.value === 'active' && c.status !== 'ACTIVE') return false
-    if (filterStatus.value === 'inactive' && c.status === 'ACTIVE') return false
-  }
-  if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
-  return true
-}))
+const filteredCoupons = computed(() =>
+  coupons.value.filter((c) => {
+    if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase()))
+      return false
+    if (isMobile.value) {
+      if (
+        mobileStatus.value === 'EXPIRED'
+          ? c.status !== 'EXPIRED' && c.status !== 'EXHAUSTED'
+          : mobileStatus.value !== 'all' && c.status !== mobileStatus.value
+      )
+        return false
+    } else {
+      if (filterStatus.value === 'active' && c.status !== 'ACTIVE') return false
+      if (filterStatus.value === 'inactive' && c.status === 'ACTIVE') return false
+    }
+    if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
+    return true
+  }),
+)
 
 const statusMeta = (status: Coupon['status']) => {
   switch (status) {
     case 'ACTIVE':
-      return { label: t('coupons.active'), icon: 'i-lucide-circle-check', tone: 'bg-success text-inverted', chip: 'success' as const }
+      return {
+        label: t('coupons.active'),
+        icon: 'i-lucide-circle-check',
+        tone: 'bg-success text-inverted',
+        chip: 'success' as const,
+      }
     case 'INACTIVE':
-      return { label: t('coupons.inactive'), icon: 'i-lucide-circle-x', tone: 'bg-accented text-muted', chip: 'neutral' as const }
+      return {
+        label: t('coupons.inactive'),
+        icon: 'i-lucide-circle-x',
+        tone: 'bg-accented text-muted',
+        chip: 'neutral' as const,
+      }
     case 'EXPIRED':
-      return { label: t('coupons.expired'), icon: 'i-lucide-clock-alert', tone: 'bg-warning text-inverted', chip: 'warning' as const }
+      return {
+        label: t('coupons.expired'),
+        icon: 'i-lucide-clock-alert',
+        tone: 'bg-warning text-inverted',
+        chip: 'warning' as const,
+      }
     case 'SCHEDULED':
-      return { label: t('coupons.scheduled'), icon: 'i-lucide-calendar-clock', tone: 'bg-info text-inverted', chip: 'info' as const }
+      return {
+        label: t('coupons.scheduled'),
+        icon: 'i-lucide-calendar-clock',
+        tone: 'bg-info text-inverted',
+        chip: 'info' as const,
+      }
     case 'EXHAUSTED':
-      return { label: t('coupons.exhausted'), icon: 'i-lucide-battery-low', tone: 'bg-warning text-inverted', chip: 'warning' as const }
+      return {
+        label: t('coupons.exhausted'),
+        icon: 'i-lucide-battery-low',
+        tone: 'bg-warning text-inverted',
+        chip: 'warning' as const,
+      }
   }
 }
 
@@ -516,7 +656,9 @@ const paginatedCoupons = computed(() => {
   return filteredCoupons.value.slice(start, start + pageSize.value)
 })
 
-watch([searchQuery, filterStatus, filterType, mobileStatus], () => { page.value = 1 })
+watch([searchQuery, filterStatus, filterType, mobileStatus], () => {
+  page.value = 1
+})
 
 // Inline toggle state
 const togglingId = ref<string | null>(null)
@@ -528,9 +670,12 @@ const toggleActive = async (coupon: Coupon) => {
     const res = await mutate({ id: coupon.id, input: { isActive: !coupon.isActive } })
 
     if (dataCoupons.value?.coupons) {
-      const idx = dataCoupons.value.coupons.findIndex(c => c.id === coupon.id)
+      const idx = dataCoupons.value.coupons.findIndex((c) => c.id === coupon.id)
       if (idx !== -1) {
-        dataCoupons.value.coupons.splice(idx, 1, { ...dataCoupons.value.coupons[idx], ...res.updateCoupon })
+        dataCoupons.value.coupons.splice(idx, 1, {
+          ...dataCoupons.value.coupons[idx],
+          ...res.updateCoupon,
+        })
       }
     }
   } catch {
@@ -552,30 +697,30 @@ const mobileStatusOptions = computed(() => [
   { value: 'ACTIVE' as MobileStatus, label: t('coupons.active') },
   { value: 'SCHEDULED' as MobileStatus, label: t('coupons.scheduled') },
   { value: 'INACTIVE' as MobileStatus, label: t('coupons.inactive') },
-  { value: 'EXPIRED' as MobileStatus, label: t('coupons.expired') }
+  { value: 'EXPIRED' as MobileStatus, label: t('coupons.expired') },
 ])
 
 const typeSheetOptions = computed(() => [
   { value: 'all', label: t('orderHistory.allTypes') },
   { value: 'PERCENTAGE', label: t('coupons.percentage') },
-  { value: 'FIXED', label: t('coupons.fixed') }
+  { value: 'FIXED', label: t('coupons.fixed') },
 ])
 
 const discountTypeOptions = computed(() => [
   { label: t('coupons.percentage'), value: 'PERCENTAGE' },
-  { label: t('coupons.fixed'), value: 'FIXED' }
+  { label: t('coupons.fixed'), value: 'FIXED' },
 ])
 
 const statusFilterOptions = computed(() => [
   { label: t('orderHistory.allTypes'), value: 'all' },
   { label: t('coupons.active'), value: 'active' },
-  { label: t('coupons.inactive'), value: 'inactive' }
+  { label: t('coupons.inactive'), value: 'inactive' },
 ])
 
 const typeFilterOptions = computed(() => [
   { label: t('orderHistory.allTypes'), value: 'all' },
   { label: t('coupons.percentage'), value: 'PERCENTAGE' },
-  { label: t('coupons.fixed'), value: 'FIXED' }
+  { label: t('coupons.fixed'), value: 'FIXED' },
 ])
 
 const defaultForm = () => ({
@@ -587,19 +732,25 @@ const defaultForm = () => ({
   maxUsesPerUser: '',
   isActive: true,
   validFrom: '',
-  validUntil: ''
+  validUntil: '',
 })
 
 const form = ref(defaultForm())
 
-const discountLabel = (coupon: Coupon) => coupon.discountType === 'PERCENTAGE'
-  ? `−${Number(coupon.discountValue).toLocaleString('fr-BE')}\u00a0%`
-  : `−${formatPrice(coupon.discountValue)}`
+const discountLabel = (coupon: Coupon) =>
+  coupon.discountType === 'PERCENTAGE'
+    ? `−${Number(coupon.discountValue).toLocaleString('fr-BE')}\u00a0%`
+    : `−${formatPrice(coupon.discountValue)}`
 
-const shortDate = (d: string) => new Date(d).toLocaleDateString('fr-BE', { timeZone: 'Europe/Brussels' })
+const shortDate = (d: string) =>
+  new Date(d).toLocaleDateString('fr-BE', { timeZone: 'Europe/Brussels' })
 
 const periodLabel = (coupon: Coupon) => {
-  if (coupon.validFrom && coupon.validUntil) return t('coupons.fromTo', { from: shortDate(coupon.validFrom), to: shortDate(coupon.validUntil) })
+  if (coupon.validFrom && coupon.validUntil)
+    return t('coupons.fromTo', {
+      from: shortDate(coupon.validFrom),
+      to: shortDate(coupon.validUntil),
+    })
   if (coupon.validUntil) return t('coupons.until', { date: shortDate(coupon.validUntil) })
   return t('coupons.noEnd')
 }
@@ -620,7 +771,6 @@ const formatDateRange = (from: string | null, until: string | null) => {
   return '-'
 }
 
-
 const openEditDialog = (coupon: Coupon) => {
   isEditing.value = true
   editingCouponId.value = coupon.id
@@ -630,10 +780,13 @@ const openEditDialog = (coupon: Coupon) => {
     discountValue: coupon.discountValue,
     minOrderAmount: coupon.minOrderAmount ?? '',
     maxUses: coupon.maxUses !== null && coupon.maxUses !== undefined ? String(coupon.maxUses) : '',
-    maxUsesPerUser: coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined ? String(coupon.maxUsesPerUser) : '',
+    maxUsesPerUser:
+      coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined
+        ? String(coupon.maxUsesPerUser)
+        : '',
     isActive: coupon.isActive,
     validFrom: isoToBrusselsDateTimeLocal(coupon.validFrom),
-    validUntil: isoToBrusselsDateTimeLocal(coupon.validUntil)
+    validUntil: isoToBrusselsDateTimeLocal(coupon.validUntil),
   }
   validationError.value = ''
   showDialog.value = true
@@ -679,7 +832,7 @@ const handleSubmit = async () => {
         maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
         validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
-        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil)
+        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil),
       }
 
       const { mutate } = useGqlMutation<{ updateCoupon: Coupon }>(UPDATE_COUPON_MUTATION)
@@ -688,9 +841,9 @@ const handleSubmit = async () => {
       if (dataCoupons.value?.coupons) {
         dataCoupons.value = {
           ...dataCoupons.value,
-          coupons: dataCoupons.value.coupons.map(c =>
-            c.id === res.updateCoupon.id ? res.updateCoupon : c
-          )
+          coupons: dataCoupons.value.coupons.map((c) =>
+            c.id === res.updateCoupon.id ? res.updateCoupon : c,
+          ),
         }
       }
     } else {
@@ -703,7 +856,7 @@ const handleSubmit = async () => {
         maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
         isActive: form.value.isActive,
         validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
-        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil)
+        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil),
       }
 
       const { mutate } = useGqlMutation<{ createCoupon: Coupon }>(CREATE_COUPON_MUTATION)
@@ -711,7 +864,7 @@ const handleSubmit = async () => {
 
       dataCoupons.value = {
         ...dataCoupons.value,
-        coupons: [res.createCoupon, ...(dataCoupons.value?.coupons ?? [])]
+        coupons: [res.createCoupon, ...(dataCoupons.value?.coupons ?? [])],
       }
     }
 
@@ -726,11 +879,11 @@ const handleSubmit = async () => {
 
 // Subscribe in setup so onScopeDispose ties to the component scope; in onMounted it leaks the WebSocket.
 const { data: liveCoupon } = useGqlSubscription<{ couponUpdated: Coupon }>(
-  print(SUB_COUPON_UPDATED)
+  print(SUB_COUPON_UPDATED),
 )
 watch(liveCoupon, (val) => {
   if (!val?.couponUpdated?.id || !dataCoupons.value?.coupons) return
-  const idx = dataCoupons.value.coupons.findIndex(c => c.id === val.couponUpdated.id)
+  const idx = dataCoupons.value.coupons.findIndex((c) => c.id === val.couponUpdated.id)
   if (idx === -1) {
     dataCoupons.value.coupons.unshift(val.couponUpdated)
   } else {

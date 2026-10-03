@@ -2,93 +2,102 @@
   <div class="md:p-6">
     <!-- Desktop: header, summary and filters (>= md) -->
     <div class="hidden md:block">
-    <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('customers.title') }}</h1>
-      <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
-    </div>
+      <!-- Page Header -->
+      <div class="mb-6">
+        <h1 class="text-lg sm:text-2xl font-bold text-highlighted">{{ t('customers.title') }}</h1>
+        <p class="hidden sm:block text-sm text-muted mt-0.5">{{ t('customers.subtitle') }}</p>
+      </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-3 sm:mb-6">
+      <!-- Summary Cards -->
       <div
-        v-for="card in summaryCards"
-        :key="card.label"
-        class="rounded-[14px] border border-default bg-elevated p-3 sm:p-4"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-3 sm:mb-6"
       >
-        <div class="flex items-center gap-3">
-          <UIcon :name="card.icon" class="size-5 text-muted shrink-0" />
-          <div class="min-w-0">
-            <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
-            <div class="text-base sm:text-lg font-bold text-highlighted font-mono tabular-nums truncate">
-              <USkeleton v-if="pending" class="h-5 w-14 mt-1" />
-              <template v-else>{{ card.value }}</template>
+        <div
+          v-for="card in summaryCards"
+          :key="card.label"
+          class="rounded-[14px] border border-default bg-elevated p-3 sm:p-4"
+        >
+          <div class="flex items-center gap-3">
+            <UIcon :name="card.icon" class="size-5 text-muted shrink-0" />
+            <div class="min-w-0">
+              <p class="text-xs text-muted leading-tight">{{ card.label }}</p>
+              <div
+                class="text-base sm:text-lg font-bold text-highlighted font-mono tabular-nums truncate"
+              >
+                <USkeleton v-if="pending" class="h-5 w-14 mt-1" />
+                <template v-else>{{ card.value }}</template>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Filters Bar (sticky on mobile) -->
-    <div class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent">
-      <!-- Search row (search + min orders) -->
-      <div class="flex items-center gap-2">
-        <UInput
-          v-model="searchQuery"
-          icon="i-lucide-search"
-          :placeholder="t('customers.search')"
-          size="lg"
-          class="flex-1"
-          :ui="{ base: 'h-12 text-base bg-accented' }"
-        />
-        <UInput
-          id="min-orders"
-          v-model.number="minOrders"
-          type="number"
-          :placeholder="t('customers.filters.minOrders')"
-          :min="1"
-          size="lg"
-          class="w-24 sm:w-32 shrink-0"
-          icon="i-lucide-hash"
-          :ui="{ base: 'h-12 text-base bg-accented font-mono tabular-nums' }"
-          :aria-label="t('customers.filters.minOrders')"
-        />
-      </div>
+      <!-- Filters Bar (sticky on mobile) -->
+      <div
+        class="sticky top-0 z-20 -mx-3 sm:mx-0 px-3 sm:px-0 pb-3 sm:pb-4 pt-1 bg-default sm:static sm:bg-transparent"
+      >
+        <!-- Search row (search + min orders) -->
+        <div class="flex items-center gap-2">
+          <UInput
+            v-model="searchQuery"
+            icon="i-lucide-search"
+            :placeholder="t('customers.search')"
+            size="lg"
+            class="flex-1"
+            :ui="{ base: 'h-12 text-base bg-accented' }"
+          />
+          <UInput
+            id="min-orders"
+            v-model.number="minOrders"
+            type="number"
+            :placeholder="t('customers.filters.minOrders')"
+            :min="1"
+            size="lg"
+            class="w-24 sm:w-32 shrink-0"
+            icon="i-lucide-hash"
+            :ui="{ base: 'h-12 text-base bg-accented font-mono tabular-nums' }"
+            :aria-label="t('customers.filters.minOrders')"
+          />
+        </div>
 
-      <!-- Combined chip rail: period + type -->
-      <div class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide">
-        <button
-          v-for="preset in periodPresets"
-          :key="`p-${preset.key}`"
-          type="button"
-          class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
-          :class="selectedPeriod === preset.key
-            ? 'bg-inverted text-inverted border-transparent'
-            : 'bg-accented text-muted border-default hover:text-default'
-          "
-          @click="selectPeriod(preset.key)"
+        <!-- Combined chip rail: period + type -->
+        <div
+          class="relative mt-2 sm:mt-3 -mx-3 sm:mx-0 px-3 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible scrollbar-hide"
         >
-          {{ preset.label }}
-        </button>
+          <button
+            v-for="preset in periodPresets"
+            :key="`p-${preset.key}`"
+            type="button"
+            class="shrink-0 inline-flex items-center h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
+            :class="
+              selectedPeriod === preset.key
+                ? 'bg-inverted text-inverted border-transparent'
+                : 'bg-accented text-muted border-default hover:text-default'
+            "
+            @click="selectPeriod(preset.key)"
+          >
+            {{ preset.label }}
+          </button>
 
-        <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
+          <span class="shrink-0 h-6 w-px bg-(--ui-border)" aria-hidden="true" />
 
-        <button
-          v-for="opt in orderTypeOptions"
-          :key="`t-${opt.value}`"
-          type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
-          :class="selectedOrderType === opt.value
-            ? 'bg-inverted text-inverted border-transparent'
-            : 'bg-accented text-muted border-default hover:text-default'
-          "
-          @click="selectedOrderType = opt.value"
-        >
-          <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
-          {{ opt.label }}
-        </button>
+          <button
+            v-for="opt in orderTypeOptions"
+            :key="`t-${opt.value}`"
+            type="button"
+            class="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium border transition-all active:scale-95"
+            :class="
+              selectedOrderType === opt.value
+                ? 'bg-inverted text-inverted border-transparent'
+                : 'bg-accented text-muted border-default hover:text-default'
+            "
+            @click="selectedOrderType = opt.value"
+          >
+            <UIcon v-if="opt.icon" :name="opt.icon" class="size-4" />
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
-    </div>
-
     </div>
 
     <!-- ========== MOBILE VIEW (< md) ========== -->
@@ -119,12 +128,18 @@
           <button
             type="button"
             class="shrink-0 h-12 px-4 rounded-xl border text-sm font-bold inline-flex items-center gap-2"
-            :class="activeFilterCount > 0 ? 'bg-inverted text-inverted border-inverted' : 'bg-elevated border-default'"
+            :class="
+              activeFilterCount > 0
+                ? 'bg-inverted text-inverted border-inverted'
+                : 'bg-elevated border-default'
+            "
             @click="showFilters = true"
           >
             <UIcon name="i-lucide-sliders-horizontal" class="size-4" />
             {{ t('common.filters') }}
-            <span v-if="activeFilterCount > 0" class="font-mono tabular-nums">{{ activeFilterCount }}</span>
+            <span v-if="activeFilterCount > 0" class="font-mono tabular-nums">{{
+              activeFilterCount
+            }}</span>
           </button>
         </div>
         <PiliChipRail
@@ -137,7 +152,11 @@
 
       <!-- Skeleton -->
       <div v-if="pending" class="px-4 pb-5 flex flex-col gap-2.5">
-        <div v-for="i in 5" :key="i" class="p-3.5 rounded-[14px] bg-elevated border border-default flex flex-col gap-2.5">
+        <div
+          v-for="i in 5"
+          :key="i"
+          class="p-3.5 rounded-[14px] bg-elevated border border-default flex flex-col gap-2.5"
+        >
           <div class="flex justify-between gap-3">
             <USkeleton class="h-4 w-32" />
             <USkeleton class="h-4 w-16" />
@@ -168,21 +187,31 @@
           @keydown.enter.self="openCustomerOrders(customer)"
         >
           <div class="flex items-baseline gap-2.5">
-            <span class="flex-1 min-w-0 text-base font-bold truncate">{{ customer.firstName }} {{ customer.lastName }}</span>
-            <span class="font-mono text-base font-bold tabular-nums">{{ formatPrice(customer.totalAmount) }}</span>
+            <span class="flex-1 min-w-0 text-base font-bold truncate"
+              >{{ customer.firstName }} {{ customer.lastName }}</span
+            >
+            <span class="font-mono text-base font-bold tabular-nums">{{
+              formatPrice(customer.totalAmount)
+            }}</span>
           </div>
           <div class="grid grid-cols-3 gap-2">
             <div class="min-w-0 flex flex-col gap-0.5">
               <span class="text-[11px] text-muted truncate">{{ t('customers.totalOrders') }}</span>
-              <span class="font-mono text-sm font-bold tabular-nums">{{ customer.totalOrders }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{
+                customer.totalOrders
+              }}</span>
             </div>
             <div class="min-w-0 flex flex-col gap-0.5">
               <span class="text-[11px] text-muted truncate">{{ t('customers.averageOrder') }}</span>
-              <span class="font-mono text-sm font-bold tabular-nums">{{ formatPrice(customer.averageOrderAmount) }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{
+                formatPrice(customer.averageOrderAmount)
+              }}</span>
             </div>
             <div class="min-w-0 flex flex-col gap-0.5">
               <span class="text-[11px] text-muted truncate">{{ t('customers.last') }}</span>
-              <span class="font-mono text-sm font-bold tabular-nums">{{ formatShortDate(customer.lastOrderDate) }}</span>
+              <span class="font-mono text-sm font-bold tabular-nums">{{
+                formatShortDate(customer.lastOrderDate)
+              }}</span>
             </div>
           </div>
           <div class="flex items-center gap-2 pt-1.5 border-t border-default">
@@ -191,10 +220,15 @@
               :href="`tel:${customer.phoneNumber}`"
               class="inline-flex items-center min-h-11 font-mono text-[13px] text-muted underline underline-offset-[3px]"
               @click.stop
-            >{{ customer.phoneNumber }}</a>
+              >{{ customer.phoneNumber }}</a
+            >
             <span class="flex-1" />
             <PiliChip class="self-center">
-              {{ customer.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
+              {{
+                customer.preferredOrderType === 'DELIVERY'
+                  ? t('customers.delivery')
+                  : t('customers.pickup')
+              }}
             </PiliChip>
           </div>
         </div>
@@ -203,7 +237,9 @@
       <!-- Filters sheet -->
       <PiliBottomSheet v-model:open="showFilters" :title="t('common.filters')">
         <div class="flex flex-col gap-2">
-          <label for="m-min-orders" class="text-sm font-bold">{{ t('customers.filters.minOrders') }}</label>
+          <label for="m-min-orders" class="text-sm font-bold">{{
+            t('customers.filters.minOrders')
+          }}</label>
           <UInput
             id="m-min-orders"
             v-model.number="minOrders"
@@ -241,13 +277,15 @@
         :ui="{
           th: 'font-mono text-xs font-medium uppercase tracking-wider text-muted py-3 px-4',
           td: 'py-3 px-4',
-          tr: 'cursor-pointer hover:bg-accented transition-colors'
+          tr: 'cursor-pointer hover:bg-accented transition-colors',
         }"
         @select="(_e: Event, row: any) => openCustomerOrders(row.original)"
       >
         <template #name-cell="{ row }">
           <div>
-            <span class="font-medium text-highlighted">{{ row.original.firstName }} {{ row.original.lastName }}</span>
+            <span class="font-medium text-highlighted"
+              >{{ row.original.firstName }} {{ row.original.lastName }}</span
+            >
             <p class="text-xs text-muted lg:hidden">{{ row.original.email }}</p>
           </div>
         </template>
@@ -257,19 +295,27 @@
         </template>
 
         <template #totalOrders-cell="{ row }">
-          <span class="text-sm font-semibold font-mono tabular-nums">{{ row.original.totalOrders }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums">{{
+            row.original.totalOrders
+          }}</span>
         </template>
 
         <template #totalAmount-cell="{ row }">
-          <span class="text-sm font-semibold font-mono tabular-nums">{{ formatPrice(row.original.totalAmount) }}</span>
+          <span class="text-sm font-semibold font-mono tabular-nums">{{
+            formatPrice(row.original.totalAmount)
+          }}</span>
         </template>
 
         <template #averageOrder-cell="{ row }">
-          <span class="text-sm font-mono tabular-nums text-muted">{{ formatPrice(row.original.averageOrderAmount) }}</span>
+          <span class="text-sm font-mono tabular-nums text-muted">{{
+            formatPrice(row.original.averageOrderAmount)
+          }}</span>
         </template>
 
         <template #lastOrder-cell="{ row }">
-          <span class="text-sm text-muted font-mono tabular-nums">{{ formatDate(row.original.lastOrderDate) }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{
+            formatDate(row.original.lastOrderDate)
+          }}</span>
         </template>
 
         <template #preferredType-cell="{ row }">
@@ -277,15 +323,25 @@
             color="neutral"
             variant="solid"
             size="sm"
-            :icon="row.original.preferredOrderType === 'DELIVERY' ? 'i-lucide-bike' : 'i-lucide-shopping-bag'"
+            :icon="
+              row.original.preferredOrderType === 'DELIVERY'
+                ? 'i-lucide-bike'
+                : 'i-lucide-shopping-bag'
+            "
             :ui="{ base: 'rounded-[5px] font-bold text-xs' }"
           >
-            {{ row.original.preferredOrderType === 'DELIVERY' ? t('customers.delivery') : t('customers.pickup') }}
+            {{
+              row.original.preferredOrderType === 'DELIVERY'
+                ? t('customers.delivery')
+                : t('customers.pickup')
+            }}
           </UBadge>
         </template>
 
         <template #registeredAt-cell="{ row }">
-          <span class="text-sm text-muted font-mono tabular-nums">{{ formatDate(row.original.registeredAt) }}</span>
+          <span class="text-sm text-muted font-mono tabular-nums">{{
+            formatDate(row.original.registeredAt)
+          }}</span>
         </template>
       </UTable>
 
@@ -305,14 +361,20 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="!pending && filteredCustomers.length === 0" class="flex flex-col items-center justify-center py-16">
+      <div
+        v-if="!pending && filteredCustomers.length === 0"
+        class="flex flex-col items-center justify-center py-16"
+      >
         <UIcon name="i-lucide-users" class="size-12 mb-3 text-muted" />
         <p class="text-muted text-sm">{{ t('customers.noResults') }}</p>
       </div>
     </div>
 
     <!-- Pagination -->
-    <div v-if="!pending && filteredCustomers.length > pageSize" class="flex justify-center mt-2 md:mt-6 px-4 pb-5 md:px-0 md:pb-0">
+    <div
+      v-if="!pending && filteredCustomers.length > pageSize"
+      class="flex justify-center mt-2 md:mt-6 px-4 pb-5 md:px-0 md:pb-0"
+    >
       <UPagination
         v-model:page="page"
         :total="filteredCustomers.length"
@@ -385,13 +447,13 @@ const periodPresets = computed(() => [
   { key: 'today' as PeriodKey, label: t('customers.filters.today') },
   { key: 'week' as PeriodKey, label: t('customers.filters.thisWeek') },
   { key: 'month' as PeriodKey, label: t('customers.filters.thisMonth') },
-  { key: 'year' as PeriodKey, label: t('customers.filters.thisYear') }
+  { key: 'year' as PeriodKey, label: t('customers.filters.thisYear') },
 ])
 
 const orderTypeOptions = computed(() => [
   { value: '', label: t('customers.filters.allTypes'), icon: '' },
   { value: 'DELIVERY', label: t('customers.delivery'), icon: 'i-lucide-bike' },
-  { value: 'PICKUP', label: t('customers.pickup'), icon: 'i-lucide-shopping-bag' }
+  { value: 'PICKUP', label: t('customers.pickup'), icon: 'i-lucide-shopping-bag' },
 ])
 
 function getDateRange(period: PeriodKey): { startDate?: string; endDate?: string } {
@@ -419,7 +481,7 @@ function getDateRange(period: PeriodKey): { startDate?: string; endDate?: string
   }
   return {
     startDate: start.toISOString(),
-    endDate: now.toISOString()
+    endDate: now.toISOString(),
   }
 }
 
@@ -427,10 +489,12 @@ function selectPeriod(key: PeriodKey | null) {
   if (key) selectedPeriod.value = key
 }
 
-const mobilePeriodOptions = computed(() => periodPresets.value.map(p => ({ value: p.key, label: p.label })))
+const mobilePeriodOptions = computed(() =>
+  periodPresets.value.map((p) => ({ value: p.key, label: p.label })),
+)
 
-const activeFilterCount = computed(() =>
-  (minOrders.value && minOrders.value > 1 ? 1 : 0) + (selectedOrderType.value ? 1 : 0)
+const activeFilterCount = computed(
+  () => (minOrders.value && minOrders.value > 1 ? 1 : 0) + (selectedOrderType.value ? 1 : 0),
 )
 
 const queryVariables = computed(() => {
@@ -475,7 +539,7 @@ const CUSTOMER_STATS_QUERY = gql`
 const { data, pending, refetch } = await useGqlQuery<{ customerStats: CustomerStatsResponse }>(
   print(CUSTOMER_STATS_QUERY),
   () => queryVariables.value,
-  { immediate: true, cache: false, server: false }
+  { immediate: true, cache: false, server: false },
 )
 
 // Refetch when filters change
@@ -491,10 +555,11 @@ const summary = computed(() => stats.value?.summary)
 const filteredCustomers = computed(() => {
   if (!searchQuery.value) return customers.value
   const q = searchQuery.value.toLowerCase()
-  return customers.value.filter(c =>
-    `${c.firstName} ${c.lastName}`.toLowerCase().includes(q)
-    || c.email.toLowerCase().includes(q)
-    || (c.phoneNumber && c.phoneNumber.includes(q))
+  return customers.value.filter(
+    (c) =>
+      `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      (c.phoneNumber && c.phoneNumber.includes(q)),
   )
 })
 
@@ -503,53 +568,89 @@ const paginatedCustomers = computed(() => {
   return filteredCustomers.value.slice(start, start + pageSize.value)
 })
 
-watch(searchQuery, () => { page.value = 1 })
+watch(searchQuery, () => {
+  page.value = 1
+})
 
 const summaryCards = computed(() => [
   {
     label: t('customers.summary.totalCustomers'),
     value: summary.value?.totalCustomers ?? 0,
-    icon: 'i-lucide-users'
+    icon: 'i-lucide-users',
   },
   {
     label: t('customers.summary.totalRevenue'),
     value: formatPrice(Number(summary.value?.totalRevenue ?? 0)),
-    icon: 'i-lucide-banknote'
+    icon: 'i-lucide-banknote',
   },
   {
     label: t('customers.summary.averageOrder'),
     value: formatPrice(Number(summary.value?.averageOrderValue ?? 0)),
-    icon: 'i-lucide-calculator'
+    icon: 'i-lucide-calculator',
   },
   {
     label: t('customers.summary.totalOrders'),
     value: summary.value?.totalOrders ?? 0,
-    icon: 'i-lucide-shopping-bag'
+    icon: 'i-lucide-shopping-bag',
   },
   {
     label: t('customers.summary.avgOrdersPerCustomer'),
     value: summary.value?.totalCustomers
       ? (summary.value.totalOrders / summary.value.totalCustomers).toFixed(1)
       : '0',
-    icon: 'i-lucide-repeat'
-  }
+    icon: 'i-lucide-repeat',
+  },
 ])
 
 const columns = computed(() => [
   { accessorKey: 'name', header: t('customers.name') },
-  { accessorKey: 'email', header: t('customers.email'), meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } } },
-  { accessorKey: 'totalOrders', header: t('customers.totalOrders'), meta: { class: { th: 'text-right', td: 'text-right' } } },
-  { accessorKey: 'totalAmount', header: t('customers.totalAmount'), meta: { class: { th: 'text-right', td: 'text-right' } } },
-  { accessorKey: 'averageOrder', header: t('customers.averageOrder'), meta: { class: { td: 'hidden md:table-cell text-right', th: 'hidden md:table-cell text-right' } } },
-  { accessorKey: 'lastOrder', header: t('customers.lastOrder'), meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } } },
-  { accessorKey: 'preferredType', header: t('customers.preferredType'), meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } },
-  { accessorKey: 'registeredAt', header: t('customers.registeredAt'), meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } } }
+  {
+    accessorKey: 'email',
+    header: t('customers.email'),
+    meta: { class: { td: 'hidden lg:table-cell', th: 'hidden lg:table-cell' } },
+  },
+  {
+    accessorKey: 'totalOrders',
+    header: t('customers.totalOrders'),
+    meta: { class: { th: 'text-right', td: 'text-right' } },
+  },
+  {
+    accessorKey: 'totalAmount',
+    header: t('customers.totalAmount'),
+    meta: { class: { th: 'text-right', td: 'text-right' } },
+  },
+  {
+    accessorKey: 'averageOrder',
+    header: t('customers.averageOrder'),
+    meta: {
+      class: { td: 'hidden md:table-cell text-right', th: 'hidden md:table-cell text-right' },
+    },
+  },
+  {
+    accessorKey: 'lastOrder',
+    header: t('customers.lastOrder'),
+    meta: { class: { td: 'hidden md:table-cell', th: 'hidden md:table-cell' } },
+  },
+  {
+    accessorKey: 'preferredType',
+    header: t('customers.preferredType'),
+    meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } },
+  },
+  {
+    accessorKey: 'registeredAt',
+    header: t('customers.registeredAt'),
+    meta: { class: { td: 'hidden xl:table-cell', th: 'hidden xl:table-cell' } },
+  },
 ])
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
 
 const formatShortDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString('fr-BE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Brussels' })
+  new Date(dateStr).toLocaleDateString('fr-BE', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'Europe/Brussels',
+  })
 
 const getInitials = (firstName: string, lastName: string) =>
   `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || '?'
@@ -588,7 +689,7 @@ const { $gqlFetch } = useNuxtApp()
 
 const fetchCustomerOrders = (userId: string, pageNum: number) =>
   $gqlFetch<{ customerOrders: CustomerOrder[] }>(CUSTOMER_ORDERS_QUERY, {
-    variables: { userId, first: ordersPageSize, page: pageNum }
+    variables: { userId, first: ordersPageSize, page: pageNum },
   })
 
 const openCustomerOrders = async (customer: CustomerStats) => {

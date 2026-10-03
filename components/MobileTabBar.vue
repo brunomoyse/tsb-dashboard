@@ -19,7 +19,8 @@
         <span
           v-if="tab.badge"
           class="absolute -top-1 right-0.5 min-w-5 h-5 px-[5px] rounded-[10px] bg-warning text-inverted font-mono tabular-nums text-[11px] font-bold flex items-center justify-center"
-        >{{ tab.badge }}</span>
+          >{{ tab.badge }}</span
+        >
       </span>
       <span class="text-xs" :class="tab.active ? 'font-bold' : 'font-medium'">{{ tab.label }}</span>
     </NuxtLink>
@@ -67,7 +68,7 @@ const tabs = computed(() => {
       label: t('navigation.more'),
       icon: 'i-lucide-ellipsis',
       to: localePath('/more'),
-      active: MORE_SECTIONS.some(section => path.includes(section)),
+      active: MORE_SECTIONS.some((section) => path.includes(section)),
       badge: 0,
     },
   ]

@@ -5,19 +5,25 @@ import { print } from 'graphql'
 
 const GET_ORDERING = print(gql`
   query OrderingStatus {
-    restaurantConfig { orderingEnabled }
+    restaurantConfig {
+      orderingEnabled
+    }
   }
 `)
 
 const UPDATE_ORDERING = print(gql`
   mutation UpdateOrderingEnabled($enabled: Boolean!) {
-    updateOrderingEnabled(enabled: $enabled) { orderingEnabled }
+    updateOrderingEnabled(enabled: $enabled) {
+      orderingEnabled
+    }
   }
 `)
 
 const SUB_ORDERING = print(gql`
   subscription OrderingStatusUpdated {
-    restaurantConfigUpdated { orderingEnabled }
+    restaurantConfigUpdated {
+      orderingEnabled
+    }
   }
 `)
 
@@ -48,7 +54,9 @@ export function useOrderingStatus() {
     }
   }
 
-  const { data: live } = useGqlSubscription<{ restaurantConfigUpdated: { orderingEnabled: boolean } }>(SUB_ORDERING)
+  const { data: live } = useGqlSubscription<{
+    restaurantConfigUpdated: { orderingEnabled: boolean }
+  }>(SUB_ORDERING)
   watch(live, (val) => {
     if (val?.restaurantConfigUpdated) enabled.value = val.restaurantConfigUpdated.orderingEnabled
   })

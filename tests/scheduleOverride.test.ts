@@ -25,8 +25,18 @@ describe('schedule override dates', () => {
   it.each([
     { name: 'single day', start: '2026-10-05', end: '', want: ['2026-10-05'] },
     { name: 'end before start', start: '2026-10-05', end: '2026-10-01', want: ['2026-10-05'] },
-    { name: 'across the DST change', start: '2026-10-24', end: '2026-10-27', want: ['2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27'] },
-    { name: 'across a month end', start: '2026-10-30', end: '2026-11-02', want: ['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02'] },
+    {
+      name: 'across the DST change',
+      start: '2026-10-24',
+      end: '2026-10-27',
+      want: ['2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27'],
+    },
+    {
+      name: 'across a month end',
+      start: '2026-10-30',
+      end: '2026-11-02',
+      want: ['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02'],
+    },
   ])('builds the range: $name', ({ start, end, want }) => {
     expect(overrideDateRange(start, end)).toEqual(want)
   })
@@ -40,6 +50,8 @@ describe('schedule override dates', () => {
   })
 
   it('formats the calendar date, not the browser-local day', () => {
-    expect(formatOverrideDate('2026-10-05T00:00:00Z', 'en-GB')).toMatch(/^Monday,? 05 October 2026$/u)
+    expect(formatOverrideDate('2026-10-05T00:00:00Z', 'en-GB')).toMatch(
+      /^Monday,? 05 October 2026$/u,
+    )
   })
 })

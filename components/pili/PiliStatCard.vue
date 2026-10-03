@@ -4,16 +4,20 @@
     <span
       class="font-mono tabular-nums font-bold whitespace-nowrap"
       :class="size === 'lg' ? 'text-lg' : 'text-base'"
-    >{{ value }}</span>
+      >{{ value }}</span
+    >
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  label: string
-  value: string | number
-  size?: 'md' | 'lg'
-}>(), {
-  size: 'md',
-})
+withDefaults(
+  defineProps<{
+    label: string
+    value: string | number
+    size?: 'md' | 'lg'
+  }>(),
+  {
+    size: 'md',
+  },
+)
 </script>

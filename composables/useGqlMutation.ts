@@ -10,22 +10,18 @@ type Vars = Record<string, unknown>
  * Returns a mutate() you can await anywhere (even inside handlers),
  * plus reactive data/loading/error for your UI.
  */
-export function useGqlMutation<T = unknown>(
-    rawMutation: string | DocumentNode,
-) {
+export function useGqlMutation<T = unknown>(rawMutation: string | DocumentNode) {
   const { $gqlFetch } = useNuxtApp()
-  const data    = ref<T>()
+  const data = ref<T>()
   const loading = ref(false)
-  const error   = ref<any>()
+  const error = ref<any>()
 
   /** Call this and await the result */
   async function mutate(variables: Vars = {}): Promise<T> {
     loading.value = true
-    error.value   = undefined
+    error.value = undefined
     try {
-      const queryStr = typeof rawMutation === 'string'
-          ? rawMutation
-          : print(rawMutation)
+      const queryStr = typeof rawMutation === 'string' ? rawMutation : print(rawMutation)
 
       const res = await $gqlFetch<T>(queryStr, { variables })
       data.value = res

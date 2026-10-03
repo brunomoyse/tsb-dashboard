@@ -9,13 +9,13 @@ const s3Url = process.env.S3_BUCKET_URL
 const zitadelOrigin = process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be'
 
 const csp = `${[
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    `img-src 'self' data: blob:${s3Url ? ` ${s3Url}` : ''}`,
-    "font-src 'self' https://fonts.gstatic.com",
-    `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin} https://api.iconify.design`,
-    `frame-src 'self' ${zitadelOrigin}`,
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  `img-src 'self' data: blob:${s3Url ? ` ${s3Url}` : ''}`,
+  "font-src 'self' https://fonts.gstatic.com",
+  `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin} https://api.iconify.design`,
+  `frame-src 'self' ${zitadelOrigin}`,
 ].join('; ')};`
 
 export default defineNuxtConfig({
@@ -27,17 +27,12 @@ export default defineNuxtConfig({
   ssr: false,
   ignore: ['plugins/capacitor-sunmi-printer/**'],
   devtools: { enabled: true },
-  modules: [
-    "@nuxt/ui",
-    "@nuxtjs/i18n",
-    "@pinia/nuxt",
-    'pinia-plugin-persistedstate/nuxt'
-  ],
+  modules: ['@nuxt/ui', '@nuxtjs/i18n', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt'],
 
   icon: {
     clientBundle: {
-      scan: true
-    }
+      scan: true,
+    },
   },
 
   css: ['~/assets/css/main.css'],
@@ -59,7 +54,8 @@ export default defineNuxtConfig({
       graphqlWs: process.env.GRAPHQL_WS_URL,
       // Zitadel OIDC
       zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
-      zitadelClientId: process.env.DASHBOARD_ZITADEL_CLIENT_ID || process.env.ZITADEL_CLIENT_ID || '',
+      zitadelClientId:
+        process.env.DASHBOARD_ZITADEL_CLIENT_ID || process.env.ZITADEL_CLIENT_ID || '',
       zitadelNativeClientId: process.env.ZITADEL_NATIVE_CLIENT_ID || '',
       // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
       appBuild: process.env.APP_BUILD || 'web',
@@ -83,16 +79,16 @@ export default defineNuxtConfig({
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@700;800&display=swap' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@700;800&display=swap',
+        },
       ],
     },
     pageTransition: { name: 'page', mode: 'out-in' },
   },
 
-  plugins: [
-    '~/plugins/api',
-    '~/plugins/gqlFetch',
-  ],
+  plugins: ['~/plugins/api', '~/plugins/gqlFetch'],
 
   i18n: {
     defaultLocale: 'fr',
@@ -100,20 +96,20 @@ export default defineNuxtConfig({
     locales: [
       {
         code: 'fr',
-        language: 'fr-BE'
+        language: 'fr-BE',
       },
       {
         code: 'en',
-        language: 'en'
+        language: 'en',
       },
       {
         code: 'zh',
-        language: 'zh-CN'
+        language: 'zh-CN',
       },
       {
         code: 'nl',
-        language: 'nl-BE'
-      }
+        language: 'nl-BE',
+      },
     ],
     detectBrowserLanguage: {
       useCookie: true,
@@ -123,9 +119,8 @@ export default defineNuxtConfig({
     },
     rootRedirect: isCapacitor ? 'fr' : undefined,
     baseUrl: process.env.DASHBOARD_BASE_URL,
-    vueI18n: "../i18n.config.ts",
+    vueI18n: '../i18n.config.ts',
   },
-
 
   routeRules: {
     '/**': {
@@ -139,5 +134,4 @@ export default defineNuxtConfig({
       },
     },
   },
-
 })

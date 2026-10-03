@@ -7,24 +7,24 @@
  * rejects the refresh token.
  */
 export default defineNuxtPlugin(async () => {
-    const { useAuthStore } = await import('~/stores/auth')
-    const authStore = useAuthStore()
+  const { useAuthStore } = await import('~/stores/auth')
+  const authStore = useAuthStore()
 
-    // Nothing to sync if no persisted user
-    if (!authStore.user) return
+  // Nothing to sync if no persisted user
+  if (!authStore.user) return
 
-    const { useOidc } = await import('~/composables/useOidc')
-    const { isAuthenticated, silentRenew } = useOidc()
+  const { useOidc } = await import('~/composables/useOidc')
+  const { isAuthenticated, silentRenew } = useOidc()
 
-    // Session still valid
-    if (await isAuthenticated()) return
+  // Session still valid
+  if (await isAuthenticated()) return
 
-    // Try silent renewal (refresh token may still work)
-    const renewed = await silentRenew()
-    if (renewed) return
+  // Try silent renewal (refresh token may still work)
+  const renewed = await silentRenew()
+  if (renewed) return
 
-    // No valid session — clear stale OIDC session + Pinia store
-    const { removeUser } = useOidc()
-    await removeUser()
-    authStore.clearUser()
+  // No valid session — clear stale OIDC session + Pinia store
+  const { removeUser } = useOidc()
+  await removeUser()
+  authStore.clearUser()
 })

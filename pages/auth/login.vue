@@ -46,11 +46,7 @@
               </div>
             </Transition>
 
-            <button
-              type="submit"
-              class="login-submit"
-              :disabled="loading"
-            >
+            <button type="submit" class="login-submit" :disabled="loading">
               <span v-if="loading" class="login-spinner" />
               <span v-else>{{ t('login.sendCode') }}</span>
             </button>
@@ -87,11 +83,7 @@
               </div>
             </Transition>
 
-            <button
-              type="submit"
-              class="login-submit"
-              :disabled="loading || code.length < 6"
-            >
+            <button type="submit" class="login-submit" :disabled="loading || code.length < 6">
               <span v-if="loading" class="login-spinner" />
               <span v-else>{{ t('login.verify') }}</span>
             </button>
@@ -106,7 +98,11 @@
                 :disabled="resendCooldown > 0 || loading"
                 @click="resendCode"
               >
-                {{ resendCooldown > 0 ? t('login.resendCooldown', { seconds: resendCooldown }) : t('login.resendCode') }}
+                {{
+                  resendCooldown > 0
+                    ? t('login.resendCooldown', { seconds: resendCooldown })
+                    : t('login.resendCode')
+                }}
               </button>
             </div>
           </form>
@@ -142,11 +138,7 @@
               </div>
             </Transition>
 
-            <button
-              type="submit"
-              class="login-submit"
-              :disabled="loading || totpCode.length < 6"
-            >
+            <button type="submit" class="login-submit" :disabled="loading || totpCode.length < 6">
               <span v-if="loading" class="login-spinner" />
               <span v-else>{{ t('login.verify') }}</span>
             </button>
@@ -159,9 +151,7 @@
           </form>
 
           <!-- Footer -->
-          <p class="login-footer-text">
-            PILI &middot; ADMIN
-          </p>
+          <p class="login-footer-text">PILI &middot; ADMIN</p>
         </div>
       </div>
     </div>
@@ -175,7 +165,7 @@ import { useZitadelApi } from '~/composables/useZitadelApi'
 
 definePageMeta({
   public: true,
-  layout: false
+  layout: false,
 })
 
 const config = useRuntimeConfig()
@@ -183,7 +173,8 @@ const isCapacitor = config.public.appBuild === 'capacitor'
 
 const { t } = useI18n()
 const route = useRoute()
-const { requestOtpLogin, verifyOtpLogin, verifyTotpLogin, resendOtpLogin, finalizeOidcAuth } = useZitadelApi()
+const { requestOtpLogin, verifyOtpLogin, verifyTotpLogin, resendOtpLogin, finalizeOidcAuth } =
+  useZitadelApi()
 
 const step = ref<'email' | 'code' | 'totp'>('email')
 const email = ref('')
@@ -295,9 +286,7 @@ const resendCode = async () => {
     startCooldown()
   } catch (error: any) {
     const status = error?.response?.status || error?.statusCode
-    errorMessage.value = status === 429
-      ? t('login.tooManyRequests')
-      : t('login.requestFailed')
+    errorMessage.value = status === 429 ? t('login.tooManyRequests') : t('login.requestFailed')
   } finally {
     loading.value = false
   }
@@ -334,9 +323,8 @@ const finishLogin = async (sessionId: string, sessionToken: string) => {
     const outcome = await processCallback()
     if (!outcome.ok) {
       loading.value = false
-      errorMessage.value = outcome.reason === 'not_admin'
-        ? t('login.accessDenied')
-        : t('login.callbackError')
+      errorMessage.value =
+        outcome.reason === 'not_admin' ? t('login.accessDenied') : t('login.callbackError')
     }
   } else {
     window.location.href = result.callbackUrl
@@ -349,7 +337,9 @@ const refreshCapacitorAuthRequest = async () => {
   try {
     const { useOidc } = await import('~/composables/useOidc')
     fetchedAuthRequestId.value = await useOidc().getAuthRequestId()
-  } catch { /* Best-effort */ }
+  } catch {
+    /* Best-effort */
+  }
 }
 
 /** The backend refuses to finalize a staff login whose TOTP step was skipped. */
@@ -410,7 +400,11 @@ const verifyTotp = async () => {
   loading.value = true
 
   try {
-    const verified = await verifyTotpLogin(otpSessionId.value, otpSessionToken.value, totpCode.value)
+    const verified = await verifyTotpLogin(
+      otpSessionId.value,
+      otpSessionToken.value,
+      totpCode.value,
+    )
     otpSessionToken.value = verified.sessionToken
     await finishLogin(verified.sessionId, verified.sessionToken)
   } catch (error: any) {
@@ -440,7 +434,8 @@ const verifyTotp = async () => {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
 @media (min-width: 1024px) {
@@ -788,6 +783,8 @@ const verifyTotp = async () => {
 }
 
 @keyframes login-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

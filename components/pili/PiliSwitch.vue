@@ -11,7 +11,12 @@
       :class="[dims.knob, knobClass]"
       :style="{ left: knobLeft }"
     >
-      <UIcon v-if="loading" name="i-lucide-loader-circle" class="size-3 animate-spin" :class="modelValue ? 'text-success' : 'text-inverted'" />
+      <UIcon
+        v-if="loading"
+        name="i-lucide-loader-circle"
+        class="size-3 animate-spin"
+        :class="modelValue ? 'text-success' : 'text-inverted'"
+      />
     </span>
   </span>
   <button
@@ -33,7 +38,12 @@
         :class="[dims.knob, knobClass]"
         :style="{ left: knobLeft }"
       >
-        <UIcon v-if="loading" name="i-lucide-loader-circle" class="size-3 animate-spin" :class="modelValue ? 'text-success' : 'text-inverted'" />
+        <UIcon
+          v-if="loading"
+          name="i-lucide-loader-circle"
+          class="size-3 animate-spin"
+          :class="modelValue ? 'text-success' : 'text-inverted'"
+        />
       </span>
     </span>
   </button>
@@ -42,23 +52,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = withDefaults(defineProps<{
-  modelValue: boolean
-  /** sm 40×24, md 44×26, lg 52×30 */
-  size?: 'sm' | 'md' | 'lg'
-  loading?: boolean
-  disabled?: boolean
-  /** Accessible name when the switch stands alone */
-  label?: string
-  /** Render only the visual: the parent row is the control */
-  presentational?: boolean
-}>(), {
-  size: 'sm',
-  loading: false,
-  disabled: false,
-  label: undefined,
-  presentational: false,
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    /** sm 40×24, md 44×26, lg 52×30 */
+    size?: 'sm' | 'md' | 'lg'
+    loading?: boolean
+    disabled?: boolean
+    /** Accessible name when the switch stands alone */
+    label?: string
+    /** Render only the visual: the parent row is the control */
+    presentational?: boolean
+  }>(),
+  {
+    size: 'sm',
+    loading: false,
+    disabled: false,
+    label: undefined,
+    presentational: false,
+  },
+)
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
@@ -70,7 +83,7 @@ const DIMS = {
 
 const dims = computed(() => DIMS[props.size])
 // On: green track with an Encre knob. Off: pressed track with a muted knob.
-const trackClass = computed(() => props.modelValue ? 'bg-success' : 'bg-(--pili-pressed)')
-const knobClass = computed(() => props.modelValue ? 'bg-(--ui-bg)' : 'bg-(--ui-text-muted)')
+const trackClass = computed(() => (props.modelValue ? 'bg-success' : 'bg-(--pili-pressed)'))
+const knobClass = computed(() => (props.modelValue ? 'bg-(--ui-bg)' : 'bg-(--ui-text-muted)'))
 const knobLeft = computed(() => `${props.modelValue ? dims.value.on : 3}px`)
 </script>

@@ -105,7 +105,10 @@ export const ORDER_BY_ID_QUERY = print(gql`
 `)
 
 // Define allowed transitions based on current status and delivery option
-export const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderType): OrderStatus[] => {
+export const getAllowedStatuses = (
+  current: OrderStatus,
+  deliveryOption: OrderType,
+): OrderStatus[] => {
   let allowed: OrderStatus[] = []
   switch (current) {
     case 'PENDING':
@@ -138,7 +141,10 @@ export const getAllowedStatuses = (current: OrderStatus, deliveryOption: OrderTy
 }
 
 // Chip tone per order status (Pili: PENDING amber, CONFIRMED cyan, PREPARING neutral, ready/done green, cancelled red)
-export const ORDER_STATUS_CHIP_TONE: Record<string, 'warning' | 'danger' | 'success' | 'info' | 'neutral'> = {
+export const ORDER_STATUS_CHIP_TONE: Record<
+  string,
+  'warning' | 'danger' | 'success' | 'info' | 'neutral'
+> = {
   PENDING: 'warning',
   CONFIRMED: 'info',
   PREPARING: 'neutral',
@@ -147,7 +153,7 @@ export const ORDER_STATUS_CHIP_TONE: Record<string, 'warning' | 'danger' | 'succ
   DELIVERED: 'success',
   PICKED_UP: 'success',
   CANCELLED: 'danger',
-  FAILED: 'danger'
+  FAILED: 'danger',
 }
 
 export const isActiveStatus = (status: OrderStatus): boolean =>
@@ -155,7 +161,7 @@ export const isActiveStatus = (status: OrderStatus): boolean =>
 
 // Whether an order has a non-cancel/non-fail next status (for quick-action button)
 export const hasNextStatus = (order: Order): boolean =>
-  getAllowedStatuses(order.status, order.type).some(s => s !== 'CANCELLED' && s !== 'FAILED')
+  getAllowedStatuses(order.status, order.type).some((s) => s !== 'CANCELLED' && s !== 'FAILED')
 
 /**
  * Order actions shared by the desktop slideover and the mobile detail page:
@@ -174,8 +180,12 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   const isUpdatingPayment = ref(false)
   const quickActionLoading = ref(false)
 
-  const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(UPDATE_ORDER_MUTATION)
-  const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{ updatePaymentStatus: { id: string, status: string } }>(UPDATE_PAYMENT_STATUS_MUTATION)
+  const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(
+    UPDATE_ORDER_MUTATION,
+  )
+  const { mutate: mutationUpdatePaymentStatus } = useGqlMutation<{
+    updatePaymentStatus: { id: string; status: string }
+  }>(UPDATE_PAYMENT_STATUS_MUTATION)
 
   // Statuses
   const availableStatuses = computed(() => {
@@ -187,14 +197,14 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   const primaryStatuses = computed<OrderStatus[]>(() => {
     if (!selectedOrder.value) return []
     const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
-    return allowed.filter(s => s !== 'CANCELLED' && s !== 'FAILED')
+    return allowed.filter((s) => s !== 'CANCELLED' && s !== 'FAILED')
   })
 
   // Secondary statuses = everything else (cancel, failed, edge cases)
   const secondaryStatuses = computed<OrderStatus[]>(() => {
     if (!selectedOrder.value) return []
     const allowed = getAllowedStatuses(selectedOrder.value.status, selectedOrder.value.type)
-    return allowed.filter(s => s === 'CANCELLED' || s === 'FAILED')
+    return allowed.filter((s) => s === 'CANCELLED' || s === 'FAILED')
   })
 
   const handleStatusButton = (newStatus: OrderStatus) => {
@@ -255,8 +265,8 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     return formatTimeOnly(newTime.toISOString(), locale.value)
   })
 
-  const canSave = computed(() =>
-    stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value
+  const canSave = computed(
+    () => stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value,
   )
 
   // Estimated ready time to send with a mutation, when the delta was changed
@@ -286,7 +296,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     try {
       const res = await mutationUpdateOrder({
         id: selectedOrder.value.id,
-        input: { status: newStatus, estimatedReadyTime }
+        input: { status: newStatus, estimatedReadyTime },
       })
       ordersStore.updateOrder(res.updateOrder)
       options.onDone?.('advance')
@@ -301,7 +311,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   // Quick advance from card list (one-tap, picks best next status)
   const quickAdvanceStatus = async (order: Order) => {
     const allowed = getAllowedStatuses(order.status, order.type)
-    const target = allowed.find(s => s !== 'CANCELLED' && s !== 'FAILED')
+    const target = allowed.find((s) => s !== 'CANCELLED' && s !== 'FAILED')
     if (!target) return
 
     const previousStatus = order.status
@@ -315,7 +325,11 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       ordersStore.updateOrder(res.updateOrder)
       toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
     } catch {
-      ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
+      ordersStore.updateOrder({
+        id: order.id,
+        status: previousStatus,
+        updatedAt: previousUpdatedAt,
+      })
       toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
     }
   }
@@ -326,18 +340,26 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     const previousUpdatedAt = order.updatedAt
 
     // Optimistic update (include updatedAt for COMPLETED column date filter)
-    ordersStore.updateOrder({ id: order.id, status: targetStatus, updatedAt: new Date().toISOString() })
+    ordersStore.updateOrder({
+      id: order.id,
+      status: targetStatus,
+      updatedAt: new Date().toISOString(),
+    })
 
     try {
       const res = await mutationUpdateOrder({
         id: order.id,
-        input: { status: targetStatus }
+        input: { status: targetStatus },
       })
       // Apply server response (authoritative updatedAt)
       ordersStore.updateOrder(res.updateOrder)
     } catch {
       // Revert on failure
-      ordersStore.updateOrder({ id: order.id, status: previousStatus, updatedAt: previousUpdatedAt })
+      ordersStore.updateOrder({
+        id: order.id,
+        status: previousStatus,
+        updatedAt: previousUpdatedAt,
+      })
       toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
     }
   }
@@ -358,8 +380,8 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
         id: selectedOrder.value.id,
         input: {
           status,
-          estimatedReadyTime
-        }
+          estimatedReadyTime,
+        },
       })
 
       ordersStore.updateOrder(res.updateOrder)
@@ -379,7 +401,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     try {
       const res = await mutationUpdatePaymentStatus({
         orderId: selectedOrder.value.id,
-        status: 'paid'
+        status: 'paid',
       })
 
       if (selectedOrder.value.payment) {
@@ -390,7 +412,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
         id: selectedOrder.value.id,
         payment: selectedOrder.value.payment
           ? { ...selectedOrder.value.payment, status: res.updatePaymentStatus.status }
-          : null
+          : null,
       })
     } catch (error) {
       if (import.meta.dev) console.error('Failed to update payment status:', error)
@@ -424,7 +446,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     try {
       const res = await mutationUpdateOrder({
         id: selectedOrder.value.id,
-        input: { status: 'CANCELLED' as OrderStatus }
+        input: { status: 'CANCELLED' as OrderStatus },
       })
       ordersStore.updateOrder(res.updateOrder)
       showCancelDialog.value = false
@@ -490,7 +512,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     const orderId = printContinueOrderId.value
     printContinueOrderId.value = null
     if (!orderId) return
-    const order = ordersStore.orders.find(o => o.id === orderId) ?? selectedOrder.value
+    const order = ordersStore.orders.find((o) => o.id === orderId) ?? selectedOrder.value
     if (!order) return
     try {
       await sunmiPrintDelivery(order)
@@ -506,23 +528,25 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   }
 
   // Print menu items (desktop dropdown and mobile sheet)
-  const printMenuItems = computed(() => [[
-    {
-      label: t('orders.print.both'),
-      icon: 'i-lucide-printer',
-      click: () => printBoth()
-    },
-    {
-      label: t('orders.print.delivery'),
-      icon: 'i-lucide-truck',
-      click: () => printDelivery()
-    },
-    {
-      label: t('orders.print.kitchen'),
-      icon: 'i-lucide-chef-hat',
-      click: () => printKitchen()
-    }
-  ]])
+  const printMenuItems = computed(() => [
+    [
+      {
+        label: t('orders.print.both'),
+        icon: 'i-lucide-printer',
+        click: () => printBoth(),
+      },
+      {
+        label: t('orders.print.delivery'),
+        icon: 'i-lucide-truck',
+        click: () => printDelivery(),
+      },
+      {
+        label: t('orders.print.kitchen'),
+        icon: 'i-lucide-chef-hat',
+        click: () => printKitchen(),
+      },
+    ],
+  ])
 
   onUnmounted(() => {
     if (cancelTimer) {
@@ -564,6 +588,6 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     showPrintContinueDialog,
     continueToClientPrint,
     cancelContinueClientPrint,
-    printMenuItems
+    printMenuItems,
   }
 }

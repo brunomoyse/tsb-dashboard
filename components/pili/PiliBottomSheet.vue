@@ -9,8 +9,10 @@
       overlay: 'bg-black/70',
       content: [
         'bg-elevated border-t border-default rounded-t-[20px] divide-y-0 ring-0 sm:ring-0 shadow-none sm:shadow-none',
-        full ? 'h-[calc(100dvh-env(safe-area-inset-top)-12px)]' : 'max-h-[calc(100dvh-env(safe-area-inset-top)-12px)]'
-      ].join(' ')
+        full
+          ? 'h-[calc(100dvh-env(safe-area-inset-top)-12px)]'
+          : 'max-h-[calc(100dvh-env(safe-area-inset-top)-12px)]',
+      ].join(' '),
     }"
     @update:open="emit('update:open', $event)"
   >
@@ -39,21 +41,24 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  open: boolean
-  title: string
-  description?: string
-  /** Take the full height of the screen (forms, customer detail) */
-  full?: boolean
-  /** Keep the title for screen readers only */
-  hideTitle?: boolean
-  dismissible?: boolean
-}>(), {
-  description: undefined,
-  full: false,
-  hideTitle: false,
-  dismissible: true,
-})
+withDefaults(
+  defineProps<{
+    open: boolean
+    title: string
+    description?: string
+    /** Take the full height of the screen (forms, customer detail) */
+    full?: boolean
+    /** Keep the title for screen readers only */
+    hideTitle?: boolean
+    dismissible?: boolean
+  }>(),
+  {
+    description: undefined,
+    full: false,
+    hideTitle: false,
+    dismissible: true,
+  },
+)
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 </script>
