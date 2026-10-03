@@ -466,9 +466,6 @@ import gql from 'graphql-tag'
 import { useCategoriesStore } from '~/stores/categories'
 import { useI18n } from 'vue-i18n'
 
-// Local UI type: keep categoryId for form binding, map to categoryID for API
-type UIUpdateProductInput = Omit<UpdateProductInput, 'categoryID'> & { categoryId?: string }
-
 // Props and emits definition.
 const {
   product,
@@ -513,7 +510,7 @@ const textareaUi = computed(() => ({
 const selectMenuUi = computed(() => ({ ...inputUi.value, content: 'min-w-[200px]' }))
 
 // Create a copy of an existing product with exactly the languages we need.
-const createProductCopy = (sourceProduct: Product): UIUpdateProductInput => {
+const createProductCopy = (sourceProduct: Product): CreateProductInput => {
   const categoryId = sourceProduct.category?.id || ''
   const translations: TranslationInput[] = languages.map((lang) => {
     const existing = sourceProduct.translations.find((tr) => tr.language === lang)
@@ -565,7 +562,7 @@ const vatCategoryOptions = computed(() => [
 ])
 
 // Initialize the edited product based on mode.
-const editedProduct = ref<CreateProductInput | UIUpdateProductInput>(
+const editedProduct = ref<CreateProductInput>(
   mode === 'create' || !product ? createDefaultProduct() : createProductCopy(product),
 )
 

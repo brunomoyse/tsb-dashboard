@@ -7,8 +7,13 @@ import {
   useRequestEvent,
   useRuntimeConfig,
 } from '#imports'
+import type { NitroFetchOptions } from 'nitropack/types'
 
-export default defineNuxtPlugin(() => {
+export type ApiFetch = <T>(request: string, options?: NitroFetchOptions<string>) => Promise<T>
+
+// Explicit injection type: inferring it from the body is circular (the body's
+// Types depend on NuxtApp, which includes this plugin's injection).
+export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
   const config = useRuntimeConfig()
   const apiUrl: string = config.public.api
   const userLocale = useCookie('i18n_redirected').value ?? 'fr'
@@ -60,7 +65,10 @@ export default defineNuxtPlugin(() => {
   })
 
   // Wrapper that handles 401 retry externally (onResponseError return values are ignored by ofetch)
-  const api = async <T>(request: string, options?: Parameters<typeof baseApi>[1]): Promise<T> => {
+  const api: ApiFetch = async <T>(
+    request: string,
+    options?: NitroFetchOptions<string>,
+  ): Promise<T> => {
     try {
       return await baseApi<T, string>(request, options)
     } catch (err: unknown) {

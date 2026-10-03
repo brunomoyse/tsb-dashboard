@@ -38,7 +38,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   // Pili is dark only. A dedicated storage key ignores any "light" preference
-  // saved by the old theme toggle.
+  // Saved by the old theme toggle.
   colorMode: {
     preference: 'dark',
     fallback: 'dark',
@@ -61,7 +61,7 @@ export default defineNuxtConfig({
       appBuild: process.env.APP_BUILD || 'web',
       // Restaurant name printed on receipts (white-label). Read from a plain
       // (non-NUXT_PUBLIC_) env var so it's baked at build time — the runtime
-      // override machinery never fires for this static SPA (served by Caddy).
+      // Override machinery never fires for this static SPA (served by Caddy).
       restaurantName: process.env.RESTAURANT_NAME || 'Tokyo Sushi Bar',
     },
   },
@@ -89,6 +89,11 @@ export default defineNuxtConfig({
   },
 
   plugins: ['~/plugins/api', '~/plugins/gqlFetch'],
+  typescript: {
+    // Android/ holds the built Capacitor web bundle; with allowJs its minified
+    // globals (e.g. $fetch) would replace the real types.
+    tsConfig: { exclude: ['../android/**'] },
+  },
 
   i18n: {
     defaultLocale: 'fr',

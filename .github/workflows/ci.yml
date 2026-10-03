@@ -21,6 +21,23 @@ jobs:
       - name: Run vp check
         run: vp check
 
+  typecheck:
+    name: Typecheck (vue-tsc)
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: '24'
+          cache: true
+
+      # vue-tsc also checks Vue templates, which vp check does not.
+      - name: Typecheck
+        run: vp exec nuxi typecheck
+
   test:
     name: Tests
     runs-on: ubuntu-26.04

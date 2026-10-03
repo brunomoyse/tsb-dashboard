@@ -46,8 +46,10 @@
     "@nuxtjs/i18n": "^10.6.0",
     "@types/node": "^24.13.6",
     "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
     "vite-plus": "1.0.0",
-    "vitest": "5.0.1"
+    "vitest": "5.0.1",
+    "vue-tsc": "^3.3.12"
   },
   "optionalDependencies": {
     "@esbuild/linux-arm64": "^0.28.2",
