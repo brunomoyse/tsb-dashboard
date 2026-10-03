@@ -57,7 +57,7 @@
           </form>
 
           <!-- Step 2: Code -->
-          <form v-else class="login-form" @submit.prevent="verifyCode">
+          <form v-else-if="step === 'code'" class="login-form" @submit.prevent="verifyCode">
             <p class="login-code-hint">{{ t('login.codeSent', { email }) }}</p>
 
             <div class="login-field">
@@ -111,6 +111,53 @@
             </div>
           </form>
 
+          <!-- Step 3 (optional): authenticator app code -->
+          <form v-else class="login-form" @submit.prevent="verifyTotp">
+            <p class="login-code-hint">{{ t('login.totpHint') }}</p>
+
+            <div class="login-field">
+              <label for="totp-code" class="login-label">{{ t('login.totpLabel') }}</label>
+              <div class="login-input-wrap">
+                <UIcon name="i-lucide-shield-check" class="login-input-icon" />
+                <input
+                  id="totp-code"
+                  v-model="totpCode"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]{6}"
+                  maxlength="6"
+                  required
+                  autocomplete="one-time-code"
+                  :placeholder="t('login.codePlaceholder')"
+                  class="login-input login-input-code"
+                  :disabled="loading"
+                />
+              </div>
+            </div>
+
+            <Transition name="login-error">
+              <div v-if="errorMessage" class="login-error" role="alert">
+                <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
+                <span>{{ errorMessage }}</span>
+              </div>
+            </Transition>
+
+            <button
+              type="submit"
+              class="login-submit"
+              :disabled="loading || totpCode.length < 6"
+            >
+              <span v-if="loading" class="login-spinner" />
+              <span v-else>{{ t('login.verify') }}</span>
+            </button>
+
+            <div class="login-code-actions">
+              <button type="button" class="login-link-button" @click="backToEmail">
+                {{ t('login.backToEmail') }}
+              </button>
+            </div>
+          </form>
+
           <!-- Footer -->
           <p class="login-footer-text">
             PILI &middot; ADMIN
@@ -136,11 +183,12 @@ const isCapacitor = config.public.appBuild === 'capacitor'
 
 const { t } = useI18n()
 const route = useRoute()
-const { requestOtpLogin, verifyOtpLogin, resendOtpLogin, finalizeOidcAuth } = useZitadelApi()
+const { requestOtpLogin, verifyOtpLogin, verifyTotpLogin, resendOtpLogin, finalizeOidcAuth } = useZitadelApi()
 
-const step = ref<'email' | 'code'>('email')
+const step = ref<'email' | 'code' | 'totp'>('email')
 const email = ref('')
 const code = ref('')
+const totpCode = ref('')
 const otpSessionId = ref('')
 const otpSessionToken = ref('')
 const errorMessage = ref('')
@@ -232,6 +280,7 @@ const requestCode = async () => {
 const backToEmail = () => {
   step.value = 'email'
   code.value = ''
+  totpCode.value = ''
   errorMessage.value = ''
   otpSessionId.value = ''
   otpSessionToken.value = ''
@@ -254,6 +303,61 @@ const resendCode = async () => {
   }
 }
 
+/*
+ * Completes the OIDC flow for a session that passed every required check.
+ * Throws on failure; callers map the error to a message.
+ */
+const finishLogin = async (sessionId: string, sessionToken: string) => {
+  if (!effectiveAuthRequestId.value) {
+    const { useOidc } = await import('~/composables/useOidc')
+    const { signIn } = useOidc()
+    await signIn({ login_hint: email.value })
+    return
+  }
+
+  const result = await finalizeOidcAuth(effectiveAuthRequestId.value, sessionId, sessionToken)
+
+  if (isCapacitor) {
+    // Capacitor: exchange the auth code for tokens directly.
+    // We can't follow result.callbackUrl, the WebView runs at https://localhost
+    // And navigating there would lose the OIDC state.
+    const callbackUrl = new URL(result.callbackUrl)
+    const authCode = callbackUrl.searchParams.get('code')
+    if (!authCode) throw new Error('No authorization code in callback URL')
+
+    const { useOidc } = await import('~/composables/useOidc')
+    const { exchangeCodeForTokens } = useOidc()
+    await exchangeCodeForTokens(authCode)
+
+    const { useAuthCallback } = await import('~/composables/useAuthCallback')
+    const { processCallback } = useAuthCallback()
+    const outcome = await processCallback()
+    if (!outcome.ok) {
+      loading.value = false
+      errorMessage.value = outcome.reason === 'not_admin'
+        ? t('login.accessDenied')
+        : t('login.callbackError')
+    }
+  } else {
+    window.location.href = result.callbackUrl
+  }
+}
+
+/** Refresh the authRequestId so retries after a failed finalize get a fresh one. */
+const refreshCapacitorAuthRequest = async () => {
+  if (!isCapacitor) return
+  try {
+    const { useOidc } = await import('~/composables/useOidc')
+    fetchedAuthRequestId.value = await useOidc().getAuthRequestId()
+  } catch { /* Best-effort */ }
+}
+
+/** The backend refuses to finalize a staff login whose TOTP step was skipped. */
+const isMfaRequired = (error: any) => {
+  const status = error?.response?.status || error?.statusCode
+  return status === 403 && error?.data?.error === 'mfa_required'
+}
+
 const verifyCode = async () => {
   if (verifyInFlight || loading.value) return
   verifyInFlight = true
@@ -262,50 +366,26 @@ const verifyCode = async () => {
 
   try {
     const verified = await verifyOtpLogin(otpSessionId.value, otpSessionToken.value, code.value)
+    otpSessionId.value = verified.sessionId
+    otpSessionToken.value = verified.sessionToken
 
-    if (effectiveAuthRequestId.value) {
-      const result = await finalizeOidcAuth(effectiveAuthRequestId.value, verified.sessionId, verified.sessionToken)
-
-      if (isCapacitor) {
-        // Capacitor: exchange the auth code for tokens directly.
-        // We can't follow result.callbackUrl, the WebView runs at https://localhost
-        // And navigating there would lose the OIDC state.
-        const callbackUrl = new URL(result.callbackUrl)
-        const authCode = callbackUrl.searchParams.get('code')
-        if (!authCode) throw new Error('No authorization code in callback URL')
-
-        const { useOidc } = await import('~/composables/useOidc')
-        const { exchangeCodeForTokens } = useOidc()
-        await exchangeCodeForTokens(authCode)
-
-        const { useAuthCallback } = await import('~/composables/useAuthCallback')
-        const { processCallback } = useAuthCallback()
-        const outcome = await processCallback()
-        if (!outcome.ok) {
-          loading.value = false
-          errorMessage.value = outcome.reason === 'not_admin'
-            ? t('login.accessDenied')
-            : t('login.callbackError')
-        }
-      } else {
-        window.location.href = result.callbackUrl
-      }
-    } else {
-      const { useOidc } = await import('~/composables/useOidc')
-      const { signIn } = useOidc()
-      await signIn({ login_hint: email.value })
+    if (verified.requiresTotp) {
+      step.value = 'totp'
+      loading.value = false
+      return
     }
+
+    await finishLogin(verified.sessionId, verified.sessionToken)
   } catch (error: any) {
     loading.value = false
     if (import.meta.dev) console.error('OTP verify error:', error)
 
-    // Refresh the authRequestId so subsequent retries get a fresh one.
-    if (isCapacitor) {
-      try {
-        const { useOidc } = await import('~/composables/useOidc')
-        fetchedAuthRequestId.value = await useOidc().getAuthRequestId()
-      } catch { /* Best-effort */ }
+    if (isMfaRequired(error)) {
+      step.value = 'totp'
+      return
     }
+
+    await refreshCapacitorAuthRequest()
 
     const status = error?.response?.status || error?.statusCode
     if (status === 429) {
@@ -319,6 +399,29 @@ const verifyCode = async () => {
      * not_admin outcome that keeps us on the page) can re-fire. The success
      * path triggers a navigation; clearing the flag there is a no-op.
      */
+    verifyInFlight = false
+  }
+}
+
+const verifyTotp = async () => {
+  if (verifyInFlight || loading.value) return
+  verifyInFlight = true
+  errorMessage.value = ''
+  loading.value = true
+
+  try {
+    const verified = await verifyTotpLogin(otpSessionId.value, otpSessionToken.value, totpCode.value)
+    otpSessionToken.value = verified.sessionToken
+    await finishLogin(verified.sessionId, verified.sessionToken)
+  } catch (error: any) {
+    loading.value = false
+    if (import.meta.dev) console.error('TOTP verify error:', error)
+    totpCode.value = ''
+    await refreshCapacitorAuthRequest()
+
+    const status = error?.response?.status || error?.statusCode
+    errorMessage.value = status === 429 ? t('login.tooManyRequests') : t('login.invalidTotp')
+  } finally {
     verifyInFlight = false
   }
 }

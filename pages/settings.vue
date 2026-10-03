@@ -139,6 +139,9 @@
             </UDropdownMenu>
           </div>
         </div>
+
+        <!-- Staff two-factor authentication -->
+        <SecuritySettings />
       </div>
     </template>
 
@@ -376,6 +379,9 @@
         </li>
       </ul>
     </SettingsSection>
+
+    <!-- Staff two-factor authentication -->
+    <SecuritySettings />
     </div>
 
     <!-- Override editor: restyled bottom sheet on mobile, side panel on desktop -->
@@ -540,6 +546,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useGqlSubscription, useNuxtApp } from '#imports'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import ScheduleEditor from '~/components/ScheduleEditor.vue'
+import SecuritySettings from '~/components/SecuritySettings.vue'
 import SettingsSection from '~/components/SettingsSection.vue'
 import gql from 'graphql-tag'
 import { onBeforeRouteLeave } from 'vue-router'

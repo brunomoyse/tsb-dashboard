@@ -349,6 +349,32 @@
   },
 
   "settings": {
+    "security": {
+      "title": "双重身份验证",
+      "description": "可选：登录时还需输入身份验证器应用中的验证码。",
+      "statusOn": "已启用",
+      "statusOff": "未启用",
+      "loading": "加载中...",
+      "loadFailed": "无法加载安全状态。",
+      "enabled": "身份验证器应用已启用。每次登录时都需要输入其验证码。",
+      "disabledHint": "添加身份验证器应用（Google Authenticator、Microsoft Authenticator、1Password 等），为账户增加一层保护。",
+      "enable": "设置身份验证器应用",
+      "scanHint": "使用身份验证器应用扫描此二维码，然后输入显示的 6 位验证码。",
+      "openInApp": "在身份验证器应用中打开",
+      "manualKey": "或手动输入此密钥：",
+      "copyKey": "复制密钥",
+      "keyCopied": "密钥已复制",
+      "codeLabel": "6 位验证码",
+      "codePlaceholder": "123456",
+      "activate": "启用",
+      "disable": "关闭",
+      "disableHint": "输入身份验证器应用中的当前验证码以关闭。",
+      "disableConfirm": "关闭双重身份验证",
+      "invalidCode": "验证码无效，请检查身份验证器应用后重试。",
+      "actionFailed": "出现错误，请重试。",
+      "enabledToast": "双重身份验证已启用",
+      "disabledToast": "双重身份验证已关闭"
+    },
     "title": "餐厅设置",
     "unsaved": "未保存",
     "leaveConfirm": "您有未保存的更改。仍要离开吗？",
@@ -433,7 +459,10 @@
     "authenticating": "正在验证...",
     "callbackError": "验证错误",
     "sessionExpired": "您的会话已过期。请重新登录。",
-    "tooManyRequests": "尝试次数过多。请稍后重试。"
+    "tooManyRequests": "尝试次数过多。请稍后重试。",
+    "totpHint": "请输入身份验证器应用中的 6 位验证码。",
+    "totpLabel": "身份验证器验证码",
+    "invalidTotp": "验证码无效，请检查身份验证器应用后重试。"
   },
 
   "validation": {

@@ -348,6 +348,32 @@
   },
 
   "settings": {
+    "security": {
+      "title": "Two-factor authentication",
+      "description": "Optional: also ask for a code from an authenticator app when signing in.",
+      "statusOn": "Enabled",
+      "statusOff": "Not enabled",
+      "loading": "Loading...",
+      "loadFailed": "Could not load the security status.",
+      "enabled": "Authenticator app enabled. You will be asked for its code at every sign-in.",
+      "disabledHint": "Add an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password...) for an extra layer of protection on your account.",
+      "enable": "Set up authenticator app",
+      "scanHint": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
+      "openInApp": "Open in authenticator app",
+      "manualKey": "Or enter this key manually:",
+      "copyKey": "Copy key",
+      "keyCopied": "Key copied",
+      "codeLabel": "6-digit code",
+      "codePlaceholder": "123456",
+      "activate": "Activate",
+      "disable": "Turn off",
+      "disableHint": "Enter a current code from your authenticator app to turn it off.",
+      "disableConfirm": "Turn off two-factor",
+      "invalidCode": "Invalid code. Check your authenticator app and try again.",
+      "actionFailed": "Something went wrong. Please try again.",
+      "enabledToast": "Two-factor authentication enabled",
+      "disabledToast": "Two-factor authentication turned off"
+    },
     "title": "Restaurant Settings",
     "unsaved": "Unsaved",
     "leaveConfirm": "You have unsaved changes. Leave anyway?",
@@ -432,7 +458,10 @@
     "authenticating": "Authenticating...",
     "callbackError": "Authentication error",
     "sessionExpired": "Your session has expired. Please sign in again.",
-    "tooManyRequests": "Too many attempts. Please try again later."
+    "tooManyRequests": "Too many attempts. Please try again later.",
+    "totpHint": "Enter the 6-digit code from your authenticator app.",
+    "totpLabel": "Authenticator code",
+    "invalidTotp": "Invalid code. Check your authenticator app and try again."
   },
 
   "validation": {
