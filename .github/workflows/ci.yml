@@ -5,24 +5,37 @@ on:
     branches: [main]
 
 jobs:
-  lint:
-    name: Lint
+  check:
+    name: Vite+ check (format, lint, type check)
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          node-version: 24
-          cache: npm
+          node-version: '24'
+          cache: true
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Run vp check
+        run: vp check
 
-      - name: Run oxlint
-        run: npm run lint
+  test:
+    name: Tests
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: '24'
+          cache: true
+
+      - name: Run vp test
+        run: vp test run --passWithNoTests
 
   build:
     name: Build
@@ -36,33 +49,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+          node-version: '24'
+          cache: true
 
       - name: Build
-        run: npm run build
-
-  test:
-    name: Tests
-    runs-on: ubuntu-26.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test
+        run: vp run build

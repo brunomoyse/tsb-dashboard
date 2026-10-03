@@ -19,6 +19,9 @@ ENV DASHBOARD_BASE_URL=${DASHBOARD_BASE_URL} \
     ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID} \
     RESTAURANT_NAME=${RESTAURANT_NAME}
 
+# The image has no git; skip the Vite+ hook setup run by the `prepare` script.
+ENV VP_GIT_HOOKS=0
+
 COPY package*.json ./
 
 RUN npm ci --prefer-offline --no-audit
