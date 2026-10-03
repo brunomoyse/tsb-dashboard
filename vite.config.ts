@@ -18,7 +18,7 @@ export default defineConfig({
   fmt: {
     singleQuote: true,
     semi: false,
-    ignorePatterns: ['android/**', '**/android/**', 'public/**'],
+    ignorePatterns: ['.claude/**', 'android/**', '**/android/**', 'public/**'],
   },
   lint: {
     plugins: ['typescript', 'vue'],
