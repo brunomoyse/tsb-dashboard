@@ -8,13 +8,16 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
-    "lint": "oxlint",
+    "test": "vp test run --passWithNoTests",
+    "test:watch": "vp test",
+    "lint": "vp lint",
+    "check": "vp check",
+    "fmt": "vp fmt",
     "cap:build": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs",
     "build:android": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs && npx cap sync android",
     "cap:sync": "npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -42,9 +45,9 @@
     "@nuxt/test-utils": "^4.3.2",
     "@nuxtjs/i18n": "^10.6.0",
     "@types/node": "^24.13.6",
-    "oxlint": "^1.85.0",
     "tailwindcss": "^4.3.3",
-    "vitest": "^5.0.1"
+    "vite-plus": "1.0.0",
+    "vitest": "5.0.1"
   },
   "optionalDependencies": {
     "@esbuild/linux-arm64": "^0.28.2",
@@ -61,5 +64,16 @@
     "@tailwindcss/oxide-linux-x64-gnu": "^4.3.3",
     "lightningcss-linux-arm64-gnu": "^1.33.0",
     "lightningcss-linux-x64-gnu": "^1.33.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vitest": "5.0.1"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "11.19.0",
+      "onFail": "download"
+    }
   }
 }
