@@ -5,6 +5,11 @@ interface SessionResponse {
     sessionToken: string
 }
 
+interface VerifyOtpResponse extends SessionResponse {
+    /** The account has an authenticator app: ask for its code before finalize. */
+    requiresTotp?: boolean
+}
+
 interface FinalizeResponse {
     callbackUrl: string
 }
@@ -35,8 +40,16 @@ export function useZitadelApi() {
     }
 
     /** Step 2: verify the OTP code; returns a fresh sessionToken with otpEmail check fulfilled. */
-    function verifyOtpLogin(sessionId: string, sessionToken: string, code: string): Promise<SessionResponse> {
-        return $fetch<SessionResponse>(`${apiUrl}/auth/session/otp/verify`, {
+    function verifyOtpLogin(sessionId: string, sessionToken: string, code: string): Promise<VerifyOtpResponse> {
+        return $fetch<VerifyOtpResponse>(`${apiUrl}/auth/session/otp/verify`, {
+            method: 'POST',
+            body: { sessionId, sessionToken, code },
+        })
+    }
+
+    /** Step 3 (staff with an authenticator app): add the TOTP check to the session. */
+    function verifyTotpLogin(sessionId: string, sessionToken: string, code: string): Promise<SessionResponse> {
+        return $fetch<SessionResponse>(`${apiUrl}/auth/session/totp/verify`, {
             method: 'POST',
             body: { sessionId, sessionToken, code },
         })
@@ -61,6 +74,7 @@ export function useZitadelApi() {
     return {
         requestOtpLogin,
         verifyOtpLogin,
+        verifyTotpLogin,
         resendOtpLogin,
         finalizeOidcAuth,
     }

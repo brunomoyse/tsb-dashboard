@@ -341,6 +341,32 @@
   },
 
   "settings": {
+    "security": {
+      "title": "Tweestapsverificatie",
+      "description": "Optioneel: vraag bij het aanmelden ook een code uit een authenticator-app.",
+      "statusOn": "Ingeschakeld",
+      "statusOff": "Niet ingeschakeld",
+      "loading": "Laden...",
+      "loadFailed": "Beveiligingsstatus kon niet worden geladen.",
+      "enabled": "Authenticator-app ingeschakeld. Bij elke aanmelding wordt om de code gevraagd.",
+      "disabledHint": "Voeg een authenticator-app toe (Google Authenticator, Microsoft Authenticator, 1Password...) voor extra bescherming van je account.",
+      "enable": "Authenticator-app instellen",
+      "scanHint": "Scan deze QR-code met je authenticator-app en voer daarna de 6-cijferige code in.",
+      "openInApp": "Openen in authenticator-app",
+      "manualKey": "Of voer deze sleutel handmatig in:",
+      "copyKey": "Sleutel kopiëren",
+      "keyCopied": "Sleutel gekopieerd",
+      "codeLabel": "6-cijferige code",
+      "codePlaceholder": "123456",
+      "activate": "Activeren",
+      "disable": "Uitschakelen",
+      "disableHint": "Voer een actuele code uit je authenticator-app in om deze uit te schakelen.",
+      "disableConfirm": "Tweestapsverificatie uitschakelen",
+      "invalidCode": "Ongeldige code. Controleer je authenticator-app en probeer opnieuw.",
+      "actionFailed": "Er ging iets mis. Probeer het opnieuw.",
+      "enabledToast": "Tweestapsverificatie ingeschakeld",
+      "disabledToast": "Tweestapsverificatie uitgeschakeld"
+    },
     "title": "Restaurantinstellingen",
     "unsaved": "Niet opgeslagen",
     "leaveConfirm": "Je hebt niet-opgeslagen wijzigingen. Toch verlaten?",
@@ -422,7 +448,10 @@
     "authenticating": "Authenticatie bezig...",
     "callbackError": "Fout bij authenticatie",
     "sessionExpired": "Uw sessie is verlopen. Log opnieuw in.",
-    "tooManyRequests": "Te veel pogingen. Probeer het later opnieuw."
+    "tooManyRequests": "Te veel pogingen. Probeer het later opnieuw.",
+    "totpHint": "Voer de 6-cijferige code uit je authenticator-app in.",
+    "totpLabel": "Authenticatiecode",
+    "invalidTotp": "Ongeldige code. Controleer je authenticator-app en probeer opnieuw."
   },
 
   "validation": {

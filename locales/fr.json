@@ -349,6 +349,32 @@
   },
 
   "settings": {
+    "security": {
+      "title": "Authentification à deux facteurs",
+      "description": "Optionnel : demander aussi un code d'une application d'authentification à la connexion.",
+      "statusOn": "Activée",
+      "statusOff": "Non activée",
+      "loading": "Chargement...",
+      "loadFailed": "Impossible de charger l'état de sécurité.",
+      "enabled": "Application d'authentification activée. Son code vous sera demandé à chaque connexion.",
+      "disabledHint": "Ajoutez une application d'authentification (Google Authenticator, Microsoft Authenticator, 1Password...) pour mieux protéger votre compte.",
+      "enable": "Configurer une application",
+      "scanHint": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code à 6 chiffres affiché.",
+      "openInApp": "Ouvrir dans l'application",
+      "manualKey": "Ou saisissez cette clé manuellement :",
+      "copyKey": "Copier la clé",
+      "keyCopied": "Clé copiée",
+      "codeLabel": "Code à 6 chiffres",
+      "codePlaceholder": "123456",
+      "activate": "Activer",
+      "disable": "Désactiver",
+      "disableHint": "Saisissez un code actuel de votre application d'authentification pour la désactiver.",
+      "disableConfirm": "Désactiver la double authentification",
+      "invalidCode": "Code invalide. Vérifiez votre application d'authentification et réessayez.",
+      "actionFailed": "Une erreur est survenue. Veuillez réessayer.",
+      "enabledToast": "Authentification à deux facteurs activée",
+      "disabledToast": "Authentification à deux facteurs désactivée"
+    },
     "title": "Paramètres du restaurant",
     "unsaved": "Non enregistré",
     "leaveConfirm": "Vous avez des modifications non enregistrées. Quitter quand même ?",
@@ -433,7 +459,10 @@
     "authenticating": "Authentification en cours...",
     "callbackError": "Erreur lors de l'authentification",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
-    "tooManyRequests": "Trop de tentatives. Veuillez réessayer plus tard."
+    "tooManyRequests": "Trop de tentatives. Veuillez réessayer plus tard.",
+    "totpHint": "Saisissez le code à 6 chiffres de votre application d'authentification.",
+    "totpLabel": "Code d'authentification",
+    "invalidTotp": "Code invalide. Vérifiez votre application d'authentification et réessayez."
   },
 
   "validation": {
