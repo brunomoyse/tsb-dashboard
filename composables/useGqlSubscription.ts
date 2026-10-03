@@ -14,7 +14,7 @@ let wsClientPromise: Promise<Client> | null = null
  * resolvers and produces lib/pq "canceling statement" errors.
  */
 const disposeSharedClient = () => {
-  wsClient?.dispose()
+  void wsClient?.dispose()
   wsClient = null
   wsClientPromise = null
 }
@@ -43,7 +43,7 @@ const getWsClient = (): Promise<Client> => {
         let pongTimer: ReturnType<typeof setTimeout> | null = null
 
         const client = createClient({
-          url: cfg.public.graphqlWs as string,
+          url: cfg.public.graphqlWs,
           connectionParams: async () => {
             const token = await getAccessToken()
             return token ? { Authorization: `Bearer ${token}` } : {}
@@ -166,7 +166,7 @@ export function useGqlSubscription<T = unknown>(
   })
 
   const closeAll = () => {
-    wsClient?.dispose()
+    void wsClient?.dispose()
     wsClient = null
     wsClientPromise = null
   }

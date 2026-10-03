@@ -16,7 +16,7 @@ export function useLocaleSwitch() {
   const onLanguageChange = (newLocale: AppLocale) => {
     const newPath = switchLocalePath(newLocale)
     if (newPath) {
-      navigateTo(newPath)
+      void navigateTo(newPath)
     }
   }
 

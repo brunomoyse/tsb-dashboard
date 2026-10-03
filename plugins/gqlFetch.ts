@@ -16,7 +16,7 @@ interface GqlOptions {
 
 export default defineNuxtPlugin(() => {
   const cfg = useRuntimeConfig()
-  const httpURL = cfg.public.graphqlHttp as string
+  const httpURL = cfg.public.graphqlHttp
   const localePath = useLocalePath()
 
   /** Get access token from OIDC client (client-side only) */
@@ -88,7 +88,10 @@ export default defineNuxtPlugin(() => {
     errors?: { extensions?: { code?: string }; message?: string }[]
   }> => {
     const userLocale = useCookie('i18n_redirected').value ?? 'fr'
-    return await $fetch(httpURL, {
+    return $fetch<
+      { data?: unknown; errors?: { extensions?: { code?: string }; message?: string }[] },
+      string
+    >(httpURL, {
       method: 'POST',
       body,
       credentials: 'omit',
@@ -127,7 +130,7 @@ export default defineNuxtPlugin(() => {
       const user = await silentRenew()
       return Boolean(user)
     } catch {
-      navigateTo(`${localePath('auth-login')}?session=expired`)
+      void navigateTo(`${localePath('auth-login')}?session=expired`)
       return false
     }
   }

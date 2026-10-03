@@ -1,4 +1,6 @@
 export default defineNuxtPlugin(() => {
+  // Always invoked via .call(this, ...) below, so `this` stays bound.
+  // oxlint-disable-next-line typescript/unbound-method
   const originalAddEventListener = EventTarget.prototype.addEventListener
 
   // eslint-disable-next-line func-names, no-extend-native
@@ -17,6 +19,6 @@ export default defineNuxtPlugin(() => {
       }
     }
 
-    return originalAddEventListener.call(this, type, listener, options)
+    originalAddEventListener.call(this, type, listener, options)
   }
 })

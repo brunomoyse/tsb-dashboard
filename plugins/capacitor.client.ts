@@ -28,11 +28,11 @@ export default defineNuxtPlugin(async () => {
   // Back on the app via a deep link.
   try {
     const { App } = await import('@capacitor/app')
-    App.addListener('appUrlOpen', ({ url }) => {
+    await App.addListener('appUrlOpen', ({ url }) => {
       try {
         const parsed = new URL(url)
         if (parsed.pathname.includes('/auth/callback')) {
-          navigateTo(`${parsed.pathname}${parsed.search}`)
+          void navigateTo(`${parsed.pathname}${parsed.search}`)
         }
       } catch {
         /* Ignore malformed URLs */

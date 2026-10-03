@@ -59,7 +59,7 @@ export function usePushNotifications() {
     await PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
       const router = useNuxtApp().$router
       const localePath = useNuxtApp().$localePath as (path: string) => string
-      router.push(localePath('/orders'))
+      void router.push(localePath('/orders'))
 
       // If the notification has order-specific data, we could use it later
       void notification

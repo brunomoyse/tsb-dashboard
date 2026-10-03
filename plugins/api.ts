@@ -10,7 +10,7 @@ import {
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  const apiUrl: string = config.public.api as string
+  const apiUrl: string = config.public.api
   const userLocale = useCookie('i18n_redirected').value ?? 'fr'
   const localePath = useLocalePath()
 
@@ -30,7 +30,7 @@ export default defineNuxtPlugin(() => {
     return Boolean(user)
   }
 
-  const baseApi = $fetch.create({
+  const baseApi = $fetch.create<unknown, string>({
     baseURL: apiUrl,
     credentials: 'omit', // No cookies — we use Bearer tokens
     headers: {
@@ -38,7 +38,7 @@ export default defineNuxtPlugin(() => {
       Accept: 'application/json',
       'Accept-Language': userLocale,
     },
-    async onRequest({ options }: { options: { headers?: Record<string, string> } }) {
+    async onRequest({ options }) {
       if (import.meta.server) {
         // SSR: forward cookies for Accept-Language if available
         const event = useRequestEvent()
@@ -46,32 +46,23 @@ export default defineNuxtPlugin(() => {
         const cookies = event?.node.req.headers.cookie
 
         if (cookies) {
-          options.headers = {
-            ...options.headers,
-            cookie: cookies,
-            'Accept-Language': serverLocale,
-          }
+          options.headers.set('cookie', cookies)
+          options.headers.set('Accept-Language', serverLocale)
         }
       } else {
         // Client-side: attach Bearer token from OIDC
         const token = await getOidcToken()
         if (token) {
-          options.headers = {
-            ...options.headers,
-            Authorization: `Bearer ${token}`,
-          }
+          options.headers.set('Authorization', `Bearer ${token}`)
         }
       }
     },
   })
 
   // Wrapper that handles 401 retry externally (onResponseError return values are ignored by ofetch)
-  const api = async <T>(
-    request: Parameters<typeof baseApi>[0],
-    options?: Parameters<typeof baseApi>[1],
-  ): Promise<T> => {
+  const api = async <T>(request: string, options?: Parameters<typeof baseApi>[1]): Promise<T> => {
     try {
-      return (await baseApi(request, options)) as T
+      return await baseApi<T, string>(request, options)
     } catch (err: unknown) {
       if (
         !import.meta.server &&
@@ -81,8 +72,8 @@ export default defineNuxtPlugin(() => {
         (err as { status: number }).status === 401
       ) {
         const ok = await refreshAuth()
-        if (ok) return (await baseApi(request, options)) as T
-        navigateTo(`${localePath('auth-login')}?session=expired`)
+        if (ok) return baseApi<T, string>(request, options)
+        void navigateTo(`${localePath('auth-login')}?session=expired`)
       }
       throw err
     }

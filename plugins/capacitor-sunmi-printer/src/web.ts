@@ -80,6 +80,11 @@ export class SunmiPrinterWeb extends WebPlugin implements SunmiPrinterPlugin {
     return Promise.resolve()
   }
 
+  cutPaper(): Promise<void> {
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] cutPaper() — web stub')
+    return Promise.resolve()
+  }
+
   enterBuffer(): Promise<void> {
     if (import.meta.env.DEV) console.info('[SunmiPrinter] enterBuffer() — web stub')
     return Promise.resolve()
