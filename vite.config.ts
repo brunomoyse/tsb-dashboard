@@ -5,13 +5,13 @@ import { runtimeFlagsPlugin } from './tests/support/flags'
 const root = (path: string) => resolve(import.meta.dirname, path)
 const excluded = ['**/node_modules/**', '**/.nuxt/**', '**/.output/**']
 
-// The files of the critical flows (auth, the GraphQL client, the orders store and the order actions, receipt printing,
-// the date helpers) must not regress, whatever the rest gains: each is held at the level it reaches today, 100 % lines,
-// statements and functions everywhere, and 100 % of the branches except the few arms measured below 100 (defensive
-// fallbacks and dead `import.meta.server` arms, listed in docs/testing.md). Only ever raise them.
+// The files of the critical flows (auth, the GraphQL client, the orders store and the order actions and logic, money,
+// receipt printing, the date helpers) must not regress, whatever the rest gains: each is held at the level it reaches
+// today, 100 % lines, statements, functions and branches, except the few arms of utils/utils.ts measured below 100
+// (listed in docs/testing.md). Only ever raise them.
 const full = { statements: 100, branches: 100, functions: 100, lines: 100 }
 const criticalFiles = {
-  'composables/useOidc.ts': { ...full, branches: 98.33 },
+  'composables/useOidc.ts': full,
   'composables/useAuthCallback.ts': full,
   'composables/useZitadelApi.ts': full,
   'composables/useLoginFlow.ts': full,
@@ -19,15 +19,17 @@ const criticalFiles = {
   'composables/useGqlMutation.ts': full,
   'composables/useGqlSubscription.ts': full,
   'composables/useOrderActions.ts': full,
-  'composables/useSunmiPrinter.ts': { ...full, branches: 98.88 },
+  'composables/useSunmiPrinter.ts': full,
   'composables/usePushNotifications.ts': full,
   'stores/auth.ts': full,
   'stores/orders.ts': full,
   'middleware/auth.global.ts': full,
-  'plugins/api.ts': { ...full, statements: 97.36, branches: 96.55 },
-  'plugins/gqlFetch.ts': { ...full, statements: 98.21, branches: 97.36 },
+  'plugins/api.ts': full,
+  'plugins/gqlFetch.ts': full,
   'plugins/auth-sync.client.ts': full,
-  'utils/utils.ts': { ...full, branches: 87.3 },
+  'utils/utils.ts': { ...full, branches: 96.07 },
+  'utils/authReturn.ts': full,
+  'utils/silentRenewError.ts': full,
   'utils/orders.ts': full,
   'utils/money.ts': full,
   'utils/coupons.ts': full,
@@ -79,10 +81,10 @@ export default defineConfig({
       ],
       reporter: ['text-summary', 'json-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      // A ratchet just under the measured values (99.8 % statements, 98 % branches, 100 % functions and lines). Only ever raise it.
+      // A ratchet at the measured values (100 % statements, functions and lines, 99.8 % branches). Only ever raise it.
       thresholds: {
-        statements: 99.5,
-        branches: 97.9,
+        statements: 100,
+        branches: 99.8,
         functions: 100,
         lines: 100,
         ...criticalFiles,
