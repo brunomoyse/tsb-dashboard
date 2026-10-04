@@ -10,21 +10,15 @@ updates:
       # Peer-pinned to the vitest that vite-plus bundles: bump it together with vite-plus, never alone.
       - dependency-name: '@vitest/coverage-v8'
     groups:
-      oxc-toolchain:
+      # Vite+ ships its own oxc/rolldown/vitest binaries; bump the CLI and its platform packages together.
+      # A bump also needs the `overrides.vite` pin (vite-plus-core) and @vitest/coverage-v8 moved by hand.
+      vite-plus:
         patterns:
-          - '@oxc-*'
-      esbuild-platforms:
+          - 'vite-plus'
+          - '@voidzero-dev/*'
+      capacitor:
         patterns:
-          - '@esbuild/*'
-      rollup-platforms:
-        patterns:
-          - '@rollup/*'
-      tailwindcss-platforms:
-        patterns:
-          - '@tailwindcss/oxide-*'
-      lightningcss-platforms:
-        patterns:
-          - 'lightningcss-*'
+          - '@capacitor/*'
   - package-ecosystem: 'docker'
     directory: '/'
     schedule:
