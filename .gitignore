@@ -25,3 +25,7 @@ logs
 
 CLAUDE.md
 .vitest/
+
+# Test coverage output
+coverage
+.nuxtrc

@@ -1,0 +1,110 @@
+# Unit tests and coverage
+
+Unit tests run with Vite+ (`vp test run`, vitest 5 inside). They cover the **TypeScript** of the dashboard: `composables`,
+`stores`, `plugins` (including `plugins/capacitor-sunmi-printer/src`), `middleware`, `utils` and `server`. `.vue` pages,
+layouts and components are not part of the unit metric.
+
+```bash
+npm test                                          # all projects
+npx vp test run tests/composables                 # one folder / file
+npx vp test run -t "removes the line"             # by test title
+npx vp test run --project unit                    # only the plain-node project (fastest, no Nuxt boot)
+npx vp test run --sequence.shuffle --sequence.seed=7   # random order: the suite must pass in any order
+npm run test:coverage                             # coverage + thresholds (what CI runs); report in coverage/
+```
+
+`coverage/lcov-report/index.html` is the browsable report. The thresholds in `vite.config.ts`
+(`test.coverage.thresholds`) only ever go up: a global one, and one per file for the critical flows (`criticalFiles`:
+auth, the GraphQL client, the orders store and the order actions, the receipt printing), held at what they reach.
+
+npm: the repo declares `devEngines.packageManager` npm 11.19.0 (`onFail: download`); with another npm, `npm ci --force`.
+
+## Where tests go and how they are named
+
+Tests live under `tests/`, mirroring the source folder (`composables/useOidc.ts` is tested by
+`tests/composables/useOidc.nuxt.test.ts`). They cannot sit next to the sources: Nuxt scans `composables/`, `plugins/`,
+`middleware/` and `stores/` and would register a test file there. One test file per module: add the case to the file that
+exists. The suffix picks the environment (the vitest "project"):
+
+| Suffix           | Project | Environment                              | For                                                                         |
+| ---------------- | ------- | ---------------------------------------- | --------------------------------------------------------------------------- |
+| `*.test.ts`      | `unit`  | plain Node, no Nuxt                      | pure code: `utils/`, stores without auto-imports, the Capacitor plugin stub |
+| `*.nuxt.test.ts` | `nuxt`  | the real dashboard Nuxt app in happy-dom | composables, plugins, route middleware, stores that use auto-imports        |
+
+Prefer the lightest project that works. Always `import { describe, expect, it, vi } from 'vite-plus/test'` (the lint rule
+`prefer-vite-plus-imports` enforces it). `~` and `@` resolve in every project.
+
+Every project resets spies, stubbed globals and stubbed env after each test (`restoreMocks`, `unstubGlobals`,
+`unstubEnvs`), and unmounts every mounted component (`tests/support/vue.ts`). Whatever else a test overrides (a property of
+`window`, `navigator`, `process.env.TZ`, a module-level state), it puts back itself. The suite must pass in any order
+(`--sequence.shuffle`) and needs per-file isolation.
+
+Shared helpers live in `tests/`:
+
+- `tests/fixtures/dashboard.ts`: `makeOrder`, `makeOrderItem`, `makeProduct`, `makeCategory`, `makeAddress`, `makeCustomer`, `makeUser`
+- `tests/support/flags.ts`: `setFlags({ server, client, dev })`, see "SSR-only and dev-only code"
+- `tests/support/*`: setup files of the projects (no network, flag reset, Nuxt ready), `nuxtProject.ts` (the Nuxt project and its runtime config)
+- `tests/helpers/`: `i18n.ts` (a `t` that returns the key), `gqlFetch.ts` (swap `$gqlFetch`), `mountComposable.ts`, `fakeOidc.ts`
+  (oidc-client-ts's `UserManager`, to run the real `useOidc` over a fake Zitadel), `settle.ts`
+
+## The `nuxt` project: composables, stores, plugins, middleware
+
+`@nuxt/test-utils` boots the real app (auto-imports, Pinia, i18n, runtime config) once per test file. Real is the default:
+use the real stores, real `useState`, real i18n and localised paths, real runtime config, and mock only the boundaries.
+
+```ts
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import { beforeEach, expect, it, vi } from 'vite-plus/test'
+```
+
+| Need           | How                                                                                                                                                                                                                                                                              |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime config | Fixed values from `tests/support/nuxtProject.ts` (`https://dash.test`, `https://api.dash.test/api/v1`...), whatever a developer has exported. A test reads what it asserts from `useRuntimeConfig()`; the object is mutable (`public.appBuild = 'capacitor'`), put it back after |
+| `$fetch`       | `const $fetchMock = vi.hoisted(() => vi.fn()); mockNuxtImport('$fetch', () => $fetchMock)`                                                                                                                                                                                       |
+| `$gqlFetch`    | wrap `useNuxtApp` with `withGqlFetch` (it is a read-only getter on the app), see `tests/helpers/gqlFetch.ts`                                                                                                                                                                     |
+| Navigation     | `mockNuxtImport('navigateTo', () => navigateTo)`, or `vi.mock('nuxt/app', ...)` when the file imports it from `'nuxt/app'` (the auth middleware)                                                                                                                                 |
+| i18n           | `vi.mock('vue-i18n', ...)` with `fakeI18n`: a test asserts WHICH message key was chosen, not its wording                                                                                                                                                                         |
+| OIDC (Zitadel) | `vi.mock('~/composables/useOidc', () => ({ useOidc: () => oidcMock }))`; to run the REAL `useOidc`, fake only the UserManager: `vi.mock('oidc-client-ts', async () => (await import('../helpers/fakeOidc')).oidcClientTsFake())`                                                 |
+| Capacitor      | `vi.mock('@capacitor/core', ...)` and the `@capacitor/*` plugin in use; `~/composables/usePlatform` can be mocked directly                                                                                                                                                       |
+| Time           | `vi.useFakeTimers({ toFake: ['Date'] })` and `vi.setSystemTime(...)`; restore with `vi.useRealTimers()`. Never sleep. A timezone: `process.env.TZ = 'Asia/Kolkata'` (restore it)                                                                                                 |
+
+`vi.mock` / `mockNuxtImport` are hoisted: the values they use must come from `vi.hoisted(...)`. A module that is mocked
+must be imported **after** the mocks: `const { default: plugin } = await import('~/plugins/gqlFetch')`.
+
+A composable with module-level state (the OIDC user manager and renewal promise, the shared WebSocket client) is loaded
+fresh per test: `vi.resetModules()` then `await import(...)` (see `useOidc.nuxt.test.ts`, `useGqlSubscription.nuxt.test.ts`).
+`mountComposable` runs a composable inside a real component (`onMounted`, `onScopeDispose`...).
+
+A plugin file default-exports `defineNuxtPlugin(fn)`, which is the function itself: call it and read what it returns
+(`{ provide: { gqlFetch } }`). Route middleware is the same: call it with a fake `to`.
+
+## SSR-only and dev-only code
+
+Nuxt replaces `import.meta.server`, `import.meta.client` and `import.meta.dev` with constants at build time, which makes one
+side of every `if (import.meta.server)` unreachable. The dashboard is a SPA (`ssr: false`), but the plugins keep their
+server branches. In the projects, the sources of the app are rewritten so each flag first reads a per-test override.
+Defaults: browser (`client` true, `server` false, `dev` false).
+
+```ts
+import { setFlags } from '../support/flags'
+it('does not touch localStorage during SSR', () => {
+  setFlags({ server: true }) // also sets client: false; reset automatically after each test
+})
+```
+
+This is a hybrid, not a server render: it proves the server BRANCH does the right thing, not that nothing touches the DOM.
+
+## The network is closed
+
+`tests/support/noNetwork.ts` makes any `fetch`/`$fetch` to a host other than localhost fail with
+`Unmocked network request blocked in unit tests`. A test that reaches Zitadel, the API or S3 is wrong: mock the boundary.
+
+## Writing good tests (the review bar)
+
+- Assert behaviour: return values, state, calls made with the right arguments, errors surfaced. A test that only calls a
+  function to light up lines is rejected.
+- Critical flows (auth, the GraphQL client, orders, printing) cover every branch, error paths included.
+- Deterministic and fast: no real network, no sleeps, no dependence on test order or on the current date or timezone.
+- Don't change production behaviour for testability. A branch that cannot be reached is dead code: report it instead of
+  adding an ignore comment.
+- A suspected product bug is pinned with a `NOTE:` test title and a comment, and reported; a real bug gets a `fix(...)` commit.
