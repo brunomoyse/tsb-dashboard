@@ -550,13 +550,18 @@ describe('the delivery receipt', () => {
       expect(lines).toContain(`TOTAL | ${eur('20,51')}`)
     })
 
+    it('reads a comma decimal like the point one', async () => {
+      const lines = await print(order({ totalPrice: '12,50' }))
+      expect(lines).toContain(`TOTAL | ${eur('12,50')}`)
+    })
+
     describe('an amount that is not a number', () => {
       const log = () => vi.spyOn(console, 'error').mockImplementation(() => {})
 
       it.each([
         ['text', 'abc'],
         ['an empty string', ''],
-        ['a comma decimal', '12,50'],
+        ['a thousands separator', '1,234.56'],
         ['NaN', NaN],
       ])('prints --,-- €, never "NaN €", and logs it (%s)', async (_name, bad) => {
         const logged = log()
