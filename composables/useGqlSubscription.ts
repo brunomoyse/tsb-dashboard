@@ -107,6 +107,8 @@ export function useGqlSubscription<T = unknown>(
   const data = ref<T>()
   const error = ref<Error | null>(null)
   let stop: () => void = () => {}
+  // Set when the owning scope ends, so a subscription whose client was still loading is never started afterwards.
+  let disposed = false
 
   // Track if we've genuinely gone offline
   let wentOffline = false
@@ -114,6 +116,7 @@ export function useGqlSubscription<T = unknown>(
   const startSubscription = () => {
     getWsClient()
       .then((client) => {
+        if (disposed) return
         stop = client.subscribe(
           {
             query: typeof rawSub === 'string' ? rawSub : print(rawSub),
@@ -158,6 +161,7 @@ export function useGqlSubscription<T = unknown>(
   }
 
   onScopeDispose(() => {
+    disposed = true
     stop()
     if (import.meta.client) {
       window.removeEventListener('offline', handleOffline)
@@ -174,7 +178,11 @@ export function useGqlSubscription<T = unknown>(
   return {
     data,
     error,
-    stop,
+    // A function that calls the current unsubscribe: `stop` is reassigned once the client is ready, so returning the
+    // variable itself would hand callers the initial no-op for good.
+    stop: () => {
+      stop()
+    },
     closeAll,
   }
 }

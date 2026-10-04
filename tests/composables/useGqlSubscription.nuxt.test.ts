@@ -478,6 +478,24 @@ describe('page and network lifecycle', () => {
     expect(removed.sort()).toEqual(['offline', 'online'])
   })
 
+  it('a scope that ends before the client is ready must not leave a live subscription behind', async () => {
+    const { subscribe, scopes } = await load()
+    subscribe(SUB)
+    scopes[0]!.stop() // the component is gone before the WebSocket client resolved
+    await settle()
+    const { subscriptions } = clients()[0]!
+    // Either it never subscribed, or whatever it subscribed was unsubscribed.
+    for (const s of subscriptions) expect(s.unsubscribe).toHaveBeenCalledOnce()
+  })
+
+  it('returns a stop() that really unsubscribes', async () => {
+    const { subscribe } = await load()
+    const { stop } = subscribe(SUB)
+    await settle()
+    stop()
+    expect(clients()[0]!.subscriptions[0]!.unsubscribe).toHaveBeenCalledOnce()
+  })
+
   it('closeAll disposes the shared client; the next subscription opens a new one', async () => {
     const { subscribe } = await load()
     const { closeAll } = subscribe(SUB)
