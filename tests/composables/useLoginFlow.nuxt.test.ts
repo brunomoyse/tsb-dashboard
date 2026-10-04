@@ -116,11 +116,25 @@ describe('start', () => {
     expect(flow.errorMessage.value).toBe('login.sessionExpired')
   })
 
-  it('does not fetch an authRequestId when Zitadel passed one, or when the session just expired', async () => {
-    await mountFlow()
-    route.query = { session: 'expired' }
+  it('does not fetch an authRequestId when Zitadel passed one', async () => {
     await mountFlow()
     expect(oidc.getAuthRequestId).not.toHaveBeenCalled()
+  })
+
+  it('still fetches an authRequestId when the session just expired, and finalizes through it', async () => {
+    route.query = { session: 'expired' }
+    oidc.getAuthRequestId.mockResolvedValue('fetched-req')
+    const { flow } = await mountFlow()
+    await settle()
+    expect(oidc.getAuthRequestId).toHaveBeenCalledOnce()
+    expect(flow.errorMessage.value).toBe('login.sessionExpired')
+
+    flow.email.value = 'chef@example.com'
+    await flow.requestCode()
+    flow.code.value = '123456'
+    await flow.verifyCode()
+    expect(zitadel.finalizeOidcAuth).toHaveBeenCalledWith('fetched-req', 's-2', 'tok-2')
+    expect(oidc.signIn).not.toHaveBeenCalled()
   })
 
   it('fetches the authRequestId through the proxy when the page was opened directly', async () => {
@@ -375,7 +389,8 @@ describe('verifyCode: the last step on the web', () => {
   })
 
   it('without any authRequestId, starts a plain OIDC sign-in with the email as hint', async () => {
-    route.query = { session: 'expired' }
+    route.query = {}
+    oidc.getAuthRequestId.mockRejectedValue(new Error('offline'))
     const { flow } = await mountFlow()
     flow.email.value = 'chef@example.com'
     await flow.requestCode()
@@ -493,6 +508,22 @@ describe('verifyCode: the last step on Capacitor', () => {
     expect(flow.errorMessage.value).toBe('')
   })
 
+  it('after a session expiry (?session=expired) it also finishes through the fetched authRequestId', async () => {
+    route.query = { session: 'expired' }
+    oidc.getAuthRequestId.mockResolvedValue('fetched-req')
+    const { flow } = await mountFlow()
+    await settle()
+    flow.email.value = 'chef@example.com'
+    await flow.requestCode()
+    flow.code.value = '123456'
+
+    await flow.verifyCode()
+
+    expect(zitadel.finalizeOidcAuth).toHaveBeenCalledExactlyOnceWith('fetched-req', 's-2', 'tok-2')
+    expect(oidc.exchangeCodeForTokens).toHaveBeenCalledExactlyOnceWith('abc')
+    expect(oidc.signIn).not.toHaveBeenCalled()
+  })
+
   it('tells a non-admin they have no access, and lets them retry', async () => {
     authCallback.processCallback.mockResolvedValue({ ok: false, reason: 'not_admin' })
     const { flow } = await flowAtCodeStep()
@@ -544,16 +575,17 @@ describe('verifyCode: the last step on Capacitor', () => {
   })
 
   it('uses the refreshed authRequestId when Zitadel did not pass one', async () => {
-    route.query = { session: 'expired' }
-    oidc.getAuthRequestId.mockResolvedValue('fresh-req')
+    route.query = {}
+    oidc.getAuthRequestId.mockResolvedValueOnce('mount-req').mockResolvedValue('fresh-req')
     zitadel.verifyOtpLogin.mockRejectedValueOnce(httpError(401))
     const { flow } = await mountFlow()
+    await settle()
     flow.email.value = 'chef@example.com'
     await flow.requestCode()
     flow.code.value = '123456'
 
     await flow.verifyCode()
-    expect(oidc.getAuthRequestId).toHaveBeenCalledTimes(1)
+    expect(oidc.getAuthRequestId).toHaveBeenCalledTimes(2)
     await flow.verifyCode()
 
     expect(zitadel.finalizeOidcAuth).toHaveBeenCalledExactlyOnceWith('fresh-req', 's-2', 'tok-2')

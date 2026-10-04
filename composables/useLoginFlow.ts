@@ -51,10 +51,12 @@ export function useLoginFlow() {
     errorMessage.value = t('login.sessionExpired')
   }
 
-  // Fetch authRequestId via authorize-proxy when navigated directly (no authRequestID in URL),
-  // So the user never leaves the dashboard domain
+  // Fetch authRequestId via authorize-proxy when navigated directly (no authRequestID in URL), so the user never
+  // Leaves the dashboard domain. Also after a session expiry (?session=expired): that is the usual way in, and without
+  // An authRequestId the last step would fall back to signIn(), i.e. to Zitadel's own login UI (and, on Capacitor, out
+  // Of the WebView).
   onMounted(async () => {
-    if (!authRequestIdFromUrl && !route.query.session) {
+    if (!authRequestIdFromUrl) {
       initializing.value = true
       try {
         const { useOidc } = await import('~/composables/useOidc')
