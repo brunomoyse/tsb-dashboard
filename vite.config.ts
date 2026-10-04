@@ -14,6 +14,7 @@ const criticalFiles = {
   'composables/useOidc.ts': { ...full, branches: 98.33 },
   'composables/useAuthCallback.ts': full,
   'composables/useZitadelApi.ts': full,
+  'composables/useLoginFlow.ts': full,
   'composables/useGqlQuery.ts': full,
   'composables/useGqlMutation.ts': full,
   'composables/useGqlSubscription.ts': full,
