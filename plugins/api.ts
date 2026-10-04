@@ -21,9 +21,8 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
   const userLocale = useCookie('i18n_redirected').value ?? 'fr'
   const localePath = useLocalePath()
 
-  /** Get access token from OIDC client (client-side only) */
+  /** Get access token from OIDC client (client-side only: the callers only ask for it in the browser). */
   const getOidcToken = async (): Promise<string | null> => {
-    if (import.meta.server) return null
     const { useOidc } = await import('~/composables/useOidc')
     const { getAccessToken } = useOidc()
     return getAccessToken()

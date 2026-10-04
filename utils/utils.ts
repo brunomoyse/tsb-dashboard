@@ -114,18 +114,12 @@ const brusselsPartsFormatter = new Intl.DateTimeFormat('en-US', {
 
 /** Europe/Brussels offset from UTC, in milliseconds, at the given instant. */
 const brusselsOffsetMs = (date: Date): number => {
-  const map: Record<string, number> = {}
+  // formatToParts returns every requested part, so each one is there.
+  const map = {} as Record<'year' | 'month' | 'day' | 'hour' | 'minute' | 'second', number>
   for (const p of brusselsPartsFormatter.formatToParts(date)) {
-    if (p.type !== 'literal') map[p.type] = Number(p.value)
+    if (p.type !== 'literal') map[p.type as keyof typeof map] = Number(p.value)
   }
-  const asUTC = Date.UTC(
-    map.year ?? 1970,
-    (map.month ?? 1) - 1,
-    map.day ?? 1,
-    map.hour ?? 0,
-    map.minute ?? 0,
-    map.second ?? 0,
-  )
+  const asUTC = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second)
   return asUTC - date.getTime()
 }
 

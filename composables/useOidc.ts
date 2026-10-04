@@ -257,7 +257,7 @@ export function useOidc() {
       // Capacitor: token expired, attempt refresh
       if (isCapacitor) {
         const renewed = await silentRenew()
-        return renewed ? (capacitorTokenCache?.access_token ?? null) : null
+        return renewed?.access_token ?? null
       }
       // Web: use oidc-client-ts UserManager
       const mgr = getUserManager()

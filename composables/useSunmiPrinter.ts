@@ -165,7 +165,7 @@ export const useSunmiPrinter = () => {
         const box = boxNumber ? ` bte ${boxNumber}` : ''
         await plugin.printText({ text: `${streetName} ${houseNumber}${box}\n` })
         await plugin.printText({ text: `${postcode} ${municipalityName}\n` })
-      } else if (order.displayAddress) {
+      } else {
         await plugin.printText({ text: `${order.displayAddress}\n` })
       }
       if (order.addressExtra) {
