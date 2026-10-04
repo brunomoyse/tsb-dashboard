@@ -23,7 +23,7 @@ const criticalFiles = {
   'stores/auth.ts': full,
   'stores/orders.ts': full,
   'middleware/auth.global.ts': full,
-  'plugins/api.ts': { ...full, statements: 97.22, branches: 96.29 },
+  'plugins/api.ts': { ...full, statements: 97.36, branches: 96.55 },
   'plugins/gqlFetch.ts': { ...full, statements: 98.21, branches: 97.36 },
   'plugins/auth-sync.client.ts': full,
   'utils/utils.ts': { ...full, branches: 87.3 },
