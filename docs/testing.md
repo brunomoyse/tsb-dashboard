@@ -15,7 +15,13 @@ npm run test:coverage                             # coverage + thresholds (what 
 
 `coverage/lcov-report/index.html` is the browsable report. The thresholds in `vite.config.ts`
 (`test.coverage.thresholds`) only ever go up: a global one, and one per file for the critical flows (`criticalFiles`:
-auth, the GraphQL client, the orders store and the order actions, the receipt printing), held at what they reach.
+auth, the GraphQL client, the orders store and the order actions, the receipt printing), held at what they reach: 100 % lines,
+statements and functions, and 100 % branches except the arms below, which are unreachable defensive code:
+
+- `composables/useOidc.ts`: `capacitorTokenCache?.access_token ?? null` right after a renewal that filled the cache;
+- `composables/useSunmiPrinter.ts`: the implicit `else` of `if (order.address) ... else if (order.displayAddress)` inside a block that already requires one of them;
+- `plugins/api.ts`, `plugins/gqlFetch.ts`: `if (import.meta.server) return null` in `getOidcToken` (its callers only reach it on the client);
+- `utils/utils.ts`: the `?? 1970` / `?? 0` fallbacks after `Intl.formatToParts` and `split`, which always return every part.
 
 npm: the repo declares `devEngines.packageManager` npm 11.19.0 (`onFail: download`); with another npm, `npm ci --force`.
 

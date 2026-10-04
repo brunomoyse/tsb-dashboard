@@ -5,6 +5,30 @@ import { runtimeFlagsPlugin } from './tests/support/flags'
 const root = (path: string) => resolve(import.meta.dirname, path)
 const excluded = ['**/node_modules/**', '**/.nuxt/**', '**/.output/**']
 
+// The files of the critical flows (auth, the GraphQL client, the orders store and the order actions, receipt printing,
+// the date helpers) must not regress, whatever the rest gains: each is held at the level it reaches today, 100 % lines,
+// statements and functions everywhere, and 100 % of the branches except the few arms measured below 100 (defensive
+// fallbacks and dead `import.meta.server` arms, listed in docs/testing.md). Only ever raise them.
+const full = { statements: 100, branches: 100, functions: 100, lines: 100 }
+const criticalFiles = {
+  'composables/useOidc.ts': { ...full, branches: 98.33 },
+  'composables/useAuthCallback.ts': full,
+  'composables/useZitadelApi.ts': full,
+  'composables/useGqlQuery.ts': full,
+  'composables/useGqlMutation.ts': full,
+  'composables/useGqlSubscription.ts': full,
+  'composables/useOrderActions.ts': full,
+  'composables/useSunmiPrinter.ts': { ...full, branches: 98.88 },
+  'composables/usePushNotifications.ts': full,
+  'stores/auth.ts': full,
+  'stores/orders.ts': full,
+  'middleware/auth.global.ts': full,
+  'plugins/api.ts': { ...full, statements: 97.22, branches: 96.29 },
+  'plugins/gqlFetch.ts': { ...full, statements: 98.21, branches: 97.36 },
+  'plugins/auth-sync.client.ts': full,
+  'utils/utils.ts': { ...full, branches: 87.3 },
+}
+
 export default defineConfig({
   // Only Vite+ (vp test/lint/fmt) reads this file; Nuxt builds with its own Vite config.
   test: {
@@ -49,7 +73,14 @@ export default defineConfig({
       ],
       reporter: ['text-summary', 'json-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      thresholds: { statements: 0, branches: 0, functions: 0, lines: 0 },
+      // A ratchet just under the measured values (99.8 % statements, 98 % branches, 100 % functions and lines). Only ever raise it.
+      thresholds: {
+        statements: 99.5,
+        branches: 97.9,
+        functions: 100,
+        lines: 100,
+        ...criticalFiles,
+      },
     },
   },
   staged: {
