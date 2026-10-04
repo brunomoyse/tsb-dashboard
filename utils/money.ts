@@ -35,3 +35,14 @@ export function formatCentsReceipt(cents: number): string {
   const fraction = String(abs % 100).padStart(2, '0')
   return `${cents < 0 ? '-' : ''}${whole},${fraction} €`
 }
+
+/** The sum of amounts in integer cents, or null when any of them is not a readable amount (a partial sum would be wrong). */
+export function sumCents(values: (string | number | null | undefined)[]): number | null {
+  let sum = 0
+  for (const value of values) {
+    const cents = parseCents(value)
+    if (cents === null) return null
+    sum += cents
+  }
+  return sum
+}

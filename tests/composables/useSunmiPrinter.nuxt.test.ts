@@ -531,6 +531,66 @@ describe('the delivery receipt', () => {
       ])
     })
 
+    it('sums the item lines in cents: no float drift in the subtotal', async () => {
+      const lines = await print(
+        order({
+          items: [
+            makeOrderItem({ product: sushi, totalPrice: '0.10' }),
+            makeOrderItem({ product: sushi, totalPrice: '0.20' }),
+          ],
+          totalPrice: '0.30',
+        }),
+      )
+      // 0.1 + 0.2 = 0.30000000000000004 as floats.
+      expect(lines).toContain(`Sous-total | ${eur('0,30')}`)
+    })
+
+    it('rounds a third decimal half up, like the integer-cents maths of the POS', async () => {
+      const lines = await print(order({ totalPrice: '20.505' }))
+      expect(lines).toContain(`TOTAL | ${eur('20,51')}`)
+    })
+
+    describe('an amount that is not a number', () => {
+      const log = () => vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      it.each([
+        ['text', 'abc'],
+        ['an empty string', ''],
+        ['a comma decimal', '12,50'],
+        ['NaN', NaN],
+      ])('prints --,-- €, never "NaN €", and logs it (%s)', async (_name, bad) => {
+        const logged = log()
+        const lines = await print(order({ totalPrice: bad as string }))
+        expect(lines).toContain(`TOTAL | ${eur('--,--')}`)
+        expect(lines.some((l) => l.includes('NaN'))).toBe(false)
+        expect(logged).toHaveBeenCalledWith('[SunmiPrinter] Unreadable price on a receipt:', bad)
+      })
+
+      it('prints an unreadable item price as --,-- and makes the subtotal unknown, not a partial sum', async () => {
+        log()
+        const lines = await print(
+          order({
+            items: [
+              makeOrderItem({ product: sushi, totalPrice: '4.00' }),
+              makeOrderItem({ product: sushi, totalPrice: 'oops' }),
+            ],
+          }),
+        )
+        expect(lines).toContain(`Sous-total | ${eur('--,--')}`)
+        // The item line and the subtotal are unknown; the total (a field of its own) is still printed.
+        expect(lines.filter((l) => l.includes('--,--'))).toHaveLength(2)
+        expect(lines).toContain(`TOTAL | ${eur('14,50')}`)
+      })
+
+      it('does not print a discount or a fee it cannot read', async () => {
+        log()
+        const lines = await print(order({ discountAmount: 'n/a', deliveryFee: 'n/a' }))
+        expect(lines.some((l) => l.startsWith('Réduction') || l.startsWith('Livraison'))).toBe(
+          false,
+        )
+      })
+    })
+
     it('omits the delivery fee when it is null, empty or zero', async () => {
       for (const fee of [null, '', '0.00']) {
         const lines = await print(order({ deliveryFee: fee }))

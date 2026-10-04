@@ -1,6 +1,6 @@
 // Integer-cents helpers: the API sends decimal strings, sums must not drift and receipts must never print "NaN €".
 import { describe, expect, it } from 'vite-plus/test'
-import { centsToEuros, formatCentsReceipt, parseCents, toCents } from '~/utils/money'
+import { centsToEuros, formatCentsReceipt, parseCents, sumCents, toCents } from '~/utils/money'
 
 describe('parseCents', () => {
   it.each([
@@ -74,5 +74,19 @@ describe('formatCentsReceipt', () => {
 
   it('keeps the sign of a negative amount', () => {
     expect(formatCentsReceipt(-250)).toBe('-2,50 €')
+  })
+})
+
+describe('sumCents', () => {
+  it('sums decimal strings and numbers exactly', () => {
+    expect(sumCents(['0.10', '0.20'])).toBe(30)
+    expect(sumCents(['19.99', 0.01, '4'])).toBe(2400)
+    expect(sumCents([])).toBe(0)
+  })
+
+  it('is null as soon as one amount is not readable (a partial sum would be wrong)', () => {
+    expect(sumCents(['1.00', 'oops', '2.00'])).toBeNull()
+    expect(sumCents(['1.00', null])).toBeNull()
+    expect(sumCents([undefined])).toBeNull()
   })
 })
