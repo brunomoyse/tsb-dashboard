@@ -4,11 +4,12 @@ import { Capacitor } from '@capacitor/core'
 export default defineNuxtPlugin(async () => {
   if (!Capacitor.isNativePlatform()) return
 
-  // StatusBar: dark icons on white background
+  // StatusBar: the app is dark-only: light icons on the app background (`--ui-bg`, also the theme-color and the
+  // capacitor.config.ts status bar colour). `Style.Dark` is the Capacitor style for dark backgrounds.
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
-    await StatusBar.setStyle({ style: Style.Light })
-    await StatusBar.setBackgroundColor({ color: '#FFFFFF' })
+    await StatusBar.setStyle({ style: Style.Dark })
+    await StatusBar.setBackgroundColor({ color: '#0b0d0e' })
     await StatusBar.setOverlaysWebView({ overlay: false })
   } catch {
     /* StatusBar not available on web */

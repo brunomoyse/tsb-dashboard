@@ -2,6 +2,8 @@
 // link to the auth callback back into the SPA. Each native plugin is optional (a failure never blocks the next step).
 // The @capacitor/* plugins and navigation are the boundaries.
 // Run: `vp test run tests/plugins/capacitor.client.nuxt.test.ts`.
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { settle } from '../helpers/settle'
@@ -56,11 +58,18 @@ describe('in a browser', () => {
 })
 
 describe('in the Android app', () => {
-  it('shows dark icons on a white status bar that does not overlay the WebView', async () => {
+  it('shows light icons on a status bar in the dark app colour that does not overlay the WebView', async () => {
     await run()
-    expect(statusBar.setStyle).toHaveBeenCalledExactlyOnceWith({ style: 'LIGHT' })
-    expect(statusBar.setBackgroundColor).toHaveBeenCalledExactlyOnceWith({ color: '#FFFFFF' })
+    expect(statusBar.setStyle).toHaveBeenCalledExactlyOnceWith({ style: 'DARK' })
+    expect(statusBar.setBackgroundColor).toHaveBeenCalledExactlyOnceWith({ color: '#0b0d0e' })
     expect(statusBar.setOverlaysWebView).toHaveBeenCalledExactlyOnceWith({ overlay: false })
+  })
+
+  it('paints the status bar with the colour of the app background, which is the dark one', async () => {
+    const css = readFileSync(resolve(import.meta.dirname, '../../assets/css/main.css'), 'utf8')
+    expect(css).toMatch(/--ui-bg:\s*#0b0d0e/u)
+    await run()
+    expect(statusBar.setBackgroundColor).toHaveBeenCalledExactlyOnceWith({ color: '#0b0d0e' })
   })
 
   it('hides the splash screen once the app is ready', async () => {
