@@ -9,6 +9,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useRuntimeConfig } from '#imports'
 import { ErrorResponse, fakeUserManagers } from '../helpers/fakeOidc'
 import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
+import type { useOidc as useOidcType } from '~/composables/useOidc'
 
 /** Zitadel's token endpoint refusing the refresh token (expired, revoked or already rotated). */
 /** What ofetch throws for an HTTP error status of the backend. */
@@ -1026,6 +1027,93 @@ describe('the cooldown after a transient failure of the renewal', () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
     await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
     expect(storedTokens()).toMatchObject({ refresh_token: 'refresh-1' })
+  })
+})
+
+// The live-updates WebSocket asks it when it has no token: "the session is kept, Zitadel is down" (keep retrying) versus
+// "the session is over" (stop).
+describe('isRenewalUnavailable', () => {
+  const failWeb = async () => {
+    const loaded = await load()
+    await loaded.oidc.signIn()
+    loaded.manager().getUser.mockResolvedValue(user({ expired: true }))
+    loaded.manager().signinSilent.mockRejectedValue(new TypeError('Failed to fetch'))
+    await expect(loaded.oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    return loaded
+  }
+
+  it('is false before anything went wrong', async () => {
+    const { oidc } = await load()
+    expect(oidc.isRenewalUnavailable()).toBe(false)
+  })
+
+  it('is true after a transient failure, also once the cooldown or an online event is over', async () => {
+    const { oidc } = await failWeb()
+    expect(oidc.isRenewalUnavailable()).toBe(true)
+    window.dispatchEvent(new Event('online'))
+    vi.setSystemTime(NOW_MS + 60_000)
+    expect(oidc.isRenewalUnavailable()).toBe(true)
+  })
+
+  it('is true while the cooldown rejects requests, and false once a renewal succeeds', async () => {
+    const { oidc, manager } = await failWeb()
+    await expect(oidc.getAccessToken()).resolves.toBeNull()
+    expect(oidc.isRenewalUnavailable()).toBe(true)
+
+    window.dispatchEvent(new Event('online'))
+    manager().signinSilent.mockResolvedValue(user({ access_token: 'access-2' }))
+    await oidc.silentRenew()
+    expect(oidc.isRenewalUnavailable()).toBe(false)
+  })
+
+  it('is false when the session ended (refused), so that the live updates stop', async () => {
+    const { oidc, manager } = await failWeb()
+    window.dispatchEvent(new Event('online'))
+    manager().signinSilent.mockRejectedValue(refused())
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+    expect(oidc.isRenewalUnavailable()).toBe(false)
+  })
+
+  it.each([
+    ['signing out', (o: ReturnType<typeof useOidcType>) => o.signOut()],
+    ['removing the user', (o: ReturnType<typeof useOidcType>) => o.removeUser()],
+    [
+      'logging out of Capacitor',
+      (o: ReturnType<typeof useOidcType>) => {
+        o.logoutCapacitor()
+      },
+    ],
+  ])('is false after %s', async (_name, end) => {
+    const { oidc } = await failWeb()
+    await Promise.resolve(end(oidc))
+    expect(oidc.isRenewalUnavailable()).toBe(false)
+  })
+
+  it.each(['handleCallback', 'handleDeepLinkCallback'] as const)(
+    'is false after a new sign-in (%s), and the cooldown of the old session does not apply',
+    async (callback) => {
+      const { oidc, manager } = await failWeb()
+      manager().signinRedirectCallback.mockResolvedValue(user())
+      await oidc[callback]('https://x/cb')
+      expect(oidc.isRenewalUnavailable()).toBe(false)
+      manager().signinSilent.mockResolvedValue(user({ access_token: 'access-2' }))
+      await expect(oidc.silentRenew()).resolves.toMatchObject({ access_token: 'access-2' })
+    },
+  )
+
+  it('is false after a Capacitor sign-in (code exchange)', async () => {
+    asCapacitor()
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 10 })
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    $fetchMock.mockRejectedValueOnce(httpError(503))
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect(oidc.isRenewalUnavailable()).toBe(true)
+
+    manager().settings.stateStore.getAllKeys.mockResolvedValue([])
+    $fetchMock.mockResolvedValueOnce({ access_token: 'new', expires_in: 300 })
+    await oidc.exchangeCodeForTokens('code')
+    expect(oidc.isRenewalUnavailable()).toBe(false)
   })
 })
 

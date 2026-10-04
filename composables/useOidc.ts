@@ -79,6 +79,7 @@ const isTokenExchangeRefusal = (err: unknown): boolean => {
  */
 const RENEW_COOLDOWN_MS = 30_000
 let renewBlockedUntil = 0
+// Why the last renewal could not be made, until a renewal succeeds or ends the session (NOT cleared by the cooldown).
 let renewBlockedBy: unknown = null
 let onlineListenerAdded = false
 
@@ -93,6 +94,12 @@ function blockRenewals(cause: unknown): SilentRenewUnavailableError {
     })
   }
   return new SilentRenewUnavailableError({ cause })
+}
+
+/** A new session starts or the session was dropped on purpose: nothing from the previous one is held against it. */
+function forgetRenewalFailure() {
+  renewBlockedUntil = 0
+  renewBlockedBy = null
 }
 
 function assertRenewalsAllowed() {
@@ -260,12 +267,14 @@ export function useOidc() {
     // Store in both memory and localStorage
     capacitorTokenCache = tokenData
     localStorage.setItem(CAPACITOR_TOKEN_KEY, JSON.stringify(tokenData))
+    forgetRenewalFailure()
   }
 
   /** Complete the OIDC callback (web only — exchange code for tokens). */
   async function handleCallback(): Promise<OidcUser> {
     const mgr = getUserManager()
     const user = await mgr.signinRedirectCallback()
+    forgetRenewalFailure()
     oidcUser.value = user
     return user
   }
@@ -274,6 +283,7 @@ export function useOidc() {
   async function handleDeepLinkCallback(url: string): Promise<OidcUser> {
     const mgr = getUserManager()
     const user = await mgr.signinRedirectCallback(url)
+    forgetRenewalFailure()
     oidcUser.value = user
     return user
   }
@@ -348,6 +358,22 @@ export function useOidc() {
   }
 
   async function doSilentRenew(): Promise<OidcUser | null> {
+    const outcome = await attemptRenewal()
+    // Renewed, or the session is over: whatever kept the renewal from being made is behind us.
+    renewBlockedBy = null
+    return outcome
+  }
+
+  /**
+   * True while the session is kept but could not be renewed because Zitadel / the backend is unreachable (until a
+   * renewal succeeds or ends the session). For callers that must tell "no token because the session is over" from "no
+   * token right now" (the live-updates WebSocket keeps retrying in the second case only).
+   */
+  function isRenewalUnavailable(): boolean {
+    return renewBlockedBy !== null
+  }
+
+  async function attemptRenewal(): Promise<OidcUser | null> {
     if (isCapacitor) {
       // Read stored refresh token
       const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
@@ -429,12 +455,14 @@ export function useOidc() {
 
   /** Sign out via OIDC end-session endpoint (web only). */
   async function signOut() {
+    forgetRenewalFailure()
     const mgr = getUserManager()
     await mgr.signoutRedirect()
   }
 
   /** Capacitor: clear local tokens without browser redirect. */
   function logoutCapacitor() {
+    forgetRenewalFailure()
     capacitorTokenCache = null
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(CAPACITOR_TOKEN_KEY)
@@ -461,6 +489,7 @@ export function useOidc() {
 
   /** Clear stale OIDC session from storage (prevents automaticSilentRenew loops). */
   async function removeUser(): Promise<void> {
+    forgetRenewalFailure()
     const mgr = getUserManager()
     await mgr.removeUser()
   }
@@ -474,6 +503,7 @@ export function useOidc() {
     handleDeepLinkCallback,
     getAccessToken,
     silentRenew,
+    isRenewalUnavailable,
     signOut,
     logoutCapacitor,
     isAuthenticated,

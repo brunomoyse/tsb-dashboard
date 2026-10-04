@@ -49,10 +49,14 @@ const h = vi.hoisted(() => ({
   clients: [] as unknown[],
   createClient: vi.fn(),
   getAccessToken: vi.fn<() => Promise<string | null>>(),
+  isRenewalUnavailable: vi.fn<() => boolean>(),
 }))
 vi.mock('graphql-ws', () => ({ createClient: h.createClient }))
 vi.mock('~/composables/useOidc', () => ({
-  useOidc: () => ({ getAccessToken: h.getAccessToken }),
+  useOidc: () => ({
+    getAccessToken: h.getAccessToken,
+    isRenewalUnavailable: h.isRenewalUnavailable,
+  }),
 }))
 
 const clients = () => h.clients as FakeClient[]
@@ -91,6 +95,7 @@ beforeEach(() => {
     return client
   })
   h.getAccessToken.mockResolvedValue('token-1')
+  h.isRenewalUnavailable.mockReturnValue(false)
   vi.spyOn(window, 'addEventListener').mockImplementation(((type: string, listener: unknown) => {
     added.push(type)
     listeners[type] = listener as (event?: unknown) => void
@@ -418,6 +423,18 @@ describe('reconnecting', () => {
     await vi.advanceTimersByTimeAsync(1000)
     await expect(waiting).resolves.toBeUndefined()
     expect(h.getAccessToken).toHaveBeenCalled()
+  })
+
+  it('keeps retrying, and says so, while the session is kept but cannot be renewed right now', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const retryWait = await retry()
+    h.getAccessToken.mockResolvedValue(null)
+    h.isRenewalUnavailable.mockReturnValue(true)
+    const waiting = retryWait(0)
+    await vi.advanceTimersByTimeAsync(1000)
+    await expect(waiting).resolves.toBeUndefined()
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0]![0]).toContain('Live updates paused')
   })
 
   it('stops retrying when no valid token is left (the session is over)', async () => {

@@ -57,7 +57,7 @@ const getWsClient = (): Promise<Client> => {
     wsClientPromise = Promise.all([import('graphql-ws'), import('~/composables/useOidc')]).then(
       ([{ createClient }, { useOidc }]) => {
         const cfg = useRuntimeConfig()
-        const { getAccessToken } = useOidc()
+        const { getAccessToken, isRenewalUnavailable } = useOidc()
 
         /*
          * `keepAlive` only schedules pings — detection of a dead server
@@ -112,9 +112,16 @@ const getWsClient = (): Promise<Client> => {
             await new Promise<void>((resolve) => {
               setTimeout(resolve, delay)
             })
-            // If no valid token after refresh attempt, stop retrying
             const token = await getAccessToken()
-            if (!token) throw new Error('No valid auth token')
+            if (token) return
+            /*
+             * No token: either the session is over (stop: graphql-ws gives up and the login flow takes over), or it is
+             * kept but Zitadel / the backend cannot be reached right now (keep backing off: only an offline -> online
+             * event of the browser would otherwise restart the subscriptions, and that does not fire when the outage
+             * is not on the device's side). There is no live-updates indicator in the UI, so this is only logged.
+             */
+            if (!isRenewalUnavailable()) throw new Error('No valid auth token')
+            console.warn('Live updates paused: the session cannot be renewed right now, retrying')
           },
         })
         wsClient = client
