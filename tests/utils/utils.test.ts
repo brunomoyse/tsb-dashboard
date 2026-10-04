@@ -212,6 +212,26 @@ describe('Europe/Brussels calendar', () => {
       expect(brusselsDateTimeLocalToISO('2026-01-01T00:30')).toBe('2025-12-31T23:30:00.000Z')
     })
 
+    it('converts the wall-clock times either side of the spring DST change (29 March 2026, 02:00 -> 03:00)', () => {
+      expect(brusselsDateTimeLocalToISO('2026-03-29T01:30')).toBe('2026-03-29T00:30:00.000Z') // CET
+      expect(brusselsDateTimeLocalToISO('2026-03-29T01:59')).toBe('2026-03-29T00:59:00.000Z') // CET
+      expect(brusselsDateTimeLocalToISO('2026-03-29T03:00')).toBe('2026-03-29T01:00:00.000Z') // CEST
+      expect(brusselsDateTimeLocalToISO('2026-03-29T03:30')).toBe('2026-03-29T01:30:00.000Z') // CEST
+    })
+
+    it('moves a time inside the skipped hour of spring forward by one hour', () => {
+      expect(brusselsDateTimeLocalToISO('2026-03-29T02:30')).toBe('2026-03-29T01:30:00.000Z')
+    })
+
+    it('converts the wall-clock times either side of the autumn DST change (25 October 2026, 03:00 -> 02:00)', () => {
+      expect(brusselsDateTimeLocalToISO('2026-10-25T01:30')).toBe('2026-10-24T23:30:00.000Z') // CEST
+      expect(brusselsDateTimeLocalToISO('2026-10-25T03:30')).toBe('2026-10-25T02:30:00.000Z') // CET
+    })
+
+    it('reads the repeated hour of autumn as its second occurrence (CET)', () => {
+      expect(brusselsDateTimeLocalToISO('2026-10-25T02:30')).toBe('2026-10-25T01:30:00.000Z')
+    })
+
     it('ignores anything after the minutes', () => {
       expect(brusselsDateTimeLocalToISO('2026-07-01T12:00:45')).toBe('2026-07-01T10:00:00.000Z')
     })
@@ -245,6 +265,22 @@ describe('Europe/Brussels calendar', () => {
 
     it('shows the first minutes of the day as 00:xx, never 24:xx', () => {
       expect(isoToBrusselsDateTimeLocal('2026-10-04T22:05:00Z')).toBe('2026-10-05T00:05')
+    })
+
+    it('round-trips every quarter hour around both DST changes, except the repeated hour of autumn', () => {
+      const quarter = 15 * 60_000
+      for (const change of ['2026-03-29T01:00:00Z', '2026-10-25T01:00:00Z']) {
+        for (let k = -16; k <= 16; k++) {
+          const instant = new Date(Date.parse(change) + k * quarter)
+          // Autumn: 00:00Z-01:00Z (CEST) and 01:00Z-02:00Z (CET) show the same 02:xx wall-clock time.
+          const repeated = change.startsWith('2026-10') && k >= -4 && k < 0
+          if (repeated) continue
+          const local = isoToBrusselsDateTimeLocal(instant.toISOString())
+          expect(brusselsDateTimeLocalToISO(local), `${instant.toISOString()} as ${local}`).toBe(
+            instant.toISOString(),
+          )
+        }
+      }
     })
 
     it('round-trips with brusselsDateTimeLocalToISO, so open -> save does not shift the time', () => {
