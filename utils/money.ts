@@ -4,18 +4,30 @@
  */
 
 /**
- * Converts a decimal price ("12.5", "12.50", 12.5, "-3") to integer cents. Strings are parsed digit by digit (no float
- * maths), a third decimal rounds half up. Returns null for anything that is not a plain decimal number.
+ * Converts a decimal price ("12.5", "12.50", "12,50", "5.", 12.5, "-3") to integer cents. Strings are parsed digit by
+ * digit (no float maths); a third decimal rounds half away from zero. A number is read through its shortest decimal
+ * representation (`String(1.005)` is "1.005", not 100.49999999999999 cents), so it rounds like the same string would.
+ * The comma is accepted as the decimal separator (the French / Belgian way), thousands separators and exponents are
+ * not. Returns null for anything that is not a plain decimal number.
  */
 export function parseCents(value: string | number | null | undefined): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value * 100) : null
+  if (typeof value === 'number')
+    return Number.isFinite(value) ? parseCents(numberToDecimal(value)) : null
   if (typeof value !== 'string') return null
-  const match = /^\s*([+-])?(\d+)?(?:\.(\d+))?\s*$/.exec(value)
-  if (!match || (match[2] === undefined && match[3] === undefined)) return null
+  const match = /^\s*([+-])?(\d+)?(?:[.,](\d*))?\s*$/u.exec(value)
+  if (!match || (!match[2] && !match[3])) return null
   const fraction = (match[3] ?? '').padEnd(3, '0')
   let cents = Number(match[2] ?? '0') * 100 + Number(fraction.slice(0, 2))
   if (Number(fraction[2]) >= 5) cents += 1
-  return match[1] === '-' ? -cents : cents
+  return match[1] === '-' && cents > 0 ? -cents : cents
+}
+
+/** The plain decimal text of a finite number: `String()` writes 1e-7 / 1e21 with an exponent, which `parseCents` refuses. */
+function numberToDecimal(value: number): string {
+  const text = String(value)
+  if (!text.includes('e')) return text
+  // Below a hundredth of a cent it rounds to 0; above 1e21 euros cents are no longer exact integers: not an amount.
+  return Math.abs(value) < 1 ? '0' : 'NaN'
 }
 
 /** Like {@link parseCents}, but an invalid or missing amount counts as 0 (for sums and "is there a discount?" checks). */

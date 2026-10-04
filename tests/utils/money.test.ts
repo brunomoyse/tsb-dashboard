@@ -18,6 +18,13 @@ describe('parseCents', () => {
     ['0.004', 0],
     ['1.999', 200],
     ['1234567.89', 123456789],
+    ['5.', 500],
+    ['12,50', 1250],
+    ['0,5', 50],
+    [',5', 50],
+    ['-1.005', -101],
+    ['-0', 0],
+    ['-0.001', 0],
   ])('reads %s as %d cents', (input, cents) => {
     expect(parseCents(input)).toBe(cents)
   })
@@ -28,12 +35,46 @@ describe('parseCents', () => {
     expect(parseCents(-4)).toBe(-400)
   })
 
-  it.each(['', ' ', 'abc', '12,50', '1.2.3', '5.', '12.5€', '.', '+', '1e3', 'NaN', 'Infinity'])(
-    'rejects the string %j',
-    (input) => {
-      expect(parseCents(input)).toBeNull()
-    },
-  )
+  // Math.round(x * 100) drifts: 1.005 * 100 = 100.49999999999999. A number rounds like its decimal text does.
+  it.each([
+    [1.005, 101],
+    [1.255, 126],
+    [4.35, 435],
+    [12.345, 1235],
+    [-1.005, -101],
+    [-2.5, -250],
+    [0.005, 1],
+    [0.004, 0],
+    [1e-7, 0],
+    [-1e-7, 0],
+    [0, 0],
+    [-0, 0],
+    [1234567.89, 123456789],
+  ])('reads the number %d as %d cents without float drift', (input, cents) => {
+    expect(parseCents(input)).toBe(cents)
+  })
+
+  it('rejects a number too large to be an exact amount in cents', () => {
+    expect(parseCents(1e21)).toBeNull()
+  })
+
+  it.each([
+    '',
+    ' ',
+    'abc',
+    '1.2.3',
+    '1,2,3',
+    '1,234.56',
+    '12.5€',
+    '.',
+    ',',
+    '+',
+    '1e3',
+    'NaN',
+    'Infinity',
+  ])('rejects the string %j', (input) => {
+    expect(parseCents(input)).toBeNull()
+  })
 
   it.each([NaN, Infinity, -Infinity, null, undefined])('rejects %s', (input) => {
     expect(parseCents(input as number)).toBeNull()
