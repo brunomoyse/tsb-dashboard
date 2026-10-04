@@ -33,7 +33,7 @@ vi.mock('vue-i18n', async (importOriginal) => {
 })
 
 const { ORDER_BY_ID_QUERY, useOrderActions } = await import('~/composables/useOrderActions')
-const { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, hasNextStatus, isActiveStatus } =
+const { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, isActiveStatus } =
   await import('~/utils/orders')
 
 // Local wall-clock "now" so formatted times are the same in any timezone.
@@ -133,14 +133,6 @@ describe('getAllowedStatuses: the order workflow', () => {
 describe('status helpers', () => {
   it('isActiveStatus: only the orders still to prepare', () => {
     expect(ALL_STATUSES.filter(isActiveStatus)).toEqual(['PENDING', 'CONFIRMED', 'PREPARING'])
-  })
-
-  it('hasNextStatus: true while there is a forward move, false once only cancel / fail remain', () => {
-    expect(hasNextStatus(makeOrder({ status: 'PENDING' }))).toBe(true)
-    expect(hasNextStatus(makeOrder({ status: 'OUT_FOR_DELIVERY', type: 'DELIVERY' }))).toBe(true)
-    expect(hasNextStatus(makeOrder({ status: 'DELIVERED' }))).toBe(false)
-    expect(hasNextStatus(makeOrder({ status: 'FAILED' }))).toBe(false)
-    expect(hasNextStatus(makeOrder({ status: 'CANCELLED' }))).toBe(false)
   })
 
   it('has a chip tone for every status', () => {
@@ -578,7 +570,12 @@ describe('updateOrder: why a save fails', () => {
 
   it('says a refunded order cannot be reopened when the backend refuses to move a cancelled order (USER_ERROR)', async () => {
     const { actions, store } = selected({ status: 'CANCELLED' })
-    gqlFetch.mockRejectedValue(gqlFailure('USER_ERROR'))
+    gqlFetch.mockRejectedValue(
+      gqlFailure(
+        'USER_ERROR',
+        'this order was cancelled and its payment refunded or cancelled, so it cannot be reopened; create a new order instead',
+      ),
+    )
 
     await actions.updateOrder('PREPARING')
     await actions.dropOrderStatus(store.orders[0]!, 'PREPARING')

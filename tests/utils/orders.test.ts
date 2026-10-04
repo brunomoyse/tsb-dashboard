@@ -18,7 +18,6 @@ import {
   getTimeSince,
   gqlErrorCodes,
   hasBreakdown,
-  hasNextStatus,
   hoursSince,
   isActiveStatus,
   isLateOrder,
@@ -83,12 +82,6 @@ describe('status machine', () => {
 
   it('treats pending, confirmed and preparing as active', () => {
     expect(ALL_STATUSES.filter(isActiveStatus)).toEqual(['PENDING', 'CONFIRMED', 'PREPARING'])
-  })
-
-  it('offers the quick action only when there is a forward move', () => {
-    expect(hasNextStatus(makeOrder({ status: 'PENDING' }))).toBe(true)
-    expect(hasNextStatus(makeOrder({ status: 'DELIVERED', type: 'DELIVERY' }))).toBe(false)
-    expect(hasNextStatus(makeOrder({ status: 'CANCELLED' }))).toBe(false)
   })
 
   it('advances to the first allowed status that is not a cancel or a failure', () => {
@@ -624,11 +617,38 @@ describe('why an order update failed', () => {
       )
     })
 
-    it('says a refunded order cannot be reopened for a USER_ERROR when moving a cancelled order to another status', () => {
+    // What tsb-service sends (resolver refuseReopeningSettledOrder).
+    const REOPEN_REFUSAL = [
+      {
+        message:
+          'this order was cancelled and its payment refunded or cancelled, so it cannot be reopened; create a new order instead',
+        extensions: { code: 'USER_ERROR' },
+      },
+    ]
+
+    it('says a refunded order cannot be reopened when the backend refuses it, moving a cancelled order to another status', () => {
       const context = { currentStatus: 'CANCELLED', targetStatus: 'PREPARING' } as const
-      expect(updateOrderErrorKey(failure('USER_ERROR'), context)).toBe(
+      expect(updateOrderErrorKey(REOPEN_REFUSAL, context)).toBe(
         'orders.errors.refundedNotReopenable',
       )
+      expect(updateOrderErrorKey({ errors: REOPEN_REFUSAL }, context)).toBe(
+        'orders.errors.refundedNotReopenable',
+      )
+    })
+
+    it('keeps the generic message for any other USER_ERROR of that move (the message must say it cannot be reopened)', () => {
+      const context = { currentStatus: 'CANCELLED', targetStatus: 'PREPARING' } as const
+      expect(updateOrderErrorKey(failure('USER_ERROR'), context)).toBe('orders.errors.updateFailed')
+      expect(
+        updateOrderErrorKey(
+          [{ message: 'cannot be reopened', extensions: { code: 'OTHER' } }],
+          context,
+        ),
+      ).toBe('orders.errors.updateFailed')
+      expect(
+        updateOrderErrorKey([{ extensions: { code: 'USER_ERROR' } }, null, 'x'], context),
+      ).toBe('orders.errors.updateFailed')
+      expect(updateOrderErrorKey(null, context)).toBe('orders.errors.updateFailed')
     })
 
     it.each([
@@ -636,8 +656,8 @@ describe('why an order update failed', () => {
       ['a time-only save', { currentStatus: 'CANCELLED' }],
       ['another order', { currentStatus: 'CONFIRMED', targetStatus: 'PREPARING' }],
       ['no context', {}],
-    ] as const)('keeps the generic message for a USER_ERROR on %s', (_name, context) => {
-      expect(updateOrderErrorKey(failure('USER_ERROR'), context)).toBe('orders.errors.updateFailed')
+    ] as const)('keeps the generic message for the reopen refusal on %s', (_name, context) => {
+      expect(updateOrderErrorKey(REOPEN_REFUSAL, context)).toBe('orders.errors.updateFailed')
     })
 
     it('keeps the generic message for any other failure', () => {
@@ -650,7 +670,7 @@ describe('why an order update failed', () => {
 
     it('does not let a USER_ERROR reopen message hide a payment code', () => {
       expect(
-        updateOrderErrorKey(failure('USER_ERROR', 'PAYMENT_SETTLEMENT_FAILED'), {
+        updateOrderErrorKey([...REOPEN_REFUSAL, ...failure('PAYMENT_SETTLEMENT_FAILED')], {
           currentStatus: 'CANCELLED',
           targetStatus: 'PREPARING',
         }),

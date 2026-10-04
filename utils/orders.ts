@@ -68,10 +68,6 @@ export const ORDER_STATUS_CHIP_TONE: Record<
 export const isActiveStatus = (status: OrderStatus): boolean =>
   ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
 
-// Whether an order has a non-cancel/non-fail next status (for quick-action button)
-export const hasNextStatus = (order: Order): boolean =>
-  getAllowedStatuses(order.status, order.type).some((s) => s !== 'CANCELLED' && s !== 'FAILED')
-
 /** The status the one-tap "next" button moves an order to (the first allowed one that is not cancel / failed). */
 export const nextActionOf = (order: Order): OrderStatus | undefined =>
   getAllowedStatuses(order.status, order.type).find((s) => s !== 'CANCELLED' && s !== 'FAILED')
@@ -387,15 +383,18 @@ const UPDATE_ORDER_ERROR_KEYS: Record<string, string> = {
   PAYMENT_NOT_REFUNDABLE: 'orders.errors.paymentNotRefundable',
 }
 
-/** The `extensions.code` of every GraphQL error of a failed request (`$gqlFetch` throws the raw `errors` array). */
-export const gqlErrorCodes = (error: unknown): string[] => {
-  const errors: unknown[] = Array.isArray(error)
+/** The GraphQL errors of a failed request (`$gqlFetch` throws the raw `errors` array, or an object carrying it). */
+const gqlErrorEntries = (error: unknown): unknown[] =>
+  Array.isArray(error)
     ? error
     : Array.isArray((error as { errors?: unknown } | null)?.errors)
       ? (error as { errors: unknown[] }).errors
       : [error]
+
+/** The `extensions.code` of every GraphQL error of a failed request. */
+export const gqlErrorCodes = (error: unknown): string[] => {
   const codes: string[] = []
-  for (const entry of errors) {
+  for (const entry of gqlErrorEntries(error)) {
     const code = (entry as { extensions?: { code?: unknown } } | null)?.extensions?.code
     if (typeof code === 'string') codes.push(code)
   }
@@ -403,9 +402,29 @@ export const gqlErrorCodes = (error: unknown): string[] => {
 }
 
 /**
+ * tsb-service refuses to reopen a cancelled order whose payment was refunded or cancelled with a plain USER_ERROR whose
+ * message says "... so it cannot be reopened; create a new order instead" (resolver `refuseReopeningSettledOrder`): it
+ * has no code of its own, so the message is the only thing that tells this case from any other USER_ERROR.
+ */
+const isReopenRefusal = (error: unknown): boolean =>
+  gqlErrorEntries(error).some((entry) => {
+    const { message, extensions } = (entry ?? {}) as {
+      message?: unknown
+      extensions?: { code?: unknown }
+    }
+    return (
+      extensions?.code === 'USER_ERROR' &&
+      typeof message === 'string' &&
+      /cannot be reopened/iu.test(message)
+    )
+  })
+
+/**
  * The i18n key of the message to show when `updateOrder` fails: a specific one for a payment that could not be
- * refunded or cancelled, one for reopening a cancelled order (the backend refuses it with a generic USER_ERROR once its
- * payment was refunded), the generic "failed to update" for everything else (network, server...).
+ * refunded or cancelled, one for reopening a cancelled order whose payment was settled (only when moving a cancelled
+ * order to another status AND the backend's USER_ERROR says it cannot be reopened; the UI offers no such move today,
+ * `getAllowedStatuses('CANCELLED')` is empty, so this is defensive), the generic "failed to update" for everything else
+ * (network, server, any other USER_ERROR...).
  */
 export const updateOrderErrorKey = (
   error: unknown,
@@ -420,6 +439,6 @@ export const updateOrderErrorKey = (
     context.currentStatus === 'CANCELLED' &&
     context.targetStatus !== undefined &&
     context.targetStatus !== 'CANCELLED'
-  if (reopening && codes.includes('USER_ERROR')) return 'orders.errors.refundedNotReopenable'
+  if (reopening && isReopenRefusal(error)) return 'orders.errors.refundedNotReopenable'
   return 'orders.errors.updateFailed'
 }
