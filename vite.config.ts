@@ -27,6 +27,8 @@ const criticalFiles = {
   'plugins/gqlFetch.ts': { ...full, statements: 98.21, branches: 97.36 },
   'plugins/auth-sync.client.ts': full,
   'utils/utils.ts': { ...full, branches: 87.3 },
+  'utils/orders.ts': full,
+  'utils/money.ts': full,
 }
 
 export default defineConfig({

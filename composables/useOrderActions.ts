@@ -3,8 +3,9 @@ import { useI18n } from 'vue-i18n'
 import { useGqlMutation, useToast } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
-import type { Order, OrderStatus, OrderType } from '~/types'
+import type { Order, OrderStatus } from '~/types'
 import { formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
+import { getAllowedStatuses } from '~/utils/orders'
 import { useOrdersStore } from '~/stores/orders'
 
 export type OrderActionKind = 'save' | 'advance' | 'cancel'
@@ -103,65 +104,6 @@ export const ORDER_BY_ID_QUERY = print(gql`
     }
   }
 `)
-
-// Define allowed transitions based on current status and delivery option
-export const getAllowedStatuses = (
-  current: OrderStatus,
-  deliveryOption: OrderType,
-): OrderStatus[] => {
-  let allowed: OrderStatus[] = []
-  switch (current) {
-    case 'PENDING':
-      allowed = ['CONFIRMED', 'PREPARING']
-      break
-    case 'CONFIRMED':
-      allowed = ['PREPARING']
-      break
-    case 'PREPARING':
-      allowed = ['AWAITING_PICK_UP']
-      break
-    case 'AWAITING_PICK_UP':
-      if (deliveryOption === 'DELIVERY') {
-        allowed = ['OUT_FOR_DELIVERY']
-      } else if (deliveryOption === 'PICKUP') {
-        allowed = ['PICKED_UP', 'FAILED']
-      }
-      break
-    case 'OUT_FOR_DELIVERY':
-      allowed = ['DELIVERED', 'FAILED']
-      break
-    default:
-      allowed = []
-      break
-  }
-  if (current !== 'CANCELLED') {
-    allowed.push('CANCELLED')
-  }
-  return allowed
-}
-
-// Chip tone per order status (Pili: PENDING amber, CONFIRMED cyan, PREPARING neutral, ready/done green, cancelled red)
-export const ORDER_STATUS_CHIP_TONE: Record<
-  string,
-  'warning' | 'danger' | 'success' | 'info' | 'neutral'
-> = {
-  PENDING: 'warning',
-  CONFIRMED: 'info',
-  PREPARING: 'neutral',
-  AWAITING_PICK_UP: 'success',
-  OUT_FOR_DELIVERY: 'info',
-  DELIVERED: 'success',
-  PICKED_UP: 'success',
-  CANCELLED: 'danger',
-  FAILED: 'danger',
-}
-
-export const isActiveStatus = (status: OrderStatus): boolean =>
-  ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
-
-// Whether an order has a non-cancel/non-fail next status (for quick-action button)
-export const hasNextStatus = (order: Order): boolean =>
-  getAllowedStatuses(order.status, order.type).some((s) => s !== 'CANCELLED' && s !== 'FAILED')
 
 /**
  * Order actions shared by the desktop slideover and the mobile detail page:

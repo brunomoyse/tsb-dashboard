@@ -360,15 +360,17 @@
 
 <script setup lang="ts">
 import type { Order, OrderStatus } from '~/types'
-import {
-  ORDER_BY_ID_QUERY,
-  ORDER_STATUS_CHIP_TONE,
-  isActiveStatus,
-  useOrderActions,
-} from '~/composables/useOrderActions'
+import { ORDER_BY_ID_QUERY, useOrderActions } from '~/composables/useOrderActions'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatPrice, formatTimeOnly } from '~/utils/utils'
+import {
+  ORDER_STATUS_CHIP_TONE,
+  isActiveStatus,
+  itemNames,
+  itemsSubtotalCents,
+} from '~/utils/orders'
+import { centsToEuros } from '~/utils/money'
 
 definePageMeta({ hideTabBar: true })
 
@@ -515,16 +517,7 @@ const showDirections = computed(
 )
 
 // Items
-const itemNames = (item: Order['items'][number]) => {
-  const translations = item.product.translations ?? []
-  const main = translations.find((tr) => tr.language === 'fr')?.name || item.product.name
-  const zh = translations.find((tr) => tr.language === 'zh')?.name
-  return { main, zh: zh && zh !== main ? zh : '' }
-}
-
-const itemsSubtotal = computed(() =>
-  (order.value?.items ?? []).reduce((acc, item) => acc + parseFloat(item.totalPrice), 0),
-)
+const itemsSubtotal = computed(() => centsToEuros(itemsSubtotalCents(order.value)))
 
 // Payment
 const paymentStatus = computed(() => order.value?.payment?.status?.toLowerCase())

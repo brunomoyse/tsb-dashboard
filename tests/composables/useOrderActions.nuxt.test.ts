@@ -32,14 +32,9 @@ vi.mock('vue-i18n', async (importOriginal) => {
   return { ...(await importOriginal<typeof VueI18NModule>()), useI18n: fakeI18n }
 })
 
-const {
-  ORDER_BY_ID_QUERY,
-  ORDER_STATUS_CHIP_TONE,
-  getAllowedStatuses,
-  hasNextStatus,
-  isActiveStatus,
-  useOrderActions,
-} = await import('~/composables/useOrderActions')
+const { ORDER_BY_ID_QUERY, useOrderActions } = await import('~/composables/useOrderActions')
+const { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, hasNextStatus, isActiveStatus } =
+  await import('~/utils/orders')
 
 // Local wall-clock "now" so formatted times are the same in any timezone.
 const NOW = new Date(2026, 9, 4, 12, 0, 0)
