@@ -19,6 +19,7 @@ const refused = () => new ErrorResponse({ error: 'invalid_grant' })
 
 interface FakeUser {
   access_token: string
+  refresh_token?: string
   expired: boolean
 }
 
@@ -33,6 +34,7 @@ const NOW_S = Math.floor(NOW_MS / 1000)
 
 const user = (overrides: Partial<FakeUser> = {}): FakeUser => ({
   access_token: 'access-1',
+  refresh_token: 'refresh-1',
   expired: false,
   ...overrides,
 })
@@ -621,7 +623,9 @@ describe('silentRenew (web)', () => {
 
   it.each([
     ['no network', new TypeError('Failed to fetch')],
-    ['a timeout', new Error('Network timed out')],
+    ['a timeout', Object.assign(new Error('Network timed out'), { name: 'ErrorTimeout' })],
+    ['a request timeout', new Error('Request Timeout (408)')],
+    ['a rate limit', new Error('Too Many Requests (429)')],
     ['a server error', new Error('Bad Gateway (502)')],
     ['Zitadel answering server_error', new ErrorResponse({ error: 'server_error' })],
     [
@@ -645,6 +649,54 @@ describe('silentRenew (web)', () => {
       expect(oidc.oidcUser.value).not.toBeNull()
     },
   )
+
+  // oidc-client-ts throws plain Errors for many definitive failures: keeping the session on them would leave the
+  // staff member "signed in" for ever with every request failing, and every request re-hitting Zitadel.
+  it.each([
+    ['a 4xx with a non-OAuth body', new Error('Unauthorized (401)')],
+    ['a 403 of a proxy', new Error('Forbidden (403): <html>blocked</html>')],
+    [
+      'a user without refresh token reaching the iframe path',
+      new Error('No silent_redirect_uri configured'),
+    ],
+    [
+      'an invalid Content-Type',
+      new Error('Invalid response Content-Type: text/html; charset=utf-8, from URL: x'),
+    ],
+    ['an id_token validation error', new Error('sub in id_token does not match current sub')],
+    ['something that is not an Error', 'boom'],
+  ])('ends the session on %s', async (_name, failure) => {
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    manager().getUser.mockResolvedValue(user({ expired: true }))
+    manager().signinSilent.mockRejectedValue(failure)
+    manager().listeners.loaded?.(user())
+
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+
+    expect(manager().removeUser).toHaveBeenCalledOnce()
+    expect(oidc.oidcUser.value).toBeNull()
+  })
+
+  it('treats any failure as transient while the browser reports being offline', async () => {
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    manager().getUser.mockResolvedValue(user({ expired: true }))
+    manager().signinSilent.mockRejectedValue(new Error('Unauthorized (401)'))
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect(manager().removeUser).not.toHaveBeenCalled()
+  })
+
+  it('ends the session at once when the stored user has no refresh token (no call to Zitadel)', async () => {
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    manager().getUser.mockResolvedValue(user({ expired: true, refresh_token: undefined }))
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+    expect(manager().signinSilent).not.toHaveBeenCalled()
+    expect(manager().removeUser).toHaveBeenCalledOnce()
+  })
 
   it.each(['invalid_grant', 'login_required', 'invalid_client'])(
     'ends the session when Zitadel answers %s',
@@ -709,10 +761,11 @@ describe('silentRenew (web)', () => {
     const { oidc, manager } = await load()
     await oidc.signIn()
     manager().getUser.mockResolvedValue(user({ expired: true }))
-    manager().signinSilent.mockRejectedValueOnce(new Error('network'))
+    manager().signinSilent.mockRejectedValueOnce(new TypeError('Failed to fetch'))
     manager().signinSilent.mockResolvedValueOnce(user({ access_token: 'access-3' }))
 
     await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    window.dispatchEvent(new Event('online')) // the cooldown after a failure is over once the browser is online
     await expect(oidc.silentRenew()).resolves.toMatchObject({ access_token: 'access-3' })
     expect(manager().signinSilent).toHaveBeenCalledTimes(2)
   })
@@ -858,6 +911,121 @@ describe('silentRenew (Capacitor)', () => {
     expect(a).toBe(b)
     expect(c).toBe('new')
     expect($fetchMock).toHaveBeenCalledOnce()
+  })
+})
+
+// After a transient failure nothing calls Zitadel / the backend for 30 s, or until the browser is online: N requests, the
+// assistant page's 2 s poll and the Capacitor token-exchange must not hammer a service that is down.
+describe('the cooldown after a transient failure of the renewal', () => {
+  const COOLDOWN_MS = 30_000
+
+  const failWeb = async () => {
+    const loaded = await load()
+    await loaded.oidc.signIn()
+    loaded.manager().getUser.mockResolvedValue(user({ expired: true }))
+    loaded.manager().signinSilent.mockRejectedValue(new TypeError('Failed to fetch'))
+    await expect(loaded.oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    return loaded
+  }
+
+  it('rejects at once, without a call, while it lasts (web), with the original failure as cause', async () => {
+    const { oidc, manager } = await failWeb()
+    expect(manager().signinSilent).toHaveBeenCalledOnce()
+
+    vi.setSystemTime(NOW_MS + COOLDOWN_MS - 1)
+    const outcome = await oidc.silentRenew().catch((err: unknown) => err)
+
+    expect(isSilentRenewUnavailable(outcome)).toBe(true)
+    expect((outcome as Error).cause).toBeInstanceOf(TypeError)
+    await expect(oidc.getAccessToken()).resolves.toBeNull()
+    expect(manager().signinSilent).toHaveBeenCalledOnce()
+    expect(manager().removeUser).not.toHaveBeenCalled()
+  })
+
+  it('tries again once the cooldown is over, and a new failure starts a new window', async () => {
+    const { oidc, manager } = await failWeb()
+    vi.setSystemTime(NOW_MS + COOLDOWN_MS)
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect(manager().signinSilent).toHaveBeenCalledTimes(2)
+
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect(manager().signinSilent).toHaveBeenCalledTimes(2)
+  })
+
+  it('ends when the browser comes back online', async () => {
+    const { oidc, manager } = await failWeb()
+    manager().signinSilent.mockResolvedValue(user({ access_token: 'access-2' }))
+
+    window.dispatchEvent(new Event('online'))
+
+    await expect(oidc.silentRenew()).resolves.toMatchObject({ access_token: 'access-2' })
+  })
+
+  it('does not apply to a session without refresh token: it is wiped, cooldown or not', async () => {
+    const { oidc, manager } = await failWeb()
+    manager().getUser.mockResolvedValue(user({ expired: true, refresh_token: undefined }))
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+    expect(manager().removeUser).toHaveBeenCalledOnce()
+  })
+
+  it('does not follow a definitive refusal: a refused session is wiped, nothing is blocked', async () => {
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    manager().getUser.mockResolvedValue(user({ expired: true }))
+    manager().signinSilent.mockRejectedValueOnce(refused())
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+
+    manager().signinSilent.mockResolvedValueOnce(user({ access_token: 'access-9' }))
+    await expect(oidc.silentRenew()).resolves.toMatchObject({ access_token: 'access-9' })
+  })
+
+  it('also protects the backend token-exchange (Capacitor), until online again', async () => {
+    asCapacitor()
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 10 })
+    const { oidc } = await load()
+    $fetchMock.mockRejectedValue(httpError(503))
+
+    await expect(oidc.getAccessToken()).resolves.toBeNull()
+    await expect(oidc.getAccessToken()).resolves.toBeNull()
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect($fetchMock).toHaveBeenCalledOnce()
+
+    $fetchMock.mockResolvedValue({ access_token: 'new', expires_in: 300 })
+    window.dispatchEvent(new Event('online'))
+    await expect(oidc.getAccessToken()).resolves.toBe('new')
+    expect($fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('is over after the delay (Capacitor)', async () => {
+    asCapacitor()
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 10 })
+    const { oidc } = await load()
+    $fetchMock.mockRejectedValue(httpError(503))
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+
+    vi.setSystemTime(NOW_MS + COOLDOWN_MS)
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect($fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not follow a refusal of the token-exchange (Capacitor): the session ends, nothing is blocked', async () => {
+    asCapacitor()
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 10 })
+    const { oidc } = await load()
+    $fetchMock.mockRejectedValueOnce(httpError(401))
+    await expect(oidc.silentRenew()).resolves.toBeNull()
+    $fetchMock.mockResolvedValueOnce({ access_token: 'new', expires_in: 300 })
+    await expect(oidc.silentRenew()).resolves.toMatchObject({ access_token: 'new' })
+  })
+
+  it('treats a client error of the token-exchange as transient while offline (Capacitor)', async () => {
+    asCapacitor()
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 10 })
+    const { oidc } = await load()
+    $fetchMock.mockRejectedValue(httpError(401))
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    await expect(oidc.silentRenew()).rejects.toSatisfy(isSilentRenewUnavailable)
+    expect(storedTokens()).toMatchObject({ refresh_token: 'refresh-1' })
   })
 })
 
