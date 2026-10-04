@@ -28,4 +28,6 @@ CLAUDE.md
 
 # Test coverage output
 coverage
+# Written into the project root by @nuxt/test-utils the first time the Nuxt test project boots (`setups.@nuxt/test-utils`):
+# a local cache of the module's setup version, not source
 .nuxtrc

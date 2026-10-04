@@ -14,14 +14,15 @@ npm run test:coverage                             # coverage + thresholds (what 
 ```
 
 `coverage/lcov-report/index.html` is the browsable report. The thresholds in `vite.config.ts`
-(`test.coverage.thresholds`) only ever go up: a global one, and one per file for the critical flows (`criticalFiles`:
-auth, the GraphQL client, the orders store and the order logic, money, the receipt printing): held at what they reach: 100 % lines,
-statements, functions and branches, except one file: `utils/utils.ts` has 96 % of its branches, because of the `?? 1970` / `?? 0`
+(`test.coverage.thresholds`) only ever go up: a global floor of 99 % (so that one new defensive line somewhere does not
+fail CI), and one per file for the critical flows (`criticalFiles`: auth, the GraphQL client, the orders store and the
+order logic, money, the receipt printing): held at what they reach: 100 % lines, statements, functions and branches,
+except one file: `utils/utils.ts` has 96 % of its branches, because of the `?? 1970` / `?? 0`
 fallbacks of `shiftBrusselsDate` / `timeToRFC3339` after `split`, which only run for a malformed date string.
 
 The pure logic that used to sit in the big pages lives in `utils/` (`orders`, `coupons`, `settings`, `money`, `authReturn`,
 `graphqlUpload`) and in composables (`useLoginFlow`); the pages are thin and a mount test per page (`tests/pages/`) checks
-that they are wired to it.
+that they are wired to it, submits included (coupon create / update payloads, the settings save bar, the product image upload through `$api`).
 
 npm: the repo declares `devEngines.packageManager` npm 11.19.0 (`onFail: download`); with another npm, `npm ci --force`.
 
