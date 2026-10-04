@@ -187,7 +187,7 @@ export const periodLabel = (coupon: Coupon, t: Translate): string => {
 
 /** Validity period of a coupon, for the desktop table: "04/10/2026 - 31/10/2026". */
 export const formatDateRange = (from: string | null, until: string | null): string => {
-  const fmt = (d: string) => new Date(d).toLocaleDateString('fr-BE')
+  const fmt = shortDate
   if (from && until) return `${fmt(from)} - ${fmt(until)}`
   if (from) return `${fmt(from)} -`
   if (until) return `- ${fmt(until)}`

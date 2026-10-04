@@ -346,10 +346,19 @@ describe('validity labels', () => {
   })
 
   it('periodLabel reads the day in Europe/Brussels', () => {
-    // 22:30 UTC on 31 Oct is already 1 Nov in Brussels (CET).
+    // 23:30 UTC on 31 Oct is already 1 Nov in Brussels (CET).
     expect(periodLabel(makeCoupon({ validUntil: '2026-10-31T23:30:00.000Z' }), fakeT)).toBe(
       'coupons.until{"date":"01/11/2026"}',
     )
+  })
+
+  it('formatDateRange reads the days in Europe/Brussels, whatever the timezone of the device', () => {
+    // 23:30 UTC on 31 Oct is already 1 Nov in Brussels (CET); 22:30 UTC on 3 Oct is 4 Oct (CEST).
+    expect(formatDateRange('2026-10-03T22:30:00.000Z', '2026-10-31T23:30:00.000Z')).toBe(
+      '04/10/2026 - 01/11/2026',
+    )
+    expect(formatDateRange('2026-10-03T22:30:00.000Z', null)).toBe('04/10/2026 -')
+    expect(formatDateRange(null, '2026-10-31T23:30:00.000Z')).toBe('- 01/11/2026')
   })
 
   it('formatDateRange: both ends, one end, or none', () => {
