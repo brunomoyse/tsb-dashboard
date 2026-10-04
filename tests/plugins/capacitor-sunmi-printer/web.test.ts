@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 // Mock @capacitor/core so WebPlugin can be instantiated in Node/Vitest
 const WebPlugin = function WebPlugin() {} as unknown as { new (): object }
