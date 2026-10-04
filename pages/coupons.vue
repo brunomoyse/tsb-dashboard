@@ -422,8 +422,20 @@
 </template>
 
 <script lang="ts" setup>
-import type { Coupon, CreateCouponInput, UpdateCouponInput } from '~/types'
-import { brusselsDateTimeLocalToISO, isoToBrusselsDateTimeLocal } from '~/utils/utils'
+import type { Coupon } from '~/types'
+import {
+  buildCouponInput,
+  periodLabel as buildPeriodLabel,
+  statusMeta as buildStatusMeta,
+  couponToForm,
+  defaultCouponForm,
+  discountLabel,
+  filterCoupons,
+  formatDateRange,
+  paginate,
+  validateCouponForm,
+} from '~/utils/coupons'
+import type { MobileCouponStatus } from '~/utils/coupons'
 import { computed, ref, watch } from 'vue'
 import { useGqlMutation, useGqlQuery, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'
@@ -441,7 +453,7 @@ const page = ref(1)
 const pageSize = ref(10)
 
 // Phone layout: one chip rail for the status, the type filter lives in a sheet
-type MobileStatus = 'all' | 'ACTIVE' | 'SCHEDULED' | 'INACTIVE' | 'EXPIRED'
+type MobileStatus = MobileCouponStatus
 const mobileStatus = ref<MobileStatus>('all')
 const showFilters = ref(false)
 
@@ -592,69 +604,18 @@ const { data: dataCoupons, pending } = await useGqlQuery<{ coupons: Coupon[] }>(
 const coupons = computed(() => dataCoupons.value?.coupons ?? [])
 
 const filteredCoupons = computed(() =>
-  coupons.value.filter((c) => {
-    if (searchQuery.value && !c.code.toLowerCase().includes(searchQuery.value.toLowerCase()))
-      return false
-    if (isMobile.value) {
-      if (
-        mobileStatus.value === 'EXPIRED'
-          ? c.status !== 'EXPIRED' && c.status !== 'EXHAUSTED'
-          : mobileStatus.value !== 'all' && c.status !== mobileStatus.value
-      )
-        return false
-    } else {
-      if (filterStatus.value === 'active' && c.status !== 'ACTIVE') return false
-      if (filterStatus.value === 'inactive' && c.status === 'ACTIVE') return false
-    }
-    if (filterType.value !== 'all' && c.discountType !== filterType.value) return false
-    return true
+  filterCoupons(coupons.value, {
+    search: searchQuery.value,
+    isMobile: isMobile.value,
+    mobileStatus: mobileStatus.value,
+    status: filterStatus.value,
+    type: filterType.value,
   }),
 )
 
-const statusMeta = (status: Coupon['status']) => {
-  switch (status) {
-    case 'ACTIVE':
-      return {
-        label: t('coupons.active'),
-        icon: 'i-lucide-circle-check',
-        tone: 'bg-success text-inverted',
-        chip: 'success' as const,
-      }
-    case 'INACTIVE':
-      return {
-        label: t('coupons.inactive'),
-        icon: 'i-lucide-circle-x',
-        tone: 'bg-accented text-muted',
-        chip: 'neutral' as const,
-      }
-    case 'EXPIRED':
-      return {
-        label: t('coupons.expired'),
-        icon: 'i-lucide-clock-alert',
-        tone: 'bg-warning text-inverted',
-        chip: 'warning' as const,
-      }
-    case 'SCHEDULED':
-      return {
-        label: t('coupons.scheduled'),
-        icon: 'i-lucide-calendar-clock',
-        tone: 'bg-info text-inverted',
-        chip: 'info' as const,
-      }
-    case 'EXHAUSTED':
-      return {
-        label: t('coupons.exhausted'),
-        icon: 'i-lucide-battery-low',
-        tone: 'bg-warning text-inverted',
-        chip: 'warning' as const,
-      }
-  }
-}
+const statusMeta = (status: Coupon['status']) => buildStatusMeta(status, t)
 
-const paginatedCoupons = computed(() => {
-  const start = (page.value - 1) * pageSize.value
-  return filteredCoupons.value.slice(start, start + pageSize.value)
-})
+const paginatedCoupons = computed(() => paginate(filteredCoupons.value, page.value, pageSize.value))
 
 watch([searchQuery, filterStatus, filterType, mobileStatus], () => {
   page.value = 1
@@ -723,98 +684,29 @@ const typeFilterOptions = computed(() => [
   { label: t('coupons.fixed'), value: 'FIXED' },
 ])
 
-const defaultForm = () => ({
-  code: '',
-  discountType: 'PERCENTAGE' as string,
-  discountValue: '',
-  minOrderAmount: '',
-  maxUses: '',
-  maxUsesPerUser: '',
-  isActive: true,
-  validFrom: '',
-  validUntil: '',
-})
+const form = ref(defaultCouponForm())
 
-const form = ref(defaultForm())
-
-const discountLabel = (coupon: Coupon) =>
-  coupon.discountType === 'PERCENTAGE'
-    ? `−${Number(coupon.discountValue).toLocaleString('fr-BE')}\u00a0%`
-    : `−${formatPrice(coupon.discountValue)}`
-
-const shortDate = (d: string) =>
-  new Date(d).toLocaleDateString('fr-BE', { timeZone: 'Europe/Brussels' })
-
-const periodLabel = (coupon: Coupon) => {
-  if (coupon.validFrom && coupon.validUntil)
-    return t('coupons.fromTo', {
-      from: shortDate(coupon.validFrom),
-      to: shortDate(coupon.validUntil),
-    })
-  if (coupon.validUntil) return t('coupons.until', { date: shortDate(coupon.validUntil) })
-  return t('coupons.noEnd')
-}
+const periodLabel = (coupon: Coupon) => buildPeriodLabel(coupon, t)
 
 const openCreateDialog = () => {
   isEditing.value = false
   editingCouponId.value = null
-  form.value = defaultForm()
+  form.value = defaultCouponForm()
   validationError.value = ''
   showDialog.value = true
-}
-
-const formatDateRange = (from: string | null, until: string | null) => {
-  const fmt = (d: string) => new Date(d).toLocaleDateString('fr-BE')
-  if (from && until) return `${fmt(from)} - ${fmt(until)}`
-  if (from) return `${fmt(from)} -`
-  if (until) return `- ${fmt(until)}`
-  return '-'
 }
 
 const openEditDialog = (coupon: Coupon) => {
   isEditing.value = true
   editingCouponId.value = coupon.id
-  form.value = {
-    code: coupon.code,
-    discountType: coupon.discountType,
-    discountValue: coupon.discountValue,
-    minOrderAmount: coupon.minOrderAmount ?? '',
-    maxUses: coupon.maxUses !== null && coupon.maxUses !== undefined ? String(coupon.maxUses) : '',
-    maxUsesPerUser:
-      coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined
-        ? String(coupon.maxUsesPerUser)
-        : '',
-    isActive: coupon.isActive,
-    validFrom: isoToBrusselsDateTimeLocal(coupon.validFrom),
-    validUntil: isoToBrusselsDateTimeLocal(coupon.validUntil),
-  }
+  form.value = couponToForm(coupon)
   validationError.value = ''
   showDialog.value = true
 }
 
 const validate = (): boolean => {
-  if (!form.value.code.trim()) {
-    validationError.value = `${t('coupons.code')} is required`
-    return false
-  }
-  const val = Number(form.value.discountValue)
-  if (!form.value.discountValue || isNaN(val) || val <= 0) {
-    validationError.value = `${t('coupons.value')} must be greater than 0`
-    return false
-  }
-  // Mirror the backend validateDiscount rule for immediate feedback (backend stays authoritative).
-  if (form.value.discountType === 'PERCENTAGE' && val > 100) {
-    validationError.value = t('coupons.errors.percentageMax')
-    return false
-  }
-  if (form.value.validFrom && form.value.validUntil) {
-    if (new Date(form.value.validUntil) <= new Date(form.value.validFrom)) {
-      validationError.value = `${t('coupons.validUntil')} must be after ${t('coupons.validFrom')}`
-      return false
-    }
-  }
-  validationError.value = ''
-  return true
+  validationError.value = validateCouponForm(form.value, t)
+  return validationError.value === ''
 }
 
 const handleSubmit = async () => {
@@ -823,17 +715,7 @@ const handleSubmit = async () => {
 
   try {
     if (isEditing.value && editingCouponId.value) {
-      const input: UpdateCouponInput = {
-        code: form.value.code.trim().toUpperCase(),
-        discountType: form.value.discountType,
-        discountValue: form.value.discountValue,
-        minOrderAmount: form.value.minOrderAmount ? String(form.value.minOrderAmount) : null,
-        maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
-        maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
-        isActive: form.value.isActive,
-        validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
-        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil),
-      }
+      const input = buildCouponInput(form.value)
 
       const { mutate } = useGqlMutation<{ updateCoupon: Coupon }>(UPDATE_COUPON_MUTATION)
       const res = await mutate({ id: editingCouponId.value, input })
@@ -847,17 +729,7 @@ const handleSubmit = async () => {
         }
       }
     } else {
-      const input: CreateCouponInput = {
-        code: form.value.code.trim().toUpperCase(),
-        discountType: form.value.discountType,
-        discountValue: form.value.discountValue,
-        minOrderAmount: form.value.minOrderAmount ? String(form.value.minOrderAmount) : null,
-        maxUses: form.value.maxUses ? Number(form.value.maxUses) : null,
-        maxUsesPerUser: form.value.maxUsesPerUser ? Number(form.value.maxUsesPerUser) : null,
-        isActive: form.value.isActive,
-        validFrom: brusselsDateTimeLocalToISO(form.value.validFrom),
-        validUntil: brusselsDateTimeLocalToISO(form.value.validUntil),
-      }
+      const input = buildCouponInput(form.value)
 
       const { mutate } = useGqlMutation<{ createCoupon: Coupon }>(CREATE_COUPON_MUTATION)
       const res = await mutate({ input })

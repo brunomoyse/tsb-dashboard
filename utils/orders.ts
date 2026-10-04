@@ -1,3 +1,4 @@
+import type { Translate } from '~/utils/translate'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import { brusselsDateISO, formatTimeOnly } from '~/utils/utils'
 import { toCents } from '~/utils/money'
@@ -7,9 +8,6 @@ import { toCents } from '~/utils/money'
  * time and lateness, payment chips, the discount breakdown, the kanban columns / mobile tabs and the drag & drop rules.
  * Nothing here reads the clock or the i18n instance: the caller passes `now` and `t`.
  */
-
-/** The shape of vue-i18n's `t` that these helpers need. */
-export type Translate = (key: string, named?: Record<string, unknown>, plural?: number) => string
 
 export type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
 

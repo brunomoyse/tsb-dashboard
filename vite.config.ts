@@ -29,6 +29,7 @@ const criticalFiles = {
   'utils/utils.ts': { ...full, branches: 87.3 },
   'utils/orders.ts': full,
   'utils/money.ts': full,
+  'utils/coupons.ts': full,
 }
 
 export default defineConfig({
