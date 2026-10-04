@@ -45,13 +45,16 @@ export function useAuthCallback() {
     const { getAccessToken } = useOidc()
     await getAccessToken()
 
-    // Read once, whatever the outcome below: a stale path must not send the next login somewhere unexpected.
-    const returnTo = consumeReturnTo()
-
+    /*
+     * The return path is read only once `me` has answered: when that query fails (network, no user) the page is
+     * retried and must still know where to go. Once it has answered, it is read whatever the outcome (an account that
+     * is not an admin included), so that a stale path never sends a later login somewhere unexpected.
+     */
     const data = await $gqlFetch<{ me: User }>(print(ME))
     if (!data?.me) {
       return { ok: false }
     }
+    const returnTo = consumeReturnTo()
 
     if (!data.me.isAdmin) {
       authStore.clearUser()

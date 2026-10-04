@@ -74,6 +74,24 @@ describe('processCallback', () => {
     expect(sessionStorage.getItem('oidc_return_to')).toBeNull()
   })
 
+  it('keeps the remembered page when the me query fails, so that the retry still lands there', async () => {
+    sessionStorage.setItem('oidc_return_to', '/fr/products')
+    gqlFetch.mockRejectedValueOnce(new Error('Failed to fetch'))
+    await expect(useAuthCallback().processCallback()).rejects.toThrow('Failed to fetch')
+    expect(sessionStorage.getItem('oidc_return_to')).toBe('/fr/products')
+
+    gqlFetch.mockResolvedValueOnce({ me: makeUser({ isAdmin: true }) })
+    await expect(useAuthCallback().processCallback()).resolves.toEqual({ ok: true })
+    expect(navigateTo).toHaveBeenCalledExactlyOnceWith('/fr/products')
+  })
+
+  it('keeps the remembered page when me answers without a user', async () => {
+    sessionStorage.setItem('oidc_return_to', '/fr/products')
+    gqlFetch.mockResolvedValue({ me: null })
+    await expect(useAuthCallback().processCallback()).resolves.toEqual({ ok: false })
+    expect(sessionStorage.getItem('oidc_return_to')).toBe('/fr/products')
+  })
+
   it('loads the access token BEFORE asking the API who is signed in', async () => {
     gqlFetch.mockResolvedValue({ me: makeUser() })
     await useAuthCallback().processCallback()
