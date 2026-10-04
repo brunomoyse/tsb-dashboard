@@ -16,6 +16,7 @@ import {
   getStatusColor,
   getStatusIcon,
   getTimeSince,
+  gqlErrorCodes,
   hasBreakdown,
   hasNextStatus,
   hoursSince,
@@ -31,6 +32,7 @@ import {
   paymentChip,
   resolveDrop,
   staleOrders,
+  updateOrderErrorKey,
 } from '~/utils/orders'
 import { formatTimeOnly } from '~/utils/utils'
 import { fakeT } from '../helpers/i18n'
@@ -579,5 +581,80 @@ describe('mobile tabs', () => {
     mobileCards(orders, 'new', DAY)
     mobileCards(orders, 'done', DAY)
     expect(orders.map((o) => o.id)).toEqual(before)
+  })
+})
+
+describe('why an order update failed', () => {
+  const failure = (...codes: string[]) =>
+    codes.map((code) => ({ message: 'x', extensions: { code } }))
+
+  describe('gqlErrorCodes', () => {
+    it('reads the code of each GraphQL error', () => {
+      expect(gqlErrorCodes(failure('A', 'B'))).toEqual(['A', 'B'])
+    })
+
+    it('reads a single error object and an object carrying an `errors` array', () => {
+      expect(gqlErrorCodes({ message: 'x', extensions: { code: 'A' } })).toEqual(['A'])
+      expect(gqlErrorCodes({ errors: failure('B') })).toEqual(['B'])
+    })
+
+    it('skips errors without a string code, and anything that is not an error', () => {
+      expect(gqlErrorCodes([{ message: 'x' }, { extensions: { code: 5 } }, null, 'oops'])).toEqual(
+        [],
+      )
+      expect(gqlErrorCodes(new Error('network'))).toEqual([])
+      expect(gqlErrorCodes(null)).toEqual([])
+      expect(gqlErrorCodes(undefined)).toEqual([])
+    })
+  })
+
+  describe('updateOrderErrorKey', () => {
+    it('has a message for a payment that could not be refunded or cancelled, and for one Mollie cannot refund', () => {
+      expect(updateOrderErrorKey(failure('PAYMENT_SETTLEMENT_FAILED'))).toBe(
+        'orders.errors.paymentSettlementFailed',
+      )
+      expect(updateOrderErrorKey(failure('PAYMENT_NOT_REFUNDABLE'))).toBe(
+        'orders.errors.paymentNotRefundable',
+      )
+    })
+
+    it('finds the code wherever it is in the list of errors', () => {
+      expect(updateOrderErrorKey(failure('SOMETHING', 'PAYMENT_NOT_REFUNDABLE'))).toBe(
+        'orders.errors.paymentNotRefundable',
+      )
+    })
+
+    it('says a refunded order cannot be reopened for a USER_ERROR when moving a cancelled order to another status', () => {
+      const context = { currentStatus: 'CANCELLED', targetStatus: 'PREPARING' } as const
+      expect(updateOrderErrorKey(failure('USER_ERROR'), context)).toBe(
+        'orders.errors.refundedNotReopenable',
+      )
+    })
+
+    it.each([
+      ['cancelling a cancelled order', { currentStatus: 'CANCELLED', targetStatus: 'CANCELLED' }],
+      ['a time-only save', { currentStatus: 'CANCELLED' }],
+      ['another order', { currentStatus: 'CONFIRMED', targetStatus: 'PREPARING' }],
+      ['no context', {}],
+    ] as const)('keeps the generic message for a USER_ERROR on %s', (_name, context) => {
+      expect(updateOrderErrorKey(failure('USER_ERROR'), context)).toBe('orders.errors.updateFailed')
+    })
+
+    it('keeps the generic message for any other failure', () => {
+      expect(updateOrderErrorKey(failure('INTERNAL_ERROR'))).toBe('orders.errors.updateFailed')
+      expect(updateOrderErrorKey(new TypeError('Failed to fetch'))).toBe(
+        'orders.errors.updateFailed',
+      )
+      expect(updateOrderErrorKey(undefined)).toBe('orders.errors.updateFailed')
+    })
+
+    it('does not let a USER_ERROR reopen message hide a payment code', () => {
+      expect(
+        updateOrderErrorKey(failure('USER_ERROR', 'PAYMENT_SETTLEMENT_FAILED'), {
+          currentStatus: 'CANCELLED',
+          targetStatus: 'PREPARING',
+        }),
+      ).toBe('orders.errors.paymentSettlementFailed')
+    })
   })
 })

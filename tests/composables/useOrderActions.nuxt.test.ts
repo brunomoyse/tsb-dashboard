@@ -75,6 +75,11 @@ function selected(
 
 const toasts = () => toast.add.mock.calls.map(([t]) => t)
 
+/** A GraphQL failure as `$gqlFetch` throws it: the raw `errors` array, the code in `extensions.code`. */
+const gqlFailure = (code: string, message = 'backend text, never shown') => [
+  { message, extensions: { code } },
+]
+
 beforeEach(() => {
   vi.resetAllMocks()
   setActivePinia(createPinia())
@@ -541,6 +546,101 @@ describe('updateOrder (save from the slideover)', () => {
   })
 })
 
+describe('updateOrder: why a save fails', () => {
+  it.each([
+    ['PAYMENT_SETTLEMENT_FAILED', 'orders.errors.paymentSettlementFailed'],
+    ['PAYMENT_NOT_REFUNDABLE', 'orders.errors.paymentNotRefundable'],
+    ['INTERNAL_ERROR', 'orders.errors.updateFailed'],
+    ['USER_ERROR', 'orders.errors.updateFailed'],
+  ])('a %s answer shows %s (the slideover save)', async (code, key) => {
+    const { actions } = selected({ status: 'CONFIRMED' })
+    gqlFetch.mockRejectedValue(gqlFailure(code))
+    await actions.updateOrder('PREPARING')
+    expect(toasts()).toEqual([{ title: key, color: 'error' }])
+  })
+
+  it('shows the message of the code in every path that updates an order', async () => {
+    const failure = gqlFailure('PAYMENT_SETTLEMENT_FAILED')
+    const { actions, store } = selected({ status: 'CONFIRMED' })
+
+    gqlFetch.mockRejectedValue(failure)
+    await actions.quickStatusAdvance('PREPARING')
+    await actions.quickAdvanceStatus(store.orders[0]!)
+    await actions.dropOrderStatus(store.orders[0]!, 'PREPARING')
+
+    expect(toasts()).toEqual([
+      { title: 'orders.errors.paymentSettlementFailed', color: 'error' },
+      { title: 'orders.errors.paymentSettlementFailed', color: 'error' },
+      { title: 'orders.errors.paymentSettlementFailed', color: 'error' },
+    ])
+    expect(store.orders[0]?.status).toBe('CONFIRMED')
+  })
+
+  it('says a refunded order cannot be reopened when the backend refuses to move a cancelled order (USER_ERROR)', async () => {
+    const { actions, store } = selected({ status: 'CANCELLED' })
+    gqlFetch.mockRejectedValue(gqlFailure('USER_ERROR'))
+
+    await actions.updateOrder('PREPARING')
+    await actions.dropOrderStatus(store.orders[0]!, 'PREPARING')
+
+    expect(toasts()).toEqual([
+      { title: 'orders.errors.refundedNotReopenable', color: 'error' },
+      { title: 'orders.errors.refundedNotReopenable', color: 'error' },
+    ])
+  })
+
+  it('keeps the generic message for a USER_ERROR on any other order, and for a time-only save of a cancelled one', async () => {
+    gqlFetch.mockRejectedValue(gqlFailure('USER_ERROR'))
+    const open = selected({ status: 'CONFIRMED' })
+    await open.actions.updateOrder('PREPARING')
+    const cancelled = selected({ status: 'CANCELLED', id: 'o-2' })
+    cancelled.actions.sliderDeltaMinutes.value = 45
+    await cancelled.actions.updateOrder()
+    expect(toasts()).toEqual([
+      { title: 'orders.errors.updateFailed', color: 'error' },
+      { title: 'orders.errors.updateFailed', color: 'error' },
+    ])
+  })
+
+  it('keeps the generic message when the failure is not a GraphQL error at all (network, abort)', async () => {
+    const { actions } = selected({ status: 'CONFIRMED' })
+    gqlFetch.mockRejectedValue(new TypeError('Failed to fetch'))
+    await actions.updateOrder('PREPARING')
+    expect(toasts()).toEqual([{ title: 'orders.errors.updateFailed', color: 'error' }])
+  })
+
+  it('is "saving" while the request is in flight: a second save is ignored', async () => {
+    const onDone = vi.fn()
+    const { actions } = selected({ status: 'CONFIRMED' }, { onDone })
+    let answer: (value: unknown) => void = () => {}
+    gqlFetch.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve
+      }),
+    )
+
+    const first = actions.updateOrder('PREPARING')
+    expect(actions.isSaving.value).toBe(true)
+    await actions.updateOrder('PREPARING')
+    expect(gqlFetch).toHaveBeenCalledOnce()
+
+    answer(updated({ id: 'o-1', status: 'PREPARING' }))
+    await first
+    expect(actions.isSaving.value).toBe(false)
+    expect(onDone).toHaveBeenCalledOnce()
+  })
+
+  it('can save again after a failure', async () => {
+    const { actions } = selected({ status: 'CONFIRMED' })
+    gqlFetch.mockRejectedValueOnce(new Error('network'))
+    await actions.updateOrder('PREPARING')
+    expect(actions.isSaving.value).toBe(false)
+    gqlFetch.mockResolvedValueOnce(updated({ id: 'o-1', status: 'PREPARING' }))
+    await actions.updateOrder('PREPARING')
+    expect(gqlFetch).toHaveBeenCalledTimes(2)
+  })
+})
+
 describe('markAsPaid', () => {
   it('does nothing without a selected order', async () => {
     const { actions } = setup()
@@ -701,6 +801,74 @@ describe('the cancellation dialog', () => {
       expect(actions.showCancelDialog.value).toBe(false)
       expect(onDone).toHaveBeenCalledExactlyOnceWith('cancel')
       expect(toasts()).toEqual([{ title: 'orders.statusAdvanced', color: 'success' }])
+    })
+
+    it('says the payment could not be refunded or cancelled, and that the order is unchanged, then lets the staff try again', async () => {
+      const { actions, store } = selected({ status: 'PENDING', isOnlinePayment: true })
+      actions.openCancelDialog()
+      gqlFetch.mockRejectedValueOnce(gqlFailure('PAYMENT_SETTLEMENT_FAILED'))
+
+      await actions.confirmCancellation()
+
+      expect(toasts()).toEqual([{ title: 'orders.errors.paymentSettlementFailed', color: 'error' }])
+      expect(actions.showCancelDialog.value).toBe(true)
+      expect(store.orders[0]?.status).toBe('PENDING')
+      expect(actions.isCancelling.value).toBe(false)
+
+      gqlFailure('x')
+      gqlFetch.mockResolvedValueOnce(updated({ id: 'o-1', status: 'CANCELLED' }))
+      await actions.confirmCancellation()
+      expect(store.orders[0]?.status).toBe('CANCELLED')
+      expect(actions.showCancelDialog.value).toBe(false)
+    })
+
+    it('says Mollie cannot refund this payment and the customer must be refunded by hand', async () => {
+      const { actions, store } = selected({ status: 'PREPARING', isOnlinePayment: true })
+      actions.openCancelDialog()
+      gqlFetch.mockRejectedValue(gqlFailure('PAYMENT_NOT_REFUNDABLE'))
+
+      await actions.confirmCancellation()
+
+      expect(toasts()).toEqual([{ title: 'orders.errors.paymentNotRefundable', color: 'error' }])
+      expect(actions.showCancelDialog.value).toBe(true)
+      expect(store.orders[0]?.status).toBe('PREPARING')
+    })
+
+    it('is "cancelling" while the request is in flight: no second request, the dialog cannot be dismissed', async () => {
+      const onDone = vi.fn()
+      const { actions } = selected({ status: 'PENDING' }, { onDone })
+      actions.openCancelDialog()
+      let answer: (value: unknown) => void = () => {}
+      gqlFetch.mockReturnValue(
+        new Promise((resolve) => {
+          answer = resolve
+        }),
+      )
+
+      const first = actions.confirmCancellation()
+      expect(actions.isCancelling.value).toBe(true)
+      await actions.confirmCancellation()
+      expect(gqlFetch).toHaveBeenCalledOnce()
+
+      // "Back" and the sheet's dismissal do nothing while the cancellation is on its way.
+      actions.cancelCancellation()
+      expect(actions.showCancelDialog.value).toBe(true)
+
+      answer(updated({ id: 'o-1', status: 'CANCELLED' }))
+      await first
+      expect(actions.isCancelling.value).toBe(false)
+      expect(actions.showCancelDialog.value).toBe(false)
+      expect(onDone).toHaveBeenCalledExactlyOnceWith('cancel')
+    })
+
+    it('is not "cancelling" any more after a failure, so the staff can go back or confirm again', async () => {
+      const { actions } = selected({ status: 'PENDING' })
+      actions.openCancelDialog()
+      gqlFetch.mockRejectedValue(new Error('network'))
+      await actions.confirmCancellation()
+      expect(actions.isCancelling.value).toBe(false)
+      actions.cancelCancellation()
+      expect(actions.showCancelDialog.value).toBe(false)
     })
 
     it('keeps the dialog open and shows an error toast when the cancellation fails', async () => {

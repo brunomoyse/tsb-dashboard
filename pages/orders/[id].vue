@@ -280,7 +280,8 @@
       <div class="grid grid-cols-2 gap-2">
         <button
           type="button"
-          class="h-14 rounded-xl bg-accented active:bg-(--pili-pressed) text-base font-bold"
+          class="h-14 rounded-xl bg-accented active:bg-(--pili-pressed) text-base font-bold disabled:opacity-60"
+          :disabled="isCancelling"
           @click="cancelCancellation"
         >
           {{ t('orders.back') }}
@@ -289,7 +290,7 @@
           type="button"
           class="h-14 rounded-xl text-base font-bold font-mono tabular-nums"
           :class="confirmDisabled ? 'bg-(--pili-pressed) text-muted' : 'bg-error text-inverted'"
-          :disabled="confirmDisabled"
+          :disabled="confirmDisabled || isCancelling"
           @click="confirmCancellation"
         >
           {{ confirmDisabled ? `${t('orders.confirm')} (${cancelDelay})` : t('orders.confirm') }}
@@ -328,7 +329,8 @@
         <button
           v-if="hasDelta"
           type="button"
-          class="flex-1 h-14 rounded-xl bg-inverted text-inverted flex flex-col items-center justify-center leading-[1.2] text-[15px] font-bold"
+          class="flex-1 h-14 rounded-xl bg-inverted text-inverted flex flex-col items-center justify-center leading-[1.2] text-[15px] font-bold disabled:opacity-60"
+          :disabled="isSaving"
           @click="saveTime"
         >
           <span>{{ t('common.save') }}</span>
@@ -408,6 +410,8 @@ const {
   initialSliderValue,
   isUpdatingPayment,
   quickActionLoading,
+  isSaving,
+  isCancelling,
   primaryStatuses,
   secondaryStatuses,
   selectOrder,

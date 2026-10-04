@@ -736,6 +736,8 @@
             block
             size="lg"
             :color="primaryStatuses.length ? 'neutral' : 'primary'"
+            :disabled="isSaving"
+            :loading="isSaving"
             @click="updateOrder(stagedStatus)"
           >
             <UIcon name="i-lucide-save" class="mr-2" />
@@ -750,6 +752,7 @@
       v-model:open="showCancelDialog"
       :title="t('orders.confirmCancelTitle')"
       :description="t('orders.confirmCancelMessage')"
+      :dismissible="!isCancelling"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #body>
@@ -768,10 +771,20 @@
       </template>
 
       <template #footer>
-        <UButton color="neutral" variant="solid" @click="cancelCancellation">
+        <UButton
+          color="neutral"
+          variant="solid"
+          :disabled="isCancelling"
+          @click="cancelCancellation"
+        >
           {{ t('orders.back') }}
         </UButton>
-        <UButton color="error" :disabled="confirmDisabled" @click="confirmCancellation">
+        <UButton
+          color="error"
+          :disabled="confirmDisabled || isCancelling"
+          :loading="isCancelling"
+          @click="confirmCancellation"
+        >
           {{ t('orders.confirm') }}
         </UButton>
       </template>
@@ -882,6 +895,8 @@ const {
   stagedStatus,
   isUpdatingPayment,
   quickActionLoading,
+  isSaving,
+  isCancelling,
   primaryStatuses,
   secondaryStatuses,
   handleStatusButton,

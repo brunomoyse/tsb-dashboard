@@ -185,7 +185,10 @@
       "invalidTransition": "Cette transition de statut n'est pas autorisée pour cette commande",
       "printFailed": "Échec de l'impression",
       "paymentUpdateFailed": "Échec de la mise à jour du paiement",
-      "orderingUpdateFailed": "Impossible de modifier l'état des commandes en ligne"
+      "orderingUpdateFailed": "Impossible de modifier l'état des commandes en ligne",
+      "paymentSettlementFailed": "Le paiement n'a pas pu être remboursé ou annulé chez Mollie. La commande n'a pas été modifiée, réessayez.",
+      "paymentNotRefundable": "Ce paiement ne peut pas être remboursé via Mollie. Remboursez le client manuellement.",
+      "refundedNotReopenable": "Une commande remboursée ne peut pas être rouverte."
     },
     "lateChip": "EN RETARD",
     "toCollect": "À ENCAISSER",

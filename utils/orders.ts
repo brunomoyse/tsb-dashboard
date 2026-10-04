@@ -376,3 +376,50 @@ export const mobileCards = (orders: Order[], key: MobileTab, completedDate: stri
     key === 'done' ? byDate(b) - byDate(a) : byDate(a) - byDate(b),
   )
 }
+
+// ─── Why an order update failed ─────────────────────────────────────────────────
+
+/** Backend error codes of `updateOrder` with their own message for the staff (the order is left unchanged by all of them). */
+const UPDATE_ORDER_ERROR_KEYS: Record<string, string> = {
+  // The payment could not be refunded / cancelled at Mollie: nothing was changed, trying again can work.
+  PAYMENT_SETTLEMENT_FAILED: 'orders.errors.paymentSettlementFailed',
+  // Mollie cannot refund this payment (voucher, expired refund window...): retrying cannot work, refund by hand.
+  PAYMENT_NOT_REFUNDABLE: 'orders.errors.paymentNotRefundable',
+}
+
+/** The `extensions.code` of every GraphQL error of a failed request (`$gqlFetch` throws the raw `errors` array). */
+export const gqlErrorCodes = (error: unknown): string[] => {
+  const errors: unknown[] = Array.isArray(error)
+    ? error
+    : Array.isArray((error as { errors?: unknown } | null)?.errors)
+      ? (error as { errors: unknown[] }).errors
+      : [error]
+  const codes: string[] = []
+  for (const entry of errors) {
+    const code = (entry as { extensions?: { code?: unknown } } | null)?.extensions?.code
+    if (typeof code === 'string') codes.push(code)
+  }
+  return codes
+}
+
+/**
+ * The i18n key of the message to show when `updateOrder` fails: a specific one for a payment that could not be
+ * refunded or cancelled, one for reopening a cancelled order (the backend refuses it with a generic USER_ERROR once its
+ * payment was refunded), the generic "failed to update" for everything else (network, server...).
+ */
+export const updateOrderErrorKey = (
+  error: unknown,
+  context: { currentStatus?: OrderStatus; targetStatus?: OrderStatus } = {},
+): string => {
+  const codes = gqlErrorCodes(error)
+  for (const code of codes) {
+    const key = UPDATE_ORDER_ERROR_KEYS[code]
+    if (key) return key
+  }
+  const reopening =
+    context.currentStatus === 'CANCELLED' &&
+    context.targetStatus !== undefined &&
+    context.targetStatus !== 'CANCELLED'
+  if (reopening && codes.includes('USER_ERROR')) return 'orders.errors.refundedNotReopenable'
+  return 'orders.errors.updateFailed'
+}
