@@ -5,6 +5,7 @@
 // Run: `vp test run tests/plugins/api.nuxt.test.ts`.
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import { createFetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
 import { setFlags } from '../support/flags'
 
@@ -214,5 +215,45 @@ describe('a request that fails', () => {
     baseApi.mockRejectedValue(httpError(401))
     oidc.silentRenew.mockRejectedValue(new Error('iframe blocked'))
     await expect(install()('/orders')).rejects.toThrow('iframe blocked')
+  })
+})
+
+describe('through the real ofetch (what is actually sent)', () => {
+  /** The headers of the request that reaches the transport, for a client built by the plugin. */
+  async function send(options: Record<string, unknown>) {
+    let sent: Record<string, string> = {}
+    const transport = (_url: unknown, init: { headers: HeadersInit }) => {
+      sent = Object.fromEntries(new Headers(init.headers))
+      return Promise.resolve(
+        new Response('{}', { headers: { 'content-type': 'application/json' } }),
+      )
+    }
+    $fetchMock.create.mockImplementation((defaults: unknown) =>
+      createFetch({ fetch: transport as typeof fetch }).create(defaults as never),
+    )
+    await install()('/graphql', options)
+    return sent
+  }
+
+  it('sends a JSON body as JSON, with the bearer token and the language', async () => {
+    const sent = await send({ method: 'POST', body: { query: '{ me { id } }' } })
+    expect(sent).toMatchObject({
+      'content-type': 'application/json',
+      accept: 'application/json',
+      authorization: 'Bearer token-1',
+      'accept-language': 'fr',
+    })
+  })
+
+  it('leaves the Content-Type of a multipart upload to the runtime, which adds the boundary (product images)', async () => {
+    const form = new FormData()
+    form.append('operations', '{"query":"mutation { x }"}')
+    form.append('0', new Blob(['png-bytes']), 'photo.png')
+
+    const sent = await send({ method: 'POST', body: form })
+
+    // A fixed `application/json` here makes the server read the multipart body as JSON: no image can be uploaded.
+    expect(sent['content-type']).toBeUndefined()
+    expect(sent.authorization).toBe('Bearer token-1')
   })
 })

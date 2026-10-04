@@ -44,6 +44,10 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
       'Accept-Language': userLocale,
     },
     async onRequest({ options }) {
+      // A multipart body needs the boundary the runtime generates for it: the default JSON Content-Type above would
+      // make the server read an upload (product image) as JSON.
+      if (options.body instanceof FormData) options.headers.delete('Content-Type')
+
       if (import.meta.server) {
         // SSR: forward cookies for Accept-Language if available
         const event = useRequestEvent()
