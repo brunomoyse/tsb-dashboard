@@ -30,6 +30,7 @@ const criticalFiles = {
   'utils/orders.ts': full,
   'utils/money.ts': full,
   'utils/coupons.ts': full,
+  'utils/settings.ts': full,
 }
 
 export default defineConfig({
