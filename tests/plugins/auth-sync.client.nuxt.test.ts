@@ -4,6 +4,7 @@
 // Run: `vp test run tests/plugins/auth-sync.client.nuxt.test.ts`.
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createPinia, setActivePinia } from 'pinia'
+import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { makeUser } from '../fixtures/dashboard'
 
 const oidc = vi.hoisted(() => ({
@@ -53,6 +54,20 @@ describe('with a persisted user', () => {
     await sync()
     expect(useAuthStore().user).toEqual(makeUser())
     expect(oidc.removeUser).not.toHaveBeenCalled()
+  })
+
+  it('keeps the OIDC session AND the user when Zitadel cannot be reached (offline): the next request renews it', async () => {
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
+    await sync()
+    expect(oidc.removeUser).not.toHaveBeenCalled()
+    expect(useAuthStore().user).toEqual(makeUser())
+  })
+
+  it('does not hide an unexpected failure of the renewal, and keeps the user', async () => {
+    oidc.silentRenew.mockRejectedValue(new Error('storage unreadable'))
+    await expect(sync()).rejects.toThrow('storage unreadable')
+    expect(oidc.removeUser).not.toHaveBeenCalled()
+    expect(useAuthStore().user).toEqual(makeUser())
   })
 
   it('wipes the stale OIDC session AND the user when Zitadel rejects the refresh token', async () => {

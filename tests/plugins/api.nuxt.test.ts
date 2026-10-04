@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { createFetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
+import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
 interface CreateOptions {
@@ -209,6 +210,17 @@ describe('a request that fails', () => {
     baseApi.mockRejectedValueOnce(httpError(401)).mockRejectedValueOnce(replay)
     await expect(install()('/orders')).rejects.toBe(replay)
     expect(oidc.silentRenew).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the session and fails only this request when Zitadel cannot be reached (no login redirect)', async () => {
+    const error = httpError(401)
+    baseApi.mockRejectedValue(error)
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
+
+    await expect(install()('/orders')).rejects.toBe(error)
+
+    expect(navigateTo).not.toHaveBeenCalled()
+    expect(baseApi).toHaveBeenCalledOnce()
   })
 
   it('surfaces the failure of the renewal itself', async () => {

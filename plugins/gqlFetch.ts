@@ -8,6 +8,7 @@ import {
   useRequestEvent,
   useRuntimeConfig,
 } from '#imports'
+import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 interface GqlOptions {
   variables?: Record<string, unknown>
@@ -129,7 +130,10 @@ export default defineNuxtPlugin(() => {
       const { silentRenew } = useOidc()
       const user = await silentRenew()
       return Boolean(user)
-    } catch {
+    } catch (err: unknown) {
+      // Zitadel could not be reached (offline): the session is kept, the staff member stays where they are, this
+      // request fails and the next one renews again.
+      if (isSilentRenewUnavailable(err)) return false
       void navigateTo(`${localePath('auth-login')}?session=expired`)
       return false
     }

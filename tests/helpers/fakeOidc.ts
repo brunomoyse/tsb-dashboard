@@ -53,6 +53,16 @@ export class FakeUserManager {
   }
 }
 
+/** oidc-client-ts's `ErrorResponse`: what an OAuth error answer of Zitadel's token endpoint (invalid_grant...) throws. */
+export class ErrorResponse extends Error {
+  error: string
+  constructor(args: { error: string; error_description?: string }) {
+    super(args.error_description ?? args.error)
+    this.name = 'ErrorResponse'
+    this.error = args.error
+  }
+}
+
 export class FakeWebStorageStateStore {
   constructor(public options: unknown) {}
 }
@@ -64,5 +74,9 @@ export function fakeUserManagers(): FakeUserManager[] {
 
 /** The module factory for `vi.mock('oidc-client-ts', ...)`. */
 export function oidcClientTsFake() {
-  return { UserManager: FakeUserManager, WebStorageStateStore: FakeWebStorageStateStore }
+  return {
+    UserManager: FakeUserManager,
+    WebStorageStateStore: FakeWebStorageStateStore,
+    ErrorResponse,
+  }
 }

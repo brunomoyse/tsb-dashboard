@@ -8,6 +8,7 @@ import {
   useRuntimeConfig,
 } from '#imports'
 import type { NitroFetchOptions } from 'nitropack/types'
+import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 export type ApiFetch = <T>(request: string, options?: NitroFetchOptions<string>) => Promise<T>
 
@@ -83,7 +84,15 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
         'status' in err &&
         (err as { status: number }).status === 401
       ) {
-        const ok = await refreshAuth()
+        let ok: boolean
+        try {
+          ok = await refreshAuth()
+        } catch (renewErr: unknown) {
+          // Zitadel could not be reached: the session is kept, no login redirect, this request fails and the next one
+          // renews again.
+          if (isSilentRenewUnavailable(renewErr)) throw err
+          throw renewErr
+        }
         if (ok) return baseApi<T, string>(request, options)
         void navigateTo(`${localePath('auth-login')}?session=expired`)
       }

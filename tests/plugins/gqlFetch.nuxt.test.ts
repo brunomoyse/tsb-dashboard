@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useRuntimeConfig } from '#imports'
 import gql from 'graphql-tag'
+import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
 const oidc = vi.hoisted(() => ({
@@ -187,6 +188,15 @@ describe('HTTP errors', () => {
     expect(oidc.silentRenew).toHaveBeenCalledOnce()
   })
 
+  it('keeps the session and fails only this request when Zitadel cannot be reached (no login redirect)', async () => {
+    const error = httpError(401)
+    $fetchMock.mockRejectedValue(error)
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
+    await expect(install()(QUERY)).rejects.toBe(error)
+    expect($fetchMock).toHaveBeenCalledOnce()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
   it('sends the staff member to the login page, flagged as expired, when renewing itself blows up', async () => {
     const error = httpError(401)
     $fetchMock.mockRejectedValue(error)
@@ -235,6 +245,15 @@ describe('GraphQL errors', () => {
     const first = unauthenticated()
     $fetchMock.mockResolvedValue(first)
     oidc.silentRenew.mockResolvedValue(null)
+    await expect(install()(QUERY)).rejects.toBe(first.errors)
+    expect($fetchMock).toHaveBeenCalledOnce()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('keeps the session and throws the original errors when Zitadel cannot be reached (no login redirect)', async () => {
+    const first = unauthenticated()
+    $fetchMock.mockResolvedValue(first)
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
     await expect(install()(QUERY)).rejects.toBe(first.errors)
     expect($fetchMock).toHaveBeenCalledOnce()
     expect(navigateTo).not.toHaveBeenCalled()

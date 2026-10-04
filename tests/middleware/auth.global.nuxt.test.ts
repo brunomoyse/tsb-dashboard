@@ -5,6 +5,7 @@ import type * as NuxtAppModule from 'nuxt/app'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { RouteLocationNormalized } from 'vue-router'
 import { useLocalePath } from '#imports'
+import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
 const oidc = vi.hoisted(() => ({
@@ -73,6 +74,18 @@ describe('protected pages in the browser', () => {
     expect(result).toEqual({ redirectedTo: useLocalePath()('auth-login') })
     expect(useLocalePath()('auth-login')).toMatch(/\/auth\/login$/u)
     expect(navigateTo).toHaveBeenCalledExactlyOnceWith(useLocalePath()('auth-login'))
+  })
+
+  it('let the staff member through when Zitadel cannot be reached (offline): the session is intact, only its token expired', async () => {
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
+    expect(await run('/fr/orders')).toBeUndefined()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('does not hide an unexpected failure of the renewal', async () => {
+    oidc.silentRenew.mockRejectedValue(new Error('storage unreadable'))
+    await expect(run('/fr/orders')).rejects.toThrow('storage unreadable')
+    expect(navigateTo).not.toHaveBeenCalled()
   })
 
   it('check the session first and renew only if it is not valid, in that order', async () => {

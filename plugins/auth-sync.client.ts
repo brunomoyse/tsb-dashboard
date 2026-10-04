@@ -1,3 +1,5 @@
+import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
+
 /**
  * On app start, validate that the stored OIDC refresh token is still accepted by Zitadel.
  *
@@ -20,8 +22,14 @@ export default defineNuxtPlugin(async () => {
   if (await isAuthenticated()) return
 
   // Try silent renewal (refresh token may still work)
-  const renewed = await silentRenew()
-  if (renewed) return
+  try {
+    const renewed = await silentRenew()
+    if (renewed) return
+  } catch (err) {
+    // Zitadel could not be reached (offline): the session is intact, keep it and the user; the next request renews it.
+    if (isSilentRenewUnavailable(err)) return
+    throw err
+  }
 
   // No valid session — clear stale OIDC session + Pinia store
   const { removeUser } = useOidc()

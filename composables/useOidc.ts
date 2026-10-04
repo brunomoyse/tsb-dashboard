@@ -1,4 +1,10 @@
-import { type User as OidcUser, UserManager, WebStorageStateStore } from 'oidc-client-ts'
+import {
+  ErrorResponse,
+  type User as OidcUser,
+  UserManager,
+  WebStorageStateStore,
+} from 'oidc-client-ts'
+import { SilentRenewUnavailableError, isSilentRenewUnavailable } from '~/utils/silentRenewError'
 import { type Ref, ref } from 'vue'
 import { useRuntimeConfig } from '#imports'
 
@@ -23,6 +29,27 @@ interface CapacitorTokens {
   access_token: string
   refresh_token?: string
   expires_at: number
+}
+
+/*
+ * OAuth error codes of a token endpoint that say "try again later", not "this refresh token is no good": the session
+ * is kept. Every other `ErrorResponse` (invalid_grant: expired, revoked or already used refresh token, login_required,
+ * invalid_client...) is a definitive refusal.
+ */
+const TRANSIENT_OAUTH_ERRORS = new Set(['server_error', 'temporarily_unavailable'])
+
+/** Did Zitadel itself answer that this session cannot be renewed? (Not: we could not reach it.) */
+const isRefusal = (err: unknown): boolean =>
+  err instanceof ErrorResponse && !TRANSIENT_OAUTH_ERRORS.has(String(err.error))
+
+/**
+ * Did the backend's token-exchange answer that this refresh token is refused? A client error (400, 401, 403...) is a
+ * refusal; no answer at all (offline, a timeout), a server error, a timeout (408) or a rate limit (429) is not.
+ */
+const isTokenExchangeRefusal = (err: unknown): boolean => {
+  const status = (err as { status?: number; statusCode?: number } | null)?.status
+  const code = status ?? (err as { statusCode?: number } | null)?.statusCode
+  return typeof code === 'number' && code >= 400 && code < 500 && code !== 408 && code !== 429
 }
 
 /**
@@ -83,7 +110,12 @@ export function useOidc() {
        * renewal cannot race with a concurrent silentRenew() call from
        * middleware/plugins on the same refresh token.
        */
-      await silentRenew()
+      try {
+        await silentRenew()
+      } catch (err) {
+        // No network right now: the session is kept, the next request renews it.
+        if (!isSilentRenewUnavailable(err)) throw err
+      }
     })
 
     /*
@@ -221,23 +253,29 @@ export function useOidc() {
       }
     }
 
-    // Capacitor: token expired, attempt refresh
-    if (isCapacitor) {
-      const renewed = await silentRenew()
-      return renewed ? (capacitorTokenCache?.access_token ?? null) : null
-    }
-    // Web: use oidc-client-ts UserManager
-    const mgr = getUserManager()
-    const user = await mgr.getUser()
-    if (user && !user.expired) return user.access_token
-    if (!user) return null // No session — nothing to renew
+    try {
+      // Capacitor: token expired, attempt refresh
+      if (isCapacitor) {
+        const renewed = await silentRenew()
+        return renewed ? (capacitorTokenCache?.access_token ?? null) : null
+      }
+      // Web: use oidc-client-ts UserManager
+      const mgr = getUserManager()
+      const user = await mgr.getUser()
+      if (user && !user.expired) return user.access_token
+      if (!user) return null // No session — nothing to renew
 
-    /*
-     * Token expired — route through the coalesced silentRenew so concurrent
-     * callers share one refresh-token use (Zitadel rotates on first use).
-     */
-    const renewed = await silentRenew()
-    return renewed?.access_token ?? null
+      /*
+       * Token expired — route through the coalesced silentRenew so concurrent
+       * callers share one refresh-token use (Zitadel rotates on first use).
+       */
+      const renewed = await silentRenew()
+      return renewed?.access_token ?? null
+    } catch (err) {
+      // The renewal could not be made now (offline): no token for this request, the session stays for the next one.
+      if (isSilentRenewUnavailable(err)) return null
+      throw err
+    }
   }
 
   /**
@@ -245,6 +283,12 @@ export function useOidc() {
    * accessTokenExpired event, getAccessToken) share a single in-flight
    * promise so we never use the same refresh token twice in parallel —
    * Zitadel rotates on first use and would log the loser out.
+   *
+   * Resolves the renewed user, or `null` when the session is over (nothing to
+   * renew, or Zitadel refused the refresh token: the stale user is wiped).
+   * Rejects with `SilentRenewUnavailableError` when Zitadel could not be
+   * reached (offline, timeout, 5xx): the session is NOT touched, the caller
+   * keeps the staff member signed in and does not send them to the login page.
    */
   function silentRenew(): Promise<OidcUser | null> {
     silentRenewPromise ??= doSilentRenew().finally(() => {
@@ -258,13 +302,19 @@ export function useOidc() {
       // Read stored refresh token
       const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
       if (!stored) return null
+      let data: CapacitorTokens
       try {
-        const data: CapacitorTokens = JSON.parse(stored)
-        if (!data.refresh_token) return null
+        data = JSON.parse(stored)
+      } catch {
+        return null
+      }
+      if (!data.refresh_token) return null
 
-        // Exchange refresh token via backend proxy
-        const apiUrl = config.public.api as string
-        const tokens = await $fetch<{
+      // Exchange refresh token via backend proxy
+      const apiUrl = config.public.api as string
+      let tokens: { access_token: string; expires_in: number; refresh_token?: string }
+      try {
+        tokens = await $fetch<{
           access_token: string
           expires_in: number
           refresh_token?: string
@@ -275,20 +325,26 @@ export function useOidc() {
             clientId: config.public.zitadelNativeClientId as string,
           },
         })
+      } catch (err) {
+        // A refused refresh token ends the session; an unreachable backend does not.
+        if (isTokenExchangeRefusal(err)) return null
+        throw new SilentRenewUnavailableError({ cause: err })
+      }
 
-        // Update stored tokens (use new refresh_token if rotated, else keep old)
-        const tokenData: CapacitorTokens = {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token ?? data.refresh_token,
-          expires_at: Math.floor(Date.now() / 1000) + (tokens.expires_in || 3600),
-        }
+      // Update stored tokens (use new refresh_token if rotated, else keep old)
+      const tokenData: CapacitorTokens = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token ?? data.refresh_token,
+        expires_at: Math.floor(Date.now() / 1000) + (tokens.expires_in || 3600),
+      }
+      try {
         capacitorTokenCache = tokenData
         localStorage.setItem(CAPACITOR_TOKEN_KEY, JSON.stringify(tokenData))
-
-        return tokenData as unknown as OidcUser
       } catch {
         return null
       }
+
+      return tokenData as unknown as OidcUser
     }
     const mgr = getUserManager()
     const existing = await mgr.getUser()
@@ -297,9 +353,10 @@ export function useOidc() {
       const user = await mgr.signinSilent()
       oidcUser.value = user
       return user
-    } catch {
+    } catch (err) {
+      if (!isRefusal(err)) throw new SilentRenewUnavailableError({ cause: err })
       /*
-       * Wipe the stale user so subsequent getAccessToken() calls return null
+       * Zitadel refused the refresh token: wipe the stale user so subsequent getAccessToken() calls return null
        * instead of triggering an iframe storm against Zitadel.
        */
       try {
