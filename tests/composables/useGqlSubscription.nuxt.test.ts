@@ -178,12 +178,61 @@ describe('subscribing', () => {
     const failure = new Error('boom')
     sink.error(failure)
     expect(error.value).toBe(failure)
+  })
 
-    // NOTE: graphql-ws hands execution errors over as an array of GraphQLError, and String() of that array is all the
-    // message says: "[object Object]". The detail of the failure is lost on its way to `error`.
-    sink.error([{ message: 'resolver failed' }])
+  it('surfaces the message of the first error when graphql-ws hands over an array of GraphQL errors', async () => {
+    const { subscribe } = await load()
+    const { error } = subscribe(SUB)
+    await settle()
+    const { sink } = clients()[0]!.subscriptions[0]!
+
+    sink.error([{ message: 'resolver failed' }, { message: 'second' }])
     expect(error.value).toBeInstanceOf(Error)
-    expect(error.value?.message).toBe('[object Object]')
+    expect(error.value?.message).toBe('resolver failed')
+  })
+
+  it('keeps an Error that comes in an array as it is', async () => {
+    const { subscribe } = await load()
+    const { error } = subscribe(SUB)
+    await settle()
+    const failure = new Error('inside an array')
+    clients()[0]!.subscriptions[0]!.sink.error([failure])
+    expect(error.value).toBe(failure)
+  })
+
+  it('surfaces the message of a single error object', async () => {
+    const { subscribe } = await load()
+    const { error } = subscribe(SUB)
+    await settle()
+    clients()[0]!.subscriptions[0]!.sink.error({ message: 'not authorised' })
+    expect(error.value?.message).toBe('not authorised')
+  })
+
+  it.each([
+    [{ code: 4403, reason: 'Forbidden' }, 'Connection closed (4403): Forbidden'],
+    [{ code: 1006, reason: '' }, 'Connection closed (1006)'],
+    [{ code: 1006 }, 'Connection closed (1006)'],
+  ])('describes a close event %j', async (event, message) => {
+    const { subscribe } = await load()
+    const { error } = subscribe(SUB)
+    await settle()
+    clients()[0]!.subscriptions[0]!.sink.error(event)
+    expect(error.value?.message).toBe(message)
+  })
+
+  it.each([
+    ['an empty array', [], ''],
+    ['an object without a message', { foo: 1 }, '[object Object]'],
+    ['an empty message', [{ message: '' }], '[object Object]'],
+    ['a string', 'plain failure', 'plain failure'],
+    ['null', null, 'null'],
+  ])('still gives an Error for %s', async (_name, value, message) => {
+    const { subscribe } = await load()
+    const { error } = subscribe(SUB)
+    await settle()
+    clients()[0]!.subscriptions[0]!.sink.error(value)
+    expect(error.value).toBeInstanceOf(Error)
+    expect(error.value?.message).toBe(message)
   })
 
   it('treats completion as a no-op', async () => {

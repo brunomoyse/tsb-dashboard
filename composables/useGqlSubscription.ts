@@ -4,6 +4,31 @@ import { onScopeDispose, ref } from 'vue'
 import type { Client } from 'graphql-ws'
 import { useRuntimeConfig } from '#imports'
 
+/**
+ * What a failed subscription hands over, as an Error with a readable message. graphql-ws gives an Error, a close event
+ * (`code`, `reason`) or, for execution errors, an ARRAY of GraphQL errors: `String()` of that is "[object Object]", so
+ * the message of the first error is used.
+ */
+const toError = (e: unknown): Error => {
+  if (e instanceof Error) return e
+  const first: unknown = Array.isArray(e) ? e[0] : e
+  if (first instanceof Error) return first
+  if (typeof first === 'object' && first !== null) {
+    const { message, code, reason } = first as {
+      message?: unknown
+      code?: unknown
+      reason?: unknown
+    }
+    if (typeof message === 'string' && message) return new Error(message)
+    if (typeof code === 'number') {
+      return new Error(
+        `Connection closed (${code})${typeof reason === 'string' && reason ? `: ${reason}` : ''}`,
+      )
+    }
+  }
+  return new Error(String(e))
+}
+
 let wsClient: Client | null = null
 let wsClientPromise: Promise<Client> | null = null
 
@@ -127,14 +152,14 @@ export function useGqlSubscription<T = unknown>(
               if (msg.data !== undefined) data.value = msg.data as T
             },
             error: (e) => {
-              error.value = e instanceof Error ? e : new Error(String(e))
+              error.value = toError(e)
             },
             complete: () => {},
           },
         )
       })
       .catch((e) => {
-        error.value = e instanceof Error ? e : new Error(String(e))
+        error.value = toError(e)
       })
   }
 
