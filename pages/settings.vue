@@ -44,7 +44,7 @@
           <div class="grid grid-cols-[56px_1fr_56px] items-center gap-2">
             <button
               type="button"
-              :disabled="preparationMinutes <= 15"
+              :disabled="preparationMinutes <= MIN_PREPARATION_MINUTES"
               :aria-label="t('settings.preparation.label')"
               class="h-14 rounded-xl bg-accented font-mono text-2xl font-bold disabled:opacity-40 active:bg-(--pili-pressed)"
               @click="adjustPreparation(-5)"
@@ -60,7 +60,7 @@
             </span>
             <button
               type="button"
-              :disabled="preparationMinutes >= 240"
+              :disabled="preparationMinutes >= MAX_PREPARATION_MINUTES"
               :aria-label="t('settings.preparation.label')"
               class="h-14 rounded-xl bg-accented font-mono text-2xl font-bold disabled:opacity-40 active:bg-(--pili-pressed)"
               @click="adjustPreparation(5)"
@@ -234,7 +234,7 @@
             color="neutral"
             size="lg"
             square
-            :disabled="preparationMinutes <= 15"
+            :disabled="preparationMinutes <= MIN_PREPARATION_MINUTES"
             :aria-label="t('common.actions')"
             @click.prevent="adjustPreparation(-5)"
           />
@@ -250,7 +250,7 @@
             color="neutral"
             size="lg"
             square
-            :disabled="preparationMinutes >= 240"
+            :disabled="preparationMinutes >= MAX_PREPARATION_MINUTES"
             :aria-label="t('common.actions')"
             @click.prevent="adjustPreparation(5)"
           />
@@ -609,10 +609,27 @@ import SettingsSection from '~/components/SettingsSection.vue'
 import {
   defaultOverrideDate,
   formatOverrideDate as formatOverrideDateIn,
-  overrideDateKey,
-  overrideDateRange,
-  overrideDateToGql,
 } from '~/utils/scheduleOverride'
+import {
+  MAX_PREPARATION_MINUTES,
+  MIN_PREPARATION_MINUTES,
+  OVERRIDE_RANGE_CONFIRM_ABOVE,
+  adjustPreparation as adjustedPreparation,
+  buildHoursInput,
+  buildOverrideInputs,
+  copyOpeningHours,
+  DAYS as days,
+  defaultSchedule,
+  emptyOverrideForm,
+  isValidPreparation,
+  overrideDates,
+  overrideDetail,
+  overrideToForm,
+  parseSchedule,
+  saveDirtySteps,
+  hoursSummary as summarizeHours,
+} from '~/utils/settings'
+import type { OpeningHoursMap, ScheduleOverride } from '~/utils/settings'
 import gql from 'graphql-tag'
 import { onBeforeRouteLeave } from 'vue-router'
 import { print } from 'graphql'
@@ -624,38 +641,6 @@ const isMobile = useIsMobile()
 const { hide: hideTabBar, show: showTabBar } = useTabBar()
 // Shared online-ordering flag (mobile orders header, Plus page): kept in sync below
 const { enabled: sharedOrdering } = useOrderingStatus()
-
-interface DaySchedule {
-  open: string
-  close: string
-  dinnerOpen: string
-  dinnerClose: string
-}
-
-type OpeningHoursMap = Record<string, DaySchedule | null>
-
-interface ScheduleOverride {
-  date: string
-  closed: boolean
-  schedule: {
-    open: string
-    close: string
-    dinnerOpen?: string | null
-    dinnerClose?: string | null
-  } | null
-  note: string | null
-  updatedAt: string
-}
-
-const days = [
-  { key: 'monday' },
-  { key: 'tuesday' },
-  { key: 'wednesday' },
-  { key: 'thursday' },
-  { key: 'friday' },
-  { key: 'saturday' },
-  { key: 'sunday' },
-]
 
 // Section open state
 const openingHoursOpen = ref(true)
@@ -810,16 +795,6 @@ const DELETE_OVERRIDE = gql`
   }
 `
 
-const parseSchedule = (schedule: DaySchedule | null | undefined): DaySchedule | null => {
-  if (!schedule) return null
-  return {
-    open: schedule.open || '11:00',
-    close: schedule.close || '14:00',
-    dinnerOpen: schedule.dinnerOpen || '17:00',
-    dinnerClose: schedule.dinnerClose || '22:00',
-  }
-}
-
 const loadConfig = async () => {
   const data = await $gqlFetch<{
     restaurantConfig: {
@@ -868,13 +843,6 @@ const toggleOrdering = async (enabled: boolean) => {
   }
 }
 
-const defaultSchedule = (): DaySchedule => ({
-  open: '11:00',
-  close: '14:00',
-  dinnerOpen: '17:00',
-  dinnerClose: '22:00',
-})
-
 const toggleDay = (dayKey: string, open: boolean) => {
   localHours[dayKey] = open ? defaultSchedule() : null
   openingHoursDirty.value = true
@@ -886,35 +854,11 @@ const toggleOrderingDay = (dayKey: string, open: boolean) => {
 }
 
 const toggleCustomOrderingHours = (enabled: boolean) => {
+  const copy = copyOpeningHours(localHours)
   for (const day of days) {
-    localOrderingHours[day.key] = enabled
-      ? localHours[day.key]
-        ? { ...localHours[day.key]! }
-        : null
-      : null
+    localOrderingHours[day.key] = enabled ? (copy[day.key] ?? null) : null
   }
   orderingHoursDirty.value = true
-}
-
-const buildHoursInput = (hours: OpeningHoursMap) => {
-  const input: Record<
-    string,
-    { open: string; close: string; dinnerOpen?: string; dinnerClose?: string } | null
-  > = {}
-  for (const day of days) {
-    const schedule = hours[day.key]
-    if (schedule) {
-      input[day.key] = {
-        open: schedule.open,
-        close: schedule.close,
-        ...(schedule.dinnerOpen ? { dinnerOpen: schedule.dinnerOpen } : {}),
-        ...(schedule.dinnerClose ? { dinnerClose: schedule.dinnerClose } : {}),
-      }
-    } else {
-      input[day.key] = null
-    }
-  }
-  return input
 }
 
 const saveOpeningHours = async () => {
@@ -940,14 +884,14 @@ const saveOrderingHours = async () => {
 }
 
 const adjustPreparation = (delta: number) => {
-  const next = Math.min(240, Math.max(15, preparationMinutes.value + delta))
+  const next = adjustedPreparation(preparationMinutes.value, delta)
   if (next !== preparationMinutes.value) {
     preparationMinutes.value = next
   }
 }
 
 const savePreparation = async () => {
-  if (preparationMinutes.value < 15 || preparationMinutes.value > 240) return
+  if (!isValidPreparation(preparationMinutes.value)) return
   updatingPreparation.value = true
   try {
     await $gqlFetch(print(UPDATE_PREPARATION), { variables: { minutes: preparationMinutes.value } })
@@ -983,9 +927,11 @@ const savingAll = ref(false)
 const saveAll = async () => {
   savingAll.value = true
   try {
-    if (preparationDirty.value) await savePreparation()
-    if (openingHoursDirty.value) await saveOpeningHours()
-    if (orderingHoursDirty.value) await saveOrderingHours()
+    await saveDirtySteps([
+      { isDirty: () => preparationDirty.value, save: savePreparation },
+      { isDirty: () => openingHoursDirty.value, save: saveOpeningHours },
+      { isDirty: () => orderingHoursDirty.value, save: saveOrderingHours },
+    ])
   } finally {
     savingAll.value = false
   }
@@ -1005,38 +951,7 @@ watch(
 onBeforeUnmount(showTabBar)
 
 // "6 jours ouverts · 11:30-14:00 · 17:30-22:00": open-day count + most common lunch / dinner ranges
-const hoursSummary = (hours: OpeningHoursMap) => {
-  const open = days.map((d) => hours[d.key]).filter((h): h is DaySchedule => !!h)
-  const mostCommon = (values: string[]) => {
-    const counts = new Map<string, number>()
-    for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
-    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
-  }
-  const parts = [t('settings.mobile.daysOpen', { count: open.length }, open.length)]
-  const lunch = mostCommon(open.filter((h) => h.open && h.close).map((h) => `${h.open}-${h.close}`))
-  const dinner = mostCommon(
-    open
-      .filter((h) => h.dinnerOpen && h.dinnerClose)
-      .map((h) => `${h.dinnerOpen}-${h.dinnerClose}`),
-  )
-  if (lunch) parts.push(lunch)
-  if (dinner) parts.push(dinner)
-  return parts.join(' \u00b7 ')
-}
-
-// Note and/or hours line of an override row
-const overrideDetail = (ov: ScheduleOverride) => {
-  const parts: string[] = []
-  if (!ov.closed && ov.schedule) {
-    parts.push(
-      ov.schedule.dinnerOpen && ov.schedule.dinnerClose
-        ? `${ov.schedule.open}-${ov.schedule.close} \u00b7 ${ov.schedule.dinnerOpen}-${ov.schedule.dinnerClose}`
-        : `${ov.schedule.open}-${ov.schedule.close}`,
-    )
-  }
-  if (ov.note) parts.push(ov.note)
-  return parts.join(' \u00b7 ')
-}
+const hoursSummary = (hours: OpeningHoursMap) => summarizeHours(hours, t)
 
 onBeforeRouteLeave(() => {
   if (isAnyDirty.value) {
@@ -1048,23 +963,10 @@ onBeforeRouteLeave(() => {
 const modalOpen = ref(false)
 const editingDate = ref<string | null>(null)
 const savingOverride = ref(false)
-const form = reactive({
-  date: '',
-  dateEnd: '',
-  closed: true,
-  note: '',
-  schedule: { open: '11:00', close: '14:00', dinnerOpen: '17:00', dinnerClose: '22:00' },
-})
+const form = reactive(emptyOverrideForm())
 
 const resetForm = () => {
-  form.date = ''
-  form.dateEnd = ''
-  form.closed = true
-  form.note = ''
-  form.schedule.open = '11:00'
-  form.schedule.close = '14:00'
-  form.schedule.dinnerOpen = '17:00'
-  form.schedule.dinnerClose = '22:00'
+  Object.assign(form, emptyOverrideForm())
   editingDate.value = null
 }
 
@@ -1077,41 +979,22 @@ const openAddOverride = () => {
 const openEditOverride = (ov: ScheduleOverride) => {
   resetForm()
   editingDate.value = ov.date
-  form.date = overrideDateKey(ov.date)
-  form.closed = ov.closed
-  form.note = ov.note ?? ''
-  if (ov.schedule) {
-    form.schedule.open = ov.schedule.open
-    form.schedule.close = ov.schedule.close
-    form.schedule.dinnerOpen = ov.schedule.dinnerOpen ?? '17:00'
-    form.schedule.dinnerClose = ov.schedule.dinnerClose ?? '22:00'
-  }
+  Object.assign(form, overrideToForm(ov))
   modalOpen.value = true
 }
 
 const saveOverride = async () => {
   if (!form.date) return
-  const dates = editingDate.value ? [form.date] : overrideDateRange(form.date, form.dateEnd)
-  if (dates.length > 7 && !confirm(t('settings.overrides.confirmRange', { count: dates.length })))
+  const dates = overrideDates(form, editingDate.value)
+  if (
+    dates.length > OVERRIDE_RANGE_CONFIRM_ABOVE &&
+    !confirm(t('settings.overrides.confirmRange', { count: dates.length }))
+  )
     return
   savingOverride.value = true
   try {
-    const base: Record<string, unknown> = {
-      closed: form.closed,
-      note: form.note || null,
-    }
-    if (!form.closed) {
-      base.schedule = {
-        open: form.schedule.open,
-        close: form.schedule.close,
-        ...(form.schedule.dinnerOpen ? { dinnerOpen: form.schedule.dinnerOpen } : {}),
-        ...(form.schedule.dinnerClose ? { dinnerClose: form.schedule.dinnerClose } : {}),
-      }
-    }
-    for (const date of dates) {
-      await $gqlFetch(print(UPSERT_OVERRIDE), {
-        variables: { input: { ...base, date: overrideDateToGql(date) } },
-      })
+    for (const input of buildOverrideInputs(form, dates)) {
+      await $gqlFetch(print(UPSERT_OVERRIDE), { variables: { input } })
     }
     modalOpen.value = false
     await loadOverrides()

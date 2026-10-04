@@ -4,6 +4,7 @@ import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useAuthStore } from '@/stores/auth'
 import { useOidc } from '~/composables/useOidc'
+import { consumeReturnTo } from '~/utils/authReturn'
 
 const ME = gql`
   query {
@@ -44,10 +45,16 @@ export function useAuthCallback() {
     const { getAccessToken } = useOidc()
     await getAccessToken()
 
+    /*
+     * The return path is read only once `me` has answered: when that query fails (network, no user) the page is
+     * retried and must still know where to go. Once it has answered, it is read whatever the outcome (an account that
+     * is not an admin included), so that a stale path never sends a later login somewhere unexpected.
+     */
     const data = await $gqlFetch<{ me: User }>(print(ME))
     if (!data?.me) {
       return { ok: false }
     }
+    const returnTo = consumeReturnTo()
 
     if (!data.me.isAdmin) {
       authStore.clearUser()
@@ -55,7 +62,8 @@ export function useAuthCallback() {
     }
 
     authStore.setUser(data.me)
-    await navigateTo(localePath('orders'))
+    // Back to the page the session ended on (kept by the middleware / the API plugins), else the orders board.
+    await navigateTo(returnTo ?? localePath('orders'))
     return { ok: true }
   }
 

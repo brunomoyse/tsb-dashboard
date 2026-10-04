@@ -18,9 +18,9 @@
     "loadMore": "Load more",
     "back": "Back",
     "filters": "Filters",
-    "done": "Done"
+    "done": "Done",
+    "print": "Print"
   },
-
   "products": {
     "search": "Search Products",
     "add": "Add Product",
@@ -77,7 +77,6 @@
     "addShort": "Add",
     "piecesShort": "pcs"
   },
-
   "orders": {
     "subtitle": "Manage your orders in real-time",
     "all": "All",
@@ -184,7 +183,10 @@
       "invalidTransition": "This status transition is not allowed for this order",
       "printFailed": "Print failed",
       "paymentUpdateFailed": "Failed to update payment status",
-      "orderingUpdateFailed": "Could not change the online ordering state"
+      "orderingUpdateFailed": "Could not change the online ordering state",
+      "paymentSettlementFailed": "The payment could not be refunded or cancelled at Mollie. The order was not changed, try again.",
+      "paymentNotRefundable": "This payment can't be refunded through Mollie. Refund the customer manually.",
+      "refundedNotReopenable": "A refunded order can't be reopened."
     },
     "lateChip": "LATE",
     "toCollect": "TO COLLECT",
@@ -223,7 +225,6 @@
     "markPaid": "Mark paid",
     "estimateSaved": "Estimate saved"
   },
-
   "orderHistory": {
     "title": "Order History",
     "subtitle": "View all past orders",
@@ -256,7 +257,6 @@
     },
     "itemsShort": "items"
   },
-
   "coupons": {
     "title": "Coupons",
     "add": "Add Coupon",
@@ -293,7 +293,6 @@
     "until": "Until {date}",
     "noEnd": "No end date"
   },
-
   "customers": {
     "title": "Customer Statistics",
     "subtitle": "Overview of customer ordering activity",
@@ -333,7 +332,6 @@
     "memberSince": "Member since",
     "last": "Last order"
   },
-
   "navigation": {
     "menu": "Menu",
     "products": "Products",
@@ -347,7 +345,6 @@
     "more": "More",
     "assistant": "WeChat assistant"
   },
-
   "settings": {
     "security": {
       "title": "Two-factor authentication",
@@ -437,7 +434,6 @@
       "daysOpen": "No days open | 1 day open | {count} days open"
     }
   },
-
   "login": {
     "title": "Welcome back",
     "subtitle": "Sign in to manage your restaurant",
@@ -464,7 +460,6 @@
     "totpLabel": "Authenticator code",
     "invalidTotp": "Invalid code. Check your authenticator app and try again."
   },
-
   "validation": {
     "categoryRequired": "Category is required",
     "frenchNameRequired": "French name is required",
@@ -484,20 +479,17 @@
     "choiceSaveFailed": "Failed to save product groups/choices",
     "vatCategoryRequired": "VAT category is required and must be one of: food, beverage, zero-rated, out of scope"
   },
-
   "notifications": {
     "productCreated": "Product created successfully",
     "productUpdated": "Product updated successfully",
     "orderUpdated": "Order status updated"
   },
-
   "more": {
     "language": "Language",
     "activeCoupons": "{count} active | {count} active",
     "online": "online",
     "paused": "paused"
   },
-
   "assistant": {
     "title": "WeChat assistant",
     "description": "The owner runs the restaurant by chatting with the assistant in WeChat: orders, sold-out items, prices, opening hours. Important changes are only applied after the owner replies \"确认\" in WeChat. The assistant only answers the owner's WeChat.",

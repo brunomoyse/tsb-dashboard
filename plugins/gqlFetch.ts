@@ -8,6 +8,8 @@ import {
   useRequestEvent,
   useRuntimeConfig,
 } from '#imports'
+import { rememberCurrentPage } from '~/utils/authReturn'
+import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 interface GqlOptions {
   variables?: Record<string, unknown>
@@ -19,9 +21,8 @@ export default defineNuxtPlugin(() => {
   const httpURL = cfg.public.graphqlHttp
   const localePath = useLocalePath()
 
-  /** Get access token from OIDC client (client-side only) */
+  /** Get access token from OIDC client (client-side only: the callers only ask for it in the browser). */
   const getOidcToken = async (): Promise<string | null> => {
-    if (import.meta.server) return null
     const { useOidc } = await import('~/composables/useOidc')
     const { getAccessToken } = useOidc()
     return getAccessToken()
@@ -121,18 +122,26 @@ export default defineNuxtPlugin(() => {
     return headers
   }
 
-  /** Attempt OIDC silent renewal (coalesced inside useOidc). */
+  /**
+   * Attempt OIDC silent renewal (coalesced inside useOidc). `silentRenew` does not reject for a dead session: it wipes
+   * it and resolves `null`, which is the usual way a session ends: the staff member is sent back to log in (as `$api`
+   * does), the page they were on being kept as the return path. When Zitadel cannot be reached (offline) it rejects
+   * with `SilentRenewUnavailableError` instead: the session is kept, the staff member stays where they are, this
+   * request fails, and the next one renews again.
+   */
   const attemptRefresh = async (): Promise<boolean> => {
+    if (import.meta.server) return false
     try {
-      if (import.meta.server) return false
       const { useOidc } = await import('~/composables/useOidc')
       const { silentRenew } = useOidc()
-      const user = await silentRenew()
-      return Boolean(user)
-    } catch {
-      void navigateTo(`${localePath('auth-login')}?session=expired`)
-      return false
+      if (await silentRenew()) return true
+    } catch (err: unknown) {
+      if (isSilentRenewUnavailable(err)) return false
+      // An unexpected failure of the renewal is treated as a dead session too.
     }
+    rememberCurrentPage()
+    void navigateTo(`${localePath('auth-login')}?session=expired`)
+    return false
   }
 
   return { provide: { gqlFetch } }

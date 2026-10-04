@@ -185,7 +185,10 @@
       "invalidTransition": "此订单不允许该状态转换",
       "printFailed": "打印失败",
       "paymentUpdateFailed": "更新支付状态失败",
-      "orderingUpdateFailed": "无法更改在线订单状态"
+      "orderingUpdateFailed": "无法更改在线订单状态",
+      "paymentSettlementFailed": "无法在 Mollie 退款或取消该支付，订单未作更改，请重试。",
+      "paymentNotRefundable": "该支付无法通过 Mollie 退款，请手动退款给客户。",
+      "refundedNotReopenable": "已退款的订单无法重新打开。"
     },
     "lateChip": "已超时",
     "toCollect": "待收款",

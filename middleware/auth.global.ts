@@ -1,6 +1,8 @@
 // Middleware: auth.global.ts — OIDC session management via Zitadel
 import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
 import { useLocalePath } from '#imports'
+import { rememberReturnTo } from '~/utils/authReturn'
+import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   // Public pages skip auth check
@@ -20,10 +22,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (await isAuthenticated()) return
 
   // 2. Attempt silent renewal
-  const renewed = await silentRenew()
-  if (renewed) return
+  try {
+    const renewed = await silentRenew()
+    if (renewed) return
+  } catch (err) {
+    // Zitadel could not be reached (offline): the session is intact, only its token is expired. Let the staff member
+    // through rather than to the login page: the page's own requests renew it as soon as the network is back.
+    if (isSilentRenewUnavailable(err)) return
+    throw err
+  }
 
   // 3. No valid session — redirect to dashboard's own login page.
   //    (Don't call signIn() which would redirect to Zitadel's custom login URI on the core app domain.)
+  rememberReturnTo(to.fullPath)
   return navigateTo(localePath('auth-login'))
 })

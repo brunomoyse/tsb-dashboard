@@ -3,8 +3,9 @@ import { useI18n } from 'vue-i18n'
 import { useGqlMutation, useToast } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
-import type { Order, OrderStatus, OrderType } from '~/types'
+import type { Order, OrderStatus } from '~/types'
 import { formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
+import { getAllowedStatuses, updateOrderErrorKey } from '~/utils/orders'
 import { useOrdersStore } from '~/stores/orders'
 
 export type OrderActionKind = 'save' | 'advance' | 'cancel'
@@ -104,65 +105,6 @@ export const ORDER_BY_ID_QUERY = print(gql`
   }
 `)
 
-// Define allowed transitions based on current status and delivery option
-export const getAllowedStatuses = (
-  current: OrderStatus,
-  deliveryOption: OrderType,
-): OrderStatus[] => {
-  let allowed: OrderStatus[] = []
-  switch (current) {
-    case 'PENDING':
-      allowed = ['CONFIRMED', 'PREPARING']
-      break
-    case 'CONFIRMED':
-      allowed = ['PREPARING']
-      break
-    case 'PREPARING':
-      allowed = ['AWAITING_PICK_UP']
-      break
-    case 'AWAITING_PICK_UP':
-      if (deliveryOption === 'DELIVERY') {
-        allowed = ['OUT_FOR_DELIVERY']
-      } else if (deliveryOption === 'PICKUP') {
-        allowed = ['PICKED_UP', 'FAILED']
-      }
-      break
-    case 'OUT_FOR_DELIVERY':
-      allowed = ['DELIVERED', 'FAILED']
-      break
-    default:
-      allowed = []
-      break
-  }
-  if (current !== 'CANCELLED') {
-    allowed.push('CANCELLED')
-  }
-  return allowed
-}
-
-// Chip tone per order status (Pili: PENDING amber, CONFIRMED cyan, PREPARING neutral, ready/done green, cancelled red)
-export const ORDER_STATUS_CHIP_TONE: Record<
-  string,
-  'warning' | 'danger' | 'success' | 'info' | 'neutral'
-> = {
-  PENDING: 'warning',
-  CONFIRMED: 'info',
-  PREPARING: 'neutral',
-  AWAITING_PICK_UP: 'success',
-  OUT_FOR_DELIVERY: 'info',
-  DELIVERED: 'success',
-  PICKED_UP: 'success',
-  CANCELLED: 'danger',
-  FAILED: 'danger',
-}
-
-export const isActiveStatus = (status: OrderStatus): boolean =>
-  ['PENDING', 'CONFIRMED', 'PREPARING'].includes(status)
-
-// Whether an order has a non-cancel/non-fail next status (for quick-action button)
-export const hasNextStatus = (order: Order): boolean =>
-  getAllowedStatuses(order.status, order.type).some((s) => s !== 'CANCELLED' && s !== 'FAILED')
-
 /**
  * Order actions shared by the desktop slideover and the mobile detail page:
  * status transitions, estimated ready time, payment, printing and cancellation.
@@ -179,6 +121,9 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   const stagedStatus = ref<OrderStatus | undefined>(undefined)
   const isUpdatingPayment = ref(false)
   const quickActionLoading = ref(false)
+  // A save / cancellation is on its way to the server: its buttons are off so it cannot be sent twice.
+  const isSaving = ref(false)
+  const isCancelling = ref(false)
 
   const { mutate: mutationUpdateOrder } = useGqlMutation<{ updateOrder: Order }>(
     UPDATE_ORDER_MUTATION,
@@ -289,6 +234,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     }
 
     quickActionLoading.value = true
+    const currentStatus = selectedOrder.value.status
 
     // Also send time estimation if changed
     const estimatedReadyTime = pendingEstimatedReadyTime()
@@ -301,8 +247,11 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       ordersStore.updateOrder(res.updateOrder)
       options.onDone?.('advance')
       toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-    } catch {
-      toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+    } catch (error) {
+      toast.add({
+        title: t(updateOrderErrorKey(error, { currentStatus, targetStatus: newStatus })),
+        color: 'error',
+      })
     } finally {
       quickActionLoading.value = false
     }
@@ -324,13 +273,18 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       const res = await mutationUpdateOrder({ id: order.id, input: { status: target } })
       ordersStore.updateOrder(res.updateOrder)
       toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-    } catch {
+    } catch (error) {
       ordersStore.updateOrder({
         id: order.id,
         status: previousStatus,
         updatedAt: previousUpdatedAt,
       })
-      toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+      toast.add({
+        title: t(
+          updateOrderErrorKey(error, { currentStatus: previousStatus, targetStatus: target }),
+        ),
+        color: 'error',
+      })
     }
   }
 
@@ -353,19 +307,22 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       })
       // Apply server response (authoritative updatedAt)
       ordersStore.updateOrder(res.updateOrder)
-    } catch {
+    } catch (error) {
       // Revert on failure
       ordersStore.updateOrder({
         id: order.id,
         status: previousStatus,
         updatedAt: previousUpdatedAt,
       })
-      toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+      toast.add({
+        title: t(updateOrderErrorKey(error, { currentStatus: previousStatus, targetStatus })),
+        color: 'error',
+      })
     }
   }
 
   const updateOrder = async (newStatus?: OrderStatus) => {
-    if (!selectedOrder.value) return
+    if (!selectedOrder.value || isSaving.value) return
 
     if (newStatus === 'CANCELLED') {
       openCancelDialog()
@@ -375,6 +332,8 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     const status = newStatus
     const estimatedReadyTime = pendingEstimatedReadyTime()
 
+    isSaving.value = true
+    const currentStatus = selectedOrder.value.status
     try {
       const res = await mutationUpdateOrder({
         id: selectedOrder.value.id,
@@ -388,7 +347,12 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       options.onDone?.('save')
     } catch (error) {
       if (import.meta.dev) console.error('Update failed:', error)
-      toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+      toast.add({
+        title: t(updateOrderErrorKey(error, { currentStatus, targetStatus: status })),
+        color: 'error',
+      })
+    } finally {
+      isSaving.value = false
     }
   }
 
@@ -442,7 +406,9 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   }
 
   const confirmCancellation = async () => {
-    if (!selectedOrder.value) return
+    if (!selectedOrder.value || isCancelling.value) return
+    isCancelling.value = true
+    const currentStatus = selectedOrder.value.status
     try {
       const res = await mutationUpdateOrder({
         id: selectedOrder.value.id,
@@ -452,12 +418,20 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
       showCancelDialog.value = false
       options.onDone?.('cancel')
       toast.add({ title: t('orders.statusAdvanced'), color: 'success' })
-    } catch {
-      toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+    } catch (error) {
+      // The order is unchanged (a refund that fails leaves it as it was): the dialog stays open, to try again.
+      toast.add({
+        title: t(updateOrderErrorKey(error, { currentStatus, targetStatus: 'CANCELLED' })),
+        color: 'error',
+      })
+    } finally {
+      isCancelling.value = false
     }
   }
 
   const cancelCancellation = () => {
+    // Not while the cancellation is on its way: the dialog closes by itself once it is done.
+    if (isCancelling.value) return
     showCancelDialog.value = false
     if (cancelTimer) {
       clearInterval(cancelTimer)
@@ -563,6 +537,8 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     stagedStatus,
     isUpdatingPayment,
     quickActionLoading,
+    isSaving,
+    isCancelling,
     availableStatuses,
     primaryStatuses,
     secondaryStatuses,

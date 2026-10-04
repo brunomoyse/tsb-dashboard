@@ -4,6 +4,31 @@ import { onScopeDispose, ref } from 'vue'
 import type { Client } from 'graphql-ws'
 import { useRuntimeConfig } from '#imports'
 
+/**
+ * What a failed subscription hands over, as an Error with a readable message. graphql-ws gives an Error, a close event
+ * (`code`, `reason`) or, for execution errors, an ARRAY of GraphQL errors: `String()` of that is "[object Object]", so
+ * the message of the first error is used.
+ */
+const toError = (e: unknown): Error => {
+  if (e instanceof Error) return e
+  const first: unknown = Array.isArray(e) ? e[0] : e
+  if (first instanceof Error) return first
+  if (typeof first === 'object' && first !== null) {
+    const { message, code, reason } = first as {
+      message?: unknown
+      code?: unknown
+      reason?: unknown
+    }
+    if (typeof message === 'string' && message) return new Error(message)
+    if (typeof code === 'number') {
+      return new Error(
+        `Connection closed (${code})${typeof reason === 'string' && reason ? `: ${reason}` : ''}`,
+      )
+    }
+  }
+  return new Error(String(e))
+}
+
 let wsClient: Client | null = null
 let wsClientPromise: Promise<Client> | null = null
 
@@ -32,7 +57,7 @@ const getWsClient = (): Promise<Client> => {
     wsClientPromise = Promise.all([import('graphql-ws'), import('~/composables/useOidc')]).then(
       ([{ createClient }, { useOidc }]) => {
         const cfg = useRuntimeConfig()
-        const { getAccessToken } = useOidc()
+        const { getAccessToken, isRenewalUnavailable } = useOidc()
 
         /*
          * `keepAlive` only schedules pings — detection of a dead server
@@ -87,9 +112,16 @@ const getWsClient = (): Promise<Client> => {
             await new Promise<void>((resolve) => {
               setTimeout(resolve, delay)
             })
-            // If no valid token after refresh attempt, stop retrying
             const token = await getAccessToken()
-            if (!token) throw new Error('No valid auth token')
+            if (token) return
+            /*
+             * No token: either the session is over (stop: graphql-ws gives up and the login flow takes over), or it is
+             * kept but Zitadel / the backend cannot be reached right now (keep backing off: only an offline -> online
+             * event of the browser would otherwise restart the subscriptions, and that does not fire when the outage
+             * is not on the device's side). There is no live-updates indicator in the UI, so this is only logged.
+             */
+            if (!isRenewalUnavailable()) throw new Error('No valid auth token')
+            console.warn('Live updates paused: the session cannot be renewed right now, retrying')
           },
         })
         wsClient = client
@@ -107,6 +139,8 @@ export function useGqlSubscription<T = unknown>(
   const data = ref<T>()
   const error = ref<Error | null>(null)
   let stop: () => void = () => {}
+  // Set when the owning scope ends, so a subscription whose client was still loading is never started afterwards.
+  let disposed = false
 
   // Track if we've genuinely gone offline
   let wentOffline = false
@@ -114,6 +148,7 @@ export function useGqlSubscription<T = unknown>(
   const startSubscription = () => {
     getWsClient()
       .then((client) => {
+        if (disposed) return
         stop = client.subscribe(
           {
             query: typeof rawSub === 'string' ? rawSub : print(rawSub),
@@ -124,14 +159,14 @@ export function useGqlSubscription<T = unknown>(
               if (msg.data !== undefined) data.value = msg.data as T
             },
             error: (e) => {
-              error.value = e instanceof Error ? e : new Error(String(e))
+              error.value = toError(e)
             },
             complete: () => {},
           },
         )
       })
       .catch((e) => {
-        error.value = e instanceof Error ? e : new Error(String(e))
+        error.value = toError(e)
       })
   }
 
@@ -158,6 +193,7 @@ export function useGqlSubscription<T = unknown>(
   }
 
   onScopeDispose(() => {
+    disposed = true
     stop()
     if (import.meta.client) {
       window.removeEventListener('offline', handleOffline)
@@ -174,7 +210,11 @@ export function useGqlSubscription<T = unknown>(
   return {
     data,
     error,
-    stop,
+    // A function that calls the current unsubscribe: `stop` is reassigned once the client is ready, so returning the
+    // variable itself would hand callers the initial no-op for good.
+    stop: () => {
+      stop()
+    },
     closeAll,
   }
 }

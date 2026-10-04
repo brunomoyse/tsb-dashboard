@@ -21,7 +21,6 @@
     "filters": "Filters",
     "done": "Klaar"
   },
-
   "products": {
     "search": "Producten zoeken",
     "add": "Product toevoegen",
@@ -54,7 +53,14 @@
       "none": "Geen opties gedefinieerd",
       "new": "Nieuwe optie",
       "priceModifier": "Prijswijziging (€)",
-      "sortOrder": "Volgorde"
+      "sortOrder": "Volgorde",
+      "groupAdd": "Groep toevoegen",
+      "groupLabel": "Groep #{index}",
+      "groupNew": "Nieuwe groep",
+      "groupName": "Naam van de groep",
+      "choicesTitle": "Opties",
+      "minSelections": "Min. selecties",
+      "maxSelections": "Max. selecties"
     },
     "vatCategory": {
       "label": "BTW-categorie",
@@ -68,9 +74,9 @@
     },
     "itemsCount": "artikelen",
     "addShort": "Toevoegen",
-    "piecesShort": "st."
+    "piecesShort": "st.",
+    "lunchOnly": "Lunch (ma-vr)"
   },
-
   "orders": {
     "subtitle": "Beheer uw bestellingen in realtime",
     "all": "Alle",
@@ -177,7 +183,10 @@
       "invalidTransition": "Deze statusovergang is niet toegestaan voor deze bestelling",
       "printFailed": "Afdrukken mislukt",
       "paymentUpdateFailed": "Betalingsstatus bijwerken mislukt",
-      "orderingUpdateFailed": "De status van online bestellingen kon niet worden gewijzigd"
+      "orderingUpdateFailed": "De status van online bestellingen kon niet worden gewijzigd",
+      "paymentSettlementFailed": "De betaling kon niet worden terugbetaald of geannuleerd bij Mollie. De bestelling is niet gewijzigd, probeer het opnieuw.",
+      "paymentNotRefundable": "Deze betaling kan niet via Mollie worden terugbetaald. Betaal de klant handmatig terug.",
+      "refundedNotReopenable": "Een terugbetaalde bestelling kan niet opnieuw worden geopend."
     },
     "lateChip": "TE LAAT",
     "toCollect": "TE INNEN",
@@ -216,7 +225,6 @@
     "markPaid": "Markeer als betaald",
     "estimateSaved": "Schatting opgeslagen"
   },
-
   "orderHistory": {
     "title": "Bestelgeschiedenis",
     "subtitle": "Bekijk alle eerdere bestellingen",
@@ -249,7 +257,6 @@
     },
     "itemsShort": "art."
   },
-
   "coupons": {
     "title": "Kortingscodes",
     "add": "Kortingscode toevoegen",
@@ -286,7 +293,6 @@
     "until": "Tot {date}",
     "noEnd": "Geen einddatum"
   },
-
   "customers": {
     "title": "Klantenstatistieken",
     "subtitle": "Overzicht van de bestelactiviteit van klanten",
@@ -326,7 +332,6 @@
     "memberSince": "Klant sinds",
     "last": "Laatste"
   },
-
   "navigation": {
     "menu": "Menu",
     "products": "Producten",
@@ -340,7 +345,6 @@
     "more": "Meer",
     "assistant": "WeChat-assistent"
   },
-
   "settings": {
     "security": {
       "title": "Tweestapsverificatie",
@@ -421,13 +425,15 @@
       "typeClosed": "Gesloten",
       "typeSpecial": "Speciale uren",
       "save": "Opslaan",
-      "cancel": "Annuleren"
+      "cancel": "Annuleren",
+      "fieldDateEnd": "Einddatum (optioneel)",
+      "dateEndHint": "Leeg laten voor één dag",
+      "confirmRange": "Toepassen op {count} dagen?"
     },
     "mobile": {
       "daysOpen": "Geen dagen open | 1 dag open | {count} dagen open"
     }
   },
-
   "login": {
     "title": "Welkom",
     "subtitle": "Log in om uw restaurant te beheren",
@@ -454,7 +460,6 @@
     "totpLabel": "Authenticatiecode",
     "invalidTotp": "Ongeldige code. Controleer je authenticator-app en probeer opnieuw."
   },
-
   "validation": {
     "categoryRequired": "Categorie is vereist",
     "frenchNameRequired": "De Franse naam is vereist",
@@ -468,22 +473,23 @@
     "pieceCountPositive": "Het aantal stuks moet een positief geheel getal zijn",
     "choiceNameRequired": "Optie #{index} moet minstens één naam hebben",
     "choicePriceRequired": "Optie #{index} moet een geldige prijswijziging hebben",
-    "vatCategoryRequired": "BTW-categorie is vereist en moet zijn: voeding, drank, nultarief of buiten toepassingsgebied"
+    "vatCategoryRequired": "BTW-categorie is vereist en moet zijn: voeding, drank, nultarief of buiten toepassingsgebied",
+    "choiceGroupNameRequired": "Groep #{index} moet minstens één naam hebben",
+    "choiceGroupRangeInvalid": "Groep #{index} heeft ongeldige min/max-waarden",
+    "choiceGroupEmpty": "Groep #{index} moet minstens één optie bevatten",
+    "choiceSaveFailed": "De groepen/opties van het product konden niet worden opgeslagen"
   },
-
   "notifications": {
     "productCreated": "Product succesvol aangemaakt",
     "productUpdated": "Product succesvol bijgewerkt",
     "orderUpdated": "Bestelstatus bijgewerkt"
   },
-
   "more": {
     "language": "Taal",
     "activeCoupons": "{count} actief | {count} actief",
     "online": "online",
     "paused": "gepauzeerd"
   },
-
   "assistant": {
     "title": "WeChat-assistent",
     "description": "De eigenaar beheert het restaurant door in WeChat met de assistent te chatten: bestellingen, uitverkochte producten, prijzen, openingsuren. Belangrijke wijzigingen worden pas toegepast nadat de eigenaar in WeChat \"确认\" antwoordt. De assistent antwoordt alleen op de WeChat van de eigenaar.",

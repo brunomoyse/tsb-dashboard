@@ -477,9 +477,7 @@
             <i18n-t keypath="orders.staleDetailAlert" tag="span">
               <template #hours>
                 <span class="font-mono font-bold tabular-nums">{{
-                  Math.floor(
-                    (now.getTime() - new Date(selectedOrder.createdAt).getTime()) / 3600000,
-                  )
+                  hoursSince(selectedOrder.createdAt, now)
                 }}</span>
               </template>
             </i18n-t>
@@ -548,7 +546,7 @@
                 <span class="font-mono tabular-nums">{{ formatPrice(itemsSubtotal) }}</span>
               </div>
               <div
-                v-if="parseFloat(selectedOrder.discountAmount) > 0"
+                v-if="toCents(selectedOrder.discountAmount) > 0"
                 class="flex items-center justify-between px-3 py-1.5 text-sm text-success"
               >
                 <span
@@ -560,7 +558,7 @@
                 >
               </div>
               <div
-                v-if="selectedOrder.deliveryFee && parseFloat(selectedOrder.deliveryFee) > 0"
+                v-if="selectedOrder.deliveryFee && toCents(selectedOrder.deliveryFee) > 0"
                 class="flex items-center justify-between px-3 py-1.5 text-sm text-muted"
               >
                 <span>{{ t('orders.deliveryFeeLabel') }}</span>
@@ -738,6 +736,8 @@
             block
             size="lg"
             :color="primaryStatuses.length ? 'neutral' : 'primary'"
+            :disabled="isSaving"
+            :loading="isSaving"
             @click="updateOrder(stagedStatus)"
           >
             <UIcon name="i-lucide-save" class="mr-2" />
@@ -752,6 +752,7 @@
       v-model:open="showCancelDialog"
       :title="t('orders.confirmCancelTitle')"
       :description="t('orders.confirmCancelMessage')"
+      :dismissible="!isCancelling"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #body>
@@ -770,10 +771,20 @@
       </template>
 
       <template #footer>
-        <UButton color="neutral" variant="solid" @click="cancelCancellation">
+        <UButton
+          color="neutral"
+          variant="solid"
+          :disabled="isCancelling"
+          @click="cancelCancellation"
+        >
           {{ t('orders.back') }}
         </UButton>
-        <UButton color="error" :disabled="confirmDisabled" @click="confirmCancellation">
+        <UButton
+          color="error"
+          :disabled="confirmDisabled || isCancelling"
+          :loading="isCancelling"
+          @click="confirmCancellation"
+        >
           {{ t('orders.confirm') }}
         </UButton>
       </template>
@@ -823,13 +834,35 @@
 
 <script setup lang="ts">
 import type { Order, OrderStatus } from '~/types'
+import { useOrderActions } from '~/composables/useOrderActions'
 import {
+  KANBAN_COLUMN_DEFS,
+  MOBILE_TABS,
   ORDER_STATUS_CHIP_TONE,
-  getAllowedStatuses,
-  hasNextStatus,
+  cardMeta as buildCardMeta,
+  buildKanbanColumns,
+  mobileCards as buildMobileCards,
+  mobileTabOrders as buildMobileTabOrders,
+  paymentChip as buildPaymentChip,
+  getTimeSince as buildTimeSince,
+  canDropOnColumn,
+  oldestLateOrder as findOldestLateOrder,
+  staleOrders as findStaleOrders,
+  getPaymentIconClass,
+  getStatusColor,
+  getStatusIcon,
+  hoursSince,
   isActiveStatus,
-  useOrderActions,
-} from '~/composables/useOrderActions'
+  isLateOrder as isLateAt,
+  isUnpaidCash,
+  itemNames,
+  itemsSubtotalCents,
+  nextActionOf,
+  hasBreakdown as orderHasBreakdown,
+  resolveDrop,
+} from '~/utils/orders'
+import type { KanbanColumnDef, MobileTab } from '~/utils/orders'
+import { centsToEuros, toCents } from '~/utils/money'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   brusselsDateISO,
@@ -862,6 +895,8 @@ const {
   stagedStatus,
   isUpdatingPayment,
   quickActionLoading,
+  isSaving,
+  isCancelling,
   primaryStatuses,
   secondaryStatuses,
   handleStatusButton,
@@ -889,36 +924,7 @@ const {
   },
 })
 
-// Kanban column definitions
-interface KanbanColumnDef {
-  key: string
-  statuses: OrderStatus[]
-  dropStatus: OrderStatus | null
-  icon: string
-}
-
-const kanbanColumnDefs: KanbanColumnDef[] = [
-  { key: 'NEW', statuses: ['PENDING', 'CONFIRMED'], dropStatus: null, icon: 'i-lucide-inbox' },
-  { key: 'PREPARING', statuses: ['PREPARING'], dropStatus: 'PREPARING', icon: 'i-lucide-chef-hat' },
-  {
-    key: 'AWAITING_PICK_UP',
-    statuses: ['AWAITING_PICK_UP'],
-    dropStatus: 'AWAITING_PICK_UP',
-    icon: 'i-lucide-hourglass',
-  },
-  {
-    key: 'OUT_FOR_DELIVERY',
-    statuses: ['OUT_FOR_DELIVERY'],
-    dropStatus: 'OUT_FOR_DELIVERY',
-    icon: 'i-lucide-bike',
-  },
-  {
-    key: 'COMPLETED',
-    statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'],
-    dropStatus: 'DELIVERED',
-    icon: 'i-lucide-circle-check-big',
-  },
-]
+const kanbanColumnDefs = KANBAN_COLUMN_DEFS
 
 // Completed-column filter anchored to Europe/Brussels (UTC slicing would list yesterday's orders just past Brussels midnight).
 const completedFilterDate = ref<string>(brusselsDateISO())
@@ -949,21 +955,13 @@ const draggedOrder = ref<Order | null>(null)
 const dragOverColumnKey = ref<string | null>(null)
 
 const performDrop = async (order: Order, column: KanbanColumnDef) => {
-  if (!column.dropStatus || column.statuses.includes(order.status)) return
-
-  // For the COMPLETED column, resolve the correct terminal status based on order type
-  let targetStatus = column.dropStatus
-  if (column.key === 'COMPLETED') {
-    targetStatus = order.type === 'PICKUP' ? 'PICKED_UP' : 'DELIVERED'
-  }
-
-  const allowed = getAllowedStatuses(order.status, order.type)
-  if (!allowed.includes(targetStatus)) {
+  const decision = resolveDrop(order, column)
+  if (decision.kind === 'ignore') return
+  if (decision.kind === 'invalid') {
     toast.add({ title: t('orders.errors.invalidTransition'), color: 'warning' })
     return
   }
-
-  await dropOrderStatus(order, targetStatus)
+  await dropOrderStatus(order, decision.status)
 }
 
 // HTML5 Drag & Drop handlers (desktop)
@@ -979,12 +977,7 @@ const onDragEnd = () => {
 }
 
 const onColumnDragOver = (e: DragEvent, column: KanbanColumnDef) => {
-  if (
-    !draggedOrder.value ||
-    !column.dropStatus ||
-    column.statuses.includes(draggedOrder.value.status)
-  )
-    return
+  if (!draggedOrder.value || !canDropOnColumn(draggedOrder.value.status, column)) return
   e.preventDefault()
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
   dragOverColumnKey.value = column.key
@@ -997,12 +990,7 @@ const onColumnDragLeave = () => {
 const onColumnDrop = (e: DragEvent, column: KanbanColumnDef) => {
   e.preventDefault()
   dragOverColumnKey.value = null
-  if (
-    !draggedOrder.value ||
-    !column.dropStatus ||
-    column.statuses.includes(draggedOrder.value.status)
-  )
-    return
+  if (!draggedOrder.value || !canDropOnColumn(draggedOrder.value.status, column)) return
 
   const order = draggedOrder.value
   draggedOrder.value = null
@@ -1024,12 +1012,7 @@ const onDocTouchMove = (e: TouchEvent) => {
   if (columnEl) {
     const key = columnEl.dataset.columnKey!
     const column = kanbanColumnDefs.find((c) => c.key === key)
-    if (
-      column &&
-      column.dropStatus &&
-      draggedOrder.value &&
-      !column.statuses.includes(draggedOrder.value.status)
-    ) {
+    if (column && draggedOrder.value && canDropOnColumn(draggedOrder.value.status, column)) {
       dragOverColumnKey.value = key
     } else {
       dragOverColumnKey.value = null
@@ -1055,7 +1038,7 @@ const onDocTouchEnd = (e: TouchEvent) => {
   if (columnEl) {
     const key = columnEl.dataset.columnKey!
     const column = kanbanColumnDefs.find((c) => c.key === key)
-    if (column && column.dropStatus && !column.statuses.includes(draggedOrder.value.status)) {
+    if (column && canDropOnColumn(draggedOrder.value.status, column)) {
       performDrop(draggedOrder.value, column)
     }
   }
@@ -1103,138 +1086,21 @@ onUnmounted(() => {
   document.removeEventListener('touchcancel', onDocTouchEnd)
 })
 
-const getTimeSince = (createdAt: string): { text: string; color: string; isStale: boolean } => {
-  const created = new Date(createdAt)
-  const diffMs = now.value.getTime() - created.getTime()
-  const diffMin = Math.max(0, Math.floor(diffMs / 60000))
-
-  let text: string
-  if (diffMin < 60) {
-    text = t('orders.timeSince.minutes', { count: diffMin })
-  } else {
-    const hours = Math.floor(diffMin / 60)
-    text = t('orders.timeSince.hours', { count: hours })
-  }
-
-  let color: string
-  const isStale = diffMin >= 1440 // 24h
-
-  if (diffMin < 5) {
-    color = 'text-success'
-  } else if (diffMin < 15) {
-    color = 'text-warning'
-  } else {
-    color = 'text-error'
-  }
-
-  return { text, color, isStale }
-}
-
-// Payment icon class based on status
-const getPaymentIconClass = (order: Order): string => {
-  if (order.payment?.status?.toLowerCase() === 'failed') return 'text-error'
-  if (!order.isOnlinePayment && order.payment?.status?.toLowerCase() !== 'paid')
-    return 'text-warning'
-  return ''
-}
+const getTimeSince = (createdAt: string) => buildTimeSince(createdAt, now.value, t)
 
 // Discount breakdown helpers
-const itemsSubtotal = computed(() => {
-  if (!selectedOrder.value) return 0
-  return selectedOrder.value.items.reduce((acc, item) => acc + parseFloat(item.totalPrice), 0)
-})
+const itemsSubtotal = computed(() => centsToEuros(itemsSubtotalCents(selectedOrder.value)))
 
-const hasBreakdown = computed(() => {
-  if (!selectedOrder.value) return false
-  return (
-    parseFloat(selectedOrder.value.discountAmount) > 0 ||
-    (selectedOrder.value.deliveryFee && parseFloat(selectedOrder.value.deliveryFee) > 0)
-  )
-})
+const hasBreakdown = computed(() => orderHasBreakdown(selectedOrder.value))
 
 // Stale orders count (for banner)
-const staleOrders = computed(() =>
-  orders.value.filter(
-    (o) =>
-      isActiveStatus(o.status) && now.value.getTime() - new Date(o.createdAt).getTime() > 7200000, // 2h
-  ),
-)
+const staleOrders = computed(() => findStaleOrders(orders.value, now.value))
 const staleOrderCount = computed(() => staleOrders.value.length)
 const firstStaleOrder = computed(() => staleOrders.value[0] ?? null)
 
-// Status icon mapping
-const getStatusIcon = (status: OrderStatus): string => {
-  const statusIcons: Record<string, string> = {
-    PENDING: 'i-lucide-clock',
-    CONFIRMED: 'i-lucide-circle-check',
-    PREPARING: 'i-lucide-chef-hat',
-    AWAITING_PICK_UP: 'i-lucide-hourglass',
-    OUT_FOR_DELIVERY: 'i-lucide-bike',
-    DELIVERED: 'i-lucide-package-check',
-    PICKED_UP: 'i-lucide-circle-check-big',
-    FAILED: 'i-lucide-circle-alert',
-    CANCELLED: 'i-lucide-circle-x',
-  }
-  return statusIcons[status] || 'i-lucide-circle-help'
-}
-
-// Status color mapping
-type UiColor = 'success' | 'error' | 'primary' | 'secondary' | 'info' | 'warning' | 'neutral'
-
-const getStatusColor = (status: OrderStatus): UiColor => {
-  const colors: Record<string, UiColor> = {
-    PENDING: 'warning',
-    CONFIRMED: 'info',
-    PREPARING: 'neutral',
-    AWAITING_PICK_UP: 'success',
-    OUT_FOR_DELIVERY: 'info',
-    DELIVERED: 'success',
-    PICKED_UP: 'success',
-    FAILED: 'error',
-    CANCELLED: 'error',
-  }
-  return colors[status] || 'neutral'
-}
-
-const getPaymentStatusColor = (status: string | undefined): UiColor => {
-  if (!status) return 'error'
-  const colors: Record<string, UiColor> = {
-    open: 'warning',
-    cancelled: 'neutral',
-    canceled: 'neutral',
-    pending: 'neutral',
-    expired: 'neutral',
-    failed: 'error',
-    paid: 'success',
-  }
-  return colors[status.toLowerCase()] || 'neutral'
-}
-
 // Payment chip: unpaid cash = amber "to collect", paid online = green.
 // `detail` also returns a chip for paid cash and for every other payment state.
-const paymentChip = (order: Order, detail = false): { color: UiColor; label: string } | null => {
-  const status = order.payment?.status?.toLowerCase()
-  if (status === 'paid') {
-    return detail || order.isOnlinePayment
-      ? { color: 'success', label: t('orders.payment.status.paid') }
-      : null
-  }
-  if (!order.isOnlinePayment && (!status || status === 'open' || status === 'pending')) {
-    return { color: 'warning', label: t('orders.toCollect') }
-  }
-  return {
-    color: getPaymentStatusColor(order.payment?.status),
-    label: t(`orders.payment.status.${status ?? 'notPaid'}`),
-  }
-}
-
-// Item names: French first, Chinese translation below when it exists
-const itemNames = (item: Order['items'][number]) => {
-  const translations = item.product.translations ?? []
-  const main = translations.find((tr) => tr.language === 'fr')?.name || item.product.name
-  const zh = translations.find((tr) => tr.language === 'zh')?.name
-  return { main, zh: zh && zh !== main ? zh : '' }
-}
+const paymentChip = (order: Order, detail = false) => buildPaymentChip(order, t, detail)
 
 // GraphQL Queries and Mutations
 const ORDERS_QUERY = gql`
@@ -1321,26 +1187,7 @@ if (dataOrders.value?.orders) {
 const orders = computed(() => ordersStore.orders)
 
 // Kanban columns (tablet+ view)
-const kanbanColumns = computed(() =>
-  kanbanColumnDefs.map((def) => {
-    let filtered = orders.value.filter((o) => def.statuses.includes(o.status))
-    if (def.key === 'COMPLETED') {
-      filtered = filtered.filter(
-        (o) => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value,
-      )
-    }
-    return {
-      ...def,
-      label:
-        def.key === 'COMPLETED'
-          ? t('orders.statusShort.completed')
-          : def.key === 'NEW'
-            ? t('orders.statusShort.new')
-            : t(`orders.status.${def.key.toLowerCase()}`),
-      orders: filtered,
-    }
-  }),
-)
+const kanbanColumns = computed(() => buildKanbanColumns(orders.value, completedFilterDate.value, t))
 
 // Watch for data changes and update store
 watch(
@@ -1489,26 +1336,10 @@ watch(
 )
 
 // ===== Mobile list (< md) =====
-type MobileTab = 'new' | 'kitchen' | 'out' | 'done'
-
-const MOBILE_TABS: { key: MobileTab; statuses: OrderStatus[] }[] = [
-  { key: 'new', statuses: ['PENDING', 'CONFIRMED'] },
-  { key: 'kitchen', statuses: ['PREPARING'] },
-  { key: 'out', statuses: ['AWAITING_PICK_UP', 'OUT_FOR_DELIVERY'] },
-  { key: 'done', statuses: ['DELIVERED', 'PICKED_UP', 'CANCELLED'] },
-]
-
 const mobileTab = ref<MobileTab>('new')
 
-const mobileTabOrders = (key: MobileTab): Order[] => {
-  const tab = MOBILE_TABS.find((x) => x.key === key)!
-  const list = orders.value.filter((o) => tab.statuses.includes(o.status))
-  return key === 'done'
-    ? list.filter(
-        (o) => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === completedFilterDate.value,
-      )
-    : list
-}
+const mobileTabOrders = (key: MobileTab): Order[] =>
+  buildMobileTabOrders(orders.value, key, completedFilterDate.value)
 
 const mobileTabOptions = computed(() =>
   MOBILE_TABS.map((tab) => ({
@@ -1520,54 +1351,19 @@ const mobileTabOptions = computed(() =>
 )
 
 // Oldest first in the active tabs, newest first in "done"
-const mobileCards = computed(() => {
-  const list = [...mobileTabOrders(mobileTab.value)]
-  const byDate = (o: Order) => new Date(o.createdAt).getTime()
-  return list.sort((a, b) =>
-    mobileTab.value === 'done' ? byDate(b) - byDate(a) : byDate(a) - byDate(b),
-  )
-})
+const mobileCards = computed(() =>
+  buildMobileCards(orders.value, mobileTab.value, completedFilterDate.value),
+)
 
 const ordersInProgress = computed(() => orders.value.filter((o) => isActiveStatus(o.status)).length)
 const nowLabel = computed(() => formatTimeOnly(now.value.toISOString(), locale.value))
 
 // Late = active order waiting for more than 2 hours
-const isLateOrder = (order: Order): boolean =>
-  isActiveStatus(order.status) &&
-  now.value.getTime() - new Date(order.createdAt).getTime() > 7200000
+const isLateOrder = (order: Order): boolean => isLateAt(order, now.value)
 
-const oldestLateOrder = computed(
-  () =>
-    [...staleOrders.value].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    )[0] ?? null,
-)
+const oldestLateOrder = computed(() => findOldestLateOrder(orders.value, now.value))
 
-// Unpaid cash order still to collect
-const isUnpaidCash = (order: Order): boolean =>
-  !order.isOnlinePayment &&
-  order.payment?.status?.toLowerCase() !== 'paid' &&
-  order.status !== 'CANCELLED'
-
-const nextActionOf = (order: Order): OrderStatus | undefined =>
-  getAllowedStatuses(order.status, order.type).find((s) => s !== 'CANCELLED' && s !== 'FAILED')
-
-const cardMeta = (order: Order): string => {
-  const readyAt = order.estimatedReadyTime
-    ? t('orders.readyAround', { time: formatTimeOnly(order.estimatedReadyTime, locale.value) })
-    : order.preferredReadyTime
-      ? t('orders.wantedAt', { time: formatTimeOnly(order.preferredReadyTime, locale.value) })
-      : ''
-  const street =
-    order.type === 'DELIVERY'
-      ? order.address
-        ? `${order.address.streetName} ${order.address.houseNumber}`.trim()
-        : ((order.displayAddress ?? '').split(',')[0] ?? '')
-      : ''
-  return [t('orders.articles', { count: order.items.length }, order.items.length), readyAt, street]
-    .filter(Boolean)
-    .join(' \u00b7 ')
-}
+const cardMeta = (order: Order): string => buildCardMeta(order, t, locale.value)
 
 // Online ordering open / paused
 const {

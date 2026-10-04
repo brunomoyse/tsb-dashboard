@@ -2,12 +2,24 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import type { Order } from '~/types'
 import { SunmiPrinter } from '~/plugins/capacitor-sunmi-printer/src/index'
 import { usePlatform } from '~/composables/usePlatform'
+import { formatCentsReceipt, parseCents, sumCents, toCents } from '~/utils/money'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
 
-/** Receipt price, same format as the POS: "20.50" → "20,50 €" (comma, non-breaking space) */
-function receiptPrice(price: string | number): string {
-  return `${Number(price).toFixed(2).replace('.', ',')}\u00a0€`
+/** What a receipt shows for an amount that cannot be read: obviously unknown, never "NaN €" or a made-up 0,00 €. */
+const UNKNOWN_PRICE = '--,--\u00a0€'
+
+/**
+ * Receipt price, same format as the POS: "20.50" → "20,50 €" (comma, non-breaking space). An amount that is not a
+ * number prints as `--,-- €` and is logged: the order data is wrong, and a wrong price on a receipt must be visible.
+ */
+function receiptPrice(price: string | number | null | undefined): string {
+  const cents = parseCents(price)
+  if (cents === null) {
+    console.error('[SunmiPrinter] Unreadable price on a receipt:', price)
+    return UNKNOWN_PRICE
+  }
+  return formatCentsReceipt(cents)
 }
 
 /** Date + time formatted for a receipt: "28/03/2026 14:30" */
@@ -153,7 +165,7 @@ export const useSunmiPrinter = () => {
         const box = boxNumber ? ` bte ${boxNumber}` : ''
         await plugin.printText({ text: `${streetName} ${houseNumber}${box}\n` })
         await plugin.printText({ text: `${postcode} ${municipalityName}\n` })
-      } else if (order.displayAddress) {
+      } else {
         await plugin.printText({ text: `${order.displayAddress}\n` })
       }
       if (order.addressExtra) {
@@ -171,7 +183,7 @@ export const useSunmiPrinter = () => {
       for (const item of items) {
         const code = item.product.code ? `${item.product.code}. ` : ''
         const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
-        // Sunmi 58mm paper = 32 chars. Use 3 + 20 + 7 = 30 with 2-char safety.
+        // Sunmi 58mm paper = 32 chars. Use 3 + 18 + 9 = 30 with 2-char safety.
         await plugin.printColumnsText({
           columns: [
             { text: `${item.quantity}x`, width: 3, align: 'left' },
@@ -184,14 +196,19 @@ export const useSunmiPrinter = () => {
 
     // Totals
     await plugin.printText({ text: `\n${SEP}\n` })
-    const itemsTotal = order.items.reduce((sum, it) => sum + Number(it.totalPrice), 0)
+    // Integer cents: float sums of decimal strings drift (0.1 + 0.2). One unreadable line makes the subtotal unknown.
+    const itemsTotal = sumCents(order.items.map((it) => it.totalPrice))
     await plugin.printColumnsText({
       columns: [
         { text: 'Sous-total', width: 21, align: 'left' },
-        { text: receiptPrice(itemsTotal), width: 9, align: 'right' },
+        {
+          text: itemsTotal === null ? receiptPrice(null) : formatCentsReceipt(itemsTotal),
+          width: 9,
+          align: 'right',
+        },
       ],
     })
-    if (parseFloat(order.discountAmount) > 0) {
+    if (toCents(order.discountAmount) > 0) {
       await plugin.printColumnsText({
         columns: [
           { text: 'Réduction', width: 21, align: 'left' },
@@ -199,7 +216,7 @@ export const useSunmiPrinter = () => {
         ],
       })
     }
-    if (order.deliveryFee && parseFloat(order.deliveryFee) > 0) {
+    if (toCents(order.deliveryFee) > 0) {
       await plugin.printColumnsText({
         columns: [
           { text: 'Livraison', width: 21, align: 'left' },

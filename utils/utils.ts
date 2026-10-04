@@ -114,18 +114,12 @@ const brusselsPartsFormatter = new Intl.DateTimeFormat('en-US', {
 
 /** Europe/Brussels offset from UTC, in milliseconds, at the given instant. */
 const brusselsOffsetMs = (date: Date): number => {
-  const map: Record<string, number> = {}
+  // formatToParts returns every requested part, so each one is there.
+  const map = {} as Record<'year' | 'month' | 'day' | 'hour' | 'minute' | 'second', number>
   for (const p of brusselsPartsFormatter.formatToParts(date)) {
-    if (p.type !== 'literal') map[p.type] = Number(p.value)
+    if (p.type !== 'literal') map[p.type as keyof typeof map] = Number(p.value)
   }
-  const asUTC = Date.UTC(
-    map.year ?? 1970,
-    (map.month ?? 1) - 1,
-    map.day ?? 1,
-    map.hour ?? 0,
-    map.minute ?? 0,
-    map.second ?? 0,
-  )
+  const asUTC = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second)
   return asUTC - date.getTime()
 }
 
@@ -138,14 +132,18 @@ const brusselsOffsetMs = (date: Date): number => {
  */
 export const brusselsDateTimeLocalToISO = (local: string | null | undefined): string | null => {
   if (!local) return null
-  const m = local.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local)
   if (!m) return null
   const [, y, mo, d, h, mi] = m.map(Number) as number[]
   // Treat the wall-clock components as if they were UTC, then subtract the
   // Brussels offset at that instant to recover the true UTC instant.
   const asUTC = Date.UTC(y!, mo! - 1, d!, h!, mi!)
-  const offset = brusselsOffsetMs(new Date(asUTC))
-  return new Date(asUTC - offset).toISOString()
+  // The offset depends on the instant and the instant on the offset: read it at the wall-clock time taken as UTC, then
+  // correct it with the offset at the instant that gives. One step alone is an hour off for the wall-clock times on the
+  // CET side of a DST change (the offset is read after the change). A nonexistent time (the skipped hour of spring)
+  // resolves one hour later, the repeated hour of autumn to its second occurrence.
+  const guess = asUTC - brusselsOffsetMs(new Date(asUTC))
+  return new Date(asUTC - brusselsOffsetMs(new Date(guess))).toISOString()
 }
 
 /**

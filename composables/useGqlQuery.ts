@@ -28,11 +28,17 @@ export const useGqlQuery = async <T>(
   const getVars = () => (typeof variables === 'function' ? variables() : variables)
   const handler = () => $gqlFetch<T>(printIfAst(rawQuery), { variables: getVars() })
 
-  // Choose overload: with key (cache) or without key (no cache)
+  /*
+   * The async-data key. `cache: true` keys the data by the document: the same query shares its data wherever it is used.
+   * Without it, the key is derived from the document AND the variables it starts with: two live queries that differ
+   * share nothing (a call-site key, the same for every caller of this composable, made the second query reuse the
+   * first one's handler and data), while two identical ones are one query. Variables that change later are handled by
+   * the refetch below, under the same key.
+   */
+  const query = printIfAst(rawQuery)
+  const key = opts.cache ? `gql:${hash(query)}` : `gql:${hash([query, getVars()])}`
   const asyncOpts = { immediate: opts.immediate, server: opts.server }
-  const asyncData = opts.cache
-    ? await useAsyncData<T>(`gql:${hash(printIfAst(rawQuery))}`, handler, asyncOpts)
-    : await useAsyncData<T>(handler, asyncOpts)
+  const asyncData = await useAsyncData<T>(key, handler, asyncOpts)
 
   if (typeof variables === 'function') {
     watch(

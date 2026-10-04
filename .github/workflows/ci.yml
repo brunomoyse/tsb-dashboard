@@ -39,7 +39,7 @@ jobs:
         run: vp exec nuxi typecheck
 
   test:
-    name: Tests
+    name: Tests (coverage)
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
@@ -51,8 +51,10 @@ jobs:
           node-version: '24'
           cache: true
 
-      - name: Run vp test
-        run: vp test run --passWithNoTests
+      # Unit + Nuxt-environment tests with coverage; fails if a coverage threshold in vite.config.ts is not met.
+      # No secrets and no network: the Nuxt project boots on dummy runtime config (tests/support/nuxtProject.ts).
+      - name: Run vp test with coverage
+        run: vp test run --coverage
 
   build:
     name: Build
