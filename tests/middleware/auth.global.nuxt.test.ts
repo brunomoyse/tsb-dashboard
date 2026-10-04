@@ -5,6 +5,7 @@ import type * as NuxtAppModule from 'nuxt/app'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { RouteLocationNormalized } from 'vue-router'
 import { useLocalePath } from '#imports'
+import { consumeReturnTo } from '~/utils/authReturn'
 import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
@@ -30,6 +31,7 @@ const run = (path: string, meta: Record<string, unknown> = {}) =>
   } as unknown as RouteLocationNormalized)
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.resetAllMocks()
   navigateTo.mockImplementation((to: string) => ({ redirectedTo: to }))
   oidc.isAuthenticated.mockResolvedValue(false)
@@ -74,6 +76,17 @@ describe('protected pages in the browser', () => {
     expect(result).toEqual({ redirectedTo: useLocalePath()('auth-login') })
     expect(useLocalePath()('auth-login')).toMatch(/\/auth\/login$/u)
     expect(navigateTo).toHaveBeenCalledExactlyOnceWith(useLocalePath()('auth-login'))
+  })
+
+  it('remember the page they asked for (path and query), to come back to after logging in', async () => {
+    await run('/fr/products?category=sushi')
+    expect(consumeReturnTo()).toBe('/fr/products?category=sushi')
+  })
+
+  it('remember nothing for a signed-in staff member', async () => {
+    oidc.isAuthenticated.mockResolvedValue(true)
+    await run('/fr/products')
+    expect(consumeReturnTo()).toBeNull()
   })
 
   it('let the staff member through when Zitadel cannot be reached (offline): the session is intact, only its token expired', async () => {

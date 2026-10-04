@@ -23,6 +23,7 @@ mockNuxtImport('useNuxtApp', async (original) => {
 const { useAuthCallback } = await import('~/composables/useAuthCallback')
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.resetAllMocks()
   setActivePinia(createPinia())
   oidc.getAccessToken.mockResolvedValue('token-1')
@@ -39,6 +40,38 @@ describe('processCallback', () => {
     expect(useAuthStore().user).toEqual(admin)
     expect(navigateTo).toHaveBeenCalledExactlyOnceWith(useLocalePath()('orders'))
     expect(useLocalePath()('orders')).toMatch(/\/orders$/u)
+  })
+
+  it('goes back to the page the session ended on instead of the orders board', async () => {
+    gqlFetch.mockResolvedValue({ me: makeUser({ isAdmin: true }) })
+    sessionStorage.setItem('oidc_return_to', '/fr/products?category=sushi')
+
+    await expect(useAuthCallback().processCallback()).resolves.toEqual({ ok: true })
+
+    expect(navigateTo).toHaveBeenCalledExactlyOnceWith('/fr/products?category=sushi')
+    expect(sessionStorage.getItem('oidc_return_to')).toBeNull()
+  })
+
+  it('ignores a remembered page that is not a safe path', async () => {
+    gqlFetch.mockResolvedValue({ me: makeUser({ isAdmin: true }) })
+    sessionStorage.setItem('oidc_return_to', 'https://evil.example/orders')
+
+    await useAuthCallback().processCallback()
+
+    expect(navigateTo).toHaveBeenCalledExactlyOnceWith(useLocalePath()('orders'))
+  })
+
+  it('forgets the remembered page when the user is not an admin, so it does not leak into the next login', async () => {
+    gqlFetch.mockResolvedValue({ me: makeUser({ isAdmin: false }) })
+    sessionStorage.setItem('oidc_return_to', '/fr/products')
+
+    await expect(useAuthCallback().processCallback()).resolves.toEqual({
+      ok: false,
+      reason: 'not_admin',
+    })
+
+    expect(navigateTo).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('oidc_return_to')).toBeNull()
   })
 
   it('loads the access token BEFORE asking the API who is signed in', async () => {

@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useRuntimeConfig } from '#imports'
 import gql from 'graphql-tag'
+import { consumeReturnTo } from '~/utils/authReturn'
 import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
@@ -60,6 +61,7 @@ const unauthenticated = () => ({
 })
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.resetAllMocks()
   oidc.getAccessToken.mockResolvedValue('token-1')
   oidc.silentRenew.mockResolvedValue({ access_token: 'token-2' })
@@ -173,12 +175,37 @@ describe('HTTP errors', () => {
     })
   })
 
-  it('gives up with the original 401 when the session cannot be renewed (the session is over)', async () => {
+  it('sends the staff member to the login page, flagged as expired, when the session is over (renewal resolves null)', async () => {
     const error = httpError(401)
     $fetchMock.mockRejectedValue(error)
     oidc.silentRenew.mockResolvedValue(null)
     await expect(install()(QUERY)).rejects.toBe(error)
     expect($fetchMock).toHaveBeenCalledOnce()
+    expect(navigateTo).toHaveBeenCalledExactlyOnceWith(LOGIN_EXPIRED)
+  })
+
+  it('remembers the page the staff member was on, to come back to after logging in again', async () => {
+    window.history.replaceState({}, '', '/fr/products?category=sushi')
+    $fetchMock.mockRejectedValue(httpError(401))
+    oidc.silentRenew.mockResolvedValue(null)
+    await expect(install()(QUERY)).rejects.toBeDefined()
+    expect(consumeReturnTo()).toBe('/fr/products?category=sushi')
+  })
+
+  it('does not remember anything when the session was renewed', async () => {
+    window.history.replaceState({}, '', '/fr/products')
+    $fetchMock.mockRejectedValueOnce(httpError(401)).mockResolvedValueOnce(ok({ a: 1 }))
+    await install()(QUERY)
+    expect(consumeReturnTo()).toBeNull()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('does not remember anything when Zitadel cannot be reached', async () => {
+    window.history.replaceState({}, '', '/fr/products')
+    $fetchMock.mockRejectedValue(httpError(401))
+    oidc.silentRenew.mockRejectedValue(new SilentRenewUnavailableError())
+    await expect(install()(QUERY)).rejects.toBeDefined()
+    expect(consumeReturnTo()).toBeNull()
   })
 
   it('does not renew twice: a 401 on the replay is thrown as it is', async () => {
@@ -241,13 +268,15 @@ describe('GraphQL errors', () => {
     expect(oidc.silentRenew).toHaveBeenCalledOnce()
   })
 
-  it('throws the original errors when the session cannot be renewed', async () => {
+  it('throws the original errors and sends the staff member to the login page, flagged as expired, when the session is over (renewal resolves null)', async () => {
+    window.history.replaceState({}, '', '/fr/customers')
     const first = unauthenticated()
     $fetchMock.mockResolvedValue(first)
     oidc.silentRenew.mockResolvedValue(null)
     await expect(install()(QUERY)).rejects.toBe(first.errors)
     expect($fetchMock).toHaveBeenCalledOnce()
-    expect(navigateTo).not.toHaveBeenCalled()
+    expect(navigateTo).toHaveBeenCalledExactlyOnceWith(LOGIN_EXPIRED)
+    expect(consumeReturnTo()).toBe('/fr/customers')
   })
 
   it('keeps the session and throws the original errors when Zitadel cannot be reached (no login redirect)', async () => {

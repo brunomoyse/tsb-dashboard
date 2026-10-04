@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { createFetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
+import { consumeReturnTo } from '~/utils/authReturn'
 import { SilentRenewUnavailableError } from '~/utils/silentRenewError'
 import { setFlags } from '../support/flags'
 
@@ -69,6 +70,7 @@ async function requestHeaders(): Promise<Headers> {
 const LOGIN_EXPIRED = expect.stringMatching(/^\/[a-z]{2}\/auth\/login\?session=expired$/u)
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.resetAllMocks()
   $fetchMock.create.mockImplementation((options: unknown) => {
     created.options = options
@@ -203,6 +205,14 @@ describe('a request that fails', () => {
 
     expect(navigateTo).toHaveBeenCalledExactlyOnceWith(LOGIN_EXPIRED)
     expect(baseApi).toHaveBeenCalledOnce()
+  })
+
+  it('remembers the page the staff member was on, to come back to after logging in again', async () => {
+    window.history.replaceState({}, '', '/fr/coupons')
+    baseApi.mockRejectedValue(httpError(401))
+    oidc.silentRenew.mockResolvedValue(null)
+    await expect(install()('/orders')).rejects.toBeDefined()
+    expect(consumeReturnTo()).toBe('/fr/coupons')
   })
 
   it('does not renew twice: a 401 on the replay is thrown as it is', async () => {

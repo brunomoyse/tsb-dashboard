@@ -8,6 +8,7 @@ import {
   useRuntimeConfig,
 } from '#imports'
 import type { NitroFetchOptions } from 'nitropack/types'
+import { rememberCurrentPage } from '~/utils/authReturn'
 import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 export type ApiFetch = <T>(request: string, options?: NitroFetchOptions<string>) => Promise<T>
@@ -94,6 +95,7 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
           throw renewErr
         }
         if (ok) return baseApi<T, string>(request, options)
+        rememberCurrentPage()
         void navigateTo(`${localePath('auth-login')}?session=expired`)
       }
       throw err

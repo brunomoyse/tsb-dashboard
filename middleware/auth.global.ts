@@ -1,6 +1,7 @@
 // Middleware: auth.global.ts — OIDC session management via Zitadel
 import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
 import { useLocalePath } from '#imports'
+import { rememberReturnTo } from '~/utils/authReturn'
 import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -33,5 +34,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 3. No valid session — redirect to dashboard's own login page.
   //    (Don't call signIn() which would redirect to Zitadel's custom login URI on the core app domain.)
+  rememberReturnTo(to.fullPath)
   return navigateTo(localePath('auth-login'))
 })
