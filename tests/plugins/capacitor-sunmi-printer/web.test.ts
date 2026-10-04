@@ -100,3 +100,54 @@ describe('SunmiPrinterWeb (browser stub)', () => {
     await expect(printer.exitBuffer({ commit: false })).resolves.toBeUndefined()
   })
 })
+
+describe('SunmiPrinterWeb logging', () => {
+  const printer = new SunmiPrinterWeb()
+  const calls: [string, (p: InstanceType<typeof SunmiPrinterWeb>) => Promise<unknown>][] = [
+    ['bindService', (p) => p.bindService()],
+    ['unbindService', (p) => p.unbindService()],
+    ['getStatus', (p) => p.getStatus()],
+    ['getModel', (p) => p.getModel()],
+    ['printerInit', (p) => p.printerInit()],
+    ['printText', (p) => p.printText({ text: 'Hello' })],
+    ['setAlignment', (p) => p.setAlignment({ alignment: 'right' })],
+    ['setFontSize', (p) => p.setFontSize({ size: 32 })],
+    ['setBold', (p) => p.setBold({ enabled: true })],
+    ['printColumnsText', (p) => p.printColumnsText({ columns: [] })],
+    ['printQRCode', (p) => p.printQRCode({ content: 'https://x.test', size: 8 })],
+    ['printImage', (p) => p.printImage({ base64: 'AAAA' })],
+    ['printBarcode', (p) => p.printBarcode({ content: '123', symbology: 'EAN13' })],
+    ['lineWrap', (p) => p.lineWrap({ lines: 4 })],
+    ['cutPaper', (p) => p.cutPaper()],
+    ['enterBuffer', (p) => p.enterBuffer()],
+    ['exitBuffer', (p) => p.exitBuffer({ commit: true })],
+  ]
+
+  it.each(calls)('%s logs the call in development, naming the method', async (method, run) => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    await run(printer)
+    expect(info).toHaveBeenCalledOnce()
+    expect(String(info.mock.calls[0]?.[0])).toContain(`[SunmiPrinter] ${method}()`)
+  })
+
+  it.each(calls)('%s stays silent outside development', async (_method, run) => {
+    vi.stubEnv('DEV', false)
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    await run(printer)
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('logs what is printed: the text, the alignment, the QR content and size, the bitmap length', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    await printer.printText({ text: 'Hello' })
+    await printer.setAlignment({ alignment: 'right' })
+    await printer.printQRCode({ content: 'https://x.test', size: 8 })
+    await printer.printImage({ base64: 'AAAA' })
+    expect(info.mock.calls).toEqual([
+      ['[SunmiPrinter] printText():', 'Hello'],
+      ['[SunmiPrinter] setAlignment():', 'right'],
+      ['[SunmiPrinter] printQRCode():', 'https://x.test', 'size:', 8],
+      ['[SunmiPrinter] printImage() — base64 length:', 4],
+    ])
+  })
+})
