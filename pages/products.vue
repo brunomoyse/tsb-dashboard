@@ -442,6 +442,7 @@
 
 <script lang="ts" setup>
 import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
+import { buildGraphqlUpload } from '~/utils/graphqlUpload'
 import { computed, ref, watch } from 'vue'
 import {
   useCategoriesStore,
@@ -900,32 +901,16 @@ const openCreateDialog = () => {
 
 const handleCreate = async (newProductInput: CreateProductInput): Promise<Product | null> => {
   let newProduct: Product
-  const form = new FormData()
   const { image, ...productData } = newProductInput
 
   try {
     if (image instanceof File) {
-      const operations = {
+      const form = buildGraphqlUpload({
         query: print(CREATE_PRODUCT_MUTATION),
-        variables: {
-          input: {
-            ...productData,
-            image: null,
-          },
-        },
-      }
-      form.append('operations', JSON.stringify(operations))
-
-      form.append(
-        'map',
-        JSON.stringify({
-          0: ['variables.input.image'],
-        }),
-      )
-
-      if (image instanceof File) {
-        form.append('0', image, image.name)
-      }
+        variables: { input: productData },
+        fileVariable: 'input.image',
+        file: image,
+      })
 
       const res = await $api<{ data: { createProduct: Product }; errors?: { message: string }[] }>(
         graphqlUrl,
@@ -972,30 +957,15 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
   let updated: Product
   const { id, input } = updateReq
   const { image, ...productData } = input as CreateProductInput
-  const form = new FormData()
 
   try {
     if (image instanceof File) {
-      const operations = {
+      const form = buildGraphqlUpload({
         query: print(UPDATE_PRODUCT_MUTATION),
-        variables: {
-          id,
-          input: {
-            ...productData,
-            image: null,
-          },
-        },
-      }
-      form.append('operations', JSON.stringify(operations))
-
-      form.append(
-        'map',
-        JSON.stringify({
-          0: ['variables.input.image'],
-        }),
-      )
-
-      form.append('0', image, image.name)
+        variables: { id, input: productData },
+        fileVariable: 'input.image',
+        file: image,
+      })
 
       const res = await $api<{ data: { updateProduct: Product }; errors?: { message: string }[] }>(
         graphqlUrl,

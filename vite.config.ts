@@ -32,6 +32,7 @@ const criticalFiles = {
   'utils/money.ts': full,
   'utils/coupons.ts': full,
   'utils/settings.ts': full,
+  'utils/graphqlUpload.ts': full,
 }
 
 export default defineConfig({
