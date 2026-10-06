@@ -46,11 +46,15 @@ const server = spawn('node', [serverEntry], {
 
 await new Promise((ready) => {
   server.stdout.on('data', (data) => {
-    if (data.toString().includes('Listening')) ready()
+    if (String(data).includes('Listening')) ready()
   })
   setTimeout(ready, 3000)
 })
 
+/**
+ * @param {string} path
+ * @param {string} html
+ */
 function writeShell(path, html) {
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, html)

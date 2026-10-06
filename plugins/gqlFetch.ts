@@ -10,10 +10,28 @@ import {
 } from '#imports'
 import { rememberCurrentPage } from '~/utils/authReturn'
 import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
+import { hasText, isRecord } from '~/utils/guards'
 
 interface GqlOptions {
   variables?: Record<string, unknown>
   signal?: AbortSignal
+}
+
+interface GqlError {
+  extensions?: { code?: string }
+  message?: string
+}
+
+/** The body of a GraphQL answer; `data` is as typed as the caller says, like any `$fetch<T>`. */
+interface GqlResponse<T> {
+  data: T
+  errors?: GqlError[]
+}
+
+/** Rejects with the raw GraphQL `errors` array: callers read it as such (`gqlErrorEntries`), it is not an Error. */
+const rejectWith = (errors: GqlError[]): never => {
+  // oxlint-disable-next-line typescript/only-throw-error -- the raw errors array is the documented rejection value
+  throw errors
 }
 
 export default defineNuxtPlugin(() => {
@@ -38,21 +56,16 @@ export default defineNuxtPlugin(() => {
       variables,
     }
 
-    let res: { data?: unknown; errors?: { extensions?: { code?: string }; message?: string }[] }
+    let res: GqlResponse<T>
 
     // 1) Try the HTTP-level fetch (and 401→refresh→retry)
     try {
-      res = await doFetch(body, signal)
+      res = await doFetch<T>(body, signal)
     } catch (err: unknown) {
-      if (
-        err &&
-        typeof err === 'object' &&
-        'status' in err &&
-        (err as { status: number }).status === 401
-      ) {
+      if (isRecord(err) && err.status === 401) {
         const ok = await attemptRefresh()
         if (ok) {
-          res = await doFetch(body, signal)
+          res = await doFetch<T>(body, signal)
         } else {
           throw err
         }
@@ -62,37 +75,33 @@ export default defineNuxtPlugin(() => {
     }
 
     // 2) Handle GraphQL-level errors
-    if (res.errors?.length) {
-      const unauth = res.errors.find((e) => e.extensions?.code === 'UNAUTHENTICATED')
+    const { errors } = res
+    if (errors !== undefined && errors.length > 0) {
+      const unauth = errors.find((e) => e.extensions?.code === 'UNAUTHENTICATED')
       if (unauth) {
         const ok = await attemptRefresh()
         if (ok) {
-          res = await doFetch(body, signal)
-          if (res.errors?.length) {
-            throw res.errors
+          res = await doFetch<T>(body, signal)
+          const retryErrors = res.errors
+          if (retryErrors !== undefined && retryErrors.length > 0) {
+            return rejectWith(retryErrors)
           }
-          return res.data as T
+          return res.data
         }
       }
-      throw res.errors
+      return rejectWith(errors)
     }
 
-    return res.data as T
+    return res.data
   }
 
   /** Low-level POST that returns the raw { data, errors } */
-  const doFetch = async (
+  const doFetch = async <T>(
     body: { query: string; variables: Record<string, unknown> },
     signal?: AbortSignal,
-  ): Promise<{
-    data?: unknown
-    errors?: { extensions?: { code?: string }; message?: string }[]
-  }> => {
+  ): Promise<GqlResponse<T>> => {
     const userLocale = useCookie('i18n_redirected').value ?? 'fr'
-    return $fetch<
-      { data?: unknown; errors?: { extensions?: { code?: string }; message?: string }[] },
-      string
-    >(httpURL, {
+    return $fetch<GqlResponse<T>, string>(httpURL, {
       method: 'POST',
       body,
       credentials: 'omit',
@@ -111,11 +120,11 @@ export default defineNuxtPlugin(() => {
       // SSR: forward cookies if available (for Accept-Language, session context)
       const ev = useRequestEvent()
       const cook = ev?.node.req.headers.cookie
-      if (cook) headers.cookie = cook
+      if (hasText(cook)) headers.cookie = cook
     } else {
       // Client-side: attach OIDC Bearer token
       const token = await getOidcToken()
-      if (token) {
+      if (hasText(token)) {
         headers.Authorization = `Bearer ${token}`
       }
     }

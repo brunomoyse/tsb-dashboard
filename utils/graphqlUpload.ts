@@ -1,3 +1,5 @@
+import { isRecord } from '~/utils/guards'
+
 /**
  * Builds the body of a GraphQL multipart request (https://github.com/jaydenseric/graphql-multipart-request-spec) that
  * uploads one file: the `operations` part (query + variables, the file's variable set to null), the `map` part (which
@@ -27,9 +29,9 @@ export function buildGraphqlUpload(options: {
 
 /** A copy of `value` with the property at `path` set to null (the objects on the way are copied, not mutated). */
 function setNull(value: Record<string, unknown>, path: string[]): Record<string, unknown> {
-  const [key, ...rest] = path as [string, ...string[]]
+  const [key, ...rest] = path
+  if (key === undefined) return value
   if (rest.length === 0) return { ...value, [key]: null }
   const child = value[key]
-  const childObject = typeof child === 'object' && child !== null ? child : {}
-  return { ...value, [key]: setNull(childObject as Record<string, unknown>, rest) }
+  return { ...value, [key]: setNull(isRecord(child) ? child : {}, rest) }
 }

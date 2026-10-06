@@ -628,8 +628,9 @@ import {
   parseSchedule,
   saveDirtySteps,
   hoursSummary as summarizeHours,
+  type OpeningHoursMap,
+  type ScheduleOverride,
 } from '~/utils/settings'
-import type { OpeningHoursMap, ScheduleOverride } from '~/utils/settings'
 import gql from 'graphql-tag'
 import { onBeforeRouteLeave } from 'vue-router'
 import { print } from 'graphql'

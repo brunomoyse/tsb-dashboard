@@ -42,7 +42,9 @@ export function useAssistantStatus() {
 
   const load = async () => {
     try {
-      const data = await $gqlFetch<{ assistantConnection: AssistantConnection }>(GET_CONNECTION)
+      const data = await $gqlFetch<{ assistantConnection: AssistantConnection } | null>(
+        GET_CONNECTION,
+      )
       if (data) connection.value = data.assistantConnection
     } catch {
       // Not an admin, or the API is down: no banner, the page shows its own error.

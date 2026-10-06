@@ -35,7 +35,7 @@ const mountStatus = async () => {
 beforeEach(() => {
   vi.resetAllMocks()
   subscription.calls.length = 0
-  subscription.data = ref(undefined)
+  subscription.data = ref<unknown>(undefined)
   clearNuxtState('pili-ordering-enabled') // the composable's own initial value (null) applies
   gqlFetch.mockResolvedValue({ restaurantConfig: { orderingEnabled: true } })
 })

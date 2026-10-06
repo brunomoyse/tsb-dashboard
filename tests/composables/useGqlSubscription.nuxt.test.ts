@@ -261,7 +261,7 @@ describe('subscribing', () => {
 
   it('wraps a non-Error failure to open the client', async () => {
     h.createClient.mockImplementation(() => {
-      throw 'bad url' // oxlint-disable-line no-throw-literal -- a non-Error rejection is what is tested
+      throw 'bad url' // oxlint-disable-line no-throw-literal, typescript/only-throw-error -- a non-Error rejection is what is tested
     })
     const { subscribe } = await load()
     const { error } = subscribe(SUB)

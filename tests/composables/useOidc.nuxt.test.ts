@@ -1081,11 +1081,12 @@ describe('isRenewalUnavailable', () => {
       'logging out of Capacitor',
       (o: ReturnType<typeof useOidcType>) => {
         o.logoutCapacitor()
+        return Promise.resolve()
       },
     ],
   ])('is false after %s', async (_name, end) => {
     const { oidc } = await failWeb()
-    await Promise.resolve(end(oidc))
+    await end(oidc)
     expect(oidc.isRenewalUnavailable()).toBe(false)
   })
 

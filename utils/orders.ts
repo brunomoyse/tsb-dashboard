@@ -2,6 +2,7 @@ import type { Translate } from '~/utils/translate'
 import type { Order, OrderStatus, OrderType } from '~/types'
 import { brusselsDateISO, formatTimeOnly } from '~/utils/utils'
 import { toCents } from '~/utils/money'
+import { hasText, isRecord } from '~/utils/guards'
 
 /*
  * Pure order logic of the orders board (pages/orders.vue) and the mobile order page: allowed status moves, elapsed
@@ -39,7 +40,10 @@ export const getAllowedStatuses = (
     case 'OUT_FOR_DELIVERY':
       allowed = ['DELIVERED', 'FAILED']
       break
-    default:
+    case 'DELIVERED':
+    case 'PICKED_UP':
+    case 'FAILED':
+    case 'CANCELLED':
       allowed = []
       break
   }
@@ -84,7 +88,7 @@ export const getStatusIcon = (status: OrderStatus): string => {
     FAILED: 'i-lucide-circle-alert',
     CANCELLED: 'i-lucide-circle-x',
   }
-  return statusIcons[status] || 'i-lucide-circle-help'
+  return statusIcons[status] ?? 'i-lucide-circle-help'
 }
 
 export const getStatusColor = (status: OrderStatus): UiColor => {
@@ -99,7 +103,7 @@ export const getStatusColor = (status: OrderStatus): UiColor => {
     FAILED: 'error',
     CANCELLED: 'error',
   }
-  return colors[status] || 'neutral'
+  return colors[status] ?? 'neutral'
 }
 
 // ─── Elapsed time and lateness ──────────────────────────────────────────────────
@@ -180,7 +184,7 @@ export const getPaymentIconClass = (order: Order): string => {
 }
 
 export const getPaymentStatusColor = (status: string | undefined): UiColor => {
-  if (!status) return 'error'
+  if (!hasText(status)) return 'error'
   const colors: Record<string, UiColor> = {
     open: 'warning',
     cancelled: 'neutral',
@@ -190,7 +194,7 @@ export const getPaymentStatusColor = (status: string | undefined): UiColor => {
     failed: 'error',
     paid: 'success',
   }
-  return colors[status.toLowerCase()] || 'neutral'
+  return colors[status.toLowerCase()] ?? 'neutral'
 }
 
 /**
@@ -208,7 +212,7 @@ export const paymentChip = (
       ? { color: 'success', label: t('orders.payment.status.paid') }
       : null
   }
-  if (!order.isOnlinePayment && (!status || status === 'open' || status === 'pending')) {
+  if (!order.isOnlinePayment && (!hasText(status) || status === 'open' || status === 'pending')) {
     return { color: 'warning', label: t('orders.toCollect') }
   }
   return {
@@ -222,9 +226,10 @@ export const paymentChip = (
 /** Item names: French first, Chinese translation below when it exists and differs. */
 export const itemNames = (item: Order['items'][number]): { main: string; zh: string } => {
   const translations = item.product.translations ?? []
-  const main = translations.find((tr) => tr.language === 'fr')?.name || item.product.name
+  const frName = translations.find((tr) => tr.language === 'fr')?.name
+  const main = hasText(frName) ? frName : item.product.name
   const zh = translations.find((tr) => tr.language === 'zh')?.name
-  return { main, zh: zh && zh !== main ? zh : '' }
+  return { main, zh: hasText(zh) && zh !== main ? zh : '' }
 }
 
 /** Sum of the line totals, in integer cents. */
@@ -243,16 +248,16 @@ export const hasBreakdown = (
 
 /** Second line of a mobile order card: "3 articles · prête vers 19:30 · Rue Saint-Gilles 12". */
 export const cardMeta = (order: Order, t: Translate, locale: string): string => {
-  const readyAt = order.estimatedReadyTime
+  const readyAt = hasText(order.estimatedReadyTime)
     ? t('orders.readyAround', { time: formatTimeOnly(order.estimatedReadyTime, locale) })
-    : order.preferredReadyTime
+    : hasText(order.preferredReadyTime)
       ? t('orders.wantedAt', { time: formatTimeOnly(order.preferredReadyTime, locale) })
       : ''
   const street =
     order.type === 'DELIVERY'
       ? order.address
         ? `${order.address.streetName} ${order.address.houseNumber}`.trim()
-        : (order.displayAddress ?? '').replace(/,[\s\S]*$/, '')
+        : (order.displayAddress ?? '').replace(/,[\s\S]*$/u, '')
       : ''
   return [t('orders.articles', { count: order.items.length }, order.items.length), readyAt, street]
     .filter(Boolean)
@@ -293,7 +298,7 @@ export const KANBAN_COLUMN_DEFS: KanbanColumnDef[] = [
 
 /** Orders of the "completed" views last updated on the given Brussels calendar day. */
 const updatedOnDay = (orders: Order[], day: string): Order[] =>
-  orders.filter((o) => o.updatedAt && brusselsDateISO(new Date(o.updatedAt)) === day)
+  orders.filter((o) => hasText(o.updatedAt) && brusselsDateISO(new Date(o.updatedAt)) === day)
 
 /**
  * The kanban columns with their label and orders. The completed column only lists the orders updated on
@@ -384,18 +389,17 @@ const UPDATE_ORDER_ERROR_KEYS: Record<string, string> = {
 }
 
 /** The GraphQL errors of a failed request (`$gqlFetch` throws the raw `errors` array, or an object carrying it). */
-const gqlErrorEntries = (error: unknown): unknown[] =>
-  Array.isArray(error)
-    ? error
-    : Array.isArray((error as { errors?: unknown } | null)?.errors)
-      ? (error as { errors: unknown[] }).errors
-      : [error]
+const gqlErrorEntries = (error: unknown): unknown[] => {
+  if (Array.isArray(error)) return error
+  const errors = isRecord(error) ? error.errors : undefined
+  return Array.isArray(errors) ? errors : [error]
+}
 
 /** The `extensions.code` of every GraphQL error of a failed request. */
 export const gqlErrorCodes = (error: unknown): string[] => {
   const codes: string[] = []
   for (const entry of gqlErrorEntries(error)) {
-    const code = (entry as { extensions?: { code?: unknown } } | null)?.extensions?.code
+    const code = isRecord(entry) && isRecord(entry.extensions) ? entry.extensions.code : undefined
     if (typeof code === 'string') codes.push(code)
   }
   return codes
@@ -408,12 +412,11 @@ export const gqlErrorCodes = (error: unknown): string[] => {
  */
 const isReopenRefusal = (error: unknown): boolean =>
   gqlErrorEntries(error).some((entry) => {
-    const { message, extensions } = (entry ?? {}) as {
-      message?: unknown
-      extensions?: { code?: unknown }
-    }
+    if (!isRecord(entry)) return false
+    const { message, extensions } = entry
     return (
-      extensions?.code === 'USER_ERROR' &&
+      isRecord(extensions) &&
+      extensions.code === 'USER_ERROR' &&
       typeof message === 'string' &&
       /cannot be reopened/iu.test(message)
     )
@@ -433,7 +436,7 @@ export const updateOrderErrorKey = (
   const codes = gqlErrorCodes(error)
   for (const code of codes) {
     const key = UPDATE_ORDER_ERROR_KEYS[code]
-    if (key) return key
+    if (hasText(key)) return key
   }
   const reopening =
     context.currentStatus === 'CANCELLED' &&

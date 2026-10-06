@@ -15,7 +15,11 @@ export function useTabBar() {
   const hidden = useState('pili-tab-bar-hidden', () => false)
 
   const visible = computed(
-    () => isMobile.value && !hidden.value && !route.meta.hideTabBar && !route.meta.public,
+    () =>
+      isMobile.value &&
+      !hidden.value &&
+      route.meta.hideTabBar !== true &&
+      route.meta.public !== true,
   )
 
   return {

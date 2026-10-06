@@ -3,6 +3,8 @@
  * Zitadel's callback page, all in the same tab) so that signing back in lands there and not on the orders board.
  */
 
+import { hasText } from '~/utils/guards'
+
 const RETURN_KEY = 'oidc_return_to'
 
 /**
@@ -12,7 +14,7 @@ const RETURN_KEY = 'oidc_return_to'
  * any backslash or control character disqualifies the path.
  */
 export function sanitizeReturnTo(raw: string | null | undefined): string | null {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null
+  if (!hasText(raw) || !raw.startsWith('/') || raw.startsWith('//')) return null
   // oxlint-disable-next-line no-control-regex -- the point is to refuse control characters
   if (/[\\\u0000-\u001f\u007f]/u.test(raw)) return null
   if (/^\/(?:[^/]+\/)?auth(?:\/|\?|#|$)/u.test(raw)) return null
@@ -22,7 +24,7 @@ export function sanitizeReturnTo(raw: string | null | undefined): string | null 
 /** Remembers a path (a route's `fullPath`) as the page to come back to; refused paths and unavailable storage are ignored. */
 export function rememberReturnTo(path: string): void {
   const safe = sanitizeReturnTo(path)
-  if (!safe) return
+  if (!hasText(safe)) return
   try {
     sessionStorage.setItem(RETURN_KEY, safe)
   } catch {

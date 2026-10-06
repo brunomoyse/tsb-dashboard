@@ -10,14 +10,13 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(
-  defineProps<{
-    label: string
-    value: string | number
-    size?: 'md' | 'lg'
-  }>(),
-  {
-    size: 'md',
-  },
-)
+const {
+  label,
+  value,
+  size = 'md',
+} = defineProps<{
+  label: string
+  value: string | number
+  size?: 'md' | 'lg'
+}>()
 </script>

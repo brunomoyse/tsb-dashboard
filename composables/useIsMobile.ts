@@ -1,5 +1,4 @@
-import { ref } from 'vue'
-import type { Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 // Below Tailwind's `md` breakpoint (768px): the phone layout with the bottom tab bar.
 const MOBILE_QUERY = '(max-width: 767px)'

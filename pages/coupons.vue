@@ -434,8 +434,8 @@ import {
   formatDateRange,
   paginate,
   validateCouponForm,
+  type MobileCouponStatus,
 } from '~/utils/coupons'
-import type { MobileCouponStatus } from '~/utils/coupons'
 import { computed, ref, watch } from 'vue'
 import { useGqlMutation, useGqlQuery, useGqlSubscription } from '#imports'
 import gql from 'graphql-tag'

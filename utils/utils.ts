@@ -1,4 +1,5 @@
 import type { Address } from '~/types'
+import { hasText } from '~/utils/guards'
 
 /**
  * Formats an address object into a string.
@@ -9,7 +10,7 @@ export function formatAddress(address: Address | null): string {
   if (!address) return ''
   const { streetName, houseNumber, boxNumber, postcode, municipalityName } = address
   let formatted = `${streetName} ${houseNumber}`
-  if (boxNumber) {
+  if (hasText(boxNumber)) {
     formatted += ` / ${boxNumber}`
   }
   formatted += `, ${postcode} – ${municipalityName}`
@@ -115,11 +116,19 @@ const brusselsPartsFormatter = new Intl.DateTimeFormat('en-US', {
 /** Europe/Brussels offset from UTC, in milliseconds, at the given instant. */
 const brusselsOffsetMs = (date: Date): number => {
   // formatToParts returns every requested part, so each one is there.
-  const map = {} as Record<'year' | 'month' | 'day' | 'hour' | 'minute' | 'second', number>
+  const map: Partial<Record<Intl.DateTimeFormatPartTypes, number>> = {}
   for (const p of brusselsPartsFormatter.formatToParts(date)) {
-    if (p.type !== 'literal') map[p.type as keyof typeof map] = Number(p.value)
+    if (p.type !== 'literal') map[p.type] = Number(p.value)
   }
-  const asUTC = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second)
+  const part = (type: Intl.DateTimeFormatPartTypes): number => map[type] ?? Number.NaN
+  const asUTC = Date.UTC(
+    part('year'),
+    part('month') - 1,
+    part('day'),
+    part('hour'),
+    part('minute'),
+    part('second'),
+  )
   return asUTC - date.getTime()
 }
 
@@ -131,13 +140,20 @@ const brusselsOffsetMs = (date: Date): number => {
  * Returns null for empty/invalid input.
  */
 export const brusselsDateTimeLocalToISO = (local: string | null | undefined): string | null => {
-  if (!local) return null
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local)
-  if (!m) return null
-  const [, y, mo, d, h, mi] = m.map(Number) as number[]
+  if (!hasText(local)) return null
+  const parts = /^(?<y>\d{4})-(?<mo>\d{2})-(?<d>\d{2})T(?<h>\d{2}):(?<mi>\d{2})/u.exec(
+    local,
+  )?.groups
+  if (parts === undefined) return null
   // Treat the wall-clock components as if they were UTC, then subtract the
   // Brussels offset at that instant to recover the true UTC instant.
-  const asUTC = Date.UTC(y!, mo! - 1, d!, h!, mi!)
+  const asUTC = Date.UTC(
+    Number(parts.y),
+    Number(parts.mo) - 1,
+    Number(parts.d),
+    Number(parts.h),
+    Number(parts.mi),
+  )
   // The offset depends on the instant and the instant on the offset: read it at the wall-clock time taken as UTC, then
   // correct it with the offset at the instant that gives. One step alone is an hour off for the wall-clock times on the
   // CET side of a DST change (the offset is read after the change). A nonexistent time (the skipped hour of spring)
@@ -153,7 +169,7 @@ export const brusselsDateTimeLocalToISO = (local: string | null | undefined): st
  * time. Returns '' for empty/invalid input.
  */
 export const isoToBrusselsDateTimeLocal = (iso: string | null | undefined): string => {
-  if (!iso) return ''
+  if (!hasText(iso)) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
   const map: Record<string, string> = {}

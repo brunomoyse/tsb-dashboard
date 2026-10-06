@@ -46,7 +46,7 @@ describe('updateOrder', () => {
   it('replaces the array entry (a new object), so watchers on the list see the change', () => {
     const store = useOrdersStore()
     store.setOrders([makeOrder({ id: 'o-1' })])
-    const before = store.orders[0]
+    const [before] = store.orders
     store.updateOrder({ id: 'o-1', status: 'PREPARING' })
     expect(store.orders[0]).not.toBe(before)
   })

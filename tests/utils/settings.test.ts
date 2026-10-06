@@ -19,8 +19,10 @@ import {
   overrideToForm,
   parseSchedule,
   saveDirtySteps,
+  type OpeningHoursMap,
+  type OverrideForm,
+  type ScheduleOverride,
 } from '~/utils/settings'
-import type { OpeningHoursMap, OverrideForm, ScheduleOverride } from '~/utils/settings'
 import { fakeT } from '../helpers/i18n'
 
 const weekOf = (schedule: ReturnType<typeof defaultSchedule> | null): OpeningHoursMap =>
@@ -375,8 +377,9 @@ describe('saveDirtySteps', () => {
     const calls: string[] = []
     const step = (name: string, dirty: boolean) => ({
       isDirty: () => dirty,
-      save: async () => {
+      save: () => {
         calls.push(name)
+        return Promise.resolve()
       },
     })
     await saveDirtySteps([step('prep', true), step('hours', false), step('ordering', true)])
@@ -399,8 +402,9 @@ describe('saveDirtySteps', () => {
     }
     const second = {
       isDirty: () => true,
-      save: async () => {
+      save: () => {
         events.push('second starts')
+        return Promise.resolve()
       },
     }
     const done = saveDirtySteps([first, second])
@@ -417,8 +421,9 @@ describe('saveDirtySteps', () => {
     await saveDirtySteps([
       {
         isDirty: () => true,
-        save: async () => {
+        save: () => {
           hoursDirty = false // e.g. a live update reset the flag while the first section saved
+          return Promise.resolve()
         },
       },
       { isDirty: () => hoursDirty, save: hours },
@@ -432,9 +437,7 @@ describe('saveDirtySteps', () => {
       saveDirtySteps([
         {
           isDirty: () => true,
-          save: async () => {
-            throw new Error('offline')
-          },
+          save: () => Promise.reject(new Error('offline')),
         },
         { isDirty: () => true, save: later },
       ]),

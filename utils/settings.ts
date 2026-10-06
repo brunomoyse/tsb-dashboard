@@ -1,4 +1,5 @@
 import type { Translate } from '~/utils/translate'
+import { hasText } from '~/utils/guards'
 import { overrideDateKey, overrideDateRange, overrideDateToGql } from '~/utils/scheduleOverride'
 
 /*
@@ -115,8 +116,8 @@ export const hoursSummary = (hours: OpeningHoursMap, t: Translate): string => {
       .filter((h) => h.dinnerOpen && h.dinnerClose)
       .map((h) => `${h.dinnerOpen}-${h.dinnerClose}`),
   )
-  if (lunch) parts.push(lunch)
-  if (dinner) parts.push(dinner)
+  if (hasText(lunch)) parts.push(lunch)
+  if (hasText(dinner)) parts.push(dinner)
   return parts.join(' · ')
 }
 
@@ -127,12 +128,12 @@ export const overrideDetail = (ov: ScheduleOverride): string => {
   const parts: string[] = []
   if (!ov.closed && ov.schedule) {
     parts.push(
-      ov.schedule.dinnerOpen && ov.schedule.dinnerClose
+      hasText(ov.schedule.dinnerOpen) && hasText(ov.schedule.dinnerClose)
         ? `${ov.schedule.open}-${ov.schedule.close} · ${ov.schedule.dinnerOpen}-${ov.schedule.dinnerClose}`
         : `${ov.schedule.open}-${ov.schedule.close}`,
     )
   }
-  if (ov.note) parts.push(ov.note)
+  if (hasText(ov.note)) parts.push(ov.note)
   return parts.join(' · ')
 }
 
@@ -179,7 +180,7 @@ export const OVERRIDE_RANGE_CONFIRM_ABOVE = 7
 
 /** The days a save covers: the edited day alone, or the whole range (an end before the start gives the start only). */
 export const overrideDates = (form: OverrideForm, editingDate: string | null): string[] =>
-  editingDate ? [form.date] : overrideDateRange(form.date, form.dateEnd)
+  hasText(editingDate) ? [form.date] : overrideDateRange(form.date, form.dateEnd)
 
 /**
  * One ScheduleOverrideInput per day: a closed day carries no schedule, an open one its hours (empty dinner times left

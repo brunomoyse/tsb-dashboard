@@ -102,16 +102,17 @@ export default defineConfig({
   },
   lint: {
     plugins: ['typescript', 'vue'],
+    // Everything is an error: the codebase is at zero, and a warning would just pile up unnoticed again.
     categories: {
       correctness: 'error',
-      suspicious: 'warn',
-      pedantic: 'warn',
-      perf: 'warn',
-      style: 'warn',
+      suspicious: 'error',
+      pedantic: 'error',
+      perf: 'error',
+      style: 'error',
     },
     rules: {
-      'no-shadow': 'warn',
-      'default-case-last': 'warn',
+      'no-shadow': 'error',
+      'default-case-last': 'error',
       'prefer-const': 'error',
       'no-var': 'error',
       eqeqeq: 'error',
@@ -139,6 +140,11 @@ export default defineConfig({
       // lint run (without Nuxt's generated types) believes useless, the second rewrites arrow bodies.
       'typescript/no-unnecessary-type-assertion': 'off',
       'typescript/strict-void-return': 'off',
+      // Wants every parameter deeply readonly, which Vue refs, DOM events and most library types can never be: it fired on
+      // most of the codebase for no safety gain.
+      'typescript/prefer-readonly-parameter-types': 'off',
+      // Import order is the formatter's job; this rule disagreed with it and the pre-commit fix never settled it.
+      'sort-imports': 'off',
     },
     overrides: [
       {

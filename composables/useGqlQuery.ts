@@ -36,7 +36,7 @@ export const useGqlQuery = async <T>(
    * the refetch below, under the same key.
    */
   const query = printIfAst(rawQuery)
-  const key = opts.cache ? `gql:${hash(query)}` : `gql:${hash([query, getVars()])}`
+  const key = opts.cache === true ? `gql:${hash(query)}` : `gql:${hash([query, getVars()])}`
   const asyncOpts = { immediate: opts.immediate, server: opts.server }
   const asyncData = await useAsyncData<T>(key, handler, asyncOpts)
 
@@ -48,6 +48,7 @@ export const useGqlQuery = async <T>(
     )
   }
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Nuxt's AsyncData types its data through pick helpers (PickFrom, KeysOf) that cannot be resolved for an open T
   const result = asyncData as unknown as GqlQueryResult<T>
   result.refetch = asyncData.refresh
   return result

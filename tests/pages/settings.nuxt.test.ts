@@ -14,7 +14,7 @@ mockNuxtImport('useNuxtApp', async (original) => {
   const { withGqlFetch } = await import('../helpers/gqlFetch')
   return () => withGqlFetch(original(), gqlFetch)
 })
-mockNuxtImport('useGqlSubscription', () => () => ({ data: ref(null) }))
+mockNuxtImport('useGqlSubscription', () => () => ({ data: ref<unknown>(null) }))
 mockNuxtImport('useIsMobile', () => () => ref(true))
 mockNuxtImport('useTabBar', () => () => ({ hide: vi.fn(), show: vi.fn() }))
 vi.mock('vue-i18n', async (importOriginal) => {
@@ -46,25 +46,27 @@ const day = { open: '11:30', close: '14:00', dinnerOpen: '17:30', dinnerClose: '
 
 describe('settings page', () => {
   it('loads the config: opening-hours summary and preparation time', async () => {
-    gqlFetch.mockImplementation(async (query: string) =>
-      query.includes('restaurantConfig')
-        ? {
-            restaurantConfig: {
-              orderingEnabled: true,
-              openingHours: {
-                monday: day,
-                tuesday: day,
-                wednesday: day,
-                thursday: null,
-                friday: day,
-                saturday: day,
-                sunday: null,
+    gqlFetch.mockImplementation((query: string) =>
+      Promise.resolve(
+        query.includes('restaurantConfig')
+          ? {
+              restaurantConfig: {
+                orderingEnabled: true,
+                openingHours: {
+                  monday: day,
+                  tuesday: day,
+                  wednesday: day,
+                  thursday: null,
+                  friday: day,
+                  saturday: day,
+                  sunday: null,
+                },
+                orderingHours: null,
+                preparationMinutes: 45,
               },
-              orderingHours: null,
-              preparationMinutes: 45,
-            },
-          }
-        : { scheduleOverrides: [] },
+            }
+          : { scheduleOverrides: [] },
+      ),
     )
     const Page = (await import('~/pages/settings.vue')).default
     const wrapper = await mountSuspended(Page)
@@ -93,7 +95,7 @@ describe('settings page', () => {
     })
 
     const mountDirtyPage = async () => {
-      gqlFetch.mockImplementation(async (query: string) => configAnswer(query))
+      gqlFetch.mockImplementation((query: string) => Promise.resolve(configAnswer(query)))
       const Page = (await import('~/pages/settings.vue')).default
       const wrapper = await mountSuspended(Page)
       await settle()

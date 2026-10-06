@@ -1,6 +1,7 @@
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { usePlatform } from '~/composables/usePlatform'
+import { hasText } from '~/utils/guards'
 
 const REGISTER_DEVICE_TOKEN = print(gql`
   mutation ($deviceToken: String!, $platform: String!) {
@@ -36,18 +37,21 @@ export function usePushNotifications() {
     }
 
     // Listen for registration success
-    await PushNotifications.addListener('registration', async (token) => {
+    const registerDeviceToken = async (deviceToken: string) => {
       const previousToken = localStorage.getItem(STORAGE_KEY)
-      if (previousToken === token.value) return
+      if (previousToken === deviceToken) return
 
       try {
         await $gqlFetch(REGISTER_DEVICE_TOKEN, {
-          variables: { deviceToken: token.value, platform: 'android' },
+          variables: { deviceToken, platform: 'android' },
         })
-        localStorage.setItem(STORAGE_KEY, token.value)
+        localStorage.setItem(STORAGE_KEY, deviceToken)
       } catch {
         // Token registration failure is non-critical
       }
+    }
+    await PushNotifications.addListener('registration', (token) => {
+      void registerDeviceToken(token.value)
     })
 
     // Listen for registration errors
@@ -73,7 +77,7 @@ export function usePushNotifications() {
     if (!isCapacitor) return
 
     const storedToken = localStorage.getItem(STORAGE_KEY)
-    if (storedToken) {
+    if (hasText(storedToken)) {
       try {
         await $gqlFetch(UNREGISTER_DEVICE_TOKEN, {
           variables: { deviceToken: storedToken },

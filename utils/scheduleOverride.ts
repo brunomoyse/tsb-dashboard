@@ -1,4 +1,5 @@
 import { brusselsDateISO, shiftBrusselsDate } from '~/utils/utils'
+import { hasText } from '~/utils/guards'
 
 /*
  * Schedule overrides are keyed by a calendar date (a DATE column). Dates are
@@ -22,7 +23,7 @@ export const overrideDateToGql = (date: string): string => `${date}T00:00:00Z`
  */
 export const overrideDateRange = (start: string, end?: string | null): string[] => {
   const dates = [start]
-  if (!end) return dates
+  if (!hasText(end)) return dates
   for (let d = shiftBrusselsDate(start, 1); d <= end; d = shiftBrusselsDate(d, 1)) {
     dates.push(d)
   }

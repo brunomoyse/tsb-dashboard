@@ -69,7 +69,13 @@ import { useI18n } from 'vue-i18n'
 import { useId } from 'vue'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { open, title, description, dirty, summary } = defineProps<{
+const {
+  open,
+  title,
+  description = undefined,
+  dirty,
+  summary = undefined,
+} = defineProps<{
   open: boolean
   title: string
   description?: string

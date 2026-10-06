@@ -7,6 +7,7 @@ import type { Order, OrderStatus } from '~/types'
 import { formatTimeOnly, timeToRFC3339 } from '~/utils/utils'
 import { getAllowedStatuses, updateOrderErrorKey } from '~/utils/orders'
 import { useOrdersStore } from '~/stores/orders'
+import { hasText } from '~/utils/guards'
 
 export type OrderActionKind = 'save' | 'advance' | 'cancel'
 
@@ -169,7 +170,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
         baseEstimatedTime.value = currentNow
         sliderDeltaMinutes.value = 30
         initialSliderValue.value = 0
-      } else if (order.estimatedReadyTime) {
+      } else if (hasText(order.estimatedReadyTime)) {
         const estimatedDate = new Date(order.estimatedReadyTime)
 
         if (isNaN(estimatedDate.getTime())) {
@@ -211,7 +212,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   })
 
   const canSave = computed(
-    () => stagedStatus.value || sliderDeltaMinutes.value !== initialSliderValue.value,
+    () => stagedStatus.value !== undefined || sliderDeltaMinutes.value !== initialSliderValue.value,
   )
 
   // Estimated ready time to send with a mutation, when the delta was changed
@@ -433,7 +434,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     // Not while the cancellation is on its way: the dialog closes by itself once it is done.
     if (isCancelling.value) return
     showCancelDialog.value = false
-    if (cancelTimer) {
+    if (cancelTimer !== undefined) {
       clearInterval(cancelTimer)
       cancelTimer = undefined
     }
@@ -485,7 +486,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
     showPrintContinueDialog.value = false
     const orderId = printContinueOrderId.value
     printContinueOrderId.value = null
-    if (!orderId) return
+    if (!hasText(orderId)) return
     const order = ordersStore.orders.find((o) => o.id === orderId) ?? selectedOrder.value
     if (!order) return
     try {
@@ -523,7 +524,7 @@ export function useOrderActions(options: UseOrderActionsOptions = {}) {
   ])
 
   onUnmounted(() => {
-    if (cancelTimer) {
+    if (cancelTimer !== undefined) {
       clearInterval(cancelTimer)
       cancelTimer = undefined
     }

@@ -5,5 +5,5 @@ const SunmiPrinter = registerPlugin<SunmiPrinterPlugin>('SunmiPrinter', {
   web: () => import('./web').then((m) => new m.SunmiPrinterWeb()),
 })
 
-export * from './definitions'
+export type * from './definitions'
 export { SunmiPrinter }

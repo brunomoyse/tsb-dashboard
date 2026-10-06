@@ -7,7 +7,9 @@ const registerPlugin = vi.hoisted(() =>
   vi.fn((_name: string, _options: unknown) => ({ proxy: true })),
 )
 vi.mock('@capacitor/core', () => ({
-  WebPlugin: class WebPlugin {},
+  WebPlugin: class WebPlugin {
+    readonly mocked = true
+  },
   registerPlugin,
 }))
 

@@ -13,8 +13,8 @@ import {
   periodLabel,
   statusMeta,
   validateCouponForm,
+  type CouponFilters,
 } from '~/utils/coupons'
-import type { CouponFilters } from '~/utils/coupons'
 import { fakeT } from '../helpers/i18n'
 
 const makeCoupon = (overrides: Partial<Coupon> = {}): Coupon => ({
@@ -325,7 +325,7 @@ describe('discountLabel', () => {
   it('shows a fixed amount in euros', () => {
     const label = discountLabel(makeCoupon({ discountType: 'FIXED', discountValue: '5' }))
     expect(label.startsWith('−')).toBe(true)
-    expect(label).toMatch(/5,00\s*€$/)
+    expect(label).toMatch(/5,00\s*€$/u)
   })
 })
 

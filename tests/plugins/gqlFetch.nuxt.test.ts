@@ -108,7 +108,7 @@ describe('the request (browser)', () => {
         }
       }
     `)
-    const { body } = $fetchMock.mock.calls[0]![1]
+    const [, { body }] = $fetchMock.mock.calls[0]!
     expect(body.variables).toEqual({})
     expect(body.query).toMatch(/^query OrderList \{\s+orders \{\s+id\s+\}\s+\}\s*$/u)
   })

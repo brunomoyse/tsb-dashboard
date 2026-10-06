@@ -10,6 +10,7 @@ import {
 import type { NitroFetchOptions } from 'nitropack/types'
 import { rememberCurrentPage } from '~/utils/authReturn'
 import { isSilentRenewUnavailable } from '~/utils/silentRenewError'
+import { hasText, isRecord } from '~/utils/guards'
 
 export type ApiFetch = <T>(request: string, options?: NitroFetchOptions<string>) => Promise<T>
 
@@ -55,14 +56,14 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
         const serverLocale = useCookie('i18n_redirected').value ?? 'fr'
         const cookies = event?.node.req.headers.cookie
 
-        if (cookies) {
+        if (hasText(cookies)) {
           options.headers.set('cookie', cookies)
           options.headers.set('Accept-Language', serverLocale)
         }
       } else {
         // Client-side: attach Bearer token from OIDC
         const token = await getOidcToken()
-        if (token) {
+        if (hasText(token)) {
           options.headers.set('Authorization', `Bearer ${token}`)
         }
       }
@@ -77,13 +78,7 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
     try {
       return await baseApi<T, string>(request, options)
     } catch (err: unknown) {
-      if (
-        !import.meta.server &&
-        err &&
-        typeof err === 'object' &&
-        'status' in err &&
-        (err as { status: number }).status === 401
-      ) {
+      if (!import.meta.server && isRecord(err) && err.status === 401) {
         let ok: boolean
         try {
           ok = await refreshAuth()

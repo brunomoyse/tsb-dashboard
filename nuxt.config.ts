@@ -1,18 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+// Empty env vars fall back to the default, like unset ones.
+const envOr = (value: string | undefined, fallback: string): string =>
+  value !== undefined && value !== '' ? value : fallback
+
 const isCapacitor = process.env.APP_BUILD === 'capacitor'
 
 // Derive origins for CSP from environment variables (dev defaults)
-const apiOrigin = new URL(process.env.API_BASE_URL || 'http://localhost:8080/api/v1').origin
-const wsOrigin = apiOrigin.replace(/^http/, 'ws')
+const apiOrigin = new URL(envOr(process.env.API_BASE_URL, 'http://localhost:8080/api/v1')).origin
+const wsOrigin = apiOrigin.replace(/^http/u, 'ws')
 const s3Url = process.env.S3_BUCKET_URL
-const zitadelOrigin = process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be'
+const zitadelOrigin = envOr(process.env.ZITADEL_AUTHORITY, 'https://auth.tokyosushibarliege.be')
 
 const csp = `${[
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `img-src 'self' data: blob:${s3Url ? ` ${s3Url}` : ''}`,
+  `img-src 'self' data: blob:${s3Url !== undefined && s3Url !== '' ? ` ${s3Url}` : ''}`,
   "font-src 'self' https://fonts.gstatic.com",
   `connect-src 'self' ${apiOrigin} ${wsOrigin} ${zitadelOrigin} https://api.iconify.design`,
   `frame-src 'self' ${zitadelOrigin}`,
@@ -53,16 +57,18 @@ export default defineNuxtConfig({
       graphqlHttp: `${process.env.API_BASE_URL}/graphql`,
       graphqlWs: process.env.GRAPHQL_WS_URL,
       // Zitadel OIDC
-      zitadelAuthority: process.env.ZITADEL_AUTHORITY || 'https://auth.tokyosushibarliege.be',
-      zitadelClientId:
-        process.env.DASHBOARD_ZITADEL_CLIENT_ID || process.env.ZITADEL_CLIENT_ID || '',
-      zitadelNativeClientId: process.env.ZITADEL_NATIVE_CLIENT_ID || '',
+      zitadelAuthority: envOr(process.env.ZITADEL_AUTHORITY, 'https://auth.tokyosushibarliege.be'),
+      zitadelClientId: envOr(
+        process.env.DASHBOARD_ZITADEL_CLIENT_ID,
+        envOr(process.env.ZITADEL_CLIENT_ID, ''),
+      ),
+      zitadelNativeClientId: envOr(process.env.ZITADEL_NATIVE_CLIENT_ID, ''),
       // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
-      appBuild: process.env.APP_BUILD || 'web',
+      appBuild: envOr(process.env.APP_BUILD, 'web'),
       // Restaurant name printed on receipts (white-label). Read from a plain
       // (non-NUXT_PUBLIC_) env var so it's baked at build time — the runtime
       // Override machinery never fires for this static SPA (served by Caddy).
-      restaurantName: process.env.RESTAURANT_NAME || 'Tokyo Sushi Bar',
+      restaurantName: envOr(process.env.RESTAURANT_NAME, 'Tokyo Sushi Bar'),
     },
   },
 

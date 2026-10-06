@@ -47,13 +47,13 @@ const mountStatus = async () => {
 beforeEach(() => {
   vi.resetAllMocks()
   subscription.calls.length = 0
-  subscription.data = ref(undefined)
+  subscription.data = ref<unknown>(undefined)
   clearNuxtState('pili-assistant-connection') // the composable's own initial value (null) applies
   gqlFetch.mockResolvedValue({ assistantConnection: connection() })
 })
 
 describe('loading', () => {
-  it('stays null until the first answer', async () => {
+  it('stays null until the first answer', () => {
     gqlFetch.mockReturnValue(new Promise(() => {}))
     const { result } = mountComposable(() => useAssistantStatus())
     expect(result.connection.value).toBeNull()

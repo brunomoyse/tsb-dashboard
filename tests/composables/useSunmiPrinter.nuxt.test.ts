@@ -2,7 +2,7 @@
 // plugin (the printer) is the boundary: a recorder captures every command, and the receipts are asserted as the exact
 // lines the paper would show (prices in EUR with the comma and a no-break space, as on the POS).
 // Run: `vp test run tests/composables/useSunmiPrinter.nuxt.test.ts`.
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Order } from '~/types'
 import { setFlags } from '../support/flags'
 import { mountComposable } from '../helpers/mountComposable'
@@ -104,7 +104,7 @@ beforeEach(() => {
   printer.plugin.getStatus.mockResolvedValue({ status: 1, statusText: 'Ready' })
   for (const [name, fn] of Object.entries(printer.plugin)) {
     if (name === 'getStatus') continue
-    ;(fn as ReturnType<typeof vi.fn>).mockImplementation((arg?: Record<string, unknown>) => {
+    ;(fn as Mock<(arg?: Record<string, unknown>) => Promise<void>>).mockImplementation((arg) => {
       printer.calls.push(arg === undefined ? [name] : [name, arg])
       return Promise.resolve()
     })
