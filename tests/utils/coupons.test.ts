@@ -152,6 +152,17 @@ describe('validateCouponForm', () => {
 })
 
 describe('buildCouponInput', () => {
+  it.each<[string, unknown, string | null]>([
+    ['a text amount', '20.00', '20.00'],
+    ['an empty text', '', null],
+    ['a number from a number input', 12.5, '12.5'],
+    ['a number input emptied to 0', 0, null],
+    ['a number input holding NaN', Number.NaN, null],
+  ])('sends the minimum order as %s', (_name, minOrderAmount, expected) => {
+    const form = { ...validForm(), minOrderAmount: minOrderAmount as string }
+    expect(buildCouponInput(form).minOrderAmount).toBe(expected)
+  })
+
   it('trims and upper-cases the code, sends numbers as numbers and empty optionals as null', () => {
     expect(buildCouponInput({ ...validForm(), code: '  summer15 ' })).toEqual({
       code: 'SUMMER15',

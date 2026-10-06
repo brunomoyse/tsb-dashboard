@@ -120,7 +120,7 @@ const brusselsOffsetMs = (date: Date): number => {
   for (const p of brusselsPartsFormatter.formatToParts(date)) {
     if (p.type !== 'literal') map[p.type] = Number(p.value)
   }
-  const part = (type: Intl.DateTimeFormatPartTypes): number => map[type] ?? Number.NaN
+  const part = (type: Intl.DateTimeFormatPartTypes): number => Number(map[type])
   const asUTC = Date.UTC(
     part('year'),
     part('month') - 1,

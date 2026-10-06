@@ -297,6 +297,14 @@ describe('getAuthRequestId (Capacitor in-app login)', () => {
     )
   })
 
+  it('fails when the manager has no signin client', async () => {
+    const { oidc, manager } = await load()
+    await oidc.signIn()
+    manager()._client = {} as never
+    await expect(oidc.getAuthRequestId()).rejects.toThrow('oidc-client-ts has no signin client')
+    expect($fetchMock).not.toHaveBeenCalled()
+  })
+
   it('surfaces a proxy failure', async () => {
     const { oidc, manager } = await load()
     await oidc.signIn()
@@ -346,6 +354,7 @@ describe('exchangeCodeForTokens (Capacitor)', () => {
     const { oidc, stateStore } = await prepare({
       empty: null,
       broken: '{not json',
+      notAnObject: 'null',
       noVerifier: JSON.stringify({ id: 'y' }),
     })
     $fetchMock.mockResolvedValue({ access_token: 'a', expires_in: 600 })
@@ -506,6 +515,8 @@ describe('getAccessToken (web)', () => {
     storeTokens({ access_token: 'stale', expires_at: NOW_S })
     await expect(oidc.getAccessToken()).resolves.toBe('access-7')
     localStorage.setItem(TOKENS_KEY, '{not json')
+    await expect(oidc.getAccessToken()).resolves.toBe('access-7')
+    storeTokens({ access_token: 5, expires_at: 'soon' })
     await expect(oidc.getAccessToken()).resolves.toBe('access-7')
   })
 
@@ -863,6 +874,14 @@ describe('silentRenew (Capacitor)', () => {
       expect(storedTokens()).toMatchObject({ refresh_token: 'refresh-1' })
     },
   )
+
+  it('rejects as "unavailable" when the backend fails with something that is not an object', async () => {
+    storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 1 })
+    const { oidc } = await load()
+    $fetchMock.mockRejectedValue('boom')
+    const outcome = await oidc.silentRenew().catch((err: unknown) => err)
+    expect(isSilentRenewUnavailable(outcome)).toBe(true)
+  })
 
   it('refuses on a statusCode-only client error too', async () => {
     storeTokens({ access_token: 'old', refresh_token: 'refresh-1', expires_at: NOW_S - 1 })

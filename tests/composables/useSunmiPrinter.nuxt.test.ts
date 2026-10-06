@@ -829,10 +829,15 @@ describe('the kitchen receipt', () => {
           { name: null, options: ['x'] },
           { name: 'Sauce', options: ['Soja', 'Wasabi'] },
           { name: 'Bare', options: [] },
+          { name: 'Plain', options: null },
         ],
       }),
     )
-    expect(lines.filter((l) => l.startsWith('+ '))).toEqual(['+ Sauce: Soja, Wasabi', '+ Bare'])
+    expect(lines.filter((l) => l.startsWith('+ '))).toEqual([
+      '+ Sauce: Soja, Wasabi',
+      '+ Bare',
+      '+ Plain',
+    ])
   })
 
   it('files uncategorised products under "Autres"', async () => {

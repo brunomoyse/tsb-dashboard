@@ -18,20 +18,17 @@ export function buildGraphqlUpload(options: {
 }): FormData {
   const { query, variables, fileVariable, file } = options
   const form = new FormData()
-  form.append(
-    'operations',
-    JSON.stringify({ query, variables: setNull(variables, fileVariable.split('.')) }),
-  )
+  form.append('operations', JSON.stringify({ query, variables: setNull(variables, fileVariable) }))
   form.append('map', JSON.stringify({ 0: [`variables.${fileVariable}`] }))
   form.append('0', file, file.name)
   return form
 }
 
-/** A copy of `value` with the property at `path` set to null (the objects on the way are copied, not mutated). */
-function setNull(value: Record<string, unknown>, path: string[]): Record<string, unknown> {
-  const [key, ...rest] = path
-  if (key === undefined) return value
-  if (rest.length === 0) return { ...value, [key]: null }
+/** A copy of `value` with the property at the dotted `path` set to null (the objects on the way are copied, not mutated). */
+function setNull(value: Record<string, unknown>, path: string): Record<string, unknown> {
+  const dot = path.indexOf('.')
+  if (dot === -1) return { ...value, [path]: null }
+  const key = path.slice(0, dot)
   const child = value[key]
-  return { ...value, [key]: setNull(isRecord(child) ? child : {}, rest) }
+  return { ...value, [key]: setNull(isRecord(child) ? child : {}, path.slice(dot + 1)) }
 }

@@ -357,6 +357,14 @@ describe('the pong watchdog', () => {
     expect(sock.close).toHaveBeenCalledOnce()
   })
 
+  it('does not watch a connection that is not a socket', async () => {
+    const { on, sock } = await connected()
+    on.connected(null)
+    on.ping(false)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(sock.close).not.toHaveBeenCalled()
+  })
+
   it('does not close a socket that is no longer open', async () => {
     const { on, sock } = await connected(WebSocket.CLOSING)
     on.ping(false)
