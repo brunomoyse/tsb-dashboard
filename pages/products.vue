@@ -818,12 +818,12 @@ const filteredProducts = computed(() => {
 
     const codeA = a.code ?? ''
     const codeB = b.code ?? ''
-    const alphaA = codeA.match(/^[A-Za-z]+/)?.[0] ?? ''
-    const alphaB = codeB.match(/^[A-Za-z]+/)?.[0] ?? ''
+    const alphaA = codeA.match(/^[A-Za-z]+/u)?.[0] ?? ''
+    const alphaB = codeB.match(/^[A-Za-z]+/u)?.[0] ?? ''
     if (alphaA !== alphaB) return alphaA.localeCompare(alphaB)
 
-    const numA = parseInt(codeA.match(/[0-9]+/)?.[0] ?? '0', 10)
-    const numB = parseInt(codeB.match(/[0-9]+/)?.[0] ?? '0', 10)
+    const numA = parseInt(codeA.match(/[0-9]+/u)?.[0] ?? '0', 10)
+    const numB = parseInt(codeB.match(/[0-9]+/u)?.[0] ?? '0', 10)
     if (numA !== numB) return numA - numB
 
     return a.name.localeCompare(b.name)

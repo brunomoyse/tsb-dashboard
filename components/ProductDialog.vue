@@ -468,9 +468,9 @@ import { useI18n } from 'vue-i18n'
 
 // Props and emits definition.
 const {
-  product,
+  product = undefined,
   mode = 'create',
-  onCreate,
+  onCreate = undefined,
 } = defineProps<{
   product?: Product
   mode?: 'create' | 'edit'
@@ -588,7 +588,7 @@ interface EditableChoice {
   sortOrder: number
   translations: ChoiceTranslation[]
   _deleted?: boolean
-  _isNew?: boolean
+  isNew?: boolean
 }
 
 interface EditableChoiceGroup {
@@ -599,7 +599,7 @@ interface EditableChoiceGroup {
   translations: ChoiceTranslation[]
   choices: EditableChoice[]
   _deleted?: boolean
-  _isNew?: boolean
+  isNew?: boolean
 }
 
 const editedChoiceGroups = ref<EditableChoiceGroup[]>(
@@ -688,7 +688,7 @@ const addNewChoiceGroup = () => {
     sortOrder: editedChoiceGroups.value.length,
     translations: languages.map((lang) => ({ locale: lang, name: '' })),
     choices: [],
-    _isNew: true,
+    isNew: true,
   })
   normalizeChoiceOrdering()
 }
@@ -700,7 +700,7 @@ const addNewChoice = (groupIdx: number) => {
     priceModifier: '0',
     sortOrder: group.choices.length,
     translations: languages.map((lang) => ({ locale: lang, name: '' })),
-    _isNew: true,
+    isNew: true,
   })
   normalizeChoiceOrdering()
 }
@@ -828,7 +828,7 @@ const saveChoices = async (productId: string) => {
   for (const group of editedChoiceGroups.value) {
     let groupId = group.id
 
-    if (group._isNew || !groupId) {
+    if (group.isNew || !groupId) {
       const { mutate } = useGqlMutation<{ createProductChoiceGroup: ProductChoiceGroup }>(
         CREATE_GROUP,
       )
@@ -843,7 +843,7 @@ const saveChoices = async (productId: string) => {
       })
       groupId = created.createProductChoiceGroup.id
       group.id = groupId
-      group._isNew = false
+      group.isNew = false
     } else {
       const { mutate } = useGqlMutation<{ updateProductChoiceGroup: ProductChoiceGroup }>(
         UPDATE_GROUP,
@@ -860,7 +860,7 @@ const saveChoices = async (productId: string) => {
     }
 
     for (const choice of group.choices) {
-      if (choice._isNew) {
+      if (choice.isNew) {
         const { mutate } = useGqlMutation<{ createProductChoice: ProductChoice }>(CREATE_CHOICE)
         await mutate({
           input: {
@@ -918,7 +918,7 @@ const closeDialog = () => {
 const LANG_LABELS: Record<string, string> = { fr: 'FR', en: 'EN', zh: 'ZH', nl: 'NL' }
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024 // 50 MB
-const CODE_REGEX = /^[A-Z]+\d+$/
+const CODE_REGEX = /^[A-Z]+\d+$/u
 
 const saveChanges = async () => {
   validationErrors.value = []

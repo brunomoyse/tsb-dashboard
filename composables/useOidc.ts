@@ -5,6 +5,7 @@ import {
   WebStorageStateStore,
 } from 'oidc-client-ts'
 import { SilentRenewUnavailableError, isSilentRenewUnavailable } from '~/utils/silentRenewError'
+import { hasText, isRecord } from '~/utils/guards'
 import { type Ref, ref } from 'vue'
 import { useRuntimeConfig } from '#imports'
 
@@ -23,12 +24,41 @@ let capacitorTokenCache: CapacitorTokens | null = null
  * promise. Zitadel rotates the refresh token on first use, so two concurrent
  * renews would race and the loser would be logged out mid-session.
  */
-let silentRenewPromise: Promise<OidcUser | null> | null = null
+let silentRenewPromise: Promise<RenewedSession | null> | null = null
 
 interface CapacitorTokens {
   access_token: string
   refresh_token?: string
   expires_at: number
+}
+
+/** What a renewal resolves with: the OIDC user on the web, the stored tokens on Capacitor. Callers read the token. */
+interface RenewedSession {
+  access_token: string
+}
+
+/** The part of oidc-client-ts's internal client that `getAuthRequestId` calls (not part of its public typings). */
+interface SigninClient {
+  createSigninRequest: (args: Record<string, never>) => Promise<{ url: string }>
+}
+
+const isSigninClient = (value: unknown): value is SigninClient =>
+  isRecord(value) && typeof value.createSigninRequest === 'function'
+
+const isCapacitorTokens = (value: unknown): value is CapacitorTokens =>
+  isRecord(value) &&
+  typeof value.access_token === 'string' &&
+  typeof value.expires_at === 'number' &&
+  (value.refresh_token === undefined || typeof value.refresh_token === 'string')
+
+/** The Capacitor tokens kept in localStorage, or null when absent, unreadable or not a token record. */
+const parseCapacitorTokens = (stored: string): CapacitorTokens | null => {
+  try {
+    const data: unknown = JSON.parse(stored)
+    return isCapacitorTokens(data) ? data : null
+  } catch {
+    return null
+  }
 }
 
 /*
@@ -65,8 +95,8 @@ const isTransient = (err: unknown): boolean => {
  */
 const isTokenExchangeRefusal = (err: unknown): boolean => {
   if (isOffline()) return false
-  const status = (err as { status?: number; statusCode?: number } | null)?.status
-  const code = status ?? (err as { statusCode?: number } | null)?.statusCode
+  const status = isRecord(err) ? err.status : undefined
+  const code = status ?? (isRecord(err) ? err.statusCode : undefined)
   return typeof code === 'number' && code >= 400 && code < 500 && code !== 408 && code !== 429
 }
 
@@ -120,8 +150,9 @@ export function useOidc() {
   function getUserManager(): UserManager {
     if (userManager) return userManager
 
-    const locale =
-      typeof window === 'undefined' ? 'fr' : window.location.pathname.split('/')[1] || 'fr'
+    const localeSegment =
+      typeof window === 'undefined' ? undefined : window.location.pathname.split('/')[1]
+    const locale = hasText(localeSegment) ? localeSegment : 'fr'
 
     if (isCapacitor) {
       const { origin } = window.location
@@ -137,7 +168,7 @@ export function useOidc() {
         stateStore: new WebStorageStateStore({ store: localStorage }),
       })
     } else {
-      const baseUrl = (config.public.dashboardBaseUrl as string).replace(/\/+$/, '')
+      const baseUrl = (config.public.dashboardBaseUrl as string).replace(/\/+$/u, '')
       userManager = new UserManager({
         authority: config.public.zitadelAuthority as string,
         client_id: config.public.zitadelClientId as string,
@@ -198,8 +229,9 @@ export function useOidc() {
    */
   async function getAuthRequestId(): Promise<string> {
     const mgr = getUserManager()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client = (mgr as any)._client
+    // `_client` is internal to oidc-client-ts: read it by name and check its shape instead of casting.
+    const client: unknown = Reflect.get(mgr, '_client')
+    if (!isSigninClient(client)) throw new Error('oidc-client-ts has no signin client')
     const signinRequest = await client.createSigninRequest({})
 
     const apiUrl = config.public.api as string
@@ -228,11 +260,12 @@ export function useOidc() {
     let codeVerifier = ''
     for (const key of keys) {
       const stateStr = await stateStore.get(key)
-      if (stateStr) {
+      if (hasText(stateStr)) {
         try {
-          const stateData = JSON.parse(stateStr)
-          if (stateData.code_verifier) {
-            codeVerifier = stateData.code_verifier
+          const stateData: unknown = JSON.parse(stateStr)
+          const verifier = isRecord(stateData) ? stateData.code_verifier : undefined
+          if (typeof verifier === 'string' && verifier !== '') {
+            codeVerifier = verifier
             await stateStore.remove(key)
             break
           }
@@ -299,15 +332,12 @@ export function useOidc() {
     // Then check localStorage (survives app restart)
     if (typeof localStorage !== 'undefined') {
       const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
-      if (stored) {
-        try {
-          const data: CapacitorTokens = JSON.parse(stored)
-          if (data.expires_at > now) {
-            capacitorTokenCache = data
-            return data.access_token
-          }
-        } catch {
-          /* Invalid data */
+      if (hasText(stored)) {
+        // Invalid data is skipped.
+        const data = parseCapacitorTokens(stored)
+        if (data !== null && data.expires_at > now) {
+          capacitorTokenCache = data
+          return data.access_token
         }
       }
     }
@@ -321,7 +351,7 @@ export function useOidc() {
       // Web: use oidc-client-ts UserManager
       const mgr = getUserManager()
       const user = await mgr.getUser()
-      if (user && !user.expired) return user.access_token
+      if (user && user.expired !== true) return user.access_token
       if (!user) return null // No session — nothing to renew
 
       /*
@@ -350,14 +380,14 @@ export function useOidc() {
    * caller keeps the staff member signed in and does not send them to the login page.
    * For 30 s after such a failure it rejects at once, without a call.
    */
-  function silentRenew(): Promise<OidcUser | null> {
+  function silentRenew(): Promise<RenewedSession | null> {
     silentRenewPromise ??= doSilentRenew().finally(() => {
       silentRenewPromise = null
     })
     return silentRenewPromise
   }
 
-  async function doSilentRenew(): Promise<OidcUser | null> {
+  async function doSilentRenew(): Promise<RenewedSession | null> {
     const outcome = await attemptRenewal()
     // Renewed, or the session is over: whatever kept the renewal from being made is behind us.
     renewBlockedBy = null
@@ -373,18 +403,15 @@ export function useOidc() {
     return renewBlockedBy !== null
   }
 
-  async function attemptRenewal(): Promise<OidcUser | null> {
+  async function attemptRenewal(): Promise<RenewedSession | null> {
     if (isCapacitor) {
       // Read stored refresh token
       const stored = localStorage.getItem(CAPACITOR_TOKEN_KEY)
-      if (!stored) return null
-      let data: CapacitorTokens
-      try {
-        data = JSON.parse(stored)
-      } catch {
-        return null
-      }
-      if (!data.refresh_token) return null
+      if (!hasText(stored)) return null
+      const data = parseCapacitorTokens(stored)
+      if (data === null) return null
+      const { refresh_token: refreshToken } = data
+      if (!hasText(refreshToken)) return null
       assertRenewalsAllowed()
 
       // Exchange refresh token via backend proxy
@@ -398,7 +425,7 @@ export function useOidc() {
         }>(`${apiUrl}/auth/token-exchange`, {
           method: 'POST',
           body: {
-            refreshToken: data.refresh_token,
+            refreshToken,
             clientId: config.public.zitadelNativeClientId as string,
           },
         })
@@ -411,7 +438,7 @@ export function useOidc() {
       // Update stored tokens (use new refresh_token if rotated, else keep old)
       const tokenData: CapacitorTokens = {
         access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token ?? data.refresh_token,
+        refresh_token: tokens.refresh_token ?? refreshToken,
         expires_at: Math.floor(Date.now() / 1000) + (tokens.expires_in || 3600),
       }
       try {
@@ -421,13 +448,13 @@ export function useOidc() {
         return null
       }
 
-      return tokenData as unknown as OidcUser
+      return tokenData
     }
     const mgr = getUserManager()
     const existing = await mgr.getUser()
     if (!existing) return null // No session to renew
     // Without a refresh token oidc-client-ts would try a hidden iframe, which this app does not configure: no way back.
-    if (!existing.refresh_token) return endSession(mgr)
+    if (!hasText(existing.refresh_token)) return endSession(mgr)
     assertRenewalsAllowed()
     try {
       const user = await mgr.signinSilent()
@@ -478,7 +505,7 @@ export function useOidc() {
     }
     const mgr = getUserManager()
     const user = await mgr.getUser()
-    return user !== null && !user.expired
+    return user !== null && user.expired !== true
   }
 
   /** Get the current OIDC user (from cache). */

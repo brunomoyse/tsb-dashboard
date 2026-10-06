@@ -261,7 +261,7 @@ describe('subscribing', () => {
 
   it('wraps a non-Error failure to open the client', async () => {
     h.createClient.mockImplementation(() => {
-      throw 'bad url' // oxlint-disable-line no-throw-literal -- a non-Error rejection is what is tested
+      throw 'bad url' // oxlint-disable-line no-throw-literal, typescript/only-throw-error -- a non-Error rejection is what is tested
     })
     const { subscribe } = await load()
     const { error } = subscribe(SUB)
@@ -355,6 +355,14 @@ describe('the pong watchdog', () => {
     expect(sock.close).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(2000)
     expect(sock.close).toHaveBeenCalledOnce()
+  })
+
+  it('does not watch a connection that is not a socket', async () => {
+    const { on, sock } = await connected()
+    on.connected(null)
+    on.ping(false)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(sock.close).not.toHaveBeenCalled()
   })
 
   it('does not close a socket that is no longer open', async () => {

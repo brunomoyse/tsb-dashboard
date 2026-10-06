@@ -49,11 +49,15 @@ mockNuxtImport('useNuxtApp', async (original) => {
   const { withGqlFetch } = await import('../helpers/gqlFetch')
   return () => withGqlFetch(original(), gqlFetch)
 })
-mockNuxtImport('useGqlQuery', () => async () => ({
-  data: ref({ coupons: gql.coupons }),
-  pending: ref(false),
-}))
-mockNuxtImport('useGqlSubscription', () => () => ({ data: ref(null) }))
+mockNuxtImport(
+  'useGqlQuery',
+  () => () =>
+    Promise.resolve({
+      data: ref({ coupons: gql.coupons }),
+      pending: ref(false),
+    }),
+)
+mockNuxtImport('useGqlSubscription', () => () => ({ data: ref<unknown>(null) }))
 mockNuxtImport('useIsMobile', () => () => ref(true))
 vi.mock('vue-i18n', async (importOriginal) => {
   const { fakeI18n } = await import('../helpers/i18n')
@@ -71,7 +75,7 @@ describe('coupons page', () => {
     expect(text).toContain('−10 %')
     expect(text).toContain('coupons.until{"date":"31/10/2026"}')
     expect(text).toContain('FIVEOFF')
-    expect(text).toMatch(/−5,00\s*€/)
+    expect(text).toMatch(/−5,00\s*€/u)
     expect(text).toContain('coupons.noEnd')
     expect(text).toContain('coupons.inactive')
   })

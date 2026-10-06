@@ -16,20 +16,17 @@ import { computed } from 'vue'
 
 export type PiliChipTone = 'warning' | 'danger' | 'success' | 'info' | 'neutral' | 'outline'
 
-const props = withDefaults(
-  defineProps<{
-    tone?: PiliChipTone
-    /** sm 20px, md 22px, lg 24px */
-    size?: 'sm' | 'md' | 'lg'
-    /** Mono uppercase label (EN RETARD, LIVRAISON) */
-    mono?: boolean
-  }>(),
-  {
-    tone: 'neutral',
-    size: 'md',
-    mono: false,
-  },
-)
+const {
+  tone = 'neutral',
+  size = 'md',
+  mono = false,
+} = defineProps<{
+  tone?: PiliChipTone
+  /** sm 20px, md 22px, lg 24px */
+  size?: 'sm' | 'md' | 'lg'
+  /** Mono uppercase label (EN RETARD, LIVRAISON) */
+  mono?: boolean
+}>()
 
 // Solid colour with Encre text. Neutral is Ardoise with Brume text.
 const TONES: Record<PiliChipTone, string> = {
@@ -47,6 +44,6 @@ const SIZES = {
   lg: 'h-6 px-[9px] text-[13px]',
 }
 
-const toneClass = computed(() => TONES[props.tone])
-const sizeClass = computed(() => SIZES[props.size])
+const toneClass = computed(() => TONES[tone])
+const sizeClass = computed(() => SIZES[size])
 </script>

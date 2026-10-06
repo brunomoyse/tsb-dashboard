@@ -1,4 +1,5 @@
 import { useRuntimeConfig } from '#imports'
+import { hasText } from '~/utils/guards'
 
 interface SessionResponse {
   sessionId: string
@@ -26,7 +27,8 @@ export function useZitadelApi() {
   /** Detect current locale from URL path (safe outside Vue setup context). */
   function getLang(): string {
     if (typeof window !== 'undefined') {
-      return window.location.pathname.split('/')[1] || 'fr'
+      const [, segment] = window.location.pathname.split('/')
+      return hasText(segment) ? segment : 'fr'
     }
     return 'fr'
   }

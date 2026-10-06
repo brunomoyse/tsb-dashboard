@@ -6,7 +6,7 @@
 //   const [manager] = fakeUserManagers()                          // after the first call that needs the manager
 //
 // The list lives on `globalThis`, so that it survives `vi.resetModules()` (a reset re-evaluates this module).
-import { vi } from 'vite-plus/test'
+import { type Mock, vi } from 'vite-plus/test'
 
 type Listener = (arg?: unknown) => unknown
 
@@ -35,9 +35,9 @@ export class FakeUserManager {
   // (`manager.settings.stateStore.getAllKeys.mockResolvedValue([...])`).
   settings: Record<string, unknown> & {
     stateStore: {
-      getAllKeys: ReturnType<typeof vi.fn>
-      get: ReturnType<typeof vi.fn>
-      remove: ReturnType<typeof vi.fn>
+      getAllKeys: Mock<() => Promise<string[]>>
+      get: Mock<(key: string) => Promise<string | null | undefined>>
+      remove: Mock<(key: string) => Promise<null>>
     }
   }
   constructor(public options: Record<string, unknown>) {

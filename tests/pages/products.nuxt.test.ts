@@ -19,7 +19,7 @@ const h = vi.hoisted(() => ({
 
 mockNuxtImport(
   'useNuxtApp',
-  async (original) => () =>
+  (original) => () =>
     new Proxy(original(), {
       get(target, key, receiver) {
         if (key === '$api') return h.api
@@ -28,14 +28,18 @@ mockNuxtImport(
       },
     }),
 )
-mockNuxtImport('useGqlQuery', () => async (query: string) => ({
-  data: ref(
-    query.includes('productCategories') ? { productCategories: [] } : { products: h.products },
-  ),
-  pending: ref(false),
-  refetch: vi.fn(),
-}))
-mockNuxtImport('useGqlSubscription', () => () => ({ data: ref(null) }))
+mockNuxtImport(
+  'useGqlQuery',
+  () => (query: string) =>
+    Promise.resolve({
+      data: ref(
+        query.includes('productCategories') ? { productCategories: [] } : { products: h.products },
+      ),
+      pending: ref(false),
+      refetch: vi.fn(),
+    }),
+)
+mockNuxtImport('useGqlSubscription', () => () => ({ data: ref<unknown>(null) }))
 mockNuxtImport('useIsMobile', () => () => ref(false))
 vi.mock('vue-i18n', async (importOriginal) => {
   const { fakeI18n } = await import('../helpers/i18n')

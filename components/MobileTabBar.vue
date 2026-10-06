@@ -37,7 +37,7 @@ const ordersStore = useOrdersStore()
 const MORE_SECTIONS = ['/more', '/customers', '/coupons', '/settings', '/assistant']
 
 const tabs = computed(() => {
-  const path = route.path
+  const { path } = route
   return [
     {
       key: 'orders',

@@ -108,17 +108,17 @@ describe('in the Android app', () => {
       expect(navigateTo).toHaveBeenCalledExactlyOnceWith('/fr/auth/callback?code=c1&state=s1')
     })
 
-    it('routes a callback link without a query', async () => {
+    it('routes a callback link without a query', () => {
       deepLink({ url: 'https://dash.example/nl/auth/callback' })
       expect(navigateTo).toHaveBeenCalledExactlyOnceWith('/nl/auth/callback')
     })
 
-    it('ignores every other link', async () => {
+    it('ignores every other link', () => {
       deepLink({ url: 'https://dash.example/fr/orders' })
       expect(navigateTo).not.toHaveBeenCalled()
     })
 
-    it('ignores a malformed link', async () => {
+    it('ignores a malformed link', () => {
       expect(() => {
         deepLink({ url: 'not a url' })
       }).not.toThrow()

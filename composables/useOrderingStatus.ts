@@ -40,7 +40,9 @@ export function useOrderingStatus() {
   const updating = ref(false)
 
   const load = async () => {
-    const data = await $gqlFetch<{ restaurantConfig: { orderingEnabled: boolean } }>(GET_ORDERING)
+    const data = await $gqlFetch<{ restaurantConfig: { orderingEnabled: boolean } } | null>(
+      GET_ORDERING,
+    )
     if (data) enabled.value = data.restaurantConfig.orderingEnabled
   }
 

@@ -1,7 +1,8 @@
 import { onMounted, onUnmounted, ref } from 'vue'
-import type { Order } from '~/types'
+import type { Order, ProductCategory } from '~/types'
 import { SunmiPrinter } from '~/plugins/capacitor-sunmi-printer/src/index'
 import { usePlatform } from '~/composables/usePlatform'
+import { hasText } from '~/utils/guards'
 import { formatCentsReceipt, parseCents, sumCents, toCents } from '~/utils/money'
 
 // ─── Receipt formatting helpers ────────────────────────────────────────────────
@@ -54,14 +55,19 @@ function frName(obj: {
   translations?: { language: string; name: string }[]
 }): string {
   const fr = obj.translations?.find((t) => t.language === 'fr')?.name
-  return fr?.trim() || obj.name
+  const trimmed = fr?.trim()
+  return hasText(trimmed) ? trimmed : obj.name
 }
+
+/** The category of a product, which orders pushed by the live subscription may lack. */
+const categoryOf = (product: { category?: ProductCategory | null }) => product.category
 
 /** Group order items by their product category (French name, insertion order). */
 function groupItemsByCategory(items: Order['items']) {
   const groups = new Map<string, Order['items']>()
   for (const item of items) {
-    const cat = item.product.category ? frName(item.product.category) : 'Autres'
+    const category = categoryOf(item.product)
+    const cat = category ? frName(category) : 'Autres'
     const bucket = groups.get(cat) ?? []
     bucket.push(item)
     groups.set(cat, bucket)
@@ -71,7 +77,7 @@ function groupItemsByCategory(items: Order['items']) {
 
 /** Short human-readable order code (last 5 chars of UUID, uppercase). */
 function shortOrderCode(id: string): string {
-  return id.replace(/-/g, '').slice(-5).toUpperCase()
+  return id.replace(/-/gu, '').slice(-5).toUpperCase()
 }
 
 // ─── Composable ────────────────────────────────────────────────────────────────
@@ -126,7 +132,7 @@ export const useSunmiPrinter = () => {
 
   // ─── Internal: delivery receipt ─────────────────────────────────────────────
 
-  async function _printDelivery(plugin: ReturnType<typeof getPlugin>, order: Order) {
+  async function printDeliveryReceipt(plugin: ReturnType<typeof getPlugin>, order: Order) {
     await plugin.printerInit()
 
     // Header
@@ -145,30 +151,31 @@ export const useSunmiPrinter = () => {
     // Meta
     await plugin.printText({ text: `Le: ${receiptDateTime(order.createdAt)}\n` })
     const ready = order.estimatedReadyTime ?? order.preferredReadyTime
-    await plugin.printText({ text: `Prêt: ${ready ? receiptDateTime(ready) : 'ASAP'}\n` })
+    await plugin.printText({ text: `Prêt: ${hasText(ready) ? receiptDateTime(ready) : 'ASAP'}\n` })
 
     // Customer
     if (order.customer) {
       await plugin.printText({ text: `\n${SEP}\n` })
       const fullName = `${order.customer.firstName} ${order.customer.lastName}`
       await plugin.printText({ text: `${fullName}\n` })
-      if (order.customer.phoneNumber) {
+      if (hasText(order.customer.phoneNumber)) {
         await plugin.printText({ text: `${order.customer.phoneNumber}\n` })
       }
     }
 
     // Address
-    if (order.address || order.displayAddress) {
+    const { address } = order
+    if (address || hasText(order.displayAddress)) {
       await plugin.printText({ text: `\n${SEP}\n` })
-      if (order.address) {
-        const { streetName, houseNumber, boxNumber, postcode, municipalityName } = order.address
-        const box = boxNumber ? ` bte ${boxNumber}` : ''
+      if (address) {
+        const { streetName, houseNumber, boxNumber, postcode, municipalityName } = address
+        const box = hasText(boxNumber) ? ` bte ${boxNumber}` : ''
         await plugin.printText({ text: `${streetName} ${houseNumber}${box}\n` })
         await plugin.printText({ text: `${postcode} ${municipalityName}\n` })
       } else {
         await plugin.printText({ text: `${order.displayAddress}\n` })
       }
-      if (order.addressExtra) {
+      if (hasText(order.addressExtra)) {
         await plugin.printText({ text: `(${order.addressExtra})\n` })
       }
     }
@@ -181,8 +188,8 @@ export const useSunmiPrinter = () => {
     for (const [catName, items] of groupItemsByCategory(order.items)) {
       await plugin.printText({ text: `\n${categoryBanner(catName)}\n` })
       for (const item of items) {
-        const code = item.product.code ? `${item.product.code}. ` : ''
-        const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
+        const code = hasText(item.product.code) ? `${item.product.code}. ` : ''
+        const choiceName = hasText(item.choice?.name) ? ` (${item.choice.name})` : ''
         // Sunmi 58mm paper = 32 chars. Use 3 + 18 + 9 = 30 with 2-char safety.
         await plugin.printColumnsText({
           columns: [
@@ -246,18 +253,20 @@ export const useSunmiPrinter = () => {
     await plugin.setAlignment({ alignment: 'left' })
 
     // Extras
-    if (order.orderExtra?.length) {
+    const extras = order.orderExtra ?? []
+    if (extras.length > 0) {
       await plugin.printText({ text: `\n${SEP}\n` })
-      for (const extra of order.orderExtra) {
-        if (extra.name) {
-          const opts = extra.options?.length ? `: ${extra.options.join(', ')}` : ''
+      for (const extra of extras) {
+        if (hasText(extra.name)) {
+          const options = extra.options ?? []
+          const opts = options.length > 0 ? `: ${options.join(', ')}` : ''
           await plugin.printText({ text: `+ ${extra.name}${opts}\n` })
         }
       }
     }
 
     // Notes
-    if (order.orderNote) {
+    if (hasText(order.orderNote)) {
       await plugin.printText({ text: `\n${SEP}\n` })
       await plugin.printText({ text: `Note: ${order.orderNote}\n` })
     }
@@ -272,7 +281,7 @@ export const useSunmiPrinter = () => {
 
   // ─── Internal: kitchen receipt ───────────────────────────────────────────────
 
-  async function _printKitchen(plugin: ReturnType<typeof getPlugin>, order: Order) {
+  async function printKitchenReceipt(plugin: ReturnType<typeof getPlugin>, order: Order) {
     await plugin.printerInit()
 
     // Header
@@ -291,11 +300,11 @@ export const useSunmiPrinter = () => {
     // Order meta + customer context
     await plugin.printText({ text: `Le: ${receiptDateTime(order.createdAt)}\n` })
     const ready = order.estimatedReadyTime ?? order.preferredReadyTime
-    await plugin.printText({ text: `Prêt: ${ready ? receiptDateTime(ready) : 'ASAP'}\n` })
+    await plugin.printText({ text: `Prêt: ${hasText(ready) ? receiptDateTime(ready) : 'ASAP'}\n` })
     if (order.customer) {
       const fullName = `${order.customer.firstName} ${order.customer.lastName}`
       await plugin.printText({ text: `${fullName}\n` })
-      if (order.customer.phoneNumber) {
+      if (hasText(order.customer.phoneNumber)) {
         await plugin.printText({ text: `${order.customer.phoneNumber}\n` })
       }
     }
@@ -306,8 +315,8 @@ export const useSunmiPrinter = () => {
     for (const [catName, items] of groupItemsByCategory(order.items)) {
       await plugin.printText({ text: `\n${categoryBanner(catName)}\n` })
       for (const item of items) {
-        const code = item.product.code ? `${item.product.code}. ` : ''
-        const choiceName = item.choice?.name ? ` (${item.choice.name})` : ''
+        const code = hasText(item.product.code) ? `${item.product.code}. ` : ''
+        const choiceName = hasText(item.choice?.name) ? ` (${item.choice.name})` : ''
         await plugin.setBold({ enabled: true })
         await plugin.setFontSize({ size: 28 })
         await plugin.printText({
@@ -319,18 +328,20 @@ export const useSunmiPrinter = () => {
     }
 
     // Extras
-    if (order.orderExtra?.length) {
+    const extras = order.orderExtra ?? []
+    if (extras.length > 0) {
       await plugin.printText({ text: `\n${SEP}\n` })
-      for (const extra of order.orderExtra) {
-        if (extra.name) {
-          const opts = extra.options?.length ? `: ${extra.options.join(', ')}` : ''
+      for (const extra of extras) {
+        if (hasText(extra.name)) {
+          const options = extra.options ?? []
+          const opts = options.length > 0 ? `: ${options.join(', ')}` : ''
           await plugin.printText({ text: `+ ${extra.name}${opts}\n` })
         }
       }
     }
 
     // Notes
-    if (order.orderNote) {
+    if (hasText(order.orderNote)) {
       await plugin.printText({ text: `\n${SEP}\n` })
       await plugin.printText({ text: `Note: ${order.orderNote}\n` })
     }
@@ -349,7 +360,7 @@ export const useSunmiPrinter = () => {
       return
     }
     const plugin = getPlugin()
-    await _printDelivery(plugin, order)
+    await printDeliveryReceipt(plugin, order)
   }
 
   /** Print a kitchen copy (items + notes only). */
@@ -360,7 +371,7 @@ export const useSunmiPrinter = () => {
       return
     }
     const plugin = getPlugin()
-    await _printKitchen(plugin, order)
+    await printKitchenReceipt(plugin, order)
   }
 
   /**

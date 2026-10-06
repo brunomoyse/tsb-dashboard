@@ -1,3 +1,5 @@
+import { hasText } from '~/utils/guards'
+
 /*
  * Money is handled as integer cents. The API sends prices as decimal strings ("12.50"); summing them as floats drifts
  * (0.1 + 0.2), so every amount is converted to cents first and only formatted at the edge.
@@ -14,12 +16,16 @@ export function parseCents(value: string | number | null | undefined): number | 
   if (typeof value === 'number')
     return Number.isFinite(value) ? parseCents(numberToDecimal(value)) : null
   if (typeof value !== 'string') return null
-  const match = /^\s*([+-])?(\d+)?(?:[.,](\d*))?\s*$/u.exec(value)
-  if (!match || (!match[2] && !match[3])) return null
-  const fraction = (match[3] ?? '').padEnd(3, '0')
-  let cents = Number(match[2] ?? '0') * 100 + Number(fraction.slice(0, 2))
+  const groups = /^\s*(?<sign>[+-])?(?<whole>\d+)?(?:[.,](?<decimals>\d*))?\s*$/u.exec(
+    value,
+  )?.groups
+  if (groups === undefined) return null
+  const { sign, whole, decimals } = groups
+  if (!hasText(whole) && !hasText(decimals)) return null
+  const fraction = (decimals ?? '').padEnd(3, '0')
+  let cents = Number(whole ?? '0') * 100 + Number(fraction.slice(0, 2))
   if (Number(fraction[2]) >= 5) cents += 1
-  return match[1] === '-' && cents > 0 ? -cents : cents
+  return sign === '-' && cents > 0 ? -cents : cents
 }
 
 /** The plain decimal text of a finite number: `String()` writes 1e-7 / 1e21 with an exponent, which `parseCents` refuses. */

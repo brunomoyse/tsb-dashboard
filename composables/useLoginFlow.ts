@@ -2,15 +2,25 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRuntimeConfig } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { useZitadelApi } from '~/composables/useZitadelApi'
+import { isRecord } from '~/utils/guards'
 
 type LoginStep = 'email' | 'code' | 'totp'
 
 /** HTTP status of a failed `$fetch` call (`response.status` or `statusCode`). */
-const httpStatus = (error: any): number | undefined => error?.response?.status || error?.statusCode
+const httpStatus = (error: unknown): number | undefined => {
+  if (!isRecord(error)) return undefined
+  const fromResponse = isRecord(error.response) ? error.response.status : undefined
+  if (typeof fromResponse === 'number' && fromResponse !== 0) return fromResponse
+  return typeof error.statusCode === 'number' ? error.statusCode : undefined
+}
+
+/** The `error` code of the JSON body of a failed `$fetch` call. */
+const errorCodeOf = (error: unknown): unknown =>
+  isRecord(error) && isRecord(error.data) ? error.data.error : undefined
 
 /** The backend refuses to finalize a staff login whose TOTP step was skipped. */
-const isMfaRequired = (error: any): boolean =>
-  httpStatus(error) === 403 && error?.data?.error === 'mfa_required'
+const isMfaRequired = (error: unknown): boolean =>
+  httpStatus(error) === 403 && errorCodeOf(error) === 'mfa_required'
 
 /**
  * State machine of the login page (pages/auth/login.vue): email -> OTP code -> (staff with an authenticator app) TOTP
@@ -40,7 +50,8 @@ export function useLoginFlow() {
   let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
   // Zitadel passes authRequestID when redirecting to custom login (URL query param)
-  const authRequestIdFromUrl = (route.query.authRequestID as string) || ''
+  const authRequestIdParam = route.query.authRequestID
+  const authRequestIdFromUrl = typeof authRequestIdParam === 'string' ? authRequestIdParam : ''
   // Fetched via authorize-proxy when no URL param (so we stay on dashboard domain)
   const fetchedAuthRequestId = ref('')
 
@@ -62,7 +73,7 @@ export function useLoginFlow() {
         const { useOidc } = await import('~/composables/useOidc')
         const { getAuthRequestId } = useOidc()
         fetchedAuthRequestId.value = await getAuthRequestId()
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (import.meta.dev) console.error('Failed to fetch authRequestId:', error)
       } finally {
         initializing.value = false
@@ -110,9 +121,9 @@ export function useLoginFlow() {
       otpSessionToken.value = session.sessionToken
       step.value = 'code'
       startCooldown()
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (import.meta.dev) console.error('OTP request error:', error)
-      const errorCode = error?.data?.error
+      const errorCode = errorCodeOf(error)
       if (httpStatus(error) === 429) {
         errorMessage.value = t('login.tooManyRequests')
       } else if (errorCode === 'email_not_verified') {
@@ -142,7 +153,7 @@ export function useLoginFlow() {
     try {
       await resendOtpLogin(otpSessionId.value, otpSessionToken.value)
       startCooldown()
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorMessage.value =
         httpStatus(error) === 429 ? t('login.tooManyRequests') : t('login.requestFailed')
     } finally {
@@ -170,7 +181,8 @@ export function useLoginFlow() {
       // And navigating there would lose the OIDC state.
       const callbackUrl = new URL(result.callbackUrl)
       const authCode = callbackUrl.searchParams.get('code')
-      if (!authCode) throw new Error('No authorization code in callback URL')
+      if (authCode === null || authCode === '')
+        throw new Error('No authorization code in callback URL')
 
       const { useOidc } = await import('~/composables/useOidc')
       const { exchangeCodeForTokens } = useOidc()
@@ -211,14 +223,14 @@ export function useLoginFlow() {
       otpSessionId.value = verified.sessionId
       otpSessionToken.value = verified.sessionToken
 
-      if (verified.requiresTotp) {
+      if (verified.requiresTotp === true) {
         step.value = 'totp'
         loading.value = false
         return
       }
 
       await finishLogin(verified.sessionId, verified.sessionToken)
-    } catch (error: any) {
+    } catch (error: unknown) {
       loading.value = false
       if (import.meta.dev) console.error('OTP verify error:', error)
 
@@ -255,7 +267,7 @@ export function useLoginFlow() {
       )
       otpSessionToken.value = verified.sessionToken
       await finishLogin(verified.sessionId, verified.sessionToken)
-    } catch (error: any) {
+    } catch (error: unknown) {
       loading.value = false
       if (import.meta.dev) console.error('TOTP verify error:', error)
       totpCode.value = ''

@@ -55,39 +55,38 @@ export interface PiliSegmentedOption<V> {
   countTone?: 'warning'
 }
 
-const props = withDefaults(
-  defineProps<{
-    modelValue: T | null
-    options: PiliSegmentedOption<T>[]
-    /** Button height in px: 56 with counts, 48 for time deltas, 44 otherwise */
-    height?: number
-    /** Track colour: Graphite on the page, Ardoise inside a card */
-    surface?: 'graphite' | 'ardoise'
-    /** Unselected labels in muted text instead of Brume */
-    muted?: boolean
-    /** Labels are figures (+15, +30) */
-    mono?: boolean
-    /** Tapping the selected option clears the selection */
-    deselectable?: boolean
-    label?: string
-  }>(),
-  {
-    height: 44,
-    surface: 'graphite',
-    muted: false,
-    mono: false,
-    deselectable: false,
-    label: undefined,
-  },
-)
+const {
+  modelValue,
+  options,
+  height = 44,
+  surface = 'graphite',
+  muted = false,
+  mono = false,
+  deselectable = false,
+  label = undefined,
+} = defineProps<{
+  modelValue: T | null
+  options: PiliSegmentedOption<T>[]
+  /** Button height in px: 56 with counts, 48 for time deltas, 44 otherwise */
+  height?: number
+  /** Track colour: Graphite on the page, Ardoise inside a card */
+  surface?: 'graphite' | 'ardoise'
+  /** Unselected labels in muted text instead of Brume */
+  muted?: boolean
+  /** Labels are figures (+15, +30) */
+  mono?: boolean
+  /** Tapping the selected option clears the selection */
+  deselectable?: boolean
+  label?: string
+}>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: T | null] }>()
 
-const hasCounts = computed(() => props.options.some((o) => o.count !== undefined))
+const hasCounts = computed(() => options.some((o) => o.count !== undefined))
 
 const select = (value: T) => {
-  if (value === props.modelValue) {
-    if (props.deselectable) emit('update:modelValue', null)
+  if (value === modelValue) {
+    if (deselectable) emit('update:modelValue', null)
     return
   }
   emit('update:modelValue', value)

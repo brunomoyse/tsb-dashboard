@@ -860,8 +860,9 @@ import {
   nextActionOf,
   hasBreakdown as orderHasBreakdown,
   resolveDrop,
+  type KanbanColumnDef,
+  type MobileTab,
 } from '~/utils/orders'
-import type { KanbanColumnDef, MobileTab } from '~/utils/orders'
 import { centsToEuros, toCents } from '~/utils/money'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {

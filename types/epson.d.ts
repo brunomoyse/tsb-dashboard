@@ -9,27 +9,29 @@ declare global {
 interface EpsonDevice {
   DEVICE_TYPE_PRINTER: string
 
-  connect(ip: string, port: number, callback: (result: string) => void): void
-  disconnect(): void
+  connect: (ip: string, port: number, callback: (result: string) => void) => void
+  disconnect: () => void
 
-  createDevice(
-    deviceId: string,
-    deviceType: string,
-    options: { crypto: boolean; buffer: boolean },
-    callback: (device: EpsonPrinter | null, errorCode: string) => void,
-  ): void
+  createDevice: (
+    ...args: [
+      deviceId: string,
+      deviceType: string,
+      options: { crypto: boolean; buffer: boolean },
+      callback: (device: EpsonPrinter | null, errorCode: string) => void,
+    ]
+  ) => void
 
-  discovery(options?: {
+  discovery: (options?: {
     portNumber?: number
     broadcast?: string
     interval?: number
     timeout?: number
-  }): void
+  }) => void
 
   onreceive?: (device: DiscoveredDevice) => void
   ondiscovery?: () => void
   ondiscoveryerror?: (error: string) => void
-  stopDiscovery(): void
+  stopDiscovery: () => void
 }
 
 interface EpsonPrinter {
@@ -41,19 +43,21 @@ interface EpsonPrinter {
   FONT_B: number
   COLOR_1: number
 
-  addTextAlign(align: number): void
-  addTextSize(width: number, height: number): void
-  addText(text: string): void
-  addTextStyle(
-    reverse: boolean | undefined,
-    ul: boolean | undefined,
-    em: boolean | undefined,
-    color?: number,
-  ): void
-  addTextFont(font: number): void
-  addFeedLine(lines: number): void
-  addCut(type: number): void
-  send(): void
+  addTextAlign: (align: number) => void
+  addTextSize: (width: number, height: number) => void
+  addText: (text: string) => void
+  addTextStyle: (
+    ...args: [
+      reverse: boolean | undefined,
+      ul: boolean | undefined,
+      em: boolean | undefined,
+      color?: number,
+    ]
+  ) => void
+  addTextFont: (font: number) => void
+  addFeedLine: (lines: number) => void
+  addCut: (type: number) => void
+  send: () => void
 
   onreceive?: (res: { success: boolean; code: string; status: number }) => void
   onerror?: (err: { status: number }) => void

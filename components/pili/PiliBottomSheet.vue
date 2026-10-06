@@ -41,24 +41,23 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(
-  defineProps<{
-    open: boolean
-    title: string
-    description?: string
-    /** Take the full height of the screen (forms, customer detail) */
-    full?: boolean
-    /** Keep the title for screen readers only */
-    hideTitle?: boolean
-    dismissible?: boolean
-  }>(),
-  {
-    description: undefined,
-    full: false,
-    hideTitle: false,
-    dismissible: true,
-  },
-)
+const {
+  open,
+  title,
+  description = undefined,
+  full = false,
+  hideTitle = false,
+  dismissible = true,
+} = defineProps<{
+  open: boolean
+  title: string
+  description?: string
+  /** Take the full height of the screen (forms, customer detail) */
+  full?: boolean
+  /** Keep the title for screen readers only */
+  hideTitle?: boolean
+  dismissible?: boolean
+}>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 </script>

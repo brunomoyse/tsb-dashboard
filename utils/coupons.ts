@@ -1,6 +1,7 @@
 import type { Translate } from '~/utils/translate'
 import type { Coupon, CouponStatus, CreateCouponInput, UpdateCouponInput } from '~/types'
 import { brusselsDateTimeLocalToISO, formatPrice, isoToBrusselsDateTimeLocal } from '~/utils/utils'
+import { hasText } from '~/utils/guards'
 
 /*
  * Pure coupon logic of pages/coupons.vue: the form model and its validation, the create / update inputs sent to the API,
@@ -73,6 +74,12 @@ export const validateCouponForm = (form: CouponForm, t: Translate): string => {
   return ''
 }
 
+/** An amount field as the API takes it: null when empty. A `type="number"` input may hand over a number (0 and NaN count as empty). */
+const optionalAmount = (value: string | number): string | null => {
+  if (typeof value === 'number') return value !== 0 && !Number.isNaN(value) ? String(value) : null
+  return value === '' ? null : value
+}
+
 /**
  * The input sent to createCoupon / updateCoupon (both take the same fields): the code upper-cased and trimmed, empty
  * optional fields as null, the validity dates read as Brussels wall-clock time and sent as UTC instants.
@@ -81,7 +88,7 @@ export const buildCouponInput = (form: CouponForm): CreateCouponInput & UpdateCo
   code: form.code.trim().toUpperCase(),
   discountType: form.discountType,
   discountValue: form.discountValue,
-  minOrderAmount: form.minOrderAmount ? String(form.minOrderAmount) : null,
+  minOrderAmount: optionalAmount(form.minOrderAmount),
   maxUses: form.maxUses ? Number(form.maxUses) : null,
   maxUsesPerUser: form.maxUsesPerUser ? Number(form.maxUsesPerUser) : null,
   isActive: form.isActive,
@@ -126,43 +133,39 @@ export const paginate = <T>(items: T[], page: number, pageSize: number): T[] => 
 }
 
 export const statusMeta = (status: CouponStatus, t: Translate) => {
-  switch (status) {
-    case 'ACTIVE':
-      return {
-        label: t('coupons.active'),
-        icon: 'i-lucide-circle-check',
-        tone: 'bg-success text-inverted',
-        chip: 'success' as const,
-      }
-    case 'INACTIVE':
-      return {
-        label: t('coupons.inactive'),
-        icon: 'i-lucide-circle-x',
-        tone: 'bg-accented text-muted',
-        chip: 'neutral' as const,
-      }
-    case 'EXPIRED':
-      return {
-        label: t('coupons.expired'),
-        icon: 'i-lucide-clock-alert',
-        tone: 'bg-warning text-inverted',
-        chip: 'warning' as const,
-      }
-    case 'SCHEDULED':
-      return {
-        label: t('coupons.scheduled'),
-        icon: 'i-lucide-calendar-clock',
-        tone: 'bg-info text-inverted',
-        chip: 'info' as const,
-      }
-    case 'EXHAUSTED':
-      return {
-        label: t('coupons.exhausted'),
-        icon: 'i-lucide-battery-low',
-        tone: 'bg-warning text-inverted',
-        chip: 'warning' as const,
-      }
-  }
+  const metas = {
+    ACTIVE: {
+      label: t('coupons.active'),
+      icon: 'i-lucide-circle-check',
+      tone: 'bg-success text-inverted',
+      chip: 'success' as const,
+    },
+    INACTIVE: {
+      label: t('coupons.inactive'),
+      icon: 'i-lucide-circle-x',
+      tone: 'bg-accented text-muted',
+      chip: 'neutral' as const,
+    },
+    EXPIRED: {
+      label: t('coupons.expired'),
+      icon: 'i-lucide-clock-alert',
+      tone: 'bg-warning text-inverted',
+      chip: 'warning' as const,
+    },
+    SCHEDULED: {
+      label: t('coupons.scheduled'),
+      icon: 'i-lucide-calendar-clock',
+      tone: 'bg-info text-inverted',
+      chip: 'info' as const,
+    },
+    EXHAUSTED: {
+      label: t('coupons.exhausted'),
+      icon: 'i-lucide-battery-low',
+      tone: 'bg-warning text-inverted',
+      chip: 'warning' as const,
+    },
+  } satisfies Record<CouponStatus, unknown>
+  return metas[status]
 }
 
 /** "−15 %" for a percentage coupon, "−5,00 €" for a fixed one. */
@@ -176,20 +179,20 @@ const shortDate = (d: string) =>
 
 /** Validity period of a coupon, for the mobile card: "from X to Y", "until Y" or "no end". */
 export const periodLabel = (coupon: Coupon, t: Translate): string => {
-  if (coupon.validFrom && coupon.validUntil)
+  if (hasText(coupon.validFrom) && hasText(coupon.validUntil))
     return t('coupons.fromTo', {
       from: shortDate(coupon.validFrom),
       to: shortDate(coupon.validUntil),
     })
-  if (coupon.validUntil) return t('coupons.until', { date: shortDate(coupon.validUntil) })
+  if (hasText(coupon.validUntil)) return t('coupons.until', { date: shortDate(coupon.validUntil) })
   return t('coupons.noEnd')
 }
 
 /** Validity period of a coupon, for the desktop table: "04/10/2026 - 31/10/2026". */
 export const formatDateRange = (from: string | null, until: string | null): string => {
   const fmt = shortDate
-  if (from && until) return `${fmt(from)} - ${fmt(until)}`
-  if (from) return `${fmt(from)} -`
-  if (until) return `- ${fmt(until)}`
+  if (hasText(from) && hasText(until)) return `${fmt(from)} - ${fmt(until)}`
+  if (hasText(from)) return `${fmt(from)} -`
+  if (hasText(until)) return `- ${fmt(until)}`
   return '-'
 }

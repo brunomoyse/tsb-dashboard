@@ -11,11 +11,15 @@ import { settle } from '../helpers/settle'
 
 const gql = vi.hoisted(() => ({ orders: [] as unknown[] }))
 
-mockNuxtImport('useGqlQuery', () => async () => ({
-  data: ref({ orders: gql.orders }),
-  pending: ref(false),
-}))
-mockNuxtImport('useGqlSubscription', () => () => ({ data: ref(null) }))
+mockNuxtImport(
+  'useGqlQuery',
+  () => () =>
+    Promise.resolve({
+      data: ref({ orders: gql.orders }),
+      pending: ref(false),
+    }),
+)
+mockNuxtImport('useGqlSubscription', () => () => ({ data: ref<unknown>(null) }))
 mockNuxtImport('useOrderingStatus', () => () => ({
   enabled: ref(true),
   updating: ref(false),

@@ -14,7 +14,7 @@ export function useGqlMutation<T = unknown>(rawMutation: string | DocumentNode) 
   const { $gqlFetch } = useNuxtApp()
   const data = ref<T>()
   const loading = ref(false)
-  const error = ref<any>()
+  const error = ref<unknown>()
 
   /** Call this and await the result */
   async function mutate(variables: Vars = {}): Promise<T> {
