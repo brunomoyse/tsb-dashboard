@@ -335,7 +335,17 @@
     "orderHistory": "Historique des commandes",
     "noOrdersFound": "Aucune commande trouvée",
     "memberSince": "Client depuis",
-    "last": "Dernière"
+    "last": "Dernière",
+    "sort": {
+      "title": "Trier par",
+      "default": "Par défaut",
+      "orders": "Commandes",
+      "total": "Total dépensé",
+      "average": "Moy. commande",
+      "descending": "du plus grand au plus petit",
+      "ascending": "du plus petit au plus grand",
+      "byColumn": "Trier par {column}"
+    }
   },
 
   "navigation": {

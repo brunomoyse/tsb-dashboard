@@ -330,7 +330,17 @@
     "orderHistory": "Bestelgeschiedenis",
     "noOrdersFound": "Geen bestellingen gevonden",
     "memberSince": "Klant sinds",
-    "last": "Laatste"
+    "last": "Laatste",
+    "sort": {
+      "title": "Sorteren op",
+      "default": "Standaard",
+      "orders": "Bestellingen",
+      "total": "Totaal besteed",
+      "average": "Gem. bestelling",
+      "descending": "grootste eerst",
+      "ascending": "kleinste eerst",
+      "byColumn": "Sorteren op {column}"
+    }
   },
   "navigation": {
     "menu": "Menu",

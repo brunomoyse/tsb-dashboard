@@ -330,7 +330,17 @@
     "orderHistory": "Order History",
     "noOrdersFound": "No orders found",
     "memberSince": "Member since",
-    "last": "Last order"
+    "last": "Last order",
+    "sort": {
+      "title": "Sort by",
+      "default": "Default",
+      "orders": "Orders",
+      "total": "Total spent",
+      "average": "Avg. order",
+      "descending": "largest first",
+      "ascending": "smallest first",
+      "byColumn": "Sort by {column}"
+    }
   },
   "navigation": {
     "menu": "Menu",

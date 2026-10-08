@@ -237,6 +237,16 @@
       <!-- Filters sheet -->
       <PiliBottomSheet v-model:open="showFilters" :title="t('common.filters')">
         <div class="flex flex-col gap-2">
+          <span class="text-sm font-bold">{{ t('customers.sort.title') }}</span>
+          <PiliChipRail
+            class="-mx-4"
+            :model-value="mobileSortValue"
+            :options="mobileSortOptions"
+            :label="t('customers.sort.title')"
+            @update:model-value="selectMobileSort"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
           <label for="m-min-orders" class="text-sm font-bold">{{
             t('customers.filters.minOrders')
           }}</label>
@@ -281,6 +291,19 @@
         }"
         @select="(_e: Event, row: any) => openCustomerOrders(row.original)"
       >
+        <template v-for="column in sortableColumns" :key="column.key" #[`${column.key}-header`]>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-default transition-colors"
+            :class="sort?.key === column.key ? 'text-highlighted' : ''"
+            :aria-label="sortButtonLabel(column)"
+            @click="toggleSort(column.key)"
+          >
+            {{ column.label }}
+            <UIcon :name="sortIcon(column.key)" class="size-3.5 shrink-0" aria-hidden="true" />
+          </button>
+        </template>
+
         <template #name-cell="{ row }">
           <div>
             <span class="font-medium text-highlighted"
@@ -421,6 +444,12 @@
 
 <script lang="ts" setup>
 import type { CustomerStats, CustomerStatsResponse } from '~/types'
+import {
+  type CustomerSort,
+  type CustomerSortKey,
+  nextCustomerSort,
+  sortCustomers,
+} from '~/utils/customers'
 import { computed, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
@@ -493,8 +522,49 @@ const mobilePeriodOptions = computed(() =>
   periodPresets.value.map((p) => ({ value: p.key, label: p.label })),
 )
 
+// --- Sort (whole list, before pagination) ---
+const sort = ref<CustomerSort | null>(null)
+
+const sortableColumns = computed<{ key: CustomerSortKey; label: string }[]>(() => [
+  { key: 'totalOrders', label: t('customers.totalOrders') },
+  { key: 'totalAmount', label: t('customers.totalAmount') },
+  { key: 'averageOrder', label: t('customers.averageOrder') },
+])
+
+function toggleSort(key: CustomerSortKey) {
+  sort.value = nextCustomerSort(sort.value, key)
+}
+
+function sortIcon(key: CustomerSortKey) {
+  if (sort.value?.key !== key) return 'i-lucide-arrow-up-down'
+  return sort.value.direction === 'desc' ? 'i-lucide-arrow-down' : 'i-lucide-arrow-up'
+}
+
+function sortButtonLabel(column: { key: CustomerSortKey; label: string }) {
+  const label = t('customers.sort.byColumn', { column: column.label })
+  if (sort.value?.key !== column.key) return label
+  return `${label} (${t(`customers.sort.${sort.value.direction === 'desc' ? 'descending' : 'ascending'}`)})`
+}
+
+// Phones have no table headers: the filters sheet offers the same columns, largest first.
+type MobileSortValue = CustomerSortKey | 'default'
+const mobileSortOptions = computed<{ value: MobileSortValue; label: string }[]>(() => [
+  { value: 'default', label: t('customers.sort.default') },
+  { value: 'totalAmount', label: t('customers.sort.total') },
+  { value: 'averageOrder', label: t('customers.sort.average') },
+  { value: 'totalOrders', label: t('customers.sort.orders') },
+])
+const mobileSortValue = computed<MobileSortValue>(() => sort.value?.key ?? 'default')
+
+function selectMobileSort(value: MobileSortValue) {
+  sort.value = value === 'default' ? null : { key: value, direction: 'desc' }
+}
+
 const activeFilterCount = computed(
-  () => (minOrders.value && minOrders.value > 1 ? 1 : 0) + (selectedOrderType.value ? 1 : 0),
+  () =>
+    (minOrders.value && minOrders.value > 1 ? 1 : 0) +
+    (selectedOrderType.value ? 1 : 0) +
+    (sort.value ? 1 : 0),
 )
 
 const queryVariables = computed(() => {
@@ -553,9 +623,10 @@ const customers = computed(() => stats.value?.customers ?? [])
 const summary = computed(() => stats.value?.summary)
 
 const filteredCustomers = computed(() => {
-  if (!searchQuery.value) return customers.value
+  const sorted = sortCustomers(customers.value, sort.value)
+  if (!searchQuery.value) return sorted
   const q = searchQuery.value.toLowerCase()
-  return customers.value.filter(
+  return sorted.filter(
     (c) =>
       `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
       c.email.toLowerCase().includes(q) ||
@@ -568,7 +639,7 @@ const paginatedCustomers = computed(() => {
   return filteredCustomers.value.slice(start, start + pageSize.value)
 })
 
-watch(searchQuery, () => {
+watch([searchQuery, sort], () => {
   page.value = 1
 })
 

@@ -335,7 +335,17 @@
     "orderHistory": "订单历史",
     "noOrdersFound": "未找到订单",
     "memberSince": "注册日期",
-    "last": "最近"
+    "last": "最近",
+    "sort": {
+      "title": "排序方式",
+      "default": "默认",
+      "orders": "订单数",
+      "total": "总消费",
+      "average": "平均每单",
+      "descending": "从高到低",
+      "ascending": "从低到高",
+      "byColumn": "按{column}排序"
+    }
   },
 
   "navigation": {
