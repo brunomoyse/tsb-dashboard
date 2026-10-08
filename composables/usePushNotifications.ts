@@ -56,7 +56,7 @@ export function usePushNotifications() {
 
     // Listen for registration errors
     await PushNotifications.addListener('registrationError', () => {
-      // Non-critical — app still works via WebSocket subscriptions
+      // Non-critical, app still works via WebSocket subscriptions
     })
 
     // Handle notification tap (app was backgrounded/closed)

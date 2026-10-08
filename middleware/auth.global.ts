@@ -1,4 +1,4 @@
-// Middleware: auth.global.ts — OIDC session management via Zitadel
+// auth.global.ts: OIDC session management via Zitadel
 import { defineNuxtRouteMiddleware, navigateTo } from 'nuxt/app'
 import { useLocalePath } from '#imports'
 import { rememberReturnTo } from '~/utils/authReturn'
@@ -11,7 +11,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const localePath = useLocalePath()
 
   // Server-side: cannot check OIDC session (managed client-side by oidc-client-ts).
-  // Let SSR pass through — client-side will handle auth check on hydration.
+  // Let SSR pass through; client-side will handle auth check on hydration.
   if (import.meta.server) return
 
   // Client-side: check OIDC session
@@ -32,7 +32,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     throw err
   }
 
-  // 3. No valid session — redirect to dashboard's own login page.
+  // 3. No valid session: redirect to dashboard's own login page.
   //    (Don't call signIn() which would redirect to Zitadel's custom login URI on the core app domain.)
   rememberReturnTo(to.fullPath)
   return navigateTo(localePath('auth-login'))

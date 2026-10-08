@@ -186,8 +186,8 @@ describe('the printer service', () => {
       await result.printDelivery(makeOrder())
       await result.printKitchen(makeOrder())
       expect(warn.mock.calls).toEqual([
-        ['[SunmiPrinter] Not on a Sunmi device — delivery print skipped'],
-        ['[SunmiPrinter] Not on a Sunmi device — kitchen print skipped'],
+        ['[SunmiPrinter] Not on a Sunmi device: delivery print skipped'],
+        ['[SunmiPrinter] Not on a Sunmi device: kitchen print skipped'],
       ])
       expect(printer.calls).toEqual([])
     })
@@ -263,7 +263,7 @@ describe('the delivery receipt', () => {
       `TOTAL | ${eur('14,50')}`,
       '',
       SEP,
-      'EN LIGNE — PAYÉ',
+      'EN LIGNE : PAYÉ',
       '',
       SEP_THICK,
       'Merci pour votre commande',
@@ -632,13 +632,13 @@ describe('the delivery receipt', () => {
 
   describe('the payment banner', () => {
     it('says the order is paid online', async () => {
-      expect(await print(order({ isOnlinePayment: true }))).toContain('EN LIGNE — PAYÉ')
+      expect(await print(order({ isOnlinePayment: true }))).toContain('EN LIGNE : PAYÉ')
     })
 
     it('says cash for an order to pay on the spot', async () => {
       const lines = await print(order({ isOnlinePayment: false }))
       expect(lines).toContain('ESPÈCES')
-      expect(lines).not.toContain('EN LIGNE — PAYÉ')
+      expect(lines).not.toContain('EN LIGNE : PAYÉ')
     })
   })
 
@@ -655,7 +655,7 @@ describe('the delivery receipt', () => {
           ],
         }),
       )
-      const from = lines.indexOf('EN LIGNE — PAYÉ')
+      const from = lines.indexOf('EN LIGNE : PAYÉ')
       expect(lines.slice(from + 1, from + 8)).toEqual([
         '',
         SEP,

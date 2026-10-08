@@ -38,7 +38,7 @@ const errorMessage = ref('')
  * Module-instance once-guard. Hydration mismatches, accidental remounts
  * and HMR can fire onMounted twice; the OIDC authorization code in the URL
  * is one-shot, so a second handleCallback() call hits Zitadel with an
- * already-consumed code and returns invalid_grant — the user sees "expired".
+ * already-consumed code and returns invalid_grant, so the user sees "expired".
  */
 let callbackHandled = false
 

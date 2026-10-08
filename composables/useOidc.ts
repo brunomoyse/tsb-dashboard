@@ -15,7 +15,7 @@ const oidcUser: Ref<OidcUser | null> = ref(null)
 // Simple token storage for Capacitor (bypasses oidc-client-ts complexity)
 const CAPACITOR_TOKEN_KEY = 'capacitor_oidc_tokens'
 
-// In-memory cache — avoids any localStorage timing issues in WKWebView
+// In-memory cache: avoids any localStorage timing issues in WKWebView
 let capacitorTokenCache: CapacitorTokens | null = null
 
 /*
@@ -303,7 +303,7 @@ export function useOidc() {
     forgetRenewalFailure()
   }
 
-  /** Complete the OIDC callback (web only — exchange code for tokens). */
+  /** Complete the OIDC callback (web only: exchange code for tokens). */
   async function handleCallback(): Promise<OidcUser> {
     const mgr = getUserManager()
     const user = await mgr.signinRedirectCallback()
@@ -352,10 +352,10 @@ export function useOidc() {
       const mgr = getUserManager()
       const user = await mgr.getUser()
       if (user && user.expired !== true) return user.access_token
-      if (!user) return null // No session — nothing to renew
+      if (!user) return null // No session, nothing to renew
 
       /*
-       * Token expired — route through the coalesced silentRenew so concurrent
+       * Token expired, so route through the coalesced silentRenew so concurrent
        * callers share one refresh-token use (Zitadel rotates on first use).
        */
       const renewed = await silentRenew()
@@ -370,7 +370,7 @@ export function useOidc() {
   /**
    * Attempt silent token renewal. All callers (middleware, plugins, the
    * accessTokenExpired event, getAccessToken) share a single in-flight
-   * promise so we never use the same refresh token twice in parallel —
+   * promise so we never use the same refresh token twice in parallel,
    * Zitadel rotates on first use and would log the loser out.
    *
    * Resolves the renewed user, or `null` when the session is over (nothing to

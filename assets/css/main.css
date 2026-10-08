@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
-/* Native app feel — eliminate web browser artifacts */
+/* Native app feel: eliminate web browser artifacts */
 html,
 body {
   overscroll-behavior: none; /* No pull-to-refresh or elastic overscroll */

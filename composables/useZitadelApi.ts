@@ -17,7 +17,7 @@ interface FinalizeResponse {
 
 /**
  * Calls tsb-service auth proxy endpoints which forward to Zitadel's Session API.
- * The proxy adds the service account PAT — the frontend never touches Zitadel directly.
+ * The proxy adds the service account PAT; the frontend never touches Zitadel directly.
  * Dashboard-specific: only includes login-related methods.
  */
 export function useZitadelApi() {
@@ -33,7 +33,7 @@ export function useZitadelApi() {
     return 'fr'
   }
 
-  /** Step 1: request an OTP — creates a Zitadel session and emails a 6-digit code. */
+  /** Step 1: request an OTP (creates a Zitadel session and emails a 6-digit code). */
   function requestOtpLogin(loginName: string): Promise<SessionResponse> {
     return $fetch<SessionResponse>(`${apiUrl}/auth/session/otp/request`, {
       method: 'POST',

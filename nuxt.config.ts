@@ -66,7 +66,7 @@ export default defineNuxtConfig({
       // Build target: 'web' (default) or 'capacitor' (Android/iOS native build)
       appBuild: envOr(process.env.APP_BUILD, 'web'),
       // Restaurant name printed on receipts (white-label). Read from a plain
-      // (non-NUXT_PUBLIC_) env var so it's baked at build time — the runtime
+      // (non-NUXT_PUBLIC_) env var so it's baked at build time; the runtime
       // Override machinery never fires for this static SPA (served by Caddy).
       restaurantName: envOr(process.env.RESTAURANT_NAME, 'Tokyo Sushi Bar'),
     },
@@ -125,7 +125,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
-      // Capacitor WebViews drop redirect chains — restrict to root navigation only.
+      // Capacitor WebViews drop redirect chains: restrict to root navigation only.
       redirectOn: isCapacitor ? 'root' : 'all',
     },
     rootRedirect: isCapacitor ? 'fr' : undefined,

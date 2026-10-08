@@ -95,7 +95,7 @@ export const useSunmiPrinter = () => {
   /** True only when running inside Capacitor on an Android device. */
   const isNative = (): boolean => isCapacitor
 
-  // Static import — returning the Capacitor Proxy from an async function makes
+  // Static import: returning the Capacitor Proxy from an async function makes
   // `await` treat it as thenable (the Proxy intercepts `.then` as a plugin
   // Method call, which fails with "not implemented on android").
   const getPlugin = () => SunmiPrinter
@@ -180,7 +180,7 @@ export const useSunmiPrinter = () => {
       }
     }
 
-    // Items — grouped by category, with product code + plain-text header.
+    // Items, grouped by category, with product code + plain-text header.
     // (printColumnsText with a 4/20/8 layout can wrap on 58mm depending on
     //  Font width; hand-padded printText is predictable.)
     await plugin.printText({ text: `\n${SEP}\n` })
@@ -245,7 +245,7 @@ export const useSunmiPrinter = () => {
     await plugin.setAlignment({ alignment: 'center' })
     await plugin.setBold({ enabled: true })
     if (order.isOnlinePayment) {
-      await plugin.printText({ text: 'EN LIGNE — PAYÉ\n' })
+      await plugin.printText({ text: 'EN LIGNE : PAYÉ\n' })
     } else {
       await plugin.printText({ text: 'ESPÈCES\n' })
     }
@@ -309,7 +309,7 @@ export const useSunmiPrinter = () => {
       }
     }
 
-    // Items — grouped by category, bold + large font, with product code
+    // Items, grouped by category, bold + large font, with product code
     await plugin.printText({ text: `\n${SEP}\n` })
     await plugin.printText({ text: 'Qte Article\n' })
     for (const [catName, items] of groupItemsByCategory(order.items)) {
@@ -356,7 +356,7 @@ export const useSunmiPrinter = () => {
   const printDelivery = async (order: Order): Promise<void> => {
     if (!isNative()) {
       if (import.meta.dev)
-        console.warn('[SunmiPrinter] Not on a Sunmi device — delivery print skipped')
+        console.warn('[SunmiPrinter] Not on a Sunmi device: delivery print skipped')
       return
     }
     const plugin = getPlugin()
@@ -367,7 +367,7 @@ export const useSunmiPrinter = () => {
   const printKitchen = async (order: Order): Promise<void> => {
     if (!isNative()) {
       if (import.meta.dev)
-        console.warn('[SunmiPrinter] Not on a Sunmi device — kitchen print skipped')
+        console.warn('[SunmiPrinter] Not on a Sunmi device: kitchen print skipped')
       return
     }
     const plugin = getPlugin()
@@ -375,7 +375,7 @@ export const useSunmiPrinter = () => {
   }
 
   /**
-   * DEPRECATED for V3H (no auto-cutter) — prefer calling `printKitchen`
+   * DEPRECATED for V3H (no auto-cutter), prefer calling `printKitchen`
    * and `printDelivery` with a user confirmation between them so the
    * operator can tear the kitchen ticket before the delivery ticket
    * prints. Kept for devices with a real auto-cutter.

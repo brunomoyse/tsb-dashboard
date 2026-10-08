@@ -30,13 +30,13 @@ COPY . .
 
 # `nuxt generate` (vs `nuxt build`) ensures Nitro emits the SPA shell as a real
 # /index.html in .output/public/ rather than serving it from a virtual server
-# module at runtime — required for static file serving.
+# module at runtime, required for static file serving.
 RUN npm run generate
 
 # ---------- Runtime (Caddy) ----------
 FROM caddy:2-alpine
 
-# ARGs don't cross stages — re-declare the subset needed for the CSP origins.
+# ARGs don't cross stages, so re-declare the subset needed for the CSP origins.
 ARG API_BASE_URL
 ARG S3_BUCKET_URL
 ARG GRAPHQL_WS_URL
@@ -60,7 +60,7 @@ RUN apk add --no-cache gettext libcap && \
 # Strip cap_net_bind_service from /usr/bin/caddy above. The base image grants
 # it so Caddy can bind ports <1024; we listen on 3000 so it's unused, and
 # leaving it on breaks Kubernetes pods that set allowPrivilegeEscalation:false
-# + drop:ALL caps — the kernel refuses to exec a binary whose file caps
+# + drop:ALL caps: the kernel refuses to exec a binary whose file caps
 # exceed the container's bounding set under no_new_privs.
 
 # Strip the base image's welcome page so any future Nuxt rename doesn't leave

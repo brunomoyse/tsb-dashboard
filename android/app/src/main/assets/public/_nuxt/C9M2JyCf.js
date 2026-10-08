@@ -25,7 +25,7 @@ ${E(n)}
 ${m}
 `});const x=e.items.reduce((n,o)=>n+Number(o.totalPrice),0);if(await t.printColumnsText({columns:[{text:"Sous-total",width:23,align:"left"},{text:$(x),width:7,align:"right"}]}),parseFloat(e.discountAmount)>0&&await t.printColumnsText({columns:[{text:"Réduction",width:23,align:"left"},{text:`-${$(e.discountAmount)}`,width:7,align:"right"}]}),e.deliveryFee&&parseFloat(e.deliveryFee)>0&&await t.printColumnsText({columns:[{text:"Livraison",width:23,align:"left"},{text:$(e.deliveryFee),width:7,align:"right"}]}),await t.setBold({enabled:!0}),await t.printColumnsText({columns:[{text:"TOTAL",width:23,align:"left"},{text:$(e.totalPrice),width:7,align:"right"}]}),await t.setBold({enabled:!1}),await t.printText({text:`
 ${m}
-`}),await t.setAlignment({alignment:"center"}),await t.setBold({enabled:!0}),e.isOnlinePayment?await t.printText({text:`EN LIGNE — PAYÉ
+`}),await t.setAlignment({alignment:"center"}),await t.setBold({enabled:!0}),e.isOnlinePayment?await t.printText({text:`EN LIGNE : PAYÉ
 `}):await t.printText({text:`ESPÈCES
 `}),await t.setBold({enabled:!1}),await t.setAlignment({alignment:"left"}),e.orderExtra?.length){await t.printText({text:`
 ${m}

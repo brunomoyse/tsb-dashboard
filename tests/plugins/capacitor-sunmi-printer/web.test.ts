@@ -147,7 +147,7 @@ describe('SunmiPrinterWeb logging', () => {
       ['[SunmiPrinter] printText():', 'Hello'],
       ['[SunmiPrinter] setAlignment():', 'right'],
       ['[SunmiPrinter] printQRCode():', 'https://x.test', 'size:', 8],
-      ['[SunmiPrinter] printImage() — base64 length:', 4],
+      ['[SunmiPrinter] printImage() base64 length:', 4],
     ])
   })
 })

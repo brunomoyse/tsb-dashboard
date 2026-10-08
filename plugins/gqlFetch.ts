@@ -1,4 +1,4 @@
-// Plugins: gqlFetch.ts — OIDC Bearer token authentication via Zitadel
+// Plugins: gqlFetch.ts: OIDC Bearer token authentication via Zitadel
 import { type DocumentNode, print } from 'graphql'
 import {
   defineNuxtPlugin,

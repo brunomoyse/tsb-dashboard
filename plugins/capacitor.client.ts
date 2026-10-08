@@ -25,7 +25,7 @@ export default defineNuxtPlugin(async () => {
 
   // Deep-link listener: route any same-origin auth callback back into the SPA.
   // With androidScheme: 'https' and an in-WebView login, this usually doesn't
-  // Fire — it's defensive for future IdP / Browser.open flows that may land
+  // Fire. It's defensive for future IdP / Browser.open flows that may land
   // Back on the app via a deep link.
   try {
     const { App } = await import('@capacitor/app')

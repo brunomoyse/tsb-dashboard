@@ -1,4 +1,4 @@
-// Plugins/api.ts — OIDC Bearer token authentication via Zitadel
+// Plugins/api.ts: OIDC Bearer token authentication via Zitadel
 import {
   defineNuxtPlugin,
   navigateTo,
@@ -39,7 +39,7 @@ export default defineNuxtPlugin<{ api: ApiFetch }>(() => {
 
   const baseApi = $fetch.create<unknown, string>({
     baseURL: apiUrl,
-    credentials: 'omit', // No cookies — we use Bearer tokens
+    credentials: 'omit', // No cookies, we use Bearer tokens
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',

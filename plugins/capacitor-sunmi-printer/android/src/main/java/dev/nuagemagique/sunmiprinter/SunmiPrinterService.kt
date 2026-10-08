@@ -44,7 +44,7 @@ private val BARCODE_SYMBOLOGY = mapOf(
  *
  * Manages service binding/unbinding and exposes high-level print operations.
  * The underlying AIDL service ([SunmiAidlService]) is provided by the device
- * firmware — no separate APK is needed on Sunmi hardware.
+ * firmware, so no separate APK is needed on Sunmi hardware.
  */
 class SunmiPrinterService(private val context: Context) {
 

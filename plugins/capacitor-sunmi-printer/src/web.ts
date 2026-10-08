@@ -3,32 +3,32 @@ import { WebPlugin } from '@capacitor/core'
 
 /**
  * Web stub for SunmiPrinter.
- * All methods are no-ops in the browser — on the Sunmi device the native
+ * All methods are no-ops in the browser; on the Sunmi device the native
  * Android implementation is used instead.
  */
 export class SunmiPrinterWeb extends WebPlugin implements SunmiPrinterPlugin {
   bindService(): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] bindService() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] bindService() (web stub)')
     return Promise.resolve()
   }
 
   unbindService(): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] unbindService() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] unbindService() (web stub)')
     return Promise.resolve()
   }
 
   getStatus(): Promise<{ status: number; statusText: string }> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] getStatus() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] getStatus() (web stub)')
     return Promise.resolve({ status: 0, statusText: 'Web (no printer)' })
   }
 
   getModel(): Promise<{ model: string }> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] getModel() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] getModel() (web stub)')
     return Promise.resolve({ model: 'Web' })
   }
 
   printerInit(): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] printerInit() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] printerInit() (web stub)')
     return Promise.resolve()
   }
 
@@ -65,7 +65,7 @@ export class SunmiPrinterWeb extends WebPlugin implements SunmiPrinterPlugin {
 
   printImage(options: { base64: string }): Promise<void> {
     if (import.meta.env.DEV)
-      console.info('[SunmiPrinter] printImage() — base64 length:', options.base64.length)
+      console.info('[SunmiPrinter] printImage() base64 length:', options.base64.length)
     return Promise.resolve()
   }
 
@@ -81,12 +81,12 @@ export class SunmiPrinterWeb extends WebPlugin implements SunmiPrinterPlugin {
   }
 
   cutPaper(): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] cutPaper() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] cutPaper() (web stub)')
     return Promise.resolve()
   }
 
   enterBuffer(): Promise<void> {
-    if (import.meta.env.DEV) console.info('[SunmiPrinter] enterBuffer() — web stub')
+    if (import.meta.env.DEV) console.info('[SunmiPrinter] enterBuffer() (web stub)')
     return Promise.resolve()
   }
 

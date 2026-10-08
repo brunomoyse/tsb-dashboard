@@ -2,7 +2,7 @@
  * Extract the SPA shell HTML from the Nitro server build.
  *
  * With ssr:false, `nuxt build` produces a Nitro server that generates the
- * SPA shell at runtime — there's no static index.html. Capacitor needs one,
+ * SPA shell at runtime: there's no static index.html. Capacitor needs one,
  * so we start the server briefly, fetch the shell, and save it.
  *
  * Capacitor's Android asset server (WebViewLocalServer) returns 404 when a
@@ -19,7 +19,7 @@ import { spawn } from 'node:child_process'
 
 const PORT = 3199
 const LOCALES = ['fr', 'en', 'zh', 'nl']
-// Keep in sync with pages/ — one entry per Vue page
+// Keep in sync with pages/: one entry per Vue page
 const PAGES = [
   '', // Locale root (/{locale}/)
   'auth/login',

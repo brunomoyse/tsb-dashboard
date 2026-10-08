@@ -31,7 +31,7 @@ export default defineNuxtPlugin(async () => {
     throw err
   }
 
-  // No valid session — clear stale OIDC session + Pinia store
+  // No valid session: clear stale OIDC session + Pinia store
   const { removeUser } = useOidc()
   await removeUser()
   authStore.clearUser()

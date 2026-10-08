@@ -26,7 +26,7 @@ export const useOrdersStore = defineStore('orders', {
       }
     },
     addOrder(order: Order) {
-      // Prepend to array — NOT acknowledged (new from subscription)
+      // Prepend to array, NOT acknowledged (new from subscription)
       this.orders.unshift(order)
     },
     acknowledgeOrder(orderId: string) {

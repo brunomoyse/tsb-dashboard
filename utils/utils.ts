@@ -83,7 +83,7 @@ const brusselsDateFormatter = new Intl.DateTimeFormat('en-CA', {
 
 /**
  * Returns the calendar date in Europe/Brussels as YYYY-MM-DD.
- * Independent of the runtime timezone — never rely on `toISOString().slice(0,10)`
+ * Independent of the runtime timezone: never rely on `toISOString().slice(0,10)`
  * for "today" because that yields the UTC date.
  */
 export const brusselsDateISO = (date: Date = new Date()): string =>
@@ -135,7 +135,7 @@ const brusselsOffsetMs = (date: Date): number => {
 /**
  * Interprets a `<input type="datetime-local">` value ("YYYY-MM-DDTHH:mm") as a
  * Europe/Brussels wall-clock time and returns the corresponding UTC instant as
- * an ISO string. Independent of the browser's timezone — never use
+ * an ISO string. Independent of the browser's timezone: never use
  * `new Date(local).toISOString()`, which interprets the value in the runtime TZ.
  * Returns null for empty/invalid input.
  */
