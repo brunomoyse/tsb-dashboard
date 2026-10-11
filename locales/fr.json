@@ -21,7 +21,6 @@
     "filters": "Filtres",
     "done": "Terminé"
   },
-
   "products": {
     "search": "Rechercher des produits",
     "add": "Ajouter un produit",
@@ -78,7 +77,6 @@
     "addShort": "Ajouter",
     "piecesShort": "pcs"
   },
-
   "orders": {
     "subtitle": "Gérez vos commandes en temps réel",
     "all": "Toutes",
@@ -227,7 +225,6 @@
     "markPaid": "Marquer payé",
     "estimateSaved": "Estimation enregistrée"
   },
-
   "orderHistory": {
     "title": "Historique des commandes",
     "subtitle": "Consultez toutes les commandes passées",
@@ -260,7 +257,6 @@
     },
     "itemsShort": "art."
   },
-
   "coupons": {
     "title": "Coupons",
     "add": "Ajouter un coupon",
@@ -297,7 +293,6 @@
     "until": "Jusqu'au {date}",
     "noEnd": "Sans date de fin"
   },
-
   "customers": {
     "title": "Statistiques clients",
     "subtitle": "Aperçu de l'activité de commande des clients",
@@ -347,7 +342,6 @@
       "byColumn": "Trier par {column}"
     }
   },
-
   "navigation": {
     "menu": "Menu",
     "products": "Produits",
@@ -359,9 +353,8 @@
     "settings": "Paramètres",
     "logout": "Déconnexion",
     "more": "Plus",
-    "assistant": "Assistant WeChat"
+    "assistant": "Assistant"
   },
-
   "settings": {
     "security": {
       "title": "Authentification à deux facteurs",
@@ -451,7 +444,6 @@
       "daysOpen": "Aucun jour ouvert | 1 jour ouvert | {count} jours ouverts"
     }
   },
-
   "login": {
     "title": "Bienvenue",
     "subtitle": "Connectez-vous pour gérer votre restaurant",
@@ -478,7 +470,6 @@
     "totpLabel": "Code d'authentification",
     "invalidTotp": "Code invalide. Vérifiez votre application d'authentification et réessayez."
   },
-
   "validation": {
     "categoryRequired": "La catégorie est requise",
     "frenchNameRequired": "Le nom français est requis",
@@ -498,69 +489,71 @@
     "choiceSaveFailed": "Impossible d'enregistrer les groupes/options du produit",
     "vatCategoryRequired": "La catégorie TVA est requise et doit être : nourriture, boisson, taux zéro ou hors champ"
   },
-
   "notifications": {
     "productCreated": "Produit créé avec succès",
     "productUpdated": "Produit mis à jour avec succès",
     "orderUpdated": "Statut de commande mis à jour"
   },
-
   "more": {
     "language": "Langue",
     "activeCoupons": "{count} actif | {count} actifs",
     "online": "en ligne",
     "paused": "en pause"
   },
-
   "assistant": {
-    "title": "Assistant WeChat",
-    "description": "Le gérant peut piloter le restaurant en discutant avec l'assistant dans WeChat : commandes, ruptures de stock, prix, horaires. Les changements importants ne s'appliquent qu'après sa réponse « 确认 » dans WeChat. L'assistant ne répond qu'au WeChat du gérant.",
-    "connection": "Connexion WeChat",
-    "connect": "Connecter WeChat",
-    "reconnect": "Reconnecter",
-    "disconnect": "Déconnecter",
-    "disconnectConfirm": "Confirmer la déconnexion",
-    "newQr": "Nouveau QR code",
-    "since": "Connecté depuis le {time}",
-    "expiredSince": "La session a expiré le {time}. Reconnectez-la.",
-    "unavailableHint": "Le service de l'assistant ne répond pas pour le moment. Réessayez plus tard.",
-    "notConfiguredHint": "Aucun assistant WeChat n'est configuré sur ce serveur.",
+    "title": "Assistant",
+    "description": "Discutez avec l'assistant dans Telegram pour gérer le restaurant : commandes, produits épuisés, prix, horaires, coupons. Les changements importants ne sont appliqués qu'après votre réponse « 确认 ».",
+    "bot": "Bot Telegram",
+    "openInTelegram": "Ouvrir dans Telegram",
+    "notConfiguredHint": "Aucun assistant n'est configuré sur ce serveur.",
     "state": {
       "loading": "Chargement",
       "notConfigured": "Non configuré",
-      "connected": "Connecté",
-      "disconnected": "Déconnecté",
-      "expired": "Expiré",
-      "unavailable": "Indisponible"
+      "ready": "Prêt",
+      "noAccounts": "Aucun compte lié",
+      "tokenRejected": "Bot refusé par Telegram, contactez le développeur",
+      "conflict": "Un autre serveur utilise ce bot",
+      "unavailable": "Assistant injoignable"
     },
-    "login": {
-      "wait": "Scannez avec le WeChat du gérant",
-      "scanned": "Scanné, confirmez sur le téléphone",
-      "confirmed": "Connecté",
-      "expired": "QR code expiré",
-      "refused": "Ce n'est pas le WeChat du gérant",
-      "refusedHint": "L'assistant appartient au compte WeChat qui l'a connecté en premier. Pour le confier au compte qui vient de scanner, cochez l'option ci-dessous et scannez à nouveau.",
-      "replaceOwner": "Faire du nouveau compte le gérant",
-      "failed": "La connexion a échoué, réessayez",
-      "cancelled": "Annulé"
+    "hints": {
+      "tokenRejected": "Telegram n'accepte plus ce bot : l'assistant ne peut pas fonctionner. Contactez le développeur.",
+      "conflict": "Un autre serveur utilise le même bot, des messages peuvent être perdus. Contactez le développeur.",
+      "unavailable": "Le service de l'assistant ne répond pas pour le moment. Réessayez plus tard."
     },
-    "qr": {
-      "alt": "QR code de connexion WeChat",
-      "scanHint": "Page affichée sur un autre écran : dans WeChat, ouvrez 扫一扫 (Scan), scannez ce QR code puis confirmez sur le téléphone.",
-      "saveHint": "Un seul téléphone : appui long sur l'image pour l'enregistrer, puis dans WeChat > 扫一扫 > album (en haut à droite), choisissez l'image.",
-      "linkHint": "Ou copiez le lien, envoyez-le dans n'importe quelle discussion WeChat (par exemple 文件传输助手) et touchez-le.",
-      "copyLink": "Copier le lien",
+    "accounts": {
+      "title": "Comptes liés",
+      "empty": "Personne n'est encore lié. Appuyez sur le bouton ci-dessous et liez votre compte avec Telegram sur votre téléphone.",
+      "linkedOn": "Lié le {time}",
+      "remove": "Retirer",
+      "removeConfirm": "Confirmer le retrait",
+      "full": "Les {max} places sont prises. Retirez un compte pour en lier un nouveau.",
+      "add": "Ajouter un compte"
+    },
+    "link": {
+      "wait": "Liez avec le téléphone qui a Telegram",
+      "linked": "{name} est lié",
+      "expired": "Lien expiré",
+      "refusedFull": "Les {max} places sont prises, retirez d'abord un compte",
+      "qrAlt": "QR code pour lier Telegram",
+      "scanHint": "Scannez avec l'appareil photo de l'iPhone (ou ouvrez le lien sur le téléphone qui a Telegram), puis appuyez sur Démarrer (Start).",
+      "validUntil": "Valable jusqu'à {time}",
+      "copy": "Copier le lien",
       "copied": "Copié",
-      "openInWeChat": "Ouvrir dans WeChat"
+      "new": "Nouveau lien"
     },
     "banner": {
-      "text": "L'assistant WeChat est déconnecté : il ne reçoit plus les messages du gérant.",
-      "action": "Reconnecter"
+      "text": "L'assistant Telegram ne fonctionne plus. Ouvrez la page de l'assistant.",
+      "action": "Ouvrir"
     },
     "errors": {
-      "start": "Impossible d'obtenir un QR code, réessayez plus tard.",
-      "copy": "Copie impossible, enregistrez l'image du QR code.",
-      "disconnect": "La déconnexion a échoué, réessayez."
+      "start": "Impossible de créer un lien, réessayez plus tard.",
+      "poll": "Impossible de lire l'état du lien, réessayez.",
+      "copy": "Impossible de copier, enregistrez plutôt l'image du QR code.",
+      "remove": "Le retrait a échoué, réessayez.",
+      "disabled": "Aucun assistant n'est configuré sur ce serveur.",
+      "unavailable": "Le service de l'assistant ne répond pas pour le moment. Réessayez plus tard.",
+      "limitReached": "Toutes les places sont prises, retirez d'abord un compte.",
+      "notFound": "Ce compte ou ce lien n'existe plus, rafraîchissez la page."
     }
   }
 }

@@ -1,61 +1,85 @@
 /*
- * WeChat assistant (tsb-agent) connection, as served by the
- * assistantConnection / assistantLogin GraphQL fields.
+ * Telegram assistant (tsb-agent) connection, as served by the
+ * assistantConnection / assistantLink GraphQL fields.
  */
 
-export type AssistantState = 'CONNECTED' | 'DISCONNECTED' | 'EXPIRED' | 'UNAVAILABLE'
+export type AssistantState = 'READY' | 'NO_ACCOUNTS' | 'TOKEN_REJECTED' | 'CONFLICT' | 'UNAVAILABLE'
 
-export type AssistantLoginStatus =
-  | 'WAIT'
-  | 'SCANNED'
-  | 'CONFIRMED'
-  | 'EXPIRED'
-  | 'REFUSED_OTHER_ACCOUNT'
-  | 'FAILED'
-  | 'CANCELLED'
+export type AssistantLinkStatus = 'WAIT' | 'LINKED' | 'EXPIRED' | 'REFUSED_FULL'
+
+export interface AssistantAccount {
+  id: string
+  name: string
+  username: string | null
+  linkedAt: string
+}
 
 export interface AssistantConnection {
   enabled: boolean
   state: AssistantState
-  account: string | null
-  since: string | null
-  expiredAt: string | null
-  everConnected: boolean
-  loginInProgress: boolean
+  botUsername: string | null
+  accounts: AssistantAccount[]
+  maxAccounts: number
+  problemSince: string | null
 }
 
-export interface AssistantLogin {
+export interface AssistantLink {
   id: string
-  status: AssistantLoginStatus
-  qrContent: string
+  status: AssistantLinkStatus
+  url: string
   expiresAt: string
+  account: AssistantAccount | null
 }
 
-/** A login that will not change any more. */
-export const isLoginFinished = (status: AssistantLoginStatus): boolean =>
-  status !== 'WAIT' && status !== 'SCANNED'
+/** A link that will not change any more. */
+export const isLinkFinished = (status: AssistantLinkStatus): boolean => status !== 'WAIT'
 
 /*
- * The banner only warns about a session that ended by itself (expiry), not
- * about a deliberate disconnect, and never before the first connection. It
- * is hidden on the assistant page itself.
+ * The banner only warns when Telegram refuses the bot token: nothing works
+ * until the developer fixes it. It is hidden on the assistant page itself,
+ * which shows the state.
  */
 export const showAssistantBanner = (c: AssistantConnection | null, path: string): boolean =>
-  c !== null &&
-  c.enabled &&
-  c.everConnected &&
-  c.state === 'EXPIRED' &&
-  !path.includes('/assistant')
+  c !== null && c.enabled && c.state === 'TOKEN_REJECTED' && !path.includes('/assistant')
 
-/*
- * The QR code holds a WeChat link. A link can also be copied and opened
- * inside WeChat, which is the only way on the phone that shows the code.
- */
-export const isWeChatLink = (content: string): boolean => /^https?:\/\//iu.test(content)
+/** A new account can be linked: a free place, and a bot that answers. */
+export const canLinkAccount = (c: AssistantConnection): boolean =>
+  c.enabled &&
+  c.accounts.length < c.maxAccounts &&
+  c.state !== 'UNAVAILABLE' &&
+  c.state !== 'TOKEN_REJECTED'
+
+/** Public t.me page of the bot, or null when its username is unknown. */
+export const botUrl = (c: AssistantConnection): string | null =>
+  c.botUsername !== null && c.botUsername !== '' ? `https://t.me/${c.botUsername}` : null
+
+const STATE_KEYS: Record<AssistantState, string> = {
+  READY: 'ready',
+  NO_ACCOUNTS: 'noAccounts',
+  TOKEN_REJECTED: 'tokenRejected',
+  CONFLICT: 'conflict',
+  UNAVAILABLE: 'unavailable',
+}
 
 /** I18n key of a connection state. */
 export const stateKey = (c: AssistantConnection | null): string => {
   if (!c) return 'assistant.state.loading'
   if (!c.enabled) return 'assistant.state.notConfigured'
-  return `assistant.state.${c.state.toLowerCase()}`
+  return `assistant.state.${STATE_KEYS[c.state] ?? 'unavailable'}`
+}
+
+const ERROR_KEYS: Partial<Record<string, string>> = {
+  ASSISTANT_DISABLED: 'assistant.errors.disabled',
+  ASSISTANT_UNAVAILABLE: 'assistant.errors.unavailable',
+  ASSISTANT_LIMIT_REACHED: 'assistant.errors.limitReached',
+  NOT_FOUND: 'assistant.errors.notFound',
+}
+
+/** I18n key of the first known GraphQL error code, else `fallback`. */
+export const errorKey = (codes: string[], fallback: string): string => {
+  for (const code of codes) {
+    const key = ERROR_KEYS[code]
+    if (key !== undefined) return key
+  }
+  return fallback
 }

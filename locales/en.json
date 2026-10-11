@@ -353,7 +353,7 @@
     "settings": "Settings",
     "logout": "Logout",
     "more": "More",
-    "assistant": "WeChat assistant"
+    "assistant": "Assistant"
   },
   "settings": {
     "security": {
@@ -501,54 +501,59 @@
     "paused": "paused"
   },
   "assistant": {
-    "title": "WeChat assistant",
-    "description": "The owner runs the restaurant by chatting with the assistant in WeChat: orders, sold-out items, prices, opening hours. Important changes are only applied after the owner replies \"确认\" in WeChat. The assistant only answers the owner's WeChat.",
-    "connection": "WeChat connection",
-    "connect": "Connect WeChat",
-    "reconnect": "Reconnect",
-    "disconnect": "Disconnect",
-    "disconnectConfirm": "Confirm disconnect",
-    "newQr": "New QR code",
-    "since": "Connected since {time}",
-    "expiredSince": "The session expired on {time}. Reconnect it.",
-    "unavailableHint": "The assistant service is not answering right now. Try again later.",
-    "notConfiguredHint": "No WeChat assistant is configured on this server.",
+    "title": "Assistant",
+    "description": "Chat with the assistant in Telegram to run the restaurant: orders, sold-out items, prices, opening hours, coupons. Important changes are only applied after you reply \"确认\".",
+    "bot": "Telegram bot",
+    "openInTelegram": "Open in Telegram",
+    "notConfiguredHint": "No assistant is configured on this server.",
     "state": {
       "loading": "Loading",
       "notConfigured": "Not configured",
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "expired": "Expired",
-      "unavailable": "Unavailable"
+      "ready": "Ready",
+      "noAccounts": "No account linked",
+      "tokenRejected": "Bot refused by Telegram, contact the developer",
+      "conflict": "Another server is using this bot",
+      "unavailable": "Assistant unreachable"
     },
-    "login": {
-      "wait": "Scan with the owner's WeChat",
-      "scanned": "Scanned, confirm on the phone",
-      "confirmed": "Connected",
-      "expired": "QR code expired",
-      "refused": "This is not the owner's WeChat",
-      "refusedHint": "The assistant belongs to the WeChat account that connected it first. To hand it to the account that just scanned, tick the option below and scan again.",
-      "replaceOwner": "Make the new account the owner",
-      "failed": "Connection failed, try again",
-      "cancelled": "Cancelled"
+    "hints": {
+      "tokenRejected": "Telegram no longer accepts this bot, so the assistant cannot work. Contact the developer.",
+      "conflict": "Another server is using the same bot, so messages may be lost. Contact the developer.",
+      "unavailable": "The assistant service is not answering right now. Try again later."
     },
-    "qr": {
-      "alt": "WeChat login QR code",
-      "scanHint": "Page shown on another screen: in WeChat, open 扫一扫 (Scan), scan this QR code and confirm on the phone.",
-      "saveHint": "Only one phone: long-press the image to save it, then in WeChat > 扫一扫 > album (top right), pick the image.",
-      "linkHint": "Or copy the link, send it in any WeChat chat (for example 文件传输助手) and tap it.",
-      "copyLink": "Copy link",
+    "accounts": {
+      "title": "Linked accounts",
+      "empty": "Nobody is linked yet. Tap the button below and link your account with Telegram on your phone.",
+      "linkedOn": "Linked on {time}",
+      "remove": "Remove",
+      "removeConfirm": "Confirm removal",
+      "full": "All {max} places are taken. Remove an account to link a new one.",
+      "add": "Add an account"
+    },
+    "link": {
+      "wait": "Link with the phone that has Telegram",
+      "linked": "{name} is linked",
+      "expired": "Link expired",
+      "refusedFull": "All {max} places are taken, remove an account first",
+      "qrAlt": "QR code to link Telegram",
+      "scanHint": "Scan with the iPhone camera (or open the link on the phone that has Telegram), then tap Start.",
+      "validUntil": "Valid until {time}",
+      "copy": "Copy link",
       "copied": "Copied",
-      "openInWeChat": "Open in WeChat"
+      "new": "New link"
     },
     "banner": {
-      "text": "The WeChat assistant is disconnected: it no longer receives the owner's messages.",
-      "action": "Reconnect"
+      "text": "The Telegram assistant stopped working. Open the assistant page.",
+      "action": "Open"
     },
     "errors": {
-      "start": "Could not get a QR code, try again later.",
+      "start": "Could not create a link, try again later.",
+      "poll": "Could not read the link status, try again.",
       "copy": "Could not copy, save the QR code image instead.",
-      "disconnect": "Disconnect failed, try again."
+      "remove": "Removal failed, try again.",
+      "disabled": "No assistant is configured on this server.",
+      "unavailable": "The assistant service is not answering right now. Try again later.",
+      "limitReached": "All places are taken, remove an account first.",
+      "notFound": "This account or link no longer exists, refresh the page."
     }
   }
 }

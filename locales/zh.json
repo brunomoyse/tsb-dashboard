@@ -21,7 +21,6 @@
     "filters": "筛选",
     "done": "完成"
   },
-
   "products": {
     "search": "搜索产品",
     "add": "添加产品",
@@ -78,7 +77,6 @@
     "addShort": "添加",
     "piecesShort": "件"
   },
-
   "orders": {
     "subtitle": "实时管理您的订单",
     "all": "全部",
@@ -227,7 +225,6 @@
     "markPaid": "标记已付款",
     "estimateSaved": "预计时间已保存"
   },
-
   "orderHistory": {
     "title": "订单历史",
     "subtitle": "查看所有历史订单",
@@ -260,7 +257,6 @@
     "startDate": "开始日期",
     "endDate": "结束日期"
   },
-
   "coupons": {
     "title": "优惠券",
     "add": "添加优惠券",
@@ -297,7 +293,6 @@
     "until": "截至 {date}",
     "noEnd": "无截止日期"
   },
-
   "customers": {
     "title": "客户统计",
     "subtitle": "客户订单活动概览",
@@ -347,7 +342,6 @@
       "byColumn": "按{column}排序"
     }
   },
-
   "navigation": {
     "menu": "菜单",
     "products": "产品",
@@ -359,9 +353,8 @@
     "settings": "设置",
     "logout": "登出",
     "more": "更多",
-    "assistant": "微信助手"
+    "assistant": "助手"
   },
-
   "settings": {
     "security": {
       "title": "双重身份验证",
@@ -451,7 +444,6 @@
       "daysOpen": "无营业日 | 营业 1 天 | 营业 {count} 天"
     }
   },
-
   "login": {
     "title": "欢迎回来",
     "subtitle": "登录以管理您的餐厅",
@@ -478,7 +470,6 @@
     "totpLabel": "身份验证器验证码",
     "invalidTotp": "验证码无效，请检查身份验证器应用后重试。"
   },
-
   "validation": {
     "categoryRequired": "必须填写类别",
     "frenchNameRequired": "必须填写法语名称",
@@ -498,69 +489,71 @@
     "choiceSaveFailed": "保存产品分组/选项失败",
     "vatCategoryRequired": "必须填写增值税类别，且必须为：食品、饮料、零税率或不适用"
   },
-
   "notifications": {
     "productCreated": "产品创建成功",
     "productUpdated": "产品更新成功",
     "orderUpdated": "订单状态已更新"
   },
-
   "more": {
     "language": "语言",
     "activeCoupons": "{count} 个有效 | {count} 个有效",
     "online": "营业中",
     "paused": "已暂停"
   },
-
   "assistant": {
-    "title": "微信助手",
-    "description": "店主可以在微信里和助手聊天来管理餐厅：查订单、设置售罄、改价格、调整营业时间等。重要的修改需要在微信里回复「确认」才会执行。助手只回复店主的微信。",
-    "connection": "微信连接",
-    "connect": "连接微信",
-    "reconnect": "重新连接",
-    "disconnect": "断开",
-    "disconnectConfirm": "确认断开",
-    "newQr": "重新生成二维码",
-    "since": "自 {time} 起已连接",
-    "expiredSince": "登录已于 {time} 失效，请重新连接。",
-    "unavailableHint": "助手服务暂时没有响应，请稍后再试。",
-    "notConfiguredHint": "这个服务器没有配置微信助手。",
+    "title": "助手",
+    "description": "在 Telegram 里和助手聊天来管理餐厅：查订单、设置售罄、改价格、调整营业时间、管理优惠券等。重要的修改需要你回复「确认」才会执行。",
+    "bot": "Telegram 机器人",
+    "openInTelegram": "在 Telegram 中打开",
+    "notConfiguredHint": "这个服务器没有配置助手。",
     "state": {
       "loading": "加载中",
       "notConfigured": "未配置",
-      "connected": "已连接",
-      "disconnected": "未连接",
-      "expired": "已失效",
-      "unavailable": "暂不可用"
+      "ready": "已就绪",
+      "noAccounts": "还没有绑定账号",
+      "tokenRejected": "Telegram 拒绝了机器人，请联系开发者",
+      "conflict": "另一台服务器正在使用这个机器人",
+      "unavailable": "助手暂时没有响应"
     },
-    "login": {
-      "wait": "请用店主的微信扫码",
-      "scanned": "已扫码，请在手机上确认",
-      "confirmed": "连接成功",
-      "expired": "二维码已过期",
-      "refused": "扫码的不是店主的微信",
-      "refusedHint": "这个助手只属于第一次连接它的微信号。如果要换成刚才扫码的微信号，请勾选下面的选项，再重新扫码。",
-      "replaceOwner": "让新扫码的微信号成为店主",
-      "failed": "连接失败，请重试",
-      "cancelled": "已取消"
+    "hints": {
+      "tokenRejected": "Telegram 不再接受这个机器人，助手暂时无法使用。请联系开发者。",
+      "conflict": "另一台服务器正在使用同一个机器人，消息可能丢失。请联系开发者。",
+      "unavailable": "助手服务暂时没有响应，请稍后再试。"
     },
-    "qr": {
-      "alt": "微信登录二维码",
-      "scanHint": "用另一部手机或电脑屏幕显示这个页面时：打开微信 > 扫一扫，扫描上面的二维码，然后在手机上确认。",
-      "saveHint": "只有一部手机时：长按二维码图片保存到相册，然后打开微信 > 扫一扫 > 右上角的相册，选择这张图片。",
-      "linkHint": "也可以复制链接，粘贴到微信里任意聊天（例如文件传输助手）发送，然后点击这个链接。",
-      "copyLink": "复制链接",
+    "accounts": {
+      "title": "已绑定的账号",
+      "empty": "还没有人绑定。点击下面的按钮，用手机上的 Telegram 绑定你的账号。",
+      "linkedOn": "绑定于 {time}",
+      "remove": "移除",
+      "removeConfirm": "确认移除",
+      "full": "{max} 个名额已满。要绑定新账号，请先移除一个。",
+      "add": "添加账号"
+    },
+    "link": {
+      "wait": "用装有 Telegram 的手机绑定",
+      "linked": "{name} 已绑定",
+      "expired": "链接已过期",
+      "refusedFull": "{max} 个名额已满，请先移除一个账号",
+      "qrAlt": "绑定 Telegram 的二维码",
+      "scanHint": "用 iPhone 相机扫描二维码（或在装有 Telegram 的手机上打开链接），然后点「开始」（Start）。",
+      "validUntil": "有效至 {time}",
+      "copy": "复制链接",
       "copied": "已复制",
-      "openInWeChat": "在微信中打开"
+      "new": "重新生成链接"
     },
     "banner": {
-      "text": "微信助手已断开，店主的微信消息暂时收不到。",
-      "action": "重新连接"
+      "text": "Telegram 助手已停止工作，请打开助手页面查看。",
+      "action": "查看"
     },
     "errors": {
-      "start": "无法获取二维码，请稍后再试。",
+      "start": "无法生成链接，请稍后再试。",
+      "poll": "无法获取绑定状态，请重试。",
       "copy": "无法复制，请长按二维码图片保存。",
-      "disconnect": "断开失败，请重试。"
+      "remove": "移除失败，请重试。",
+      "disabled": "这个服务器没有配置助手。",
+      "unavailable": "助手服务暂时没有响应，请稍后再试。",
+      "limitReached": "名额已满，请先移除一个账号。",
+      "notFound": "找不到这个账号或链接，请刷新页面。"
     }
   }
 }

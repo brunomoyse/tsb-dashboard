@@ -353,7 +353,7 @@
     "settings": "Instellingen",
     "logout": "Uitloggen",
     "more": "Meer",
-    "assistant": "WeChat-assistent"
+    "assistant": "Assistent"
   },
   "settings": {
     "security": {
@@ -501,54 +501,59 @@
     "paused": "gepauzeerd"
   },
   "assistant": {
-    "title": "WeChat-assistent",
-    "description": "De eigenaar beheert het restaurant door in WeChat met de assistent te chatten: bestellingen, uitverkochte producten, prijzen, openingsuren. Belangrijke wijzigingen worden pas toegepast nadat de eigenaar in WeChat \"确认\" antwoordt. De assistent antwoordt alleen op de WeChat van de eigenaar.",
-    "connection": "WeChat-verbinding",
-    "connect": "WeChat verbinden",
-    "reconnect": "Opnieuw verbinden",
-    "disconnect": "Verbreken",
-    "disconnectConfirm": "Verbreken bevestigen",
-    "newQr": "Nieuwe QR-code",
-    "since": "Verbonden sinds {time}",
-    "expiredSince": "De sessie is verlopen op {time}. Verbind opnieuw.",
-    "unavailableHint": "De assistent-dienst antwoordt momenteel niet. Probeer het later opnieuw.",
-    "notConfiguredHint": "Er is geen WeChat-assistent ingesteld op deze server.",
+    "title": "Assistent",
+    "description": "Chat met de assistent in Telegram om het restaurant te runnen: bestellingen, uitverkochte items, prijzen, openingsuren, coupons. Belangrijke wijzigingen worden pas toegepast nadat je \"确认\" antwoordt.",
+    "bot": "Telegram-bot",
+    "openInTelegram": "Openen in Telegram",
+    "notConfiguredHint": "Op deze server is geen assistent geconfigureerd.",
     "state": {
       "loading": "Laden",
-      "notConfigured": "Niet ingesteld",
-      "connected": "Verbonden",
-      "disconnected": "Niet verbonden",
-      "expired": "Verlopen",
-      "unavailable": "Niet beschikbaar"
+      "notConfigured": "Niet geconfigureerd",
+      "ready": "Klaar",
+      "noAccounts": "Geen account gekoppeld",
+      "tokenRejected": "Bot geweigerd door Telegram, neem contact op met de ontwikkelaar",
+      "conflict": "Een andere server gebruikt deze bot",
+      "unavailable": "Assistent onbereikbaar"
     },
-    "login": {
-      "wait": "Scan met de WeChat van de eigenaar",
-      "scanned": "Gescand, bevestig op de telefoon",
-      "confirmed": "Verbonden",
-      "expired": "QR-code verlopen",
-      "refused": "Dit is niet de WeChat van de eigenaar",
-      "refusedHint": "De assistent hoort bij het WeChat-account dat hem als eerste verbond. Vink de optie hieronder aan en scan opnieuw om hem aan het account te geven dat net scande.",
-      "replaceOwner": "Maak het nieuwe account eigenaar",
-      "failed": "Verbinden mislukt, probeer opnieuw",
-      "cancelled": "Geannuleerd"
+    "hints": {
+      "tokenRejected": "Telegram accepteert deze bot niet meer, dus de assistent werkt niet. Neem contact op met de ontwikkelaar.",
+      "conflict": "Een andere server gebruikt dezelfde bot, berichten kunnen verloren gaan. Neem contact op met de ontwikkelaar.",
+      "unavailable": "De assistent-service antwoordt momenteel niet. Probeer het later opnieuw."
     },
-    "qr": {
-      "alt": "WeChat-login QR-code",
-      "scanHint": "Pagina op een ander scherm: open in WeChat 扫一扫 (Scan), scan deze QR-code en bevestig op de telefoon.",
-      "saveHint": "Maar één telefoon: houd de afbeelding ingedrukt om ze te bewaren, kies ze dan in WeChat > 扫一扫 > album (rechtsboven).",
-      "linkHint": "Of kopieer de link, stuur hem in een WeChat-chat (bijvoorbeeld 文件传输助手) en tik erop.",
-      "copyLink": "Link kopiëren",
+    "accounts": {
+      "title": "Gekoppelde accounts",
+      "empty": "Nog niemand is gekoppeld. Tik op de knop hieronder en koppel je account met Telegram op je telefoon.",
+      "linkedOn": "Gekoppeld op {time}",
+      "remove": "Verwijderen",
+      "removeConfirm": "Verwijderen bevestigen",
+      "full": "Alle {max} plaatsen zijn bezet. Verwijder een account om een nieuwe te koppelen.",
+      "add": "Account toevoegen"
+    },
+    "link": {
+      "wait": "Koppel met de telefoon waarop Telegram staat",
+      "linked": "{name} is gekoppeld",
+      "expired": "Link verlopen",
+      "refusedFull": "Alle {max} plaatsen zijn bezet, verwijder eerst een account",
+      "qrAlt": "QR-code om Telegram te koppelen",
+      "scanHint": "Scan met de iPhone-camera (of open de link op de telefoon met Telegram) en tik dan op Start.",
+      "validUntil": "Geldig tot {time}",
+      "copy": "Link kopiëren",
       "copied": "Gekopieerd",
-      "openInWeChat": "Openen in WeChat"
+      "new": "Nieuwe link"
     },
     "banner": {
-      "text": "De WeChat-assistent is niet meer verbonden: hij ontvangt de berichten van de eigenaar niet meer.",
-      "action": "Opnieuw verbinden"
+      "text": "De Telegram-assistent werkt niet meer. Open de assistent-pagina.",
+      "action": "Openen"
     },
     "errors": {
-      "start": "Geen QR-code ontvangen, probeer later opnieuw.",
-      "copy": "Kopiëren mislukt, bewaar de QR-code-afbeelding.",
-      "disconnect": "Verbreken mislukt, probeer opnieuw."
+      "start": "Kon geen link maken, probeer het later opnieuw.",
+      "poll": "Kon de status van de link niet lezen, probeer opnieuw.",
+      "copy": "Kopiëren mislukt, bewaar in plaats daarvan de QR-afbeelding.",
+      "remove": "Verwijderen mislukt, probeer opnieuw.",
+      "disabled": "Op deze server is geen assistent geconfigureerd.",
+      "unavailable": "De assistent-service antwoordt momenteel niet. Probeer het later opnieuw.",
+      "limitReached": "Alle plaatsen zijn bezet, verwijder eerst een account.",
+      "notFound": "Dit account of deze link bestaat niet meer, ververs de pagina."
     }
   }
 }

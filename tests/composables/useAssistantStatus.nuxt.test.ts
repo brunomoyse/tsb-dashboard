@@ -1,4 +1,4 @@
-// useAssistantStatus: the WeChat assistant's connection, shared by the layout banner and the assistant page: loaded on
+// useAssistantStatus: the Telegram assistant's connection, shared by the layout banner and the assistant page: loaded on
 // mount, kept live by a subscription. The GraphQL transport and the subscription are the boundaries; the shared state
 // (useState) is real.
 // Run: `vp test run tests/composables/useAssistantStatus.nuxt.test.ts`.
@@ -29,12 +29,11 @@ const { useAssistantStatus } = await import('~/composables/useAssistantStatus')
 
 const connection = (overrides: Partial<AssistantConnection> = {}): AssistantConnection => ({
   enabled: true,
-  state: 'CONNECTED',
-  account: 'o@im.wechat',
-  since: '2026-10-04T10:00:00Z',
-  expiredAt: null,
-  everConnected: true,
-  loginInProgress: false,
+  state: 'READY',
+  botUsername: 'pili_assistant_bot',
+  accounts: [{ id: '1', name: 'Li', username: 'li', linkedAt: '2026-10-04T10:00:00Z' }],
+  maxAccounts: 3,
+  problemSince: null,
   ...overrides,
 })
 
@@ -66,11 +65,13 @@ describe('loading', () => {
     for (const field of [
       'enabled',
       'state',
-      'account',
-      'since',
-      'expiredAt',
-      'everConnected',
-      'loginInProgress',
+      'botUsername',
+      'accounts',
+      'name',
+      'username',
+      'linkedAt',
+      'maxAccounts',
+      'problemSince',
     ]) {
       expect(query).toMatch(new RegExp(`\\b${field}\\b`, 'u'))
     }
@@ -78,9 +79,9 @@ describe('loading', () => {
 
   it('reload asks again', async () => {
     const { result } = await mountStatus()
-    gqlFetch.mockResolvedValue({ assistantConnection: connection({ state: 'EXPIRED' }) })
+    gqlFetch.mockResolvedValue({ assistantConnection: connection({ state: 'TOKEN_REJECTED' }) })
     await result.reload()
-    expect(result.connection.value?.state).toBe('EXPIRED')
+    expect(result.connection.value?.state).toBe('TOKEN_REJECTED')
   })
 
   it('keeps the previous connection when the answer is empty', async () => {
@@ -113,9 +114,9 @@ describe('live updates', () => {
     expect(subscription.calls[0]![0]).toEqual(expect.stringContaining('assistantConnectionUpdated'))
   })
 
-  it('shows the new state as soon as the server pushes it (e.g. the session expired)', async () => {
+  it('shows the new state as soon as the server pushes it (e.g. the token was refused)', async () => {
     const { result } = await mountStatus()
-    const expired = connection({ state: 'EXPIRED', expiredAt: '2026-10-04T11:00:00Z' })
+    const expired = connection({ state: 'TOKEN_REJECTED', problemSince: '2026-10-04T11:00:00Z' })
     subscription.data!.value = { assistantConnectionUpdated: expired }
     await nextTick()
     expect(result.connection.value).toEqual(expired)

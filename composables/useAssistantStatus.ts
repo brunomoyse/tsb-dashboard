@@ -4,14 +4,18 @@ import gql from 'graphql-tag'
 import { print } from 'graphql'
 import type { AssistantConnection } from '~/utils/assistant'
 
-const CONNECTION_FIELDS = `
+export const CONNECTION_FIELDS = `
   enabled
   state
-  account
-  since
-  expiredAt
-  everConnected
-  loginInProgress
+  botUsername
+  accounts {
+    id
+    name
+    username
+    linkedAt
+  }
+  maxAccounts
+  problemSince
 `
 
 const GET_CONNECTION = print(gql`
@@ -31,7 +35,7 @@ const SUB_CONNECTION = print(gql`
 `)
 
 /**
- * The WeChat assistant's connection, shared by the layout banner and the
+ * The Telegram assistant's connection, shared by the layout banner and the
  * assistant page. `connection` stays null until the first load.
  *
  * Call it directly in `<script setup>`: it subscribes to live updates.
