@@ -485,7 +485,6 @@
     "choicePriceRequired": "选项#{index}必须有有效的价格调整值",
     "choiceGroupNameRequired": "分组#{index}必须至少填写一个名称",
     "choiceGroupRangeInvalid": "分组#{index}的最小/最大选择数无效",
-    "choiceGroupEmpty": "分组#{index}必须至少包含一个选项",
     "choiceSaveFailed": "保存产品分组/选项失败",
     "vatCategoryRequired": "必须填写增值税类别，且必须为：食品、饮料、零税率或不适用"
   },

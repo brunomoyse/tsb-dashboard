@@ -485,7 +485,6 @@
     "choicePriceRequired": "L'option #{index} doit avoir un modificateur de prix valide",
     "choiceGroupNameRequired": "Le groupe #{index} doit avoir au moins un nom renseigné",
     "choiceGroupRangeInvalid": "Le groupe #{index} a des valeurs min/max invalides",
-    "choiceGroupEmpty": "Le groupe #{index} doit contenir au moins une option",
     "choiceSaveFailed": "Impossible d'enregistrer les groupes/options du produit",
     "vatCategoryRequired": "La catégorie TVA est requise et doit être : nourriture, boisson, taux zéro ou hors champ"
   },

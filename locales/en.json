@@ -485,7 +485,6 @@
     "choicePriceRequired": "Choice #{index} must have a valid price modifier",
     "choiceGroupNameRequired": "Group #{index} must have at least one name",
     "choiceGroupRangeInvalid": "Group #{index} has invalid min/max selections",
-    "choiceGroupEmpty": "Group #{index} must contain at least one choice",
     "choiceSaveFailed": "Failed to save product groups/choices",
     "vatCategoryRequired": "VAT category is required and must be one of: food, beverage, zero-rated, out of scope"
   },

@@ -434,7 +434,6 @@
       :product="selectedProduct"
       mode="edit"
       @update="handleUpdate"
-      @choices-changed="handleChoicesChanged"
       @close="selectedProduct = null"
     />
   </div>
@@ -728,11 +727,7 @@ const SUB_PRODUCT_UPDATED = gql`
 `
 
 // Fetch products
-const {
-  data: dataProducts,
-  refetch: refetchProducts,
-  pending,
-} = await useGqlQuery<{ products: Product[] }>(
+const { data: dataProducts, pending } = await useGqlQuery<{ products: Product[] }>(
   print(PRODUCTS_QUERY),
   {},
   { immediate: true, cache: true },
@@ -1010,11 +1005,6 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
     if (import.meta.dev) console.error('handleUpdate failed:', err)
     toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
   }
-}
-
-// Handle choices changed (created/updated/deleted)
-const handleChoicesChanged = async () => {
-  await refetchProducts()
 }
 
 // Subscribe in setup so onScopeDispose ties to the component scope; in onMounted it leaks the WebSocket.

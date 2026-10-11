@@ -486,7 +486,6 @@
     "vatCategoryRequired": "BTW-categorie is vereist en moet zijn: voeding, drank, nultarief of buiten toepassingsgebied",
     "choiceGroupNameRequired": "Groep #{index} moet minstens één naam hebben",
     "choiceGroupRangeInvalid": "Groep #{index} heeft ongeldige min/max-waarden",
-    "choiceGroupEmpty": "Groep #{index} moet minstens één optie bevatten",
     "choiceSaveFailed": "De groepen/opties van het product konden niet worden opgeslagen"
   },
   "notifications": {

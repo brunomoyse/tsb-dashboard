@@ -464,6 +464,7 @@ import type {
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { useCategoriesStore } from '~/stores/categories'
+import { splitEmptyChoiceGroups } from '~/utils/choiceGroups'
 import { useI18n } from 'vue-i18n'
 
 // Props and emits definition.
@@ -480,7 +481,6 @@ const {
 const emit = defineEmits<{
   update: [updatedProduct: UpdateProductRequest]
   create: [newProduct: CreateProductInput]
-  choicesChanged: []
   close: []
 }>()
 
@@ -705,59 +705,58 @@ const addNewChoice = (groupIdx: number) => {
   normalizeChoiceOrdering()
 }
 
-const removeChoiceGroup = async (groupIdx: number) => {
+// Removals stay local until Save, so closing the dialog never leaves a half-edited group (e.g. emptied) behind.
+const removedChoiceGroupIds: string[] = []
+const removedChoiceIds: string[] = []
+
+const removeChoiceGroup = (groupIdx: number) => {
   const group = editedChoiceGroups.value[groupIdx]
   if (!group) return
 
-  if (group.id) {
-    try {
-      const DELETE_GROUP = gql`
-        mutation ($id: ID!) {
-          deleteProductChoiceGroup(id: $id)
-        }
-      `
-      const { mutate } = useGqlMutation<{ deleteProductChoiceGroup: boolean }>(DELETE_GROUP)
-      await mutate({ id: group.id })
-    } catch (err) {
-      if (import.meta.dev) console.error('Failed to delete choice group:', err)
-      return
-    }
-  }
-
+  if (group.id) removedChoiceGroupIds.push(group.id)
   editedChoiceGroups.value.splice(groupIdx, 1)
   normalizeChoiceOrdering()
-  emit('choicesChanged')
 }
 
-const removeChoice = async (groupIdx: number, choiceIdx: number) => {
+const removeChoice = (groupIdx: number, choiceIdx: number) => {
   const group = editedChoiceGroups.value[groupIdx]
   const choice = group?.choices[choiceIdx]
   if (!group || !choice) return
 
-  if (choice.id) {
-    try {
-      const DELETE_CHOICE = gql`
-        mutation ($id: ID!) {
-          deleteProductChoice(id: $id)
-        }
-      `
-      const { mutate } = useGqlMutation<{ deleteProductChoice: boolean }>(DELETE_CHOICE)
-      await mutate({ id: choice.id })
-    } catch (err) {
-      if (import.meta.dev) console.error('Failed to delete choice:', err)
-      return
-    }
-  }
-
+  if (choice.id) removedChoiceIds.push(choice.id)
   group.choices.splice(choiceIdx, 1)
   normalizeChoiceOrdering()
-  emit('choicesChanged')
 }
 
 const saveChoices = async (productId: string) => {
   if (!product?.id) return
 
+  // A group left without choices is deleted rather than saved (see utils/choiceGroups.ts).
+  const { kept, emptyGroupIds } = splitEmptyChoiceGroups(editedChoiceGroups.value)
+  editedChoiceGroups.value = kept
   normalizeChoiceOrdering()
+
+  const DELETE_CHOICE = gql`
+    mutation ($id: ID!) {
+      deleteProductChoice(id: $id)
+    }
+  `
+  const DELETE_GROUP = gql`
+    mutation ($id: ID!) {
+      deleteProductChoiceGroup(id: $id)
+    }
+  `
+  while (removedChoiceIds.length > 0) {
+    const { mutate } = useGqlMutation<{ deleteProductChoice: boolean }>(DELETE_CHOICE)
+    await mutate({ id: removedChoiceIds[0] })
+    removedChoiceIds.shift()
+  }
+  removedChoiceGroupIds.push(...emptyGroupIds)
+  while (removedChoiceGroupIds.length > 0) {
+    const { mutate } = useGqlMutation<{ deleteProductChoiceGroup: boolean }>(DELETE_GROUP)
+    await mutate({ id: removedChoiceGroupIds[0] })
+    removedChoiceGroupIds.shift()
+  }
 
   const CREATE_GROUP = gql`
     mutation ($input: CreateProductChoiceGroupInput!) {
@@ -1006,10 +1005,6 @@ const saveChanges = async () => {
       group.minSelections > group.maxSelections
     ) {
       validationErrors.value.push(t('validation.choiceGroupRangeInvalid', { index: gIdx + 1 }))
-    }
-
-    if (group.choices.length === 0) {
-      validationErrors.value.push(t('validation.choiceGroupEmpty', { index: gIdx + 1 }))
     }
 
     for (let cIdx = 0; cIdx < group.choices.length; cIdx++) {
