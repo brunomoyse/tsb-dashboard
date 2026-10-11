@@ -221,7 +221,7 @@ const START_LINK = print(gql`
 `)
 
 const LINK_STATUS = print(gql`
-  query AssistantLink($id: ID!) {
+  query AssistantLink($id: String!) {
     assistantLink(id: $id) {
       ${LINK_FIELDS}
     }
@@ -229,7 +229,7 @@ const LINK_STATUS = print(gql`
 `)
 
 const REMOVE_ACCOUNT = print(gql`
-  mutation RemoveAssistantAccount($id: ID!) {
+  mutation RemoveAssistantAccount($id: String!) {
     removeAssistantAccount(id: $id) {
       ${CONNECTION_FIELDS}
     }
