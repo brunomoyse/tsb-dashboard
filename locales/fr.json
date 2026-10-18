@@ -270,6 +270,8 @@
     "used": "Utilisé",
     "active": "Actif",
     "inactive": "Inactif",
+    "appOnly": "Appli uniquement",
+    "appOnlyHint": "Refusé sur le site : seule l'appli iOS/Android accepte ce code.",
     "expired": "Expiré",
     "scheduled": "Programmé",
     "exhausted": "Épuisé",

@@ -149,6 +149,8 @@ export interface Coupon {
   maxUsesPerUser: number | null
   usedCount: number
   isActive: boolean
+  /** Only the iOS/Android app can redeem it: the website refuses it. */
+  appOnly: boolean
   status: CouponStatus
   validFrom: string | null
   validUntil: string | null
@@ -163,6 +165,7 @@ export interface CreateCouponInput {
   maxUses?: number | null
   maxUsesPerUser?: number | null
   isActive: boolean
+  appOnly?: boolean
   validFrom?: string | null
   validUntil?: string | null
 }
@@ -175,6 +178,7 @@ export interface UpdateCouponInput {
   maxUses?: number | null
   maxUsesPerUser?: number | null
   isActive?: boolean
+  appOnly?: boolean
   validFrom?: string | null
   validUntil?: string | null
 }

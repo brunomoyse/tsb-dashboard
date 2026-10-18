@@ -17,6 +17,8 @@ export interface CouponForm {
   maxUses: string
   maxUsesPerUser: string
   isActive: boolean
+  /** Only the iOS/Android app can redeem it. */
+  appOnly: boolean
   /** `<input type="datetime-local">` value: a Europe/Brussels wall-clock time. */
   validFrom: string
   validUntil: string
@@ -30,6 +32,7 @@ export const defaultCouponForm = (): CouponForm => ({
   maxUses: '',
   maxUsesPerUser: '',
   isActive: true,
+  appOnly: false,
   validFrom: '',
   validUntil: '',
 })
@@ -46,6 +49,7 @@ export const couponToForm = (coupon: Coupon): CouponForm => ({
       ? String(coupon.maxUsesPerUser)
       : '',
   isActive: coupon.isActive,
+  appOnly: coupon.appOnly,
   validFrom: isoToBrusselsDateTimeLocal(coupon.validFrom),
   validUntil: isoToBrusselsDateTimeLocal(coupon.validUntil),
 })
@@ -92,6 +96,7 @@ export const buildCouponInput = (form: CouponForm): CreateCouponInput & UpdateCo
   maxUses: form.maxUses ? Number(form.maxUses) : null,
   maxUsesPerUser: form.maxUsesPerUser ? Number(form.maxUsesPerUser) : null,
   isActive: form.isActive,
+  appOnly: form.appOnly,
   validFrom: brusselsDateTimeLocalToISO(form.validFrom),
   validUntil: brusselsDateTimeLocalToISO(form.validUntil),
 })

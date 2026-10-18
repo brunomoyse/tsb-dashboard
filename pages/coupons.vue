@@ -161,6 +161,9 @@
               <PiliChip :tone="statusMeta(coupon.status).chip">{{
                 statusMeta(coupon.status).label
               }}</PiliChip>
+              <PiliChip v-if="coupon.appOnly" tone="outline" data-testid="coupon-app-only">
+                <UIcon name="i-lucide-smartphone" class="size-3 mr-1" />{{ t('coupons.appOnly') }}
+              </PiliChip>
               <span class="text-[13px] text-muted font-mono tabular-nums">{{
                 periodLabel(coupon)
               }}</span>
@@ -241,7 +244,17 @@
         @select="(_e: Event, row: any) => openEditDialog(row.original)"
       >
         <template #code-cell="{ row }">
-          <span class="font-mono font-medium text-highlighted">{{ row.original.code }}</span>
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-medium text-highlighted">{{ row.original.code }}</span>
+            <PiliChip
+              v-if="row.original.appOnly"
+              tone="outline"
+              size="sm"
+              data-testid="coupon-app-only"
+            >
+              <UIcon name="i-lucide-smartphone" class="size-3 mr-1" />{{ t('coupons.appOnly') }}
+            </PiliChip>
+          </div>
         </template>
 
         <template #discountType-cell="{ row }">
@@ -517,6 +530,7 @@ const COUPONS_QUERY = gql`
       maxUsesPerUser
       usedCount
       isActive
+      appOnly
       status
       validFrom
       validUntil
@@ -537,6 +551,7 @@ const CREATE_COUPON_MUTATION = gql`
       maxUsesPerUser
       usedCount
       isActive
+      appOnly
       status
       validFrom
       validUntil
@@ -557,6 +572,7 @@ const UPDATE_COUPON_MUTATION = gql`
       maxUsesPerUser
       usedCount
       isActive
+      appOnly
       status
       validFrom
       validUntil
@@ -587,6 +603,7 @@ const SUB_COUPON_UPDATED = gql`
       maxUsesPerUser
       usedCount
       isActive
+      appOnly
       status
       validFrom
       validUntil

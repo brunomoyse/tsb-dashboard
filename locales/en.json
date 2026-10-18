@@ -270,6 +270,8 @@
     "used": "Used",
     "active": "Active",
     "inactive": "Inactive",
+    "appOnly": "App only",
+    "appOnlyHint": "Refused on the website: only the iOS/Android app accepts this code.",
     "expired": "Expired",
     "scheduled": "Scheduled",
     "exhausted": "Exhausted",

@@ -22,6 +22,7 @@ const gql = vi.hoisted(() => ({
       maxUsesPerUser: null,
       usedCount: 3,
       isActive: true,
+      appOnly: false,
       status: 'ACTIVE',
       validFrom: null,
       validUntil: '2026-10-31T12:00:00.000Z',
@@ -37,6 +38,7 @@ const gql = vi.hoisted(() => ({
       maxUsesPerUser: 1,
       usedCount: 0,
       isActive: false,
+      appOnly: true,
       status: 'INACTIVE',
       validFrom: null,
       validUntil: null,
@@ -80,6 +82,21 @@ describe('coupons page', () => {
     expect(text).toContain('coupons.inactive')
   })
 
+  it('badges the app-only coupons, and only those', async () => {
+    const Page = (await import('~/pages/coupons.vue')).default
+    const wrapper = await mountSuspended(Page)
+    await settle()
+
+    // The phone cards and the md+ table are both in the DOM (CSS shows one): one badge in each.
+    const badges = wrapper.findAll('[data-testid="coupon-app-only"]')
+    expect(badges).toHaveLength(2)
+    for (const badge of badges) expect(badge.text()).toContain('coupons.appOnly')
+    const card = wrapper.findAll('button').find((b) => b.text().includes('FIVEOFF'))
+    expect(card?.find('[data-testid="coupon-app-only"]').exists()).toBe(true)
+    const welcomeCard = wrapper.findAll('button').find((b) => b.text().includes('WELCOME10'))
+    expect(welcomeCard?.find('[data-testid="coupon-app-only"]').exists()).toBe(false)
+  })
+
   describe('the create / update submit', () => {
     beforeEach(() => {
       gqlFetch.mockReset()
@@ -116,6 +133,7 @@ describe('coupons page', () => {
         maxUses: '50',
         maxUsesPerUser: '',
         isActive: true,
+        appOnly: true,
         // Brussels wall-clock time (CEST, UTC+2) -> UTC instants.
         validFrom: '2026-10-04T12:00',
         validUntil: '2026-12-01T12:00',
@@ -127,6 +145,7 @@ describe('coupons page', () => {
       const [query, options] = gqlFetch.mock.calls[0]!
       expect(query).toContain('createCoupon')
       expect(query).not.toContain('updateCoupon')
+      expect(query).toContain('appOnly')
       expect(options).toEqual({
         variables: {
           input: {
@@ -137,6 +156,7 @@ describe('coupons page', () => {
             maxUses: 50,
             maxUsesPerUser: null,
             isActive: true,
+            appOnly: true,
             validFrom: '2026-10-04T10:00:00.000Z',
             validUntil: '2026-12-01T11:00:00.000Z',
           },
@@ -172,6 +192,7 @@ describe('coupons page', () => {
             maxUses: 100,
             maxUsesPerUser: null,
             isActive: true,
+            appOnly: false,
             validFrom: null,
             validUntil: '2026-10-31T12:00:00.000Z',
           },

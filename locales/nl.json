@@ -270,6 +270,8 @@
     "used": "Gebruikt",
     "active": "Actief",
     "inactive": "Inactief",
+    "appOnly": "Alleen app",
+    "appOnlyHint": "Geweigerd op de website: alleen de iOS/Android-app aanvaardt deze code.",
     "expired": "Verlopen",
     "scheduled": "Gepland",
     "exhausted": "Uitgeput",

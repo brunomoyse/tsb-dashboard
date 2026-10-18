@@ -270,6 +270,8 @@
     "used": "已使用",
     "active": "激活",
     "inactive": "未激活",
+    "appOnly": "仅限App",
+    "appOnlyHint": "网站不接受：仅 iOS/Android App 可使用此优惠码。",
     "expired": "已过期",
     "scheduled": "已排程",
     "exhausted": "已用尽",

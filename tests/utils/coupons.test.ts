@@ -27,6 +27,7 @@ const makeCoupon = (overrides: Partial<Coupon> = {}): Coupon => ({
   maxUsesPerUser: null,
   usedCount: 0,
   isActive: true,
+  appOnly: false,
   status: 'ACTIVE',
   validFrom: null,
   validUntil: null,
@@ -41,7 +42,7 @@ const validForm = () => ({
 })
 
 describe('coupon form', () => {
-  it('starts as an active percentage coupon with every other field empty', () => {
+  it('starts as an active percentage coupon valid everywhere, with every other field empty', () => {
     expect(defaultCouponForm()).toEqual({
       code: '',
       discountType: 'PERCENTAGE',
@@ -50,6 +51,7 @@ describe('coupon form', () => {
       maxUses: '',
       maxUsesPerUser: '',
       isActive: true,
+      appOnly: false,
       validFrom: '',
       validUntil: '',
     })
@@ -69,6 +71,7 @@ describe('coupon form', () => {
         maxUses: 100,
         maxUsesPerUser: 1,
         isActive: false,
+        appOnly: true,
         validFrom: '2026-12-01T09:30:00.000Z', // CET, UTC+1
         validUntil: '2026-07-15T21:30:00.000Z', // CEST, UTC+2
       }),
@@ -81,6 +84,7 @@ describe('coupon form', () => {
       maxUses: '100',
       maxUsesPerUser: '1',
       isActive: false,
+      appOnly: true,
       validFrom: '2026-12-01T10:30',
       validUntil: '2026-07-15T23:30',
     })
@@ -172,9 +176,15 @@ describe('buildCouponInput', () => {
       maxUses: null,
       maxUsesPerUser: null,
       isActive: true,
+      appOnly: false,
       validFrom: null,
       validUntil: null,
     })
+  })
+
+  it('carries the app-only flag', () => {
+    expect(buildCouponInput({ ...validForm(), appOnly: true }).appOnly).toBe(true)
+    expect(buildCouponInput({ ...validForm(), appOnly: false }).appOnly).toBe(false)
   })
 
   it('carries the limits and the minimum order', () => {
@@ -217,6 +227,7 @@ describe('buildCouponInput', () => {
       minOrderAmount: '15.00',
       maxUses: 10,
       maxUsesPerUser: 1,
+      appOnly: true,
       validFrom: '2026-03-29T00:30:00.000Z', // the day of the spring DST change
       validUntil: '2026-10-25T01:30:00.000Z',
     })
@@ -228,6 +239,7 @@ describe('buildCouponInput', () => {
       maxUses: 10,
       maxUsesPerUser: 1,
       isActive: true,
+      appOnly: true,
       validFrom: coupon.validFrom,
       validUntil: coupon.validUntil,
     })

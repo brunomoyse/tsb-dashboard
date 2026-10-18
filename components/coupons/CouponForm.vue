@@ -82,6 +82,15 @@
       <PiliSwitch v-model="form.isActive" size="md" :label="t('coupons.active')" />
     </div>
 
+    <!-- App only -->
+    <div class="flex items-center justify-between gap-3 min-h-12">
+      <div class="min-w-0">
+        <span class="block text-sm font-medium">{{ t('coupons.appOnly') }}</span>
+        <span class="block text-xs text-muted">{{ t('coupons.appOnlyHint') }}</span>
+      </div>
+      <PiliSwitch v-model="form.appOnly" size="md" :label="t('coupons.appOnly')" />
+    </div>
+
     <!-- Valid From -->
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('coupons.validFrom') }}</label>
@@ -120,6 +129,7 @@ export interface CouponFormState {
   maxUses: string
   maxUsesPerUser: string
   isActive: boolean
+  appOnly: boolean
   validFrom: string
   validUntil: string
 }
