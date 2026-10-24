@@ -751,9 +751,11 @@ const handleSubmit = async () => {
       const { mutate } = useGqlMutation<{ createCoupon: Coupon }>(CREATE_COUPON_MUTATION)
       const res = await mutate({ input })
 
+      // The couponUpdated push usually arrives before this answer and has already added the coupon: keep one row.
+      const others = (dataCoupons.value?.coupons ?? []).filter((c) => c.id !== res.createCoupon.id)
       dataCoupons.value = {
         ...dataCoupons.value,
-        coupons: [res.createCoupon, ...(dataCoupons.value?.coupons ?? [])],
+        coupons: [res.createCoupon, ...others],
       }
     }
 
