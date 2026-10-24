@@ -16,7 +16,8 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/pili-dashboard
+  IMAGE_NAME_TSB: ${{ github.repository_owner }}/pili-dashboard-tsb
+  IMAGE_NAME_YGF: ${{ github.repository_owner }}/pili-dashboard-ygf
 
 jobs:
   # ── Tests (every push to main and every release tag) ───────────────────────
@@ -29,12 +30,12 @@ jobs:
       contents: read
     uses: ./.github/workflows/ci.yml
 
-  # ── Test (auto on push to main) ──────────────────────────────────────────────
+  # ── tokyosushi test image (auto on push to main) ─────────────────────────────
 
-  build_amd64:
+  build_tokyosushi_amd64:
     needs: tests
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-    name: Build AMD64 Image
+    name: Build tokyosushi AMD64 Image
     runs-on: ubuntu-26.04
 
     steps:
@@ -47,33 +48,33 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.PAT }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push AMD64 Image
+      - name: Build and Push tokyosushi AMD64 Image
         run: |
           docker buildx build . \
             --platform linux/amd64 \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
-            --build-arg DASHBOARD_BASE_URL=${{ vars.DASHBOARD_BASE_URL }} \
-            --build-arg API_BASE_URL=${{ vars.API_BASE_URL }} \
-            --build-arg S3_BUCKET_URL=${{ vars.S3_BUCKET_URL }} \
-            --build-arg GRAPHQL_WS_URL=${{ vars.GRAPHQL_WS_URL }} \
-            --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
-            --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
-            --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-amd64 \
+            --build-arg DASHBOARD_BASE_URL=${{ vars.TSB_DASHBOARD_BASE_URL }} \
+            --build-arg API_BASE_URL=${{ vars.TSB_API_BASE_URL }} \
+            --build-arg S3_BUCKET_URL=${{ vars.TSB_S3_BUCKET_URL }} \
+            --build-arg GRAPHQL_WS_URL=${{ vars.TSB_GRAPHQL_WS_URL }} \
+            --build-arg ZITADEL_AUTHORITY=${{ vars.TSB_ZITADEL_AUTHORITY }} \
+            --build-arg ZITADEL_CLIENT_ID=${{ vars.TSB_DASHBOARD_ZITADEL_CLIENT_ID }} \
+            --build-arg "RESTAURANT_NAME=Tokyo Sushi Bar" \
             --load
 
       # Boots the image that was just built (the server must answer and render a page)
       # before anything is pushed: a broken image never reaches the registry.
       - name: Boot smoke test
-        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-amd64
 
       - name: Push image
         run: |
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-amd64
 
-  build_arm64:
+  build_tokyosushi_arm64:
     needs: tests
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-    name: Build ARM64 Image
+    name: Build tokyosushi ARM64 Image
     runs-on: self-hosted
 
     steps:
@@ -86,34 +87,34 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.PAT }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push ARM64 Image
+      - name: Build and Push tokyosushi ARM64 Image
         run: |
           docker buildx build . \
             --platform linux/arm64 \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64 \
-            --build-arg DASHBOARD_BASE_URL=${{ vars.DASHBOARD_BASE_URL }} \
-            --build-arg API_BASE_URL=${{ vars.API_BASE_URL }} \
-            --build-arg S3_BUCKET_URL=${{ vars.S3_BUCKET_URL }} \
-            --build-arg GRAPHQL_WS_URL=${{ vars.GRAPHQL_WS_URL }} \
-            --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
-            --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
-            --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-arm64 \
+            --build-arg DASHBOARD_BASE_URL=${{ vars.TSB_DASHBOARD_BASE_URL }} \
+            --build-arg API_BASE_URL=${{ vars.TSB_API_BASE_URL }} \
+            --build-arg S3_BUCKET_URL=${{ vars.TSB_S3_BUCKET_URL }} \
+            --build-arg GRAPHQL_WS_URL=${{ vars.TSB_GRAPHQL_WS_URL }} \
+            --build-arg ZITADEL_AUTHORITY=${{ vars.TSB_ZITADEL_AUTHORITY }} \
+            --build-arg ZITADEL_CLIENT_ID=${{ vars.TSB_DASHBOARD_ZITADEL_CLIENT_ID }} \
+            --build-arg "RESTAURANT_NAME=Tokyo Sushi Bar" \
             --load
 
       # Boots the image that was just built (the server must answer and render a page)
       # before anything is pushed: a broken image never reaches the registry.
       - name: Boot smoke test
-        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-arm64
 
       - name: Push image
         run: |
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-arm64
 
-  create_manifest:
+  create_manifest_tokyosushi:
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-    name: Create Multi-Architecture Manifest
+    name: Create tokyosushi Multi-Architecture Manifest
     runs-on: ubuntu-26.04
-    needs: [build_amd64, build_arm64]
+    needs: [build_tokyosushi_amd64, build_tokyosushi_arm64]
 
     steps:
       - name: Log in to GitHub Container Registry
@@ -122,14 +123,14 @@ jobs:
       - name: Create and Push Manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest \
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-amd64 \
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:latest-arm64
 
-  deploy_test:
+  deploy_test_tokyosushi:
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-    needs: create_manifest
-    name: Deploy to Home Server
+    needs: create_manifest_tokyosushi
+    name: Deploy tokyosushi to Home Server
     runs-on: ubuntu-26.04
 
     steps:
@@ -141,8 +142,8 @@ jobs:
 
       - name: Trigger deploy webhook
         run: |
-          curl -X POST ${{ vars.DEPLOY_WEBHOOK_URL }} \
-            -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
+          curl -X POST ${{ vars.TSB_DEPLOY_WEBHOOK_URL }} \
+            -H "X-Deploy-Token: ${{ secrets.TSB_DEPLOY_TOKEN }}" \
             --fail --max-time 300
 
       # The webhook answering does not mean the new container came up: poll the test server for 4 minutes.
@@ -159,12 +160,12 @@ jobs:
           fi
           scripts/smoke.sh dashboard "$URL"
 
-  # ── Production release (tag push v*) ────────────────────────────────────────
+  # ── tokyosushi production release (tag push v*) ──────────────────────────────
 
-  build_production:
+  build_production_tokyosushi:
     needs: tests
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    name: Build Production Image
+    name: Build tokyosushi Production Image
     runs-on: ubuntu-26.04
     environment: production
 
@@ -178,35 +179,35 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.PAT }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push Production Image
+      - name: Build and Push tokyosushi Production Image
         run: |
           docker buildx build . \
             --platform linux/amd64 \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:production \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
-            --build-arg DASHBOARD_BASE_URL=${{ vars.DASHBOARD_BASE_URL }} \
-            --build-arg API_BASE_URL=${{ vars.API_BASE_URL }} \
-            --build-arg S3_BUCKET_URL=${{ vars.S3_BUCKET_URL }} \
-            --build-arg GRAPHQL_WS_URL=${{ vars.GRAPHQL_WS_URL }} \
-            --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
-            --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
-            --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:production \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:${{ github.ref_name }} \
+            --build-arg DASHBOARD_BASE_URL=${{ vars.TSB_DASHBOARD_BASE_URL }} \
+            --build-arg API_BASE_URL=${{ vars.TSB_API_BASE_URL }} \
+            --build-arg S3_BUCKET_URL=${{ vars.TSB_S3_BUCKET_URL }} \
+            --build-arg GRAPHQL_WS_URL=${{ vars.TSB_GRAPHQL_WS_URL }} \
+            --build-arg ZITADEL_AUTHORITY=${{ vars.TSB_ZITADEL_AUTHORITY }} \
+            --build-arg ZITADEL_CLIENT_ID=${{ vars.TSB_DASHBOARD_ZITADEL_CLIENT_ID }} \
+            --build-arg "RESTAURANT_NAME=Tokyo Sushi Bar" \
             --load
 
       # Boots the image that was just built (the server must answer and render a page)
       # before anything is pushed: a broken image never reaches the registry.
       - name: Boot smoke test
-        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:production
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:production
 
       - name: Push image
         run: |
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:production
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:production
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}:${{ github.ref_name }}
 
-  deploy_production:
+  deploy_production_tokyosushi:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: build_production
-    name: Deploy to Production
+    needs: build_production_tokyosushi
+    name: Deploy tokyosushi to Production
     runs-on: ubuntu-26.04
     environment: production
 
@@ -222,7 +223,7 @@ jobs:
         env:
           APP: tsb-dashboard
           TAG: ${{ github.ref_name }}
-          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}
         with:
           host: ${{ vars.OVH_HOST }}
           username: ${{ vars.OVH_USER }}
@@ -244,7 +245,7 @@ jobs:
       - name: Smoke test tokyosushi
         id: smoke_tokyosushi
         env:
-          URL: ${{ vars.DASHBOARD_BASE_URL }}
+          URL: ${{ vars.TSB_DASHBOARD_BASE_URL }}
         run: scripts/smoke.sh --skip-unset dashboard "$URL"
 
       - name: Roll back tokyosushi after a failed smoke test
@@ -277,7 +278,7 @@ jobs:
             --data-urlencode "disable_web_page_preview=true" \
             || echo "::warning::Telegram alert failed"
 
-  # ── YGF production release (tag push ygf-v*) ─────────────────────────────────
+  # ── ygfliege production release (tag push ygf-v*) ────────────────────────────
   # Yangguofu Malatang Liège dashboard (admin.ygfliege.be): same code, built
   # with the YGF_* variables of the `production` environment, deployed to the
   # Helm release ygf-apps (namespace ygf, values.ygf.yaml).
@@ -299,12 +300,12 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.PAT }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push Production Image
+      - name: Build and Push ygfliege Production Image
         run: |
           docker buildx build . \
             --platform linux/amd64 \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:production \
-            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:${{ github.ref_name }} \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}:production \
+            --tag ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}:${{ github.ref_name }} \
             --build-arg DASHBOARD_BASE_URL=${{ vars.YGF_DASHBOARD_BASE_URL }} \
             --build-arg API_BASE_URL=${{ vars.YGF_API_BASE_URL }} \
             --build-arg S3_BUCKET_URL=${{ vars.YGF_S3_BUCKET_URL }} \
@@ -317,12 +318,12 @@ jobs:
       # Boots the image that was just built (the server must answer and render a page)
       # before anything is pushed: a broken image never reaches the registry.
       - name: Boot smoke test
-        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:production
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}:production
 
       - name: Push image
         run: |
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:production
-          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:${{ github.ref_name }}
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}:production
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}:${{ github.ref_name }}
 
   deploy_production_ygfliege:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ygf-v')
@@ -343,7 +344,7 @@ jobs:
         env:
           APP: tsb-dashboard
           TAG: ${{ github.ref_name }}
-          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege
+          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_YGF }}
         with:
           host: ${{ vars.OVH_HOST }}
           username: ${{ vars.OVH_USER }}
@@ -399,11 +400,11 @@ jobs:
             --data-urlencode "disable_web_page_preview=true" \
             || echo "::warning::Telegram alert failed"
 
-  # ── Rollback (manual trigger) ────────────────────────────────────────────────
+  # ── tokyosushi rollback (manual trigger) ─────────────────────────────────────
 
-  rollback:
+  rollback_tokyosushi:
     if: github.event_name == 'workflow_dispatch'
-    name: Rollback Production
+    name: Rollback tokyosushi Production
     runs-on: ubuntu-26.04
     environment: production
 
@@ -413,7 +414,7 @@ jobs:
         env:
           APP: tsb-dashboard
           TAG: ${{ inputs.version }}
-          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_TSB }}
         with:
           host: ${{ vars.OVH_HOST }}
           username: ${{ vars.OVH_USER }}

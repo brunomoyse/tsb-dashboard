@@ -2,7 +2,7 @@ name: Release (tag + deploy)
 
 # Manual UI button: tags the current HEAD of main with the provided version
 # and pushes the tag, which triggers the existing "Build and Deploy" workflow
-# (build_production + deploy_production) automatically.
+# (build_production_tokyosushi + deploy_production_tokyosushi) automatically.
 
 on:
   workflow_dispatch:

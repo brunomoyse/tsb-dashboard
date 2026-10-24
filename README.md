@@ -2,7 +2,7 @@
 
 Admin dashboard of Pili for restaurant operations.
 
-Repository `nuagemagique-dev/pili-dashboard`, local folder and internal name `tsb-dashboard`. Images: `ghcr.io/nuagemagique-dev/pili-dashboard` and `ghcr.io/nuagemagique-dev/pili-dashboard-ygfliege`.
+Repository `nuagemagique-dev/pili-dashboard`, local folder and internal name `tsb-dashboard`. Images: `ghcr.io/nuagemagique-dev/pili-dashboard-tsb` and `ghcr.io/nuagemagique-dev/pili-dashboard-ygf`.
 
 `tsb-dashboard` is used by staff to manage products and monitor orders in real time.
 
@@ -68,9 +68,21 @@ The Dockerfile is multi-stage with a healthcheck and supports multi-arch builds.
 
 ## Deployment
 
+### tokyosushi (`ghcr.io/nuagemagique-dev/pili-dashboard-tsb`)
+
 - Push to `main`: builds and publishes `:latest` (multi-arch) and deploys to the home server.
-- Tag `v*`: builds `:production` + version tags (AMD64) and deploys to OVH.
+- Tag `v*`: builds `:production` + version tags (AMD64) from the `TSB_*`
+  variables, then deploys the Helm release `tokyosushi-apps` to OVH.
 - Manual rollback: run the workflow with the target version.
+
+### ygfliege (`ghcr.io/nuagemagique-dev/pili-dashboard-ygf`)
+
+- Tag `ygf-v*`: builds `:production` + version tags (AMD64) from the `YGF_*`
+  variables, then deploys the Helm release `ygf-apps` (namespace `ygf`).
+
+Build and deploy settings are named per brand: `TSB_*` and `YGF_*` variables,
+the `TSB_DEPLOY_TOKEN` secret, `IMAGE_NAME_TSB` and `IMAGE_NAME_YGF` in the
+workflow. Shared ones (`PAT`, `OVH_*`) carry no prefix.
 
 ## Pili repositories
 
