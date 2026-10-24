@@ -1,4 +1,4 @@
-import type { HubriseProductFields } from '~/utils/hubrise'
+import type { HubriseOrderInfo, HubriseProductFields } from '~/utils/hubrise'
 // Types/index.ts
 export interface Translation {
   language: string
@@ -223,6 +223,8 @@ export type OrderPickUpStatus =
   | 'FAILED'
 export type OrderType = 'DELIVERY' | 'PICKUP'
 export interface Order {
+  /** The HubRise side of the order; null when it never reached HubRise, absent where the server has none. */
+  hubrise?: HubriseOrderInfo | null
   addressExtra: string | null
   addressId: string | null
   createdAt: string

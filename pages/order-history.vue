@@ -132,6 +132,7 @@
           >
             {{ t(`orders.status.${row.original.status.toLowerCase()}`) }}
           </UBadge>
+          <HubriseOrderBadges :info="row.original.hubrise" class="ml-1.5" />
         </template>
 
         <template #type-cell="{ row }">
@@ -260,6 +261,7 @@
                 <PiliChip size="sm" :tone="statusTone(order.status)">
                   {{ t(`orders.status.${order.status.toLowerCase()}`) }}
                 </PiliChip>
+                <HubriseOrderBadges :info="order.hubrise" />
               </div>
             </div>
           </div>
@@ -351,11 +353,18 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { useI18n } from 'vue-i18n'
+import HubriseOrderBadges from '~/components/hubrise/OrderBadges.vue'
+import { type HubriseOrderInfo, orderHubriseFields } from '~/utils/hubrise'
 import { brusselsDateISO, brusselsDateTimeLocalToISO, shiftBrusselsDate } from '~/utils/utils'
 
 const { t, locale } = useI18n()
 const isMobile = useIsMobile()
 const { $gqlFetch } = useNuxtApp()
+
+// HubRise: the state of each order is asked only where the server has the integration (an older server would refuse it).
+const { status: hubriseStatus, reload: loadHubriseStatus } = useHubriseStatus()
+if (hubriseStatus.value === null) await loadHubriseStatus()
+const hubriseFields = orderHubriseFields(hubriseStatus.value)
 
 // --- State ---
 const currentPage = ref(1)
@@ -374,6 +383,7 @@ interface HistoryOrder {
   totalPrice: string
   displayCustomerName: string
   items: { quantity: number }[]
+  hubrise?: HubriseOrderInfo | null
 }
 
 interface HistorySummary {
@@ -460,6 +470,7 @@ const ORDER_HISTORY_QUERY = print(gql`
         items {
           quantity
         }
+        ${hubriseFields}
       }
     }
   }

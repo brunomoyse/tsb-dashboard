@@ -28,6 +28,8 @@ import {
   orderHubriseBadges,
   planDirectionChange,
   previewHasChanges,
+  orderHubriseFields,
+  HUBRISE_ORDER_FIELDS,
   productHubriseFields,
   HUBRISE_PRODUCT_FIELDS,
   publishChip,
@@ -727,6 +729,24 @@ describe('product query fields', () => {
       'publishedAt',
     ]) {
       expect(HUBRISE_PRODUCT_FIELDS).toContain(field)
+    }
+  })
+})
+
+describe('order query fields', () => {
+  it('asks for the HubRise state only where HubRise is configured', () => {
+    expect(orderHubriseFields(makeStatus())).toBe(HUBRISE_ORDER_FIELDS)
+    expect(orderHubriseFields(makeStatus({ available: false }))).toBe('')
+    expect(orderHubriseFields(null)).toBe('')
+    for (const field of [
+      'hubriseOrderId',
+      'pushState',
+      'pushedAt',
+      'remoteStatus',
+      'remoteTotal',
+      'needsAttention',
+    ]) {
+      expect(HUBRISE_ORDER_FIELDS).toContain(field)
     }
   })
 })

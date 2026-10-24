@@ -254,6 +254,21 @@ export const HUBRISE_PRODUCT_FIELDS = `
 export const productHubriseFields = (status: HubriseStatus | null): string =>
   status?.available === true ? HUBRISE_PRODUCT_FIELDS : ''
 
+/** The selection of the HubRise state of an order, asked only where the server has HubRise. */
+export const HUBRISE_ORDER_FIELDS = `
+  hubrise {
+    hubriseOrderId
+    pushState
+    pushedAt
+    remoteStatus
+    remoteTotal
+    needsAttention
+  }
+`
+
+export const orderHubriseFields = (status: HubriseStatus | null): string =>
+  status?.available === true ? HUBRISE_ORDER_FIELDS : ''
+
 // ─── Error codes ────────────────────────────────────────────────────────────────
 
 /** Every `extensions.code` the HubRise operations answer with. */

@@ -36,8 +36,10 @@ const UPDATE_PAYMENT_STATUS_MUTATION = gql`
   }
 `
 
-// Same fields as the orders list query in pages/orders.vue
-export const ORDER_BY_ID_QUERY = print(gql`
+// Same fields as the orders list query in pages/orders.vue; `extraFields` is a selection added to the order (the HubRise
+// state, asked only where the server has HubRise).
+export const buildOrderByIdQuery = (extraFields = ''): string =>
+  print(gql`
   query ($id: ID!) {
     order(id: $id) {
       id
@@ -102,9 +104,12 @@ export const ORDER_BY_ID_QUERY = print(gql`
           name
         }
       }
+      ${extraFields}
     }
   }
 `)
+
+export const ORDER_BY_ID_QUERY = buildOrderByIdQuery()
 
 /**
  * Order actions shared by the desktop slideover and the mobile detail page:
