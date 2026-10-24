@@ -18,8 +18,9 @@ updates:
       # TypeScript 7 (native compiler) drops typescript/lib/tsc, which vue-tsc still loads.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
-      # Peer-pinned to the vitest that vite-plus bundles: bump it together with vite-plus, never alone.
+      # Pinned to the vitest that vite-plus bundles: bump them together with vite-plus, never alone.
       - dependency-name: '@vitest/coverage-v8'
+      - dependency-name: 'vitest'
     groups:
       # Security fixes, opened as soon as an advisory lands (no cooldown).
       security:
@@ -27,7 +28,8 @@ updates:
         patterns:
           - '*'
       # Vite+ ships its own oxc/rolldown/vitest binaries; bump the CLI and its platform packages together.
-      # A bump also needs the `overrides.vite` pin (vite-plus-core) and @vitest/coverage-v8 moved by hand.
+      # Dependabot cannot move the `vite` alias (vite-plus-core) nor @vitest/coverage-v8 and vitest:
+      # .github/workflows/dependabot-vite-plus.yml pushes that commit on the PR, then CI watch merges it when green.
       vite-plus:
         patterns:
           - 'vite-plus'

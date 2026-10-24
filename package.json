@@ -13,11 +13,12 @@
     "test:watch": "vp test",
     "lint": "vp lint",
     "check": "vp check",
+    "check:graphql": "node scripts/check-graphql-operations.mjs --root .",
     "fmt": "vp fmt",
     "cap:build": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs",
-    "build:android": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs && npx cap sync android",
-    "cap:sync": "npx cap sync android",
-    "cap:open": "npx cap open android",
+    "build:android": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs && cap sync android",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
     "prepare": "vp config"
   },
   "dependencies": {
@@ -45,23 +46,26 @@
     "@capacitor/cli": "^8.5.3",
     "@nuxt/test-utils": "^4.3.4",
     "@nuxtjs/i18n": "^10.6.0",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^24.19.2",
+    "@types/ws": "^8.18.2",
     "@vitest/coverage-v8": "5.0.5",
     "@vue/test-utils": "^2.5.1",
     "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
     "vite-plus": "1.4.0",
-    "vue-tsc": "^3.3.13"
-  },
-  "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"
+    "vitest": "5.0.5",
+    "vue-tsc": "^3.3.13",
+    "ws": "^8.22.0"
   },
   "devEngines": {
     "packageManager": {
-      "name": "npm",
-      "version": "11.19.0",
-      "onFail": "download"
+      "name": "pnpm",
+      "version": "^12.15.0",
+      "onFail": "error"
     }
-  }
+  },
+  "packageManager": "pnpm@12.15.0"
 }

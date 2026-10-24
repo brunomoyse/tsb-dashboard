@@ -1,6 +1,8 @@
-# tsb-dashboard
+# pili-dashboard
 
-Admin dashboard for Tokyo Sushi Bar operations.
+Admin dashboard of Pili for restaurant operations.
+
+Repository `nuagemagique-dev/pili-dashboard`, local folder and internal name `tsb-dashboard`. Images: `ghcr.io/nuagemagique-dev/pili-dashboard-tsb` and `ghcr.io/nuagemagique-dev/pili-dashboard-ygf`.
 
 `tsb-dashboard` is used by staff to manage products and monitor orders in real time.
 
@@ -41,18 +43,18 @@ Minimum variables:
 ### 2) Install and run
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Commands
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run generate
-npm run lint
+pnpm dev
+pnpm build
+pnpm preview
+pnpm generate
+pnpm lint
 ```
 
 ## Docker
@@ -81,3 +83,18 @@ The Dockerfile is multi-stage with a healthcheck and supports multi-arch builds.
 Build and deploy settings are named per brand: `TSB_*` and `YGF_*` variables,
 the `TSB_DEPLOY_TOKEN` secret, `IMAGE_NAME_TSB` and `IMAGE_NAME_YGF` in the
 workflow. Shared ones (`PAT`, `OVH_*`) carry no prefix.
+
+## Pili repositories
+
+Every Pili repository lives in the GitHub org `nuagemagique-dev`. Local folders kept their earlier names.
+
+| Repository                           | Local folder     | What it is                                             |
+| ------------------------------------ | ---------------- | ------------------------------------------------------ |
+| pili-api                             | `tsb-service`    | GraphQL API (Go) and the `pili-mcp` tool server        |
+| pili-shop                            | `tsb-core`       | Customer web shop, one Nuxt app per brand              |
+| **pili-dashboard** (this repository) | `tsb-dashboard`  | Admin dashboard (Nuxt)                                 |
+| pili-mobile                          | `tsb-mobile`     | Customer iOS and Android app (Expo)                    |
+| pili-handheld                        | `moyun-handheld` | Staff handheld app for the Sunmi V3H (Kotlin)          |
+| pili-pos                             | `moyun-pos`      | SCE 2.0 cash register (Rust engine, Android and Linux) |
+| pili-agent                           | `tsb-agent`      | Owner and staff Telegram agent                         |
+| pili-infra                           | `tsb-infra`      | Helm charts, Terraform, SOPS secrets, runbooks         |

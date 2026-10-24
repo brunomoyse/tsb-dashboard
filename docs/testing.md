@@ -5,12 +5,12 @@ Unit tests run with Vite+ (`vp test run`, vitest 5 inside). They cover the **Typ
 layouts and components are not part of the unit metric.
 
 ```bash
-npm test                                          # all projects
-npx vp test run tests/composables                 # one folder / file
-npx vp test run -t "removes the line"             # by test title
-npx vp test run --project unit                    # only the plain-node project (fastest, no Nuxt boot)
-npx vp test run --sequence.shuffle --sequence.seed=7   # random order: the suite must pass in any order
-npm run test:coverage                             # coverage + thresholds (what CI runs); report in coverage/
+pnpm test                                          # all projects
+pnpm exec vp test run tests/composables                 # one folder / file
+pnpm exec vp test run -t "removes the line"             # by test title
+pnpm exec vp test run --project unit                    # only the plain-node project (fastest, no Nuxt boot)
+pnpm exec vp test run --sequence.shuffle --sequence.seed=7   # random order: the suite must pass in any order
+pnpm test:coverage                             # coverage + thresholds (what CI runs); report in coverage/
 ```
 
 `coverage/lcov-report/index.html` is the browsable report. The thresholds in `vite.config.ts`
@@ -24,7 +24,7 @@ The pure logic that used to sit in the big pages lives in `utils/` (`orders`, `c
 `graphqlUpload`) and in composables (`useLoginFlow`); the pages are thin and a mount test per page (`tests/pages/`) checks
 that they are wired to it, submits included (coupon create / update payloads, the settings save bar, the product image upload through `$api`).
 
-npm: the repo declares `devEngines.packageManager` npm 11.19.0 (`onFail: download`); with another npm, `npm ci --force`.
+pnpm: the repo pins `packageManager` pnpm 12.15.0 and `devEngines.packageManager` accepts `^12.15.0` (`onFail: error`); install the pinned one with `corepack enable` or `npm install -g pnpm@12.15.0`.
 
 ## Where tests go and how they are named
 
@@ -115,3 +115,30 @@ This is a hybrid, not a server render: it proves the server BRANCH does the righ
 - Don't change production behaviour for testability. A branch that cannot be reached is dead code: report it instead of
   adding an ignore comment.
 - A suspected product bug is pinned with a `NOTE:` test title and a comment, and reported; a real bug gets a `fix(...)` commit.
+
+## End-to-end tests (Playwright, mock backend)
+
+`e2e/` runs the real production build of the dashboard in a browser against an in-repo mock of tsb-service and a fake
+Zitadel: no secret, no database, no network. It covers what the unit tests cannot see because it needs the pages, the
+router, the WebSocket and the API to work together: signing in with the e-mailed code, the orders board (desktop kanban
+and slideover, phone list and order page) with the status changes and the mutations they send, editing a product, creating
+a coupon.
+
+```bash
+pnpm exec playwright test                      # builds the app, starts the mock and the build, runs both projects
+E2E_SKIP_BUILD=1 pnpm exec playwright test     # reuse .output (built with the env of playwright.config.ts)
+E2E_REUSE=1 pnpm exec playwright test          # reuse a mock / app already listening on 8200 / 3300
+pnpm exec playwright test --project=mobile     # `mobile-*.spec.ts` on a Pixel 5; `desktop` runs the other specs on 1440 x 900
+```
+
+- Import `test` / `expect` from `e2e/support/test.ts`, never from `@playwright/test`: its fixtures reset the mock before every
+  test, keep the browser off the internet and FAIL a passing test when the page asked the mock for an operation or a field it
+  does not implement (the mock lags the dashboard: add it to `e2e/mock/resolvers.ts` or `e2e/mock/state.ts`).
+- `authenticatedPage` is a signed-in staff member (a faked oidc-client-ts session); `page` is anonymous. `mock` arranges
+  (`mock.failOperation('updateOrder', { code })`, `mock.newOrder(seed)`) and inspects (`mock.operations('updateOrder')` lists
+  the calls with their arguments).
+- Labels come from `locales/fr.json` through `message('orders.status.preparing')`, so a renamed label fails the spec that
+  needs it instead of being copied into it.
+- The mock has no schema: its resolvers are plain functions and the selection set is projected onto what they return.
+  What each part does is in the header comment of `e2e/mock/*.ts`.
+- CI runs this as the `e2e` job of `ci.yml`.
