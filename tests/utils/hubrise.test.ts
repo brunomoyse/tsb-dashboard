@@ -28,6 +28,8 @@ import {
   orderHubriseBadges,
   planDirectionChange,
   previewHasChanges,
+  productHubriseFields,
+  HUBRISE_PRODUCT_FIELDS,
   publishChip,
   publishCountRows,
   publishErrorKey,
@@ -710,5 +712,21 @@ describe('banner helpers', () => {
     expect(importModes('PUBLISH')).toEqual(['LINK_ONLY'])
     expect(importModes('IMPORT')).toEqual(['LINK_ONLY', 'FULL'])
     expect(importModes('NONE')).toEqual(['LINK_ONLY', 'FULL'])
+  })
+})
+
+describe('product query fields', () => {
+  it('asks for the HubRise fields only where HubRise is configured', () => {
+    expect(productHubriseFields(makeStatus())).toBe(HUBRISE_PRODUCT_FIELDS)
+    expect(productHubriseFields(makeStatus({ available: false }))).toBe('')
+    expect(productHubriseFields(null)).toBe('')
+    for (const field of [
+      'hubriseManaged',
+      'hubriseLockedFields',
+      'hubrisePublish',
+      'publishedAt',
+    ]) {
+      expect(HUBRISE_PRODUCT_FIELDS).toContain(field)
+    }
   })
 })

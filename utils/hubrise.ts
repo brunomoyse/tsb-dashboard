@@ -236,6 +236,24 @@ export interface HubriseProductFields {
   hubrisePublish?: HubriseProductPublishInfo | null
 }
 
+/**
+ * The selection of the HubRise fields of a product. Asked only when the server has HubRise (`available`): a server
+ * without it, or an older one, does not know the fields and would refuse the whole query.
+ */
+export const HUBRISE_PRODUCT_FIELDS = `
+  hubriseManaged
+  hubriseLockedFields
+  hubrisePublish {
+    state
+    publishedAt
+    ref
+  }
+`
+
+/** The selection to add to a product query: the HubRise fields when HubRise is there, nothing otherwise. */
+export const productHubriseFields = (status: HubriseStatus | null): string =>
+  status?.available === true ? HUBRISE_PRODUCT_FIELDS : ''
+
 // ─── Error codes ────────────────────────────────────────────────────────────────
 
 /** Every `extensions.code` the HubRise operations answer with. */

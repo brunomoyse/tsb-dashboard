@@ -1,3 +1,4 @@
+import type { HubriseProductFields } from '~/utils/hubrise'
 // Types/index.ts
 export interface Translation {
   language: string
@@ -51,7 +52,7 @@ export interface UpdateProductChoiceInput {
 
 export type VatCategory = 'food' | 'beverage' | 'zero_rated' | 'out_of_scope'
 
-export interface Product {
+export interface Product extends HubriseProductFields {
   categoryId: string
   code: string | null
   id: string

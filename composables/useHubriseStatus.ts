@@ -119,7 +119,7 @@ export function useHubriseStatus() {
     try {
       const data = await $gqlFetch<{ hubriseStatus: HubriseStatus } | null>(GET_STATUS)
       loadError.value = null
-      if (data) setStatus(data.hubriseStatus)
+      if (data?.hubriseStatus) setStatus(data.hubriseStatus)
       return status.value
     } catch (error: unknown) {
       // Not an admin, or the API is down: keep what is shown, the page displays the error.

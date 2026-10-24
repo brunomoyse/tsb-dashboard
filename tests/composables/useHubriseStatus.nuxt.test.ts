@@ -85,6 +85,14 @@ describe('loading', () => {
     expect(result.status.value).toEqual(makeStatus())
   })
 
+  it('keeps the previous status when the answer has no status in it', async () => {
+    const { result } = mountComposable(() => useHubriseStatus())
+    await settle()
+    gqlFetch.mockResolvedValue({})
+    await result.reload()
+    expect(result.status.value).toEqual(makeStatus())
+  })
+
   it('keeps what is shown and reports the error when the query fails', async () => {
     const { result } = mountComposable(() => useHubriseStatus())
     await settle()
