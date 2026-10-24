@@ -18,10 +18,21 @@ env:
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/pili-dashboard
 
-# ── Test (auto on push to main) ──────────────────────────────────────────────
-
 jobs:
+  # ── Tests (every push to main and every release tag) ───────────────────────
+  # The whole of ci.yml runs first; every image build waits for it, so a commit
+  # that fails its checks never produces an image, a test deploy or a release.
+  # The rollback job does not need it: it ships an old, already-released version.
+  tests:
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  # ── Test (auto on push to main) ──────────────────────────────────────────────
+
   build_amd64:
+    needs: tests
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
     name: Build AMD64 Image
     runs-on: ubuntu-26.04
@@ -48,9 +59,19 @@ jobs:
             --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
             --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
             --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
-            --push
+            --load
+
+      # Boots the image that was just built (the server must answer and render a page)
+      # before anything is pushed: a broken image never reaches the registry.
+      - name: Boot smoke test
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
+
+      - name: Push image
+        run: |
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64
 
   build_arm64:
+    needs: tests
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
     name: Build ARM64 Image
     runs-on: self-hosted
@@ -77,7 +98,16 @@ jobs:
             --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
             --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
             --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
-            --push
+            --load
+
+      # Boots the image that was just built (the server must answer and render a page)
+      # before anything is pushed: a broken image never reaches the registry.
+      - name: Boot smoke test
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+
+      - name: Push image
+        run: |
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
 
   create_manifest:
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
@@ -112,6 +142,7 @@ jobs:
   # ── Production release (tag push v*) ────────────────────────────────────────
 
   build_production:
+    needs: tests
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     name: Build Production Image
     runs-on: ubuntu-26.04
@@ -140,7 +171,17 @@ jobs:
             --build-arg ZITADEL_AUTHORITY=${{ vars.ZITADEL_AUTHORITY }} \
             --build-arg ZITADEL_CLIENT_ID=${{ vars.ZITADEL_CLIENT_ID }} \
             --build-arg "RESTAURANT_NAME=${{ vars.RESTAURANT_NAME || 'Tokyo Sushi Bar' }}" \
-            --push
+            --load
+
+      # Boots the image that was just built (the server must answer and render a page)
+      # before anything is pushed: a broken image never reaches the registry.
+      - name: Boot smoke test
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:production
+
+      - name: Push image
+        run: |
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:production
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
 
   deploy_production:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -180,6 +221,7 @@ jobs:
   # Helm release ygf-apps (namespace ygf, values.ygf.yaml).
 
   build_production_ygfliege:
+    needs: tests
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ygf-v')
     name: Build ygfliege Production Image
     runs-on: ubuntu-26.04
@@ -208,7 +250,17 @@ jobs:
             --build-arg ZITADEL_AUTHORITY=${{ vars.YGF_ZITADEL_AUTHORITY }} \
             --build-arg ZITADEL_CLIENT_ID=${{ vars.YGF_DASHBOARD_ZITADEL_CLIENT_ID }} \
             --build-arg "RESTAURANT_NAME=Yangguofu Malatang Liège" \
-            --push
+            --load
+
+      # Boots the image that was just built (the server must answer and render a page)
+      # before anything is pushed: a broken image never reaches the registry.
+      - name: Boot smoke test
+        run: scripts/ci-smoke-image.sh ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:production
+
+      - name: Push image
+        run: |
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:production
+          docker push ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-ygfliege:${{ github.ref_name }}
 
   deploy_production_ygfliege:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ygf-v')
