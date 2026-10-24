@@ -14,9 +14,8 @@ vi.mock('vue-i18n', async (importOriginal) => {
 // Compiled once at load: the first mount would otherwise eat the test timeout.
 const Banners = (await import('~/components/hubrise/HubriseBanners.vue')).default
 
-const mountBanners = async (banners: ReturnType<typeof statusBanners>, props = {}) => 
+const mountBanners = (banners: ReturnType<typeof statusBanners>, props = {}) =>
   mountSuspended(Banners, { props: { banners, ...props } })
-
 
 describe('HubriseBanners', () => {
   it('renders nothing without a banner', async () => {
