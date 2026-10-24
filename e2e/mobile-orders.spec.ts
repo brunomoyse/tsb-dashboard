@@ -84,7 +84,7 @@ test.describe('orders (phone)', () => {
     await page.getByRole('radio', { name: '+30' }).click()
     await page.getByRole('button', { name: new RegExp(message('common.save'), 'u') }).click()
 
-    await expect(page.getByText(message('orders.estimateSaved'))).toBeVisible()
+    await expect(page.getByText(message('orders.estimateSaved'), { exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/fr\/orders\/order-preparing$/u)
     const [call] = await mock.operations('updateOrder')
     expect(call?.args).toMatchObject({ id: 'order-preparing' })
