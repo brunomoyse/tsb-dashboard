@@ -82,7 +82,7 @@ describe('switching to PUBLISH', () => {
     const wrapper = await mountDirection()
     await choose(wrapper, 'PUBLISH')
     expect(bodyText()).toContain('hubrise.direction.confirm.noneToPublish')
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(api.calls('SetHubriseCatalogDirection')).toEqual([
       { direction: 'PUBLISH', acknowledgeLocalOverwrite: false },
     ])
@@ -131,7 +131,7 @@ describe('switching to PUBLISH', () => {
     api.answer('SetHubriseCatalogDirection', api.failWith(gqlFailure('HUBRISE_RECONNECT_REQUIRED')))
     const wrapper = await mountDirection()
     await choose(wrapper, 'PUBLISH')
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(bodyText()).toContain('hubrise.errors.reconnectRequired')
     expect(wrapper.emitted('changed')).toBeUndefined()
     expect(toastAdd).not.toHaveBeenCalled()
@@ -145,11 +145,11 @@ describe('leaving PUBLISH with edits waiting', () => {
     const wrapper = await mountDirection(waiting())
     await choose(wrapper, 'NONE')
     expect(bodyText()).toContain('hubrise.direction.acknowledgeOverwrite')
-    expect(bodyButton('hubrise.direction.confirm')!.disabled).toBe(true)
+    expect(bodyButton('hubrise.direction.confirmButton')!.disabled).toBe(true)
     bodyCheckbox()!.click()
     await settle()
-    expect(bodyButton('hubrise.direction.confirm')!.disabled).toBe(false)
-    await clickBody('hubrise.direction.confirm')
+    expect(bodyButton('hubrise.direction.confirmButton')!.disabled).toBe(false)
+    await clickBody('hubrise.direction.confirmButton')
     expect(api.calls('SetHubriseCatalogDirection')).toEqual([
       { direction: 'NONE', acknowledgeLocalOverwrite: true },
     ])
@@ -163,13 +163,13 @@ describe('leaving PUBLISH with edits waiting', () => {
     const wrapper = await mountDirection(makeStatus({ catalogDirection: 'PUBLISH' }))
     await choose(wrapper, 'NONE')
     expect(bodyCheckbox()).toBeNull()
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(bodyCheckbox()).not.toBeNull()
-    expect(bodyButton('hubrise.direction.confirm')!.disabled).toBe(true)
+    expect(bodyButton('hubrise.direction.confirmButton')!.disabled).toBe(true)
     api.answer('SetHubriseCatalogDirection', { setHubriseCatalogDirection: makeStatus() })
     bodyCheckbox()!.click()
     await settle()
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(api.calls('SetHubriseCatalogDirection').at(-1)).toEqual({
       direction: 'NONE',
       acknowledgeLocalOverwrite: true,
@@ -180,7 +180,7 @@ describe('leaving PUBLISH with edits waiting', () => {
     const wrapper = await mountDirection(makeStatus({ catalogDirection: 'PUBLISH' }))
     await choose(wrapper, 'NONE')
     expect(bodyCheckbox()).toBeNull()
-    expect(bodyButton('hubrise.direction.confirm')!.disabled).toBe(false)
+    expect(bodyButton('hubrise.direction.confirmButton')!.disabled).toBe(false)
   })
 })
 
@@ -194,7 +194,7 @@ describe('switching to IMPORT', () => {
     expect(api.calls('PreviewHubriseCatalogSync')).toEqual([{ mode: 'DRY_RUN' }])
     expect(bodyText()).toContain('hubrise.direction.confirm.noneToImport')
     expect(bodyText()).toContain('Edamame')
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(api.calls('SetHubriseCatalogDirection')).toEqual([
       { direction: 'IMPORT', acknowledgeLocalOverwrite: false },
     ])
@@ -205,7 +205,7 @@ describe('switching to IMPORT', () => {
     const wrapper = await mountDirection()
     await choose(wrapper, 'IMPORT')
     expect(bodyText()).toContain('hubrise.errors.emptyCatalog')
-    expect(bodyButton('hubrise.direction.confirm')!.disabled).toBe(true)
+    expect(bodyButton('hubrise.direction.confirmButton')!.disabled).toBe(true)
   })
 
   it('runs the dry run when the server says it is required', async () => {
@@ -213,7 +213,7 @@ describe('switching to IMPORT', () => {
     const wrapper = await mountDirection()
     await choose(wrapper, 'IMPORT')
     api.clear()
-    await clickBody('hubrise.direction.confirm')
+    await clickBody('hubrise.direction.confirmButton')
     expect(api.calls('PreviewHubriseCatalogSync')).toEqual([{ mode: 'DRY_RUN' }])
     expect(bodyText()).not.toContain('hubrise.errors.previewRequired')
   })

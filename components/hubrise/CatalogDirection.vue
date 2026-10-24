@@ -81,7 +81,7 @@
       <template #footer>
         <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="close" />
         <UButton
-          :label="t('hubrise.direction.confirm')"
+          :label="t('hubrise.direction.confirmButton')"
           :loading="publish.switching.value"
           :disabled="!canConfirm"
           @click="confirm"
