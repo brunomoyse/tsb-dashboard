@@ -1,8 +1,15 @@
 name: CI
 
+# Pull requests run this directly. Pushes to main and release tags run it through
+# the "tests" job of action.yml (workflow_call), which every image build waits for.
 on:
   pull_request:
     branches: [main]
+  workflow_call:
+
+# A called workflow cannot hold more than its caller grants.
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -55,6 +62,11 @@ jobs:
       # No secrets and no network: the Nuxt project boots on dummy runtime config (tests/support/nuxtProject.ts).
       - name: Run vp test with coverage
         run: vp test run --coverage
+
+      # The release and nightly workflows refuse an untested commit through
+      # this script: keep its verdicts honest.
+      - name: Self-test the green-commit gate
+        run: bash .github/scripts/main-green.test.sh
 
   build:
     name: Build
