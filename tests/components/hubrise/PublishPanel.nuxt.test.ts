@@ -137,6 +137,18 @@ describe('publish banners', () => {
     expect(api.calls('AcknowledgeHubriseExternalChange')).toHaveLength(1)
   })
 
+  it('opens the preview from the removals confirmation banner', async () => {
+    const wrapper = await mountPanel(
+      publishing({ lastErrorCode: 'REMOVALS_NEED_CONFIRM', lastError: 'hold' }),
+    )
+    const banner = wrapper.find('[data-banner="removalsConfirm"]')
+    expect(banner.exists()).toBe(true)
+    expect(wrapper.find('[data-banner="publishError"]').exists()).toBe(false)
+    await banner.find('button').trigger('click')
+    await settle()
+    expect(api.calls('PreviewHubriseCatalogPublish').length).toBeGreaterThan(0)
+  })
+
   it('shows why acknowledging failed', async () => {
     api.answer(
       'AcknowledgeHubriseExternalChange',

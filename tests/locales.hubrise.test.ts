@@ -101,7 +101,10 @@ describe.each(LOCALES)('HubRise messages in %s', (name) => {
     })
     const banners = [
       ...statusBanners(status),
-      ...statusBanners(publishing, { removalsNeedConfirm: true }),
+      ...statusBanners({
+        ...publishing,
+        publish: { ...publishing.publish, lastErrorCode: 'REMOVALS_NEED_CONFIRM' },
+      }),
     ]
     expect(banners.length).toBeGreaterThan(5)
     for (const banner of banners) has(banner.key)

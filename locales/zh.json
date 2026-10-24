@@ -677,6 +677,7 @@
     "publish": {
       "errors": {
         "writeScopeMissing": "HubRise 连接无法写入目录，请重新连接。",
+        "removalsNeedConfirm": "此次发布会删除 HubRise 中的大量内容，已暂停。请预览并确认。",
         "accountCatalog": "目录在 HubRise 账户层级共享，无法发布。",
         "catalogNotFound": "找不到 HubRise 目录，请检查连接。{detail}",
         "rejected": "HubRise 拒绝了上次发布。{detail}",

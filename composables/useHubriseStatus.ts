@@ -98,6 +98,8 @@ export function useHubriseStatusState() {
 
 // One read at a time and one timer for the whole page, however many components ask for the status.
 let inflight: Promise<HubriseStatus | null> | null = null
+// The outcome of the latest shared read, copied into the refs of every caller.
+let lastError: unknown = null
 const pollers = new Set<() => void>()
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -118,11 +120,13 @@ export function useHubriseStatus() {
     loading.value = true
     try {
       const data = await $gqlFetch<{ hubriseStatus: HubriseStatus } | null>(GET_STATUS)
+      lastError = null
       loadError.value = null
       if (data?.hubriseStatus) setStatus(data.hubriseStatus)
       return status.value
     } catch (error: unknown) {
       // Not an admin, or the API is down: keep what is shown, the page displays the error.
+      lastError = error
       loadError.value = error
       return null
     } finally {
@@ -130,11 +134,18 @@ export function useHubriseStatus() {
     }
   }
 
-  const reload = (): Promise<HubriseStatus | null> => {
+  const reload = async (): Promise<HubriseStatus | null> => {
     inflight ??= read().finally(() => {
       inflight = null
     })
-    return inflight
+    // A caller that joined a read started by another one waits and gets its outcome too.
+    loading.value = true
+    try {
+      return await inflight
+    } finally {
+      loadError.value = lastError
+      loading.value = false
+    }
   }
 
   // The poll leaves a server without HubRise alone.

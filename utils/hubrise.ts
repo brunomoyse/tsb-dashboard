@@ -19,6 +19,7 @@ export type HubrisePublishErrorCode =
   | 'INVALID_MENU'
   | 'UNAVAILABLE'
   | 'AUTH'
+  | 'REMOVALS_NEED_CONFIRM'
 
 export type HubrisePublishAction = 'ADD' | 'UPDATE' | 'REMOVE'
 export type HubrisePublishState = 'PUBLISHED' | 'PENDING' | 'NOT_PUBLISHED'
@@ -307,6 +308,7 @@ export const HUBRISE_PUBLISH_ERROR_CODES: readonly HubrisePublishErrorCode[] = [
   'INVALID_MENU',
   'UNAVAILABLE',
   'AUTH',
+  'REMOVALS_NEED_CONFIRM',
 ]
 
 /** `HUBRISE_PREVIEW_STALE` -> `previewStale`, `WRITE_SCOPE_MISSING` -> `writeScopeMissing`. */
@@ -401,6 +403,7 @@ const COVERED_PUBLISH_ERRORS: readonly HubrisePublishErrorCode[] = [
   'WRITE_SCOPE_MISSING',
   'ACCOUNT_CATALOG',
   'AUTH',
+  'REMOVALS_NEED_CONFIRM',
 ]
 
 /**
@@ -409,10 +412,7 @@ const COVERED_PUBLISH_ERRORS: readonly HubrisePublishErrorCode[] = [
  * elsewhere, the last publish failed, a publish needs a typed confirmation, an import is available. Nothing is shown
  * until a HubRise location is connected.
  */
-export const statusBanners = (
-  status: HubriseStatus | null,
-  options: { removalsNeedConfirm?: boolean } = {},
-): HubriseBanner[] => {
+export const statusBanners = (status: HubriseStatus | null): HubriseBanner[] => {
   if (status === null || !status.available || !status.connected) return []
   const { publish } = status
   const publishing = status.catalogDirection === 'PUBLISH'
@@ -461,7 +461,7 @@ export const statusBanners = (
       params: { detail: publish.lastError ?? '' },
     })
   }
-  if (options.removalsNeedConfirm === true) {
+  if (publishing && code === 'REMOVALS_NEED_CONFIRM') {
     add('removalsConfirm', 'warning', { action: 'preview' })
   }
   if (!publishing && status.catalogUpdateAvailable) {
@@ -476,6 +476,7 @@ export const PUBLISH_BANNER_IDS: readonly HubriseBannerId[] = [
   'accountCatalog',
   'externalChange',
   'publishError',
+  'removalsConfirm',
 ]
 
 export const splitBanners = (

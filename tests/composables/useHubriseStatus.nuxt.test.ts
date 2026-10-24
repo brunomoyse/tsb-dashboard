@@ -137,6 +137,26 @@ describe('loading', () => {
     expect(gqlFetch).toHaveBeenCalledTimes(1)
   })
 
+  it('reports a failed shared read to every consumer that joined it', async () => {
+    let fail!: (reason: unknown) => void
+    gqlFetch.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        fail = reject
+      }),
+    )
+    const first = mountComposable(() => useHubriseStatus())
+    const second = mountComposable(() => useHubriseStatus())
+    await settle()
+    expect(second.result.loading.value).toBe(true)
+    const failure = new Error('down')
+    fail(failure)
+    await settle()
+    expect(gqlFetch).toHaveBeenCalledTimes(1)
+    expect(first.result.loadError.value).toBe(failure)
+    expect(second.result.loadError.value).toBe(failure)
+    expect(second.result.loading.value).toBe(false)
+  })
+
   it('setStatus replaces the shared status (a mutation answered with a fresh one)', async () => {
     const { result } = mountComposable(() => useHubriseStatus())
     await settle()

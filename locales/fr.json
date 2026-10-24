@@ -677,6 +677,7 @@
     "publish": {
       "errors": {
         "writeScopeMissing": "La connexion HubRise ne permet pas d'écrire le catalogue. Reconnectez-la.",
+        "removalsNeedConfirm": "La publication supprimerait de nombreux éléments dans HubRise et est suspendue. Prévisualisez-la et confirmez.",
         "accountCatalog": "Le catalogue est partagé au niveau du compte HubRise : publication impossible.",
         "catalogNotFound": "Le catalogue HubRise est introuvable. Vérifiez la connexion. {detail}",
         "rejected": "HubRise a refusé la dernière publication. {detail}",

@@ -134,8 +134,8 @@ describe('error codes', () => {
 })
 
 describe('status banners', () => {
-  const ids = (status: Parameters<typeof statusBanners>[0], options = {}) =>
-    statusBanners(status, options).map((banner) => banner.id)
+  const ids = (status: Parameters<typeof statusBanners>[0]) =>
+    statusBanners(status).map((banner) => banner.id)
 
   it('shows nothing before a location is connected', () => {
     expect(ids(null)).toEqual([])
@@ -172,12 +172,11 @@ describe('status banners', () => {
         lastError: 'name too long',
       },
     })
-    expect(ids(status, { removalsNeedConfirm: true })).toEqual([
+    expect(ids(status)).toEqual([
       'reconnectForWrite',
       'accountCatalog',
       'externalChange',
       'publishError',
-      'removalsConfirm',
     ])
   })
 
@@ -251,12 +250,19 @@ describe('status banners', () => {
     expect(ids({ ...status, catalogDirection: 'PUBLISH', publish: makePublish() })).toEqual([])
   })
 
-  it('asks for a typed confirmation banner only when told so', () => {
-    expect(ids(makeStatus(), { removalsNeedConfirm: false })).toEqual([])
-    expect(statusBanners(makeStatus(), { removalsNeedConfirm: true })[0]).toMatchObject({
-      id: 'removalsConfirm',
-      action: 'preview',
+  it('guides to the preview when a publish waits for a removals confirmation', () => {
+    const waiting = makeStatus({
+      catalogDirection: 'PUBLISH',
+      publish: makePublish({ lastErrorCode: 'REMOVALS_NEED_CONFIRM', lastError: 'hold' }),
     })
+    expect(statusBanners(waiting)).toEqual([
+      expect.objectContaining({
+        id: 'removalsConfirm',
+        key: 'hubrise.banners.removalsConfirm',
+        action: 'preview',
+      }),
+    ])
+    expect(statusBanners({ ...waiting, catalogDirection: 'IMPORT' })).toEqual([])
   })
 })
 

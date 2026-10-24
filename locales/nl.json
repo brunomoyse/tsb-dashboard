@@ -677,6 +677,7 @@
     "publish": {
       "errors": {
         "writeScopeMissing": "De HubRise-verbinding kan de catalogus niet schrijven. Verbind opnieuw.",
+        "removalsNeedConfirm": "De publicatie zou veel items in HubRise verwijderen en staat in de wacht. Bekijk het voorbeeld en bevestig.",
         "accountCatalog": "De catalogus wordt op HubRise-accountniveau gedeeld: publiceren is niet mogelijk.",
         "catalogNotFound": "De HubRise-catalogus is niet gevonden. Controleer de verbinding. {detail}",
         "rejected": "HubRise heeft de laatste publicatie geweigerd. {detail}",

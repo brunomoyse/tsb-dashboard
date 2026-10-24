@@ -134,6 +134,7 @@ const phaseTone = computed(() => PHASE_TONES[phase.value.phase] ?? 'neutral')
 
 const onBannerAction = async (banner: HubriseBanner) => {
   if (banner.action === 'reconnect') emit('reconnect')
+  else if (banner.action === 'preview') dialogOpen.value = true
   else if (banner.action === 'acknowledge') await external.acknowledgeExternalChange()
 }
 
