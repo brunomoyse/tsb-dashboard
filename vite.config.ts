@@ -35,6 +35,7 @@ const criticalFiles = {
   'utils/coupons.ts': full,
   'utils/settings.ts': full,
   'utils/graphqlUpload.ts': full,
+  'utils/hubrise.ts': full,
 }
 
 export default defineConfig({
