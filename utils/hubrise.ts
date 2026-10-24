@@ -212,7 +212,7 @@ export interface HubrisePublishPreview {
 export interface HubrisePublishResult {
   published: boolean
   queued: boolean
-  status: HubriseStatus
+  status: HubrisePublishStatus
 }
 
 export interface HubriseProductPublishInfo {

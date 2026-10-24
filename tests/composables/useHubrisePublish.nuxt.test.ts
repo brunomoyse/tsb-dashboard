@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { clearNuxtState } from '#imports'
-import { gqlFailure, makePreview, makeStatus } from '../fixtures/hubrise'
+import { gqlFailure, makePreview, makePublish, makeStatus } from '../fixtures/hubrise'
 import { mountComposable } from '../helpers/mountComposable'
 
 const gqlFetch = vi.hoisted(() => vi.fn())
@@ -167,7 +167,7 @@ describe('publish', () => {
     publishHubriseCatalog: {
       published: true,
       queued: false,
-      status: makeStatus({ catalogDirection: 'PUBLISH' }),
+      status: makePublish({ lastPublishedAt: '2026-10-24T10:00:00Z', pending: false }),
       ...over,
     },
   })
@@ -175,13 +175,17 @@ describe('publish', () => {
   it('publishes exactly the plan that was seen and shares the status', async () => {
     gqlFetch.mockResolvedValue(published())
     const publish = mountPublish()
+    publish.setStatus(makeStatus({ catalogDirection: 'PUBLISH', publish: { pending: true } }))
     const plan = makePreview({ planHash: 'abc' })
     const pending = publish.publish(plan, true)
     expect(publish.publishing.value).toBe(true)
     const result = await pending
     expect(result).toMatchObject({ published: true, queued: false })
     expect(publish.publishing.value).toBe(false)
+    // Only the publish block comes back: it is folded into the status that was already loaded.
     expect(publish.status.value?.catalogDirection).toBe('PUBLISH')
+    expect(publish.status.value?.publish.pending).toBe(false)
+    expect(publish.status.value?.publish.lastPublishedAt).toBe('2026-10-24T10:00:00Z')
     expect(gqlFetch.mock.calls[0]![1]).toEqual({
       variables: { confirmRemovals: true, removeForeign: true, planHash: 'abc' },
     })

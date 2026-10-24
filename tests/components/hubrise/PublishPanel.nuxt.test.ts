@@ -228,7 +228,7 @@ describe('the preview button', () => {
 
   it('opens the dialog and tells that the publish ran', async () => {
     api.answer('PublishHubriseCatalog', {
-      publishHubriseCatalog: { published: true, queued: false, status: publishing() },
+      publishHubriseCatalog: { published: true, queued: false, status: publishing().publish },
     })
     const wrapper = await mountPanel()
     await previewButton(wrapper).trigger('click')
@@ -241,7 +241,7 @@ describe('the preview button', () => {
 
   it('tells that the publish was queued', async () => {
     api.answer('PublishHubriseCatalog', {
-      publishHubriseCatalog: { published: false, queued: true, status: publishing() },
+      publishHubriseCatalog: { published: false, queued: true, status: publishing().publish },
     })
     const wrapper = await mountPanel()
     await previewButton(wrapper).trigger('click')

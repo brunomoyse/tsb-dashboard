@@ -33,7 +33,7 @@ const published = (over = {}) => ({
   publishHubriseCatalog: {
     published: true,
     queued: false,
-    status: makeStatus({ catalogDirection: 'PUBLISH' }),
+    status: makeStatus({ catalogDirection: 'PUBLISH' }).publish,
     ...over,
   },
 })

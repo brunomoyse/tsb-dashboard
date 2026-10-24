@@ -2,7 +2,11 @@ import { onScopeDispose, ref } from 'vue'
 import { useNuxtApp } from '#imports'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
-import { HUBRISE_STATUS_FIELDS, useHubriseStatusState } from '~/composables/useHubriseStatus'
+import {
+  HUBRISE_PUBLISH_FIELDS,
+  HUBRISE_STATUS_FIELDS,
+  useHubriseStatusState,
+} from '~/composables/useHubriseStatus'
 import {
   type HubriseCatalogDirection,
   type HubriseErrorInfo,
@@ -86,7 +90,7 @@ const PUBLISH = print(gql`
       published
       queued
       status {
-        ${HUBRISE_STATUS_FIELDS}
+        ${HUBRISE_PUBLISH_FIELDS}
       }
     }
   }
@@ -110,7 +114,7 @@ const ACKNOWLEDGE = print(gql`
  */
 export function useHubrisePublish() {
   const { $gqlFetch } = useNuxtApp()
-  const { setStatus } = useHubriseStatusState()
+  const { status, setStatus } = useHubriseStatusState()
   const preview = ref<HubrisePublishPreview | null>(null)
   const loadingPreview = ref(false)
   const publishing = ref(false)
@@ -202,7 +206,10 @@ export function useHubrisePublish() {
       const data = await $gqlFetch<{ publishHubriseCatalog: HubrisePublishResult }>(PUBLISH, {
         variables: { ...publishVariables(seen, removeForeign) },
       })
-      setStatus(data.publishHubriseCatalog.status)
+      // The mutation answers with the publish block only: fold it into the shared status (when none is loaded yet,
+      // the next read brings the whole status).
+      if (status.value !== null)
+        setStatus({ ...status.value, publish: data.publishHubriseCatalog.status })
       return data.publishHubriseCatalog
     } catch (failure: unknown) {
       const info = fail(failure)
