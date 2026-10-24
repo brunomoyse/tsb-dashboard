@@ -179,6 +179,8 @@ export default defineConfig({
       '.nuxt',
       '.output',
       'node_modules',
+      // Plain-JS tool copied verbatim into pili-shop and pili-mobile (see its header): not held to this app's rules.
+      'scripts/check-graphql-operations.mjs',
       'android/**/build',
       'android/app/src/main/assets/public',
       'android/capacitor-cordova-android-plugins',

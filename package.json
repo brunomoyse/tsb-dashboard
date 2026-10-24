@@ -13,6 +13,7 @@
     "test:watch": "vp test",
     "lint": "vp lint",
     "check": "vp check",
+    "check:graphql": "node scripts/check-graphql-operations.mjs --root .",
     "fmt": "vp fmt",
     "cap:build": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs",
     "build:android": "APP_BUILD=capacitor nuxt build && node scripts/cap-extract-spa.mjs && npx cap sync android",
