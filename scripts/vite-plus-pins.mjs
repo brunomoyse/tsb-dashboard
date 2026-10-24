@@ -1,24 +1,23 @@
-// Dependabot bumps vite-plus and @voidzero-dev/* as one group, but two pins stay behind: the `overrides.vite` alias
-// (vite-plus-core of the same release) and @vitest/coverage-v8 (peer-pinned to the vitest vite-plus bundles).
-// .github/workflows/dependabot-vite-plus.yml moves them on the Dependabot PR with sync-vite-plus-pins.mjs.
+// Dependabot bumps vite-plus and @voidzero-dev/* as one group, but some pins stay behind: the `vite` alias (vite-plus-core
+// of the same release, declared in package.json devDependencies and in the pnpm-workspace.yaml overrides) and
+// @vitest/coverage-v8 and vitest (the vitest vite-plus bundles). .github/workflows/dependabot-vite-plus.yml moves them on the Dependabot PR with sync-vite-plus-pins.mjs.
 
 /**
  * @typedef {object} Manifest
- * @property {Record<string, string>} [dependencies]
  * @property {Record<string, string>} [devDependencies]
- * @property {Record<string, string>} [overrides]
  */
 
 /**
- * @typedef {object} Lockfile
- * @property {Record<string, Manifest>} [packages]
+ * @typedef {object} Pins
+ * @property {string} pkg package.json text
+ * @property {string} workspace pnpm-workspace.yaml text
  */
 
 /**
  * @param {string} text JSON text
- * @returns {Record<string, unknown>}
+ * @returns {Manifest}
  */
-function parseObject(text) {
+function parseManifest(text) {
   /** @type {unknown} */
   const value = JSON.parse(text)
   return typeof value === 'object' && value !== null ? { ...value } : {}
@@ -39,39 +38,65 @@ function replaceEntry(text, name, { from, to }) {
   return text.replace(entry, `${JSON.stringify(name)}: ${JSON.stringify(to)}`)
 }
 
+const VITE_OVERRIDE = /^(?<key> {2}vite: )(?<value>\S+)$/mu
+
 /**
- * package.json text with `overrides.vite` and @vitest/coverage-v8 moved to the vite-plus release it declares.
- * Returns the text unchanged when both pins already hold.
- * @param {string} pkgText package.json
- * @param {string} lockText package-lock.json, as Dependabot left it
- * @returns {string}
+ * The vitest release that the vite-plus snapshot of pnpm-lock.yaml depends on.
+ * @param {string} lockText pnpm-lock.yaml, as Dependabot left it
+ * @param {string} vitePlus declared vite-plus version
+ * @returns {string | undefined}
  */
-export function syncedPins(pkgText, lockText) {
-  /** @type {Manifest} */
-  const pkg = parseObject(pkgText)
-  /** @type {Lockfile} */
-  const lock = parseObject(lockText)
+function bundledVitest(lockText, vitePlus) {
+  const snapshots = lockText.slice(lockText.lastIndexOf('\nsnapshots:'))
+  const snapshot = new RegExp(
+    `^ {2}vite-plus@${vitePlus.replace(/\W/gu, '\\$&')}[^\\n]*\\n {4}dependencies:\\n(?<deps>(?: {6}[^\\n]*\\n)+)`,
+    'mu',
+  ).exec(snapshots)
+  return /^ {6}vitest: (?<version>[^\s(]+)/mu.exec(snapshot?.groups?.deps ?? '')?.groups?.version
+}
+
+/**
+ * package.json and pnpm-workspace.yaml texts with the `vite` alias, @vitest/coverage-v8 and vitest moved to the
+ * vite-plus release package.json declares. Returns the texts unchanged when both pins already hold.
+ * @param {string} pkgText package.json
+ * @param {string} lockText pnpm-lock.yaml, as Dependabot left it
+ * @param {string} workspaceText pnpm-workspace.yaml
+ * @returns {Pins}
+ */
+export function syncedPins(pkgText, lockText, workspaceText) {
+  const pkg = parseManifest(pkgText)
   const declared = pkg.devDependencies?.['vite-plus']
-  const override = pkg.overrides?.vite
+  const override = VITE_OVERRIDE.exec(workspaceText)?.groups?.value
   if (declared === undefined || override === undefined) {
-    throw new Error('package.json needs devDependencies.vite-plus and overrides.vite')
+    throw new Error(
+      'package.json needs devDependencies.vite-plus and pnpm-workspace.yaml overrides.vite',
+    )
+  }
+
+  let workspace = workspaceText
+  const core = `npm:@voidzero-dev/vite-plus-core@${declared}`
+  if (override !== core) {
+    workspace = workspace.replace(VITE_OVERRIDE, `$<key>${core}`)
   }
 
   let text = pkgText
-  const core = `npm:@voidzero-dev/vite-plus-core@${declared}`
-  if (override !== core) {
-    text = replaceEntry(text, 'vite', { from: override, to: core })
+  const alias = pkg.devDependencies?.vite
+  if (alias !== undefined && alias !== core) {
+    text = replaceEntry(text, 'vite', { from: alias, to: core })
   }
 
-  const coverage = pkg.devDependencies?.['@vitest/coverage-v8']
-  if (coverage !== undefined) {
-    const vitest = lock.packages?.['node_modules/vite-plus']?.dependencies?.vitest
-    if (vitest === undefined) {
-      throw new Error('package-lock.json has no vitest dependency for node_modules/vite-plus')
+  const vitest = bundledVitest(lockText, declared)
+  for (const name of ['@vitest/coverage-v8', 'vitest']) {
+    const pinned = pkg.devDependencies?.[name]
+    if (pinned === undefined) {
+      continue
     }
-    if (coverage !== vitest) {
-      text = replaceEntry(text, '@vitest/coverage-v8', { from: coverage, to: vitest })
+    if (vitest === undefined) {
+      throw new Error(`pnpm-lock.yaml has no vitest dependency for vite-plus@${declared}`)
+    }
+    if (pinned !== vitest) {
+      text = replaceEntry(text, name, { from: pinned, to: vitest })
     }
   }
-  return text
+  return { pkg: text, workspace }
 }

@@ -5,7 +5,7 @@ import type { MockOptions } from './e2e/support/test'
 /*
  * The dashboard against a mock tsb-service, no secret, database or Zitadel:
  *
- *   npx playwright test          builds the app, starts the mock + the production build, runs the specs
+ *   pnpm exec playwright test   builds the app, starts the mock + the production build, runs the specs
  *   E2E_SKIP_BUILD=1 ...         reuse the last build in .output (it must have been built with this file's env)
  *   E2E_REUSE=1 ...              reuse a mock / app already listening (local iteration)
  *
