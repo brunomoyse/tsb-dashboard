@@ -52,7 +52,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite-plus": "1.0.0",
-    "vue-tsc": "^3.3.12"
+    "vue-tsc": "^3.3.13"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
