@@ -114,6 +114,7 @@
                     class="size-4 text-warning shrink-0"
                     :title="t('products.translations')"
                   />
+                  <HubriseProductChip :product="product" />
                 </span>
                 <span
                   v-if="getZhName(product)"
@@ -253,6 +254,7 @@
                 <UIcon v-else name="i-lucide-image-off" class="size-4 text-muted" />
               </div>
               <p class="font-medium text-sm text-highlighted truncate">{{ row.original.name }}</p>
+              <HubriseProductChip :product="row.original" />
             </div>
           </template>
 
@@ -441,7 +443,9 @@
 
 <script lang="ts" setup>
 import type { CreateProductInput, Product, ProductCategory, UpdateProductRequest } from '~/types'
+import HubriseProductChip from '~/components/hubrise/ProductChip.vue'
 import { buildGraphqlUpload } from '~/utils/graphqlUpload'
+import { hubriseError, productHubriseFields } from '~/utils/hubrise'
 import { computed, ref, watch } from 'vue'
 import {
   useCategoriesStore,
@@ -549,6 +553,12 @@ const columns = computed(() => [
   { accessorKey: 'actions', header: '', enableSorting: false },
 ])
 
+// HubRise: its product fields are asked only where the server has the integration (an older server, or one without it,
+// does not know them and would refuse the whole query). The layout loads the same status, the read is shared.
+const { status: hubriseStatus, reload: loadHubriseStatus } = useHubriseStatus()
+if (hubriseStatus.value === null) await loadHubriseStatus()
+const hubriseFields = productHubriseFields(hubriseStatus.value)
+
 const PRODUCTS_QUERY = gql`
   query {
     products {
@@ -588,6 +598,7 @@ const PRODUCTS_QUERY = gql`
         name
         description
       }
+      ${hubriseFields}
     }
   }
 `
@@ -647,6 +658,7 @@ const CREATE_PRODUCT_MUTATION = gql`
         name
         description
       }
+      ${hubriseFields}
     }
   }
 `
@@ -690,6 +702,7 @@ const UPDATE_PRODUCT_MUTATION = gql`
         name
         description
       }
+      ${hubriseFields}
     }
   }
 `
@@ -722,6 +735,7 @@ const SUB_PRODUCT_UPDATED = gql`
       vatCategory
       name
       slug
+      ${hubriseFields}
     }
   }
 `
@@ -947,6 +961,12 @@ const handleCreate = async (newProductInput: CreateProductInput): Promise<Produc
   }
 }
 
+// HubRise owns some fields of a product (HUBRISE_MANAGED): say so instead of the generic failure.
+const updateFailedTitle = (failure: unknown): string =>
+  hubriseError(failure).code === 'HUBRISE_MANAGED'
+    ? t('hubrise.errors.managed')
+    : t('orders.errors.updateFailed')
+
 // Handle product updates (edit mode)
 const handleUpdate = async (updateReq: UpdateProductRequest) => {
   let updated: Product
@@ -972,7 +992,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
 
       if (res.errors?.length) {
         if (import.meta.dev) console.error('GraphQL errors:', res.errors)
-        toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+        toast.add({ title: updateFailedTitle(res.errors), color: 'error' })
         return
       }
 
@@ -1003,7 +1023,7 @@ const handleUpdate = async (updateReq: UpdateProductRequest) => {
     selectedProduct.value = null
   } catch (err) {
     if (import.meta.dev) console.error('handleUpdate failed:', err)
-    toast.add({ title: t('orders.errors.updateFailed'), color: 'error' })
+    toast.add({ title: updateFailedTitle(err), color: 'error' })
   }
 }
 

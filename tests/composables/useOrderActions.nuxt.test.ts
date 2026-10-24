@@ -32,7 +32,8 @@ vi.mock('vue-i18n', async (importOriginal) => {
   return { ...(await importOriginal<typeof VueI18NModule>()), useI18n: fakeI18n }
 })
 
-const { ORDER_BY_ID_QUERY, useOrderActions } = await import('~/composables/useOrderActions')
+const { ORDER_BY_ID_QUERY, buildOrderByIdQuery, useOrderActions } =
+  await import('~/composables/useOrderActions')
 const { ORDER_STATUS_CHIP_TONE, getAllowedStatuses, isActiveStatus } =
   await import('~/utils/orders')
 
@@ -157,6 +158,14 @@ describe('status helpers', () => {
       expect(ORDER_BY_ID_QUERY).toMatch(new RegExp(`\\b${field}\\b`, 'u'))
     }
     expect(ORDER_BY_ID_QUERY).toMatch(/query \(\$id: ID!\)/u)
+  })
+
+  it('adds a selection to the order when asked to (the HubRise state), and nothing otherwise', () => {
+    const extra = buildOrderByIdQuery('hubrise { pushState }')
+    expect(extra).toContain('hubrise {')
+    expect(extra).toContain('pushState')
+    expect(ORDER_BY_ID_QUERY).not.toContain('hubrise')
+    expect(buildOrderByIdQuery()).toBe(ORDER_BY_ID_QUERY)
   })
 })
 

@@ -56,6 +56,7 @@ import type { AppLocale } from '~/composables/useLocaleSwitch'
 import gql from 'graphql-tag'
 import { print } from 'graphql'
 import { stateKey } from '~/utils/assistant'
+import { hubriseNavHintKey, hubriseNavVisible } from '~/utils/hubrise'
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
@@ -65,6 +66,7 @@ const { $gqlFetch } = useNuxtApp()
 const { languages, onLanguageChange } = useLocaleSwitch()
 const { enabled: orderingEnabled } = useOrderingStatus()
 const { connection: assistant } = useAssistantStatus()
+const { status: hubrise } = useHubriseStatus()
 
 const restaurantName = useRuntimeConfig().public.restaurantName as string
 
@@ -132,6 +134,15 @@ const items = computed(() => [
     label: t('navigation.assistant'),
     hint: assistant.value?.enabled ? t(stateKey(assistant.value)) : '',
   },
+  ...(hubriseNavVisible(hubrise.value)
+    ? [
+        {
+          to: '/hubrise',
+          label: t('navigation.hubrise'),
+          hint: t(hubriseNavHintKey(hubrise.value) ?? ''),
+        },
+      ]
+    : []),
 ])
 
 const languageOptions = computed(() =>

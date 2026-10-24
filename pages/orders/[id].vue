@@ -70,6 +70,9 @@
         {{ t('orders.staleDetailAlert', { hours: Math.floor(ageMinutes / 60) }) }}
       </div>
 
+      <!-- 2b. HubRise: why staff must look, and the state at HubRise (nothing if it never got there) -->
+      <HubriseOrderPanel :order="order" :cancelling="isCancelling" @cancel="openCancelDialog" />
+
       <!-- 3. Contact -->
       <div
         v-if="order.customer?.phoneNumber || showDirections"
@@ -362,7 +365,9 @@
 
 <script setup lang="ts">
 import type { Order, OrderStatus } from '~/types'
-import { ORDER_BY_ID_QUERY, useOrderActions } from '~/composables/useOrderActions'
+import HubriseOrderPanel from '~/components/hubrise/OrderPanel.vue'
+import { buildOrderByIdQuery, useOrderActions } from '~/composables/useOrderActions'
+import { orderHubriseFields } from '~/utils/hubrise'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatPrice, formatTimeOnly } from '~/utils/utils'
@@ -384,6 +389,8 @@ const toast = useToast()
 const isMobile = useIsMobile()
 const ordersStore = useOrdersStore()
 const { $gqlFetch } = useNuxtApp()
+// The orders page (this page's parent) has read the HubRise status already.
+const { status: hubriseStatus } = useHubriseStatus()
 
 const orderId = computed(() => String(route.params.id ?? ''))
 
@@ -451,9 +458,12 @@ const loading = ref(!order.value)
 
 const fetchOrder = async () => {
   try {
-    const data = await $gqlFetch<{ order: Order }>(ORDER_BY_ID_QUERY, {
-      variables: { id: orderId.value },
-    })
+    const data = await $gqlFetch<{ order: Order }>(
+      buildOrderByIdQuery(orderHubriseFields(hubriseStatus.value)),
+      {
+        variables: { id: orderId.value },
+      },
+    )
     if (data?.order && !ordersStore.orders.some((o) => o.id === data.order.id)) {
       ordersStore.addOrder(data.order)
       ordersStore.acknowledgeOrder(data.order.id)

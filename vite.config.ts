@@ -20,6 +20,10 @@ const criticalFiles = {
   'composables/useGqlSubscription.ts': full,
   'composables/useOrderActions.ts': full,
   'composables/useSunmiPrinter.ts': full,
+  'composables/useHubriseStatus.ts': full,
+  'composables/useHubriseSettings.ts': full,
+  'composables/useHubriseCatalog.ts': full,
+  'composables/useHubrisePublish.ts': full,
   'composables/usePushNotifications.ts': full,
   'stores/auth.ts': full,
   'stores/orders.ts': full,
@@ -35,6 +39,7 @@ const criticalFiles = {
   'utils/coupons.ts': full,
   'utils/settings.ts': full,
   'utils/graphqlUpload.ts': full,
+  'utils/hubrise.ts': full,
 }
 
 export default defineConfig({
