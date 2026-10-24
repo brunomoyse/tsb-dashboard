@@ -1,6 +1,8 @@
-# tsb-dashboard
+# pili-dashboard
 
-Admin dashboard for Tokyo Sushi Bar operations.
+Admin dashboard of Pili for restaurant operations.
+
+Repository `nuagemagique-dev/pili-dashboard`, local folder and internal name `tsb-dashboard`. Images: `ghcr.io/nuagemagique-dev/pili-dashboard` and `ghcr.io/nuagemagique-dev/pili-dashboard-ygfliege`.
 
 `tsb-dashboard` is used by staff to manage products and monitor orders in real time.
 
@@ -69,3 +71,18 @@ The Dockerfile is multi-stage with a healthcheck and supports multi-arch builds.
 - Push to `main`: builds and publishes `:latest` (multi-arch) and deploys to the home server.
 - Tag `v*`: builds `:production` + version tags (AMD64) and deploys to OVH.
 - Manual rollback: run the workflow with the target version.
+
+## Pili repositories
+
+Every Pili repository lives in the GitHub org `nuagemagique-dev`. Local folders kept their earlier names.
+
+| Repository                           | Local folder     | What it is                                             |
+| ------------------------------------ | ---------------- | ------------------------------------------------------ |
+| pili-api                             | `tsb-service`    | GraphQL API (Go) and the `pili-mcp` tool server        |
+| pili-shop                            | `tsb-core`       | Customer web shop, one Nuxt app per brand              |
+| **pili-dashboard** (this repository) | `tsb-dashboard`  | Admin dashboard (Nuxt)                                 |
+| pili-mobile                          | `tsb-mobile`     | Customer iOS and Android app (Expo)                    |
+| pili-handheld                        | `moyun-handheld` | Staff handheld app for the Sunmi V3H (Kotlin)          |
+| pili-pos                             | `moyun-pos`      | SCE 2.0 cash register (Rust engine, Android and Linux) |
+| pili-agent                           | `tsb-agent`      | Owner and staff Telegram agent                         |
+| pili-infra                           | `tsb-infra`      | Helm charts, Terraform, SOPS secrets, runbooks         |
