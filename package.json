@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
-    "@nuxt/test-utils": "^4.3.2",
+    "@nuxt/test-utils": "^4.3.4",
     "@nuxtjs/i18n": "^10.6.0",
     "@types/node": "^24.19.1",
     "@vitest/coverage-v8": "5.0.5",
