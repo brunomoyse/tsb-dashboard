@@ -133,11 +133,31 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
+      - name: Checkout the smoke test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts/smoke.sh
+          sparse-checkout-cone-mode: false
+
       - name: Trigger deploy webhook
         run: |
           curl -X POST ${{ vars.DEPLOY_WEBHOOK_URL }} \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             --fail --max-time 300
+
+      # The webhook answering does not mean the new container came up: poll the test server for 4 minutes.
+      # Repository variable TEST_DASHBOARD_BASE_URL = public URL of the dashboard test server.
+      - name: Wait for the test server to answer
+        env:
+          URL: ${{ vars.TEST_DASHBOARD_BASE_URL }}
+          SMOKE_ATTEMPTS: '24'
+          SMOKE_DELAY: '10'
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::warning::Repository variable TEST_DASHBOARD_BASE_URL is not set: the test deploy is not verified."
+            exit 0
+          fi
+          scripts/smoke.sh dashboard "$URL"
 
   # ── Production release (tag push v*) ────────────────────────────────────────
 
@@ -191,6 +211,12 @@ jobs:
     environment: production
 
     steps:
+      - name: Checkout the smoke test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts/smoke.sh
+          sparse-checkout-cone-mode: false
+
       - name: Deploy via SSH (Helm)
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
@@ -214,6 +240,42 @@ jobs:
               --set "apps.${APP}.image.repository=${REPO}" \
               --set "apps.${APP}.image.tag=${TAG}" \
               --atomic --timeout 5m
+
+      - name: Smoke test tokyosushi
+        id: smoke_tokyosushi
+        env:
+          URL: ${{ vars.DASHBOARD_BASE_URL }}
+        run: scripts/smoke.sh --skip-unset dashboard "$URL"
+
+      - name: Roll back tokyosushi after a failed smoke test
+        id: rollback_tokyosushi
+        if: failure() && steps.smoke_tokyosushi.outcome == 'failure'
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ vars.OVH_HOST }}
+          username: ${{ vars.OVH_USER }}
+          key: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            sudo flock -w 600 /var/lock/tokyosushi-apps-helm.lock env KUBECONFIG=/etc/rancher/k3s/k3s.yaml \
+              helm rollback tokyosushi-apps --namespace tokyosushi --wait --timeout 5m
+
+      - name: Alert on a failed deploy
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEXT: >-
+            pili-dashboard ${{ github.ref_name }}: tokyosushi production deploy failed.
+            smoke ${{ steps.smoke_tokyosushi.outcome }}, rollback ${{ steps.rollback_tokyosushi.outcome }}.
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then exit 0; fi
+          curl -fsS -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "disable_web_page_preview=true" \
+            || echo "::warning::Telegram alert failed"
 
   # ── YGF production release (tag push ygf-v*) ─────────────────────────────────
   # Yangguofu Malatang Liège dashboard (admin.ygfliege.be): same code, built
@@ -270,6 +332,12 @@ jobs:
     environment: production
 
     steps:
+      - name: Checkout the smoke test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts/smoke.sh
+          sparse-checkout-cone-mode: false
+
       - name: Deploy via SSH (Helm)
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
@@ -294,6 +362,42 @@ jobs:
               --set "apps.${APP}.image.repository=${REPO}" \
               --set "apps.${APP}.image.tag=${TAG}" \
               --atomic --timeout 5m
+
+      - name: Smoke test ygfliege
+        id: smoke_ygf
+        env:
+          URL: ${{ vars.YGF_DASHBOARD_BASE_URL }}
+        run: scripts/smoke.sh --skip-unset dashboard "$URL"
+
+      - name: Roll back ygfliege after a failed smoke test
+        id: rollback_ygf
+        if: failure() && steps.smoke_ygf.outcome == 'failure'
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ vars.OVH_HOST }}
+          username: ${{ vars.OVH_USER }}
+          key: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            sudo flock -w 600 /var/lock/ygf-apps-helm.lock env KUBECONFIG=/etc/rancher/k3s/k3s.yaml \
+              helm rollback ygf-apps --namespace ygf --wait --timeout 5m
+
+      - name: Alert on a failed deploy
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEXT: >-
+            pili-dashboard ${{ github.ref_name }}: ygfliege production deploy failed.
+            smoke ${{ steps.smoke_ygf.outcome }}, rollback ${{ steps.rollback_ygf.outcome }}.
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then exit 0; fi
+          curl -fsS -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "disable_web_page_preview=true" \
+            || echo "::warning::Telegram alert failed"
 
   # ── Rollback (manual trigger) ────────────────────────────────────────────────
 
