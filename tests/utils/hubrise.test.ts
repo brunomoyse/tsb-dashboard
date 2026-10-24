@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test'
 import {
   attentionCard,
+  bannerParams,
+  formatInstant,
+  importModes,
+  splitBanners,
   attentionKey,
   canConfirmPublish,
   CATALOG_DIRECTIONS,
@@ -671,5 +675,40 @@ describe('orders', () => {
     expect(attentionCard(makeOrderInfo())).toBeNull()
     expect(attentionCard(null)).toBeNull()
     expect(attentionCard(undefined)).toBeNull()
+  })
+})
+
+describe('banner helpers', () => {
+  it('splits the publish banners from the page ones', () => {
+    const status = makeStatus({
+      catalogDirection: 'PUBLISH',
+      authErrorAt: '2026-10-24T10:00:00Z',
+      publish: { needsReconnectForWrite: true, externalChangeAt: '2026-10-24T09:00:00Z' },
+    })
+    const { general, publish } = splitBanners(statusBanners(status))
+    expect(general.map((b) => b.id)).toEqual(['authError'])
+    expect(publish.map((b) => b.id)).toEqual(['reconnectForWrite', 'externalChange'])
+  })
+
+  it('shows an instant in Brussels time', () => {
+    expect(formatInstant('2026-10-24T10:00:00Z', 'en-GB')).toMatch(/24 Oct 2026.*12:00/u)
+  })
+
+  it('formats the instants of a banner and leaves the other parameters alone', () => {
+    const [banner] = statusBanners(
+      makeStatus({
+        catalogDirection: 'PUBLISH',
+        publish: { lastErrorCode: 'REJECTED', lastError: 'name too long' },
+      }),
+    )
+    expect(bannerParams(banner!, 'en-GB')).toEqual({ detail: 'name too long' })
+    const [auth] = statusBanners(makeStatus({ authErrorAt: '2026-10-24T10:00:00Z' }))
+    expect(bannerParams(auth!, 'en-GB').since).toMatch(/12:00/u)
+  })
+
+  it('offers adoption always and a full import unless the dashboard owns the menu', () => {
+    expect(importModes('PUBLISH')).toEqual(['LINK_ONLY'])
+    expect(importModes('IMPORT')).toEqual(['LINK_ONLY', 'FULL'])
+    expect(importModes('NONE')).toEqual(['LINK_ONLY', 'FULL'])
   })
 })

@@ -437,6 +437,40 @@ export const statusBanners = (
   return banners
 }
 
+/** The banners that belong to the publish panel; the page shows the others. */
+export const PUBLISH_BANNER_IDS: readonly HubriseBannerId[] = [
+  'reconnectForWrite',
+  'accountCatalog',
+  'externalChange',
+  'publishError',
+]
+
+export const splitBanners = (
+  banners: readonly HubriseBanner[],
+): { general: HubriseBanner[]; publish: HubriseBanner[] } => ({
+  general: banners.filter((banner) => !PUBLISH_BANNER_IDS.includes(banner.id)),
+  publish: banners.filter((banner) => PUBLISH_BANNER_IDS.includes(banner.id)),
+})
+
+/** A banner parameter that is an instant is shown in Brussels time, in the language of the screen. */
+export const formatInstant = (iso: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Europe/Brussels',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(iso))
+
+const INSTANT_PARAMS: readonly string[] = ['since', 'at']
+
+/** The parameters of a banner message, its instants formatted. */
+export const bannerParams = (banner: HubriseBanner, locale: string): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(banner.params).map(([name, value]) => [
+      name,
+      INSTANT_PARAMS.includes(name) ? formatInstant(value, locale) : value,
+    ]),
+  )
+
 /** What the banner above every page (except the HubRise page itself) warns about. */
 export type HubriseLayoutBanner = 'authError' | 'parked'
 
@@ -600,6 +634,10 @@ export const IMPORT_ACTION_ORDER: readonly HubriseCatalogAction[] = [
   'LINK',
   'REVIVE',
 ]
+
+/** The import modes the page offers: adopting the existing SKUs is always possible, a full import only when HubRise may own the menu. */
+export const importModes = (direction: HubriseCatalogDirection): HubriseSyncMode[] =>
+  direction === 'PUBLISH' ? ['LINK_ONLY'] : ['LINK_ONLY', 'FULL']
 
 export const groupImportChanges = (changes: readonly HubriseCatalogChange[]): ImportChangeGroup[] =>
   IMPORT_ACTION_ORDER.map((action) => ({
