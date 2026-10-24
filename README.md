@@ -43,18 +43,18 @@ Minimum variables:
 ### 2) Install and run
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Commands
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run generate
-npm run lint
+pnpm dev
+pnpm build
+pnpm preview
+pnpm generate
+pnpm lint
 ```
 
 ## Docker
