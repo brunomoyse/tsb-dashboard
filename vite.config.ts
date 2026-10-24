@@ -98,7 +98,15 @@ export default defineConfig({
   fmt: {
     singleQuote: true,
     semi: false,
-    ignorePatterns: ['.claude/**', 'android/**', '**/android/**', 'public/**', 'coverage/**'],
+    ignorePatterns: [
+      '.claude/**',
+      'android/**',
+      '**/android/**',
+      'public/**',
+      'coverage/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
   lint: {
     plugins: ['typescript', 'vue'],
@@ -149,7 +157,8 @@ export default defineConfig({
     overrides: [
       {
         // Tests cast to fakes, build partial objects and read `any` from mocks: these rules are noise there, and only there.
-        files: ['tests/**/*.ts'],
+        // The Playwright specs, their helpers and the mock backend (e2e/) are test code too.
+        files: ['tests/**/*.ts', 'e2e/**/*.ts', 'playwright.config.ts'],
         rules: {
           'typescript/prefer-readonly-parameter-types': 'off',
           'typescript/no-unsafe-type-assertion': 'off',
@@ -183,6 +192,8 @@ export default defineConfig({
       'android/app/src/main/assets/public',
       'android/capacitor-cordova-android-plugins',
       'coverage',
+      'playwright-report',
+      'test-results',
     ],
     options: {
       typeAware: true,
